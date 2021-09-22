@@ -1,0 +1,60 @@
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MissingTranslation">
+    <string name="app_name" translatable="false">Family Photos</string>
+
+    <string name="message_morning">Good morning, %s!</string>
+    <string name="message_normal">Hello, %s!</string>
+    <string name="message_night">Good night %s</string>
+
+    <string name="settings">Settings</string>
+    <string name="section_personal">Personal</string>
+    <string name="section_family">Family</string>
+    <string name="section_folders">Folders</string>
+    <string name="section_storage">Storage</string>
+
+    <!-- Actions -->
+    <string name="action_share">Share</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_upload">Upload</string>
+    <string name="action_upload_photos">Upload Photos</string>
+    <string name="action_move">Move</string>
+    <string name="action_move_photos">Move Photos</string>
+    <string name="action_more">More</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_next">Next</string>
+    <string name="action_previous">Previous</string>
+
+    <string name="confirm_delete">Delete files?</string>
+    <string name="confirm_delete_detail">Are you sure you want to delete these files?</string>
+
+    <plurals name="images_deleted_success">
+        <item quantity="one">%d image deleted successfully</item>
+        <item quantity="other">%d images deleted successfully</item>
+    </plurals>
+
+    <plurals name="images_deleted_failure">
+        <item quantity="one">Failed to delete %d image</item>
+        <item quantity="other">Failed to delete %d images</item>
+    </plurals>
+
+    <string name="images_move_success">Images moved successfully</string>
+    <string name="images_move_failure">Failed to move images</string>
+    <string name="image_upload_success">Image uploaded successfully</string>
+    <string name="image_upload_failure">Failed to upload image</string>
+
+    <string name="send_to">Send to:</string>
+    <string name="failed_download_image">Failed to download image</string>
+
+    <!-- Notifications -->
+    <string name="notification_backup_title">Backup up files</string>
+    <string name="notification_backup_fail">Failed to backup up files</string>
+    <string name="notification_backup_fail_internet">Missing internet connection</string>
+    <string name="notification_backup_fail_io">Error in the files</string>
+    <string name="notification_backup_fail_unknown">Unknown reason</string>
+
+    <!-- Preferences -->
+    <string name="pref_category_cache">Cache</string>
+    <string name="pref_cache_size">Cache Size (MB)</string>
+    <string name="pref_restart_needed">A restart is needed to apply these changes</string>
+    <string name="pref_clear_cache">Clear all cache</string>
+</resources>

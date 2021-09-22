@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="section_personal">Personal</string>
+    <string name="section_family">Familie</string>
+    <string name="section_folders">Dosare</string>
+    <string name="section_storage">Stocare</string>
+    <string name="action_delete">Șterge</string>
+    <string name="action_upload">Încarcă</string>
+    <string name="action_upload_photos">Încarcă pozele</string>
+    <string name="action_move_photos">Schimba locația</string>
+    <string name="action_more">Mai mult</string>
+    <string name="action_cancel">Anulează</string>
+    <string name="failed_download_image">Nu s-a putut descărca imaginea</string>
+    <string name="image_upload_success">Imagine încărcată cu succes</string>
+    <string name="images_move_success">Imagini mutate cu succes</string>
+    <string name="images_move_failure">Nu s-au putut muta pozele</string>
+    <string name="image_upload_failure">Nu s-a putut încărca poza</string>
+    <string name="action_share">Partajează</string>
+    <string name="action_move">Mută</string>
+    <string name="action_next">Următorul</string>
+    <string name="confirm_delete">Șterge fișierele?</string>
+    <string name="confirm_delete_detail">Sunteți sigur că vrei să ștergi fișierele?</string>
+    <string name="message_morning">Bună dimineața %s!</string>
+    <string name="message_normal">Bună, %s!</string>
+    <string name="message_night">Noapte bună %s</string>
+</resources>
