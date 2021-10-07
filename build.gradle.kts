@@ -1,7 +1,7 @@
 buildscript {
-    val kotlinVersion: String by rootProject.extra("1.5.30")
-    val composeVersion: String by rootProject.extra("1.1.0-alpha04")
-    val hiltVersion: String by rootProject.extra("2.38.1")
+    val kotlinVersion: String by rootProject.extra("1.5.31")
+    val composeVersion: String by rootProject.extra("1.1.0-alpha05")
+    val hiltVersion: String by rootProject.extra("2.39.1")
 
     repositories {
         google()

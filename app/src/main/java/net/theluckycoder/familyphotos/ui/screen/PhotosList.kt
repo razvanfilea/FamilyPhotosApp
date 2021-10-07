@@ -63,7 +63,7 @@ fun PhotosList(
         state = listState
     ) {
         if (headerContent != null && selectedPhotoIds.isEmpty()) {
-            item {
+            item("headerContent") {
                 headerContent()
             }
         }

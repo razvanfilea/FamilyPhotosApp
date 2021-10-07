@@ -233,33 +233,35 @@ class MainViewModel @Inject constructor(
             ProcessPhoenix.triggerRebirth(app)
         }
     }
-}
 
-private val currentCalender = Calendar.getInstance()
+    companion object {
+        private val currentCalender = Calendar.getInstance()
 
-private fun Flow<PagingData<NetworkPhoto>>.mapPagingPhotos() =
-    map { pagingData ->
-        pagingData.insertSeparators { before, after ->
-            after ?: return@insertSeparators null
+        private fun Flow<PagingData<NetworkPhoto>>.mapPagingPhotos() = map { pagingData ->
+            pagingData
+                .insertSeparators { before, after ->
+                    after ?: return@insertSeparators null
 
-            val beforeCalender = if (before != null) {
-                Calendar.getInstance().apply { timeInMillis = before.timeCreated }
-            } else null
+                    val beforeCalender = if (before != null) {
+                        Calendar.getInstance().apply { timeInMillis = before.timeCreated }
+                    } else null
 
-            val afterCalendar = Calendar.getInstance()
-            afterCalendar.timeInMillis = after.timeCreated
+                    val afterCalendar = Calendar.getInstance()
+                    afterCalendar.timeInMillis = after.timeCreated
 
-            if (beforeCalender == null
-                || beforeCalender.get(Calendar.MONTH) != afterCalendar.get(Calendar.MONTH)
-                || beforeCalender.get(Calendar.YEAR) != afterCalendar.get(Calendar.YEAR)
-            ) {
-                buildString {
-                    append(DateFormat.format("MMMM", afterCalendar))
+                    if (beforeCalender == null
+                        || beforeCalender.get(Calendar.MONTH) != afterCalendar.get(Calendar.MONTH)
+                        || beforeCalender.get(Calendar.YEAR) != afterCalendar.get(Calendar.YEAR)
+                    ) {
+                        buildString {
+                            append(DateFormat.format("MMMM", afterCalendar))
 
-                    val year = afterCalendar.get(Calendar.YEAR)
-                    if (year != currentCalender.get(Calendar.YEAR))
-                        append(' ').append(year)
-                }.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-            } else null
+                            val year = afterCalendar.get(Calendar.YEAR)
+                            if (year != currentCalender.get(Calendar.YEAR))
+                                append(' ').append(year)
+                        }.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+                    } else null
+                }
         }
     }
+}

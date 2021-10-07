@@ -426,13 +426,12 @@ fun BoxScope.ZoomableImage(
                         imageSize = offsetSize
 
 //                        val max = offsetSize * (1f / scale)
-                        val newTranslation = translation + pan
 
-                        val min = -offsetSize * (scale - 1f)
+                        val min = offsetSize * (1f / scale)
                         val max = min + offsetSize
                         minR = min
                         maxR = max
-                        newTranslation.coerceIn(min, max)
+                        (translation + pan).coerceIn(min, max)
                     }
                 }
             }

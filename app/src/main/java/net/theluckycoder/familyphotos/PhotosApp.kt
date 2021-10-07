@@ -48,6 +48,7 @@ class PhotosApp : Application(), Configuration.Provider {
         GlobalScope.launch(Dispatchers.IO) {
             if (userDataStore.firstStart.first()) {
                 installServiceProviderIfNeeded()
+                userDataStore.setFirstStart()
             }
         }
     }

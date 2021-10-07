@@ -38,11 +38,21 @@ fun PhotosSlideTransition(
 
             when (orientation) {
                 SlideOrientation.Horizontal ->
-                    slideInHorizontally(initialOffset, animationSpec) with
-                            slideOutHorizontally(targetOffset, animationSpec)
+                    slideInHorizontally(
+                        initialOffsetX = initialOffset,
+                        animationSpec = animationSpec
+                    ) with slideOutHorizontally(
+                        targetOffsetX = targetOffset,
+                        animationSpec = animationSpec
+                    )
                 SlideOrientation.Vertical ->
-                    slideInVertically(initialOffset, animationSpec) with
-                            slideOutVertically(targetOffset, animationSpec)
+                    slideInVertically(
+                        initialOffsetY = initialOffset,
+                        animationSpec = animationSpec
+                    ) with slideOutVertically(
+                        targetOffsetY = targetOffset,
+                        animationSpec = animationSpec
+                    )
             }
         }
     )

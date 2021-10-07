@@ -108,7 +108,7 @@ fun <T : Photo> FolderPhotos(
             if (selectedItems.isEmpty())
                 Text(text = folderName)
             else
-                Text(text = " ${selectedItems.size} Selected")
+                Text(text = "${selectedItems.size} Selected")
         },
         actions = appBarActions,
         elevation = 0.dp,

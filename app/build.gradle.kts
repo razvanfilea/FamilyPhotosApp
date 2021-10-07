@@ -77,17 +77,21 @@ dependencies {
     val kotlinVersion: String by rootProject.extra
     val composeVersion: String by rootProject.extra
     val hiltVersion: String by rootProject.extra
-    val roomVersion = "2.4.0-alpha04"
-    val accompanistVersion = "0.18.0"
-    val coilVersion = "1.3.2"
-    val voyagerVersion = "1.0.0-beta11"
+    val roomVersion = "2.4.0-alpha05"
+    val accompanistVersion = "0.19.0"
+    val coilVersion = "1.4.0"
+    val voyagerVersion = "1.0.0-beta12"
 
     // Kotlin
     kotlin("kotlin-stdlib-jdk8", kotlinVersion)
     debugImplementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.0")
+
+    // Arrow
+    implementation(platform("io.arrow-kt:arrow-stack:1.0.0"))
+    implementation("io.arrow-kt:arrow-core")
 
     // AndroidX
     implementation("androidx.activity:activity-ktx:1.3.1")
@@ -95,7 +99,7 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 //    implementation("androidx.heifwriter:heifwriter:1.0.0")
     implementation("androidx.exifinterface:exifinterface:1.3.3")
-    implementation("com.google.android.exoplayer:exoplayer:2.15.0")
+    implementation("com.google.android.exoplayer:exoplayer:2.15.1")
 
     // Room
     implementation("androidx.room:room-runtime:$roomVersion")
@@ -105,7 +109,7 @@ dependencies {
 
     // Paging
     implementation("androidx.paging:paging-runtime-ktx:3.0.1")
-    implementation("androidx.paging:paging-compose:1.0.0-alpha12")
+    implementation("androidx.paging:paging-compose:1.0.0-alpha13")
 
     // Compose
     implementation("androidx.compose.ui:ui:$composeVersion")
@@ -114,8 +118,8 @@ dependencies {
     implementation("androidx.compose.foundation:foundation:$composeVersion")
     implementation("androidx.compose.material:material:$composeVersion")
     implementation("androidx.compose.animation:animation:$composeVersion")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0-beta01")
-    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.0-beta02")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0-rc01")
+    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.0-rc01")
 
     // Voyager
     implementation("cafe.adriel.voyager:voyager-navigator:$voyagerVersion")

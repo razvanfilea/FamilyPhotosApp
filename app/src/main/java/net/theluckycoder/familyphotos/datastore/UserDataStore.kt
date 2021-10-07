@@ -19,11 +19,15 @@ class UserDataStore @Inject constructor(@ApplicationContext context: Context) {
 
     private val userDataStore = context.userDataStore
 
+    val firstStart: Flow<Boolean> =
+        userDataStore.data.map { it[FIRST_START] ?: true }
+
+    suspend fun setFirstStart() = userDataStore.edit { preferences ->
+        preferences[FIRST_START] = false
+    }
+
     val credentials: Flow<String?> =
         userDataStore.data.map { it[CREDENTIALS] }.distinctUntilChanged()
-
-    val firstStart: Flow<Boolean> =
-        userDataStore.data.map { it[FIRST_START] ?: false }
 
     suspend fun setCredentials(value: String) = userDataStore.edit { preferences ->
         preferences[CREDENTIALS] = value

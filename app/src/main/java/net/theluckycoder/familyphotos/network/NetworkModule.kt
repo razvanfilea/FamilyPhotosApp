@@ -27,7 +27,6 @@ import net.theluckycoder.familyphotos.network.service.PhotosService
 import net.theluckycoder.familyphotos.network.service.UserService
 import net.theluckycoder.familyphotos.utils.IOCoroutineScope
 import okhttp3.Cache
-import okhttp3.CacheControl
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -72,39 +71,14 @@ object NetworkModule {
      */
     @Provides
     @Named("cacheControl")
-    fun providesCacheControlInterceptor(
-        connectivityProvider: ConnectivityProvider
-    ): Interceptor =
-        Interceptor { chain: Interceptor.Chain ->
-            var request = chain.request()
-            if (connectivityProvider.networkState is NetworkState.NotConnected) {
-                request = request.newBuilder()
-                    .cacheControl(CacheControl.FORCE_CACHE)
-                    .build()
-            }
-
-            val originalResponse = chain.proceed(request)
-            if (connectivityProvider.networkState is NetworkState.Connected) {
-                // When you have a network, you can read the configuration in @Headers on the interface, where you can set up unified settings.
-                val cacheControl = request.cacheControl.toString()
-                originalResponse.newBuilder()
-                    .header("Cache-Control", cacheControl)
-                    .removeHeader("Pragma")
-                    .build()
-            } else {
-                originalResponse.newBuilder()
-                    .header("Cache-Control", "public, only-if-cached, max-stale=2419200")
-                    .removeHeader("Pragma")
-                    .build()
-            }
-        }
+    fun providesCacheControlInterceptor(): Interceptor = CacheFirstInterceptor()
 
     @Singleton
     @Provides
     fun providesOkHttpClient(
         @ApplicationContext context: Context,
         @Named("auth") authInterceptor: Interceptor,
-//        @Named("cacheControl") cacheControlInterceptor: Interceptor,
+        @Named("cacheControl") cacheControlInterceptor: Interceptor,
         settingsDataStore: SettingsDataStore,
     ): OkHttpClient = runBlocking {
         val cache = Cache(
@@ -118,7 +92,7 @@ object NetworkModule {
             .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager)
             .hostnameVerifier { _, _ -> true }
             .addInterceptor(authInterceptor)
-            .addInterceptor(StaleIfErrorInterceptor())
+            .addInterceptor(cacheControlInterceptor)
             .cache(cache)
             .build()
     }
