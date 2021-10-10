@@ -16,7 +16,7 @@ class PhotosListRepository @Inject constructor(
 
     suspend fun pingServer(): Boolean = photosService.get().ping().isSuccessful
 
-    fun getHomePhotosPaged(userId: Long) = networkPhotosDao.getUserPhotosPaged(userId)
+    fun getPersonalPhotosPaged(userId: Long) = networkPhotosDao.getUserPhotosPaged(userId)
 
     fun getPublicPhotosPaged(userId: Long) = networkPhotosDao.getPublicPhotosPaged(userId)
 

@@ -3,7 +3,7 @@ plugins {
 
     kotlin("android")
     kotlin("kapt")
-    kotlin("plugin.serialization") version "1.5.30"
+    kotlin("plugin.serialization") version "1.5.31"
     id("kotlin-parcelize")
 
     id("dagger.hilt.android.plugin")
@@ -131,7 +131,8 @@ dependencies {
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("de.nycode:retrofit2-kotlinx-serialization-converter:0.9.3")
-    implementation("com.squareup.okhttp3:okhttp-tls:4.9.1")
+    implementation("com.squareup.okhttp3:okhttp-tls:4.9.2")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.9.2")
 
     // WorkManager
     implementation("androidx.work:work-runtime-ktx:2.6.0")

@@ -6,10 +6,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -18,11 +20,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
+import arrow.core.split
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.Photo
+import net.theluckycoder.familyphotos.model.isVideo
 import net.theluckycoder.familyphotos.ui.composables.SelectableItem
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -70,8 +74,8 @@ fun PhotosList(
 
         val list = ArrayList<Int>(columnCount)
 
-        for (index in 0 until photos.itemCount) {
-            when (val data = photos.peek(index)) {
+        for (mainIndex in 0 until photos.itemCount) {
+            when (val data = photos.peek(mainIndex)) {
                 is String -> {
                     val listCopy = list.toList()
                     list.clear()
@@ -96,13 +100,13 @@ fun PhotosList(
                                     start = 16.dp,
                                     end = 16.dp
                                 ),
-                            text = photos[index] as String,
+                            text = photos[mainIndex] as String,
                             style = MaterialTheme.typography.h4
                         )
                     }
                 }
                 is Photo -> {
-                    list.add(index)
+                    list.add(mainIndex)
                     if (list.size == columnCount) {
                         val listCopy = list.toList()
                         list.clear()
@@ -113,6 +117,19 @@ fun PhotosList(
                                 selectedPhotoIds,
                             )
                         }
+                    }
+                }
+                is List<*> -> {
+                    val currentList = photos.peek(mainIndex) as List<Photo>
+                    val chunks = currentList.chunked(columnCount)
+
+                    items(chunks) { chunk ->
+                        photos[mainIndex] as List<Photo>
+                        PhotoRow(
+                            columnCount,
+                            chunk,
+                            selectedPhotoIds,
+                        )
                     }
                 }
             }
@@ -131,6 +148,8 @@ private fun PhotoRow(
     Row(Modifier.fillMaxWidth()) {
         list.forEach { photo ->
             key({ photo.id.takeIf { it != 0L } }) {
+                val isVideo = remember { photo.isVideo }
+
                 SelectableItem(
                     modifier = Modifier
                         .weight(1f)
@@ -154,6 +173,16 @@ private fun PhotoRow(
                         photo = photo,
                         contentScale = ContentScale.Crop,
                     )
+
+                    if (isVideo) {
+                        Icon(
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .align(Alignment.TopEnd),
+                            painter = painterResource(R.drawable.ic_play_circle_filled),
+                            contentDescription = null
+                        )
+                    }
                 }
             }
         }

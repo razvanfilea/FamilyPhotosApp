@@ -16,6 +16,13 @@ abstract class NetworkPhotosDao {
     )
     abstract fun getUserPhotosPaged(userId: Long): PagingSource<Int, NetworkPhoto>
 
+    @Query(
+        """SELECT * FROM network_photo
+            WHERE network_photo.ownerUserId = :userId
+            ORDER BY network_photo.timeCreated DESC"""
+    )
+    abstract fun getUserPhotos(userId: Long): List<NetworkPhoto>
+
     @Query("SELECT * FROM network_photo WHERE network_photo.folder = :folder ORDER BY network_photo.timeCreated ASC")
     abstract fun getFolderPhotos(folder: String): Flow<List<NetworkPhoto>>
 

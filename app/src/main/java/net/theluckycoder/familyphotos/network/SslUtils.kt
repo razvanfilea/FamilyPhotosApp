@@ -1,16 +1,7 @@
 package net.theluckycoder.familyphotos.network
 
-import android.content.Context
-import android.util.Log
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
-import java.security.KeyStore
-import java.security.SecureRandom
-import java.security.cert.CertificateFactory
-import java.security.cert.X509Certificate
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManagerFactory
-import java.net.InetAddress
 
 object SslUtils {
 
@@ -67,13 +58,7 @@ object SslUtils {
     """.trimIndent())
 
     fun getCertificates(): HandshakeCertificates {
-       /* val localhostCertificate: HeldCertificate = HeldCertificate.Builder()
-            .addSubjectAlternativeName(InetAddress.getByName("razvanrares.go.ro").canonicalHostName)
-            .build()*/
-
         val certificates: HandshakeCertificates = HandshakeCertificates.Builder()
-//            .addTrustedCertificate(localhostCertificate.certificate)
-//            .addInsecureHost("razvanrares.go.ro")
             .addTrustedCertificate(certificate.certificate)
             .build()
         return certificates

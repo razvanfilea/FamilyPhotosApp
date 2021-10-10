@@ -49,7 +49,7 @@ class MainViewModel @Inject constructor(
     val displayNameFlow = userDataStore.displayNameFlow
 
     val allPhotosPaging = Pager(PagingConfig(pageSize = 100, enablePlaceholders = false)) {
-        photosListRepository.getHomePhotosPaged(userId)
+        photosListRepository.getPersonalPhotosPaged(userId)
     }.flow.flowOn(Dispatchers.Default)
         .cachedIn(viewModelScope)
         .mapPagingPhotos()

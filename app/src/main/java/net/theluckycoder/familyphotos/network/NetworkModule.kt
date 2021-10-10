@@ -30,6 +30,7 @@ import okhttp3.Cache
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import java.io.File
 import javax.inject.Named
@@ -93,6 +94,7 @@ object NetworkModule {
             .hostnameVerifier { _, _ -> true }
             .addInterceptor(authInterceptor)
             .addInterceptor(cacheControlInterceptor)
+//            .addInterceptor(HttpLoggingInterceptor())
             .cache(cache)
             .build()
     }

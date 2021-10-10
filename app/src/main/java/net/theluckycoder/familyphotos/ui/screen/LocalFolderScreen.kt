@@ -110,7 +110,9 @@ data class LocalFolderScreen(
             ) {
                 SimpleSquarePhotoItem(photo)
 
-                if (photo.isVideo) {
+                val isVideo = remember(photo) { photo.isVideo }
+
+                if (isVideo) {
                     Icon(
                         modifier = Modifier
                             .padding(8.dp)

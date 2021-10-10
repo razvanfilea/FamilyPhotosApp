@@ -59,6 +59,7 @@ class PhotosApp : Application(), Configuration.Provider {
             .setExecutor(Dispatchers.Default.asExecutor())
             .build()
 
+    @SuppressWarnings("deprecation")
     private fun installServiceProviderIfNeeded() {
         try {
             ProviderInstaller.installIfNeeded(this)

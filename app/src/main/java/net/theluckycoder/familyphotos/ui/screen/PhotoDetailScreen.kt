@@ -53,9 +53,7 @@ import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.model.getUri
 import net.theluckycoder.familyphotos.model.isVideo
 import net.theluckycoder.familyphotos.ui.*
-import net.theluckycoder.familyphotos.ui.composables.IconButtonText
-import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
-import net.theluckycoder.familyphotos.ui.composables.VideoPlayer
+import net.theluckycoder.familyphotos.ui.composables.*
 import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.MoveDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
@@ -390,18 +388,12 @@ fun CoilPhoto(
 }
 
 @Composable
-fun BoxScope.ZoomableImage(
+fun ZoomableImage(
     modifier: Modifier = Modifier,
     photo: Photo,
-    maxScale: Float = 4.5f,
-    minScale: Float = 1f,
     onTap: ((Offset) -> Unit)? = null
 ) {
-    var scale by remember { mutableStateOf(1f) }
-    var translation by remember { mutableStateOf(Offset.Zero) }
-    var minR by remember { mutableStateOf(Offset.Zero) }
-    var maxR by remember { mutableStateOf(Offset.Zero) }
-    var imageSize by remember { mutableStateOf<Offset?>(null) }
+    val zoomableState = rememberZoomableState()
 
     val ctx = LocalContext.current
 
@@ -412,70 +404,14 @@ fun BoxScope.ZoomableImage(
             .build()
     }
 
-    Image(
-        modifier = modifier
-            .pointerInput(Unit) {
-                detectTransformGestures { _, pan, zoom, _ ->
-                    scale = (scale * zoom).coerceIn(1f, maxScale)
-
-                    translation = if (scale <= 1f) {
-                        Offset.Zero
-                    } else {
-                        val offsetSize =
-                            Offset(size.width.toFloat(), size.height.toFloat())
-                        imageSize = offsetSize
-
-//                        val max = offsetSize * (1f / scale)
-
-                        val min = offsetSize * (1f / scale)
-                        val max = min + offsetSize
-                        minR = min
-                        maxR = max
-                        (translation + pan).coerceIn(min, max)
-                    }
-                }
-            }
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onDoubleTap = {
-                        scale = when {
-                            scale >= 2f -> 1f
-                            else -> 2f
-                        }.coerceIn(minScale, maxScale)
-
-                        if (scale <= 1f)
-                            translation = Offset.Zero
-                    },
-                    onTap = onTap
-                )
-            }
-            .graphicsLayer(
-                scaleX = scale,
-                scaleY = scale,
-                translationX = translation.x,
-                translationY = translation.y
+    Zoomable(state = zoomableState) {
+        Image(
+            modifier = modifier,
+            painter = rememberImagePainter(
+                imageLoader = LocalImageLoader.current.get(),
+                request = request,
             ),
-        painter = rememberImagePainter(
-            imageLoader = LocalImageLoader.current.get(),
-            request = request,
-        ),
-        contentDescription = photo.name,
-    )
-
-    if (BuildConfig.DEBUG) {
-        Text(
-            modifier = Modifier.align(Alignment.Center),
-            fontSize = 13.sp,
-            text = """
-            $imageSize
-            Center: $translation; Zoom: $scale
-            Min: $minR; Max: $maxR
-        """.trimIndent()
+            contentDescription = photo.name,
         )
     }
 }
-
-private fun Offset.coerceIn(minimumValue: Offset, maximumValue: Offset) = Offset(
-    x = x.coerceIn(minimumValue.x, maximumValue.x),
-    y = y.coerceIn(minimumValue.y, maximumValue.y),
-)

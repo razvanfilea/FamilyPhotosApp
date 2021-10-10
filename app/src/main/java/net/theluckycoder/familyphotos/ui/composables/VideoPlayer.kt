@@ -1,12 +1,16 @@
 package net.theluckycoder.familyphotos.ui.composables
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -51,9 +55,11 @@ object VideoPlayer {
 
         IconButton(
             onClick = { controller.playPause() },
-            modifier = modifier
+            modifier = modifier.size(72.dp)
+                .clip(CircleShape)
+                .background(Color(0xBB444444))
         ) {
-            val iconModifier = Modifier.size(128.dp)
+            val iconModifier = Modifier.size(64.dp)
 
             when (playbackState) {
                 ExoPlayer.STATE_BUFFERING -> CircularProgressIndicator()
@@ -61,13 +67,13 @@ object VideoPlayer {
                     if (isPlaying) {
                         Icon(
                             modifier = iconModifier,
-                            painter = painterResource(R.drawable.ic_pause_circle_outline),
+                            painter = painterResource(R.drawable.exo_icon_pause),
                             contentDescription = null
                         )
                     } else {
                         Icon(
                             modifier = iconModifier,
-                            painter = painterResource(R.drawable.ic_play_circle_outline),
+                            painter = painterResource(R.drawable.exo_icon_play),
                             contentDescription = null
                         )
                     }
