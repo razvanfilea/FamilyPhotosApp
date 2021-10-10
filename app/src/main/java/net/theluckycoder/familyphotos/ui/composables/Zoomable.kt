@@ -32,6 +32,7 @@ fun Zoomable(
     state: ZoomableState,
     modifier: Modifier = Modifier,
     enable: Boolean = true,
+    onTap: ((Offset) -> Unit)? = null,
     doubleTapScale: (() -> Float)? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
@@ -59,12 +60,15 @@ fun Zoomable(
                 }
             }
         }
-        val doubleTapModifier = if (doubleTapScale != null && enable) {
+        val doubleTapModifier = if ((onTap != null || doubleTapScale != null) && enable) {
             Modifier.pointerInput(Unit) {
                 detectTapGestures(
+                    onTap = onTap,
                     onDoubleTap = {
-                        scope.launch {
-                            state.animateScaleTo(doubleTapScale())
+                        if (doubleTapScale != null) {
+                            scope.launch {
+                                state.animateScaleTo(doubleTapScale())
+                            }
                         }
                     }
                 )

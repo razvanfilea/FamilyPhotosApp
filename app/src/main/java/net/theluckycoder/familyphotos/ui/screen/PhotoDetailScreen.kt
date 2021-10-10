@@ -388,12 +388,14 @@ fun CoilPhoto(
 }
 
 @Composable
-fun ZoomableImage(
+private fun ZoomableImage(
     modifier: Modifier = Modifier,
     photo: Photo,
     onTap: ((Offset) -> Unit)? = null
 ) {
-    val zoomableState = rememberZoomableState()
+    val zoomableState = rememberZoomableState(
+        maxScale = 5f
+    )
 
     val ctx = LocalContext.current
 
@@ -404,7 +406,16 @@ fun ZoomableImage(
             .build()
     }
 
-    Zoomable(state = zoomableState) {
+    Zoomable(
+        state = zoomableState,
+        onTap = onTap,
+        doubleTapScale = {
+            when {
+                zoomableState.scale >= 2.0f -> 0f
+                else -> 2f
+            }
+        }
+    ) {
         Image(
             modifier = modifier,
             painter = rememberImagePainter(

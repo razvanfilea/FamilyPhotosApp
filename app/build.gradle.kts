@@ -54,6 +54,12 @@ android {
         }
     }
 
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("keystore.jks")
+        }
+    }
+
     buildFeatures.compose = true
 
     compileOptions {
