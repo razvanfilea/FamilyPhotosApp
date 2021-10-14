@@ -17,8 +17,8 @@ android {
         applicationId = "net.theluckycoder.familyphotos"
         minSdk = 29
         targetSdk = 30
-        versionCode = 11
-        versionName = "1.1"
+        versionCode = 12
+        versionName = "1.2"
         resourceConfigurations += listOf("en", "ro")
 
         javaCompileOptions {
@@ -83,7 +83,7 @@ dependencies {
     val kotlinVersion: String by rootProject.extra
     val composeVersion: String by rootProject.extra
     val hiltVersion: String by rootProject.extra
-    val roomVersion = "2.4.0-alpha05"
+    val roomVersion = "2.4.0-beta01"
     val accompanistVersion = "0.19.0"
     val coilVersion = "1.4.0"
     val voyagerVersion = "1.0.0-beta12"
@@ -115,7 +115,7 @@ dependencies {
 
     // Paging
     implementation("androidx.paging:paging-runtime-ktx:3.0.1")
-    implementation("androidx.paging:paging-compose:1.0.0-alpha13")
+    implementation("androidx.paging:paging-compose:1.0.0-alpha14")
 
     // Compose
     implementation("androidx.compose.ui:ui:$composeVersion")
@@ -141,7 +141,7 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.9.2")
 
     // WorkManager
-    implementation("androidx.work:work-runtime-ktx:2.6.0")
+    implementation("androidx.work:work-runtime-ktx:2.7.0")
 
     // Hilt
     implementation("com.google.dagger:hilt-android:$hiltVersion")

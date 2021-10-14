@@ -16,9 +16,15 @@ class PhotosListRepository @Inject constructor(
 
     suspend fun pingServer(): Boolean = photosService.get().ping().isSuccessful
 
-    fun getPersonalPhotosPaged(userId: Long) = networkPhotosDao.getUserPhotosPaged(userId)
+    fun getPersonalPhotosPaged(userId: Long) = networkPhotosDao.getPhotosPaged(userId)
 
-    fun getPublicPhotosPaged(userId: Long) = networkPhotosDao.getPublicPhotosPaged(userId)
+    fun getPublicPhotosPaged() = networkPhotosDao.getPhotosPaged(PUBLIC_USER_ID)
+
+    suspend fun getPersonalMemories(userId: Long, timestamp: Long) =
+        networkPhotosDao.getPhotosOnThisDay(userId, timestamp)
+
+    suspend fun getPublicMemories(timestamp: Long) =
+        networkPhotosDao.getPhotosOnThisDay(PUBLIC_USER_ID, timestamp)
 
     suspend fun downloadAllPhotos(userId: Long) = coroutineScope {
         val service = photosService.get()
@@ -54,5 +60,9 @@ class PhotosListRepository @Inject constructor(
                 } ${calender.get(Calendar.YEAR)}, ${it.timeCreated}"
             )
         }*/
+    }
+
+    companion object {
+        const val PUBLIC_USER_ID = 1L
     }
 }

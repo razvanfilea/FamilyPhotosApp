@@ -2,15 +2,20 @@ package net.theluckycoder.familyphotos.utils
 
 import android.content.Context
 import android.net.Uri
-import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flow
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -39,15 +44,29 @@ class PlayerController(
         SimpleExoPlayer.Builder(context).build().apply {
             playWhenReady = _isPlaying.value
 
-            addListener(object: Player.Listener {
+            addListener(object : Player.Listener {
                 override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
                     _isPlaying.value = playWhenReady
-                    _durationState.value = Duration.milliseconds(duration)
+
+                    val newDuration = contentDuration
+                    if (newDuration > 0)
+                        _durationState.value = Duration.milliseconds(newDuration)
+                }
+
+                override fun onIsLoadingChanged(isLoading: Boolean) {
+                    if (!isLoading) {
+                        val newDuration = contentDuration
+                        if (newDuration > 0)
+                            _durationState.value = Duration.milliseconds(newDuration)
+                    }
                 }
 
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     _playbackState.value = playbackState
-                    _durationState.value = Duration.milliseconds(duration)
+
+                    val newDuration = contentDuration
+                    if (newDuration > 0)
+                        _durationState.value = Duration.milliseconds(newDuration)
 
                     if (playbackState == ExoPlayer.STATE_ENDED)
                         _isPlaying.value = false

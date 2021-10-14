@@ -1,10 +1,22 @@
 package net.theluckycoder.familyphotos.ui.screen.tabs
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
@@ -15,17 +27,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.paging.PagingData
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.TabOptions
-import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.model.NetworkPhoto
+import net.theluckycoder.familyphotos.ui.screen.MemoriesList
 import net.theluckycoder.familyphotos.ui.screen.PhotosList
 import net.theluckycoder.familyphotos.ui.screen.SettingsScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
@@ -58,12 +70,28 @@ object PersonalTab : BottomTab {
 
             val isOnline by mainViewModel.isOnline.collectAsState()
             val displayName by mainViewModel.displayNameFlow.collectAsState(null)
+            val memoriesList = remember { mutableStateListOf<Pair<Int, List<NetworkPhoto>>>() }
+
+            LaunchedEffect(Unit) {
+                memoriesList.addAll(mainViewModel.getPersonalMemories())
+            }
 
             PhotosList(
                 headerContent = {
-                    Header(isOnline, displayName)
+                    Column {
+                        Header(isOnline, displayName)
+
+                        Spacer(Modifier.size(8.dp))
+
+                        if (memoriesList.isNotEmpty()) {
+                            MemoriesList(
+                                memoriesList = memoriesList
+                            )
+                        }
+                    }
                 },
-                photosPagingList = mainViewModel.allPhotosPaging as Flow<PagingData<Any>>,
+                photosPagingList = mainViewModel.allPhotosPaging,
+                mainViewModel = mainViewModel,
             )
         }
 

@@ -2,17 +2,46 @@ package net.theluckycoder.familyphotos.ui.viewmodel
 
 import android.app.Application
 import android.net.Uri
-import android.text.format.DateFormat
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.*
-import androidx.work.*
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import androidx.paging.insertSeparators
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.Data
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.jakewharton.processphoenix.ProcessPhoenix
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atTime
+import kotlinx.datetime.minus
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.yearsUntil
 import net.theluckycoder.familyphotos.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.datastore.UserDataStore
 import net.theluckycoder.familyphotos.model.LocalPhoto
@@ -22,6 +51,7 @@ import net.theluckycoder.familyphotos.repository.FoldersRepository
 import net.theluckycoder.familyphotos.repository.PhotosListRepository
 import net.theluckycoder.familyphotos.repository.PhotosRepository
 import net.theluckycoder.familyphotos.workers.UploadWorker
+import java.time.format.TextStyle
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -55,7 +85,7 @@ class MainViewModel @Inject constructor(
         .mapPagingPhotos()
 
     val publicPhotosPaging = Pager(PagingConfig(pageSize = 100, enablePlaceholders = false)) {
-        photosListRepository.getPublicPhotosPaged(userId)
+        photosListRepository.getPublicPhotosPaged()
     }.flow.flowOn(Dispatchers.Default)
         .cachedIn(viewModelScope)
         .mapPagingPhotos()
@@ -110,6 +140,34 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    private suspend fun getMemories(get: suspend (timestamp: Long) -> List<NetworkPhoto>) =
+        withContext(Dispatchers.Default) {
+            val instant = Clock.System.now()
+            val today = instant.toLocalDateTime(timeZone).date
+
+            listOf(
+                today.minus(DateTimeUnit.YEAR),
+                today.minus(DateTimeUnit.YEAR * 2),
+                today.minus(DateTimeUnit.YEAR * 3),
+                today.minus(DateTimeUnit.YEAR * 4),
+                today.minus(DateTimeUnit.YEAR * 5),
+                today.minus(DateTimeUnit.YEAR * 6),
+            ).map {
+                val yearsUntil = it.yearsUntil(today)
+                val timestamp = it.atTime(12, 0).toInstant(timeZone).toEpochMilliseconds()
+
+                yearsUntil to get(timestamp)
+            }.filterNot {
+                it.second.isEmpty()
+            }
+        }
+
+    suspend fun getPersonalMemories() = getMemories {
+        photosListRepository.getPersonalMemories(userId,it)
+    }
+
+    suspend fun getPublicMemories() = getMemories(photosListRepository::getPublicMemories)
+
     fun getNetworkFolderPhotos(folder: String) =
         foldersRepository.networkPhotosFromFolder(folder)
 
@@ -153,7 +211,7 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Receives a list of localPhoto ids that will be uploaded
+     * Receives a list of [LocalPhoto] ids that will be uploaded
      */
     fun uploadPhotosAsync(
         localPhotos: List<Long>,
@@ -235,33 +293,42 @@ class MainViewModel @Inject constructor(
     }
 
     companion object {
-        private val currentCalender = Calendar.getInstance()
+        private val timeZone = TimeZone.of("Europe/Bucharest")
+        private val currentDate = Clock.System.now().toLocalDateTime(timeZone)
 
         private fun Flow<PagingData<NetworkPhoto>>.mapPagingPhotos() = map { pagingData ->
             pagingData
                 .insertSeparators { before, after ->
                     after ?: return@insertSeparators null
 
-                    val beforeCalender = if (before != null) {
-                        Calendar.getInstance().apply { timeInMillis = before.timeCreated }
-                    } else null
+                    val beforeDate = before?.let {
+                        val instant = Instant.fromEpochMilliseconds(it.timeCreated)
+                        instant.toLocalDateTime(timeZone)
+                    }
 
-                    val afterCalendar = Calendar.getInstance()
-                    afterCalendar.timeInMillis = after.timeCreated
+                    val afterDate =
+                        Instant.fromEpochMilliseconds(after.timeCreated).toLocalDateTime(timeZone)
 
-                    if (beforeCalender == null
-                        || beforeCalender.get(Calendar.MONTH) != afterCalendar.get(Calendar.MONTH)
-                        || beforeCalender.get(Calendar.YEAR) != afterCalendar.get(Calendar.YEAR)
+                    if (beforeDate == null
+                        || beforeDate.monthNumber != afterDate.monthNumber
+                        || beforeDate.year != beforeDate.year
                     ) {
-                        buildString {
-                            append(DateFormat.format("MMMM", afterCalendar))
-
-                            val year = afterCalendar.get(Calendar.YEAR)
-                            if (year != currentCalender.get(Calendar.YEAR))
-                                append(' ').append(year)
-                        }.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+                        buildDateString(afterDate)
                     } else null
                 }
         }
+
+        private fun buildDateString(afterDate: LocalDateTime) = buildString {
+            append(
+                afterDate.month.getDisplayName(
+                    TextStyle.FULL,
+                    Locale.forLanguageTag("ro-RO")
+                )
+            )
+
+            val year = afterDate.year
+            if (year != currentDate.year)
+                append(' ').append(year)
+        }.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
     }
 }

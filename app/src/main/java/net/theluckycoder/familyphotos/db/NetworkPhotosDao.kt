@@ -1,7 +1,13 @@
 package net.theluckycoder.familyphotos.db
 
 import androidx.paging.PagingSource
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.model.NetworkFolder
 import net.theluckycoder.familyphotos.model.NetworkPhoto
@@ -14,27 +20,29 @@ abstract class NetworkPhotosDao {
             WHERE network_photo.ownerUserId = :userId
             ORDER BY network_photo.timeCreated DESC"""
     )
-    abstract fun getUserPhotosPaged(userId: Long): PagingSource<Int, NetworkPhoto>
+    abstract fun getPhotosPaged(userId: Long): PagingSource<Int, NetworkPhoto>
 
     @Query(
         """SELECT * FROM network_photo
             WHERE network_photo.ownerUserId = :userId
             ORDER BY network_photo.timeCreated DESC"""
     )
-    abstract fun getUserPhotos(userId: Long): List<NetworkPhoto>
+    abstract fun getPhotos(userId: Long): List<NetworkPhoto>
 
     @Query("SELECT * FROM network_photo WHERE network_photo.folder = :folder ORDER BY network_photo.timeCreated ASC")
     abstract fun getFolderPhotos(folder: String): Flow<List<NetworkPhoto>>
-
-    @Query("""SELECT * FROM network_photo
-            WHERE network_photo.ownerUserId <> :userId
-            ORDER BY network_photo.timeCreated DESC""")
-    abstract fun getPublicPhotosPaged(userId: Long): PagingSource<Int, NetworkPhoto>
 
     @Query("""SELECT folder, id, ownerUserId, COUNT(id) FROM network_photo 
         WHERE folder IS NOT NULL GROUP BY folder
         ORDER BY network_photo.folder ASC""")
     abstract fun getFolders(): Flow<List<NetworkFolder>>
+
+    @Query("""SELECT * FROM network_photo
+        WHERE ownerUserId = :userId
+        AND ROUND(timeCreated / 1000 / 3600 / 24) = ROUND(:timestamp / 1000 / 3600 / 24)
+        ORDER BY network_photo.timeCreated DESC
+    """)
+    abstract suspend fun getPhotosOnThisDay(userId: Long, timestamp: Long): List<NetworkPhoto>
 
     @Query("SELECT * FROM network_photo WHERE id = :photoId")
     abstract suspend fun findById(photoId: Long): NetworkPhoto?
