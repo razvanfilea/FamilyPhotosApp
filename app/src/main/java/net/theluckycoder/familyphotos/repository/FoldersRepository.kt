@@ -75,7 +75,8 @@ class FoldersRepository @Inject constructor(
                 if (cursor.count == 0) return
 
                 val idColumn = cursor.getColumnIndex(MediaStore.MediaColumns._ID)
-                val bucketColumn = cursor.getColumnIndex(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
+                val bucketColumn =
+                    cursor.getColumnIndex(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
                 val displayNameColumn = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME)
                 val mimeTypeColumn = cursor.getColumnIndex(MediaStore.MediaColumns.MIME_TYPE)
                 val dateAddedColumn = cursor.getColumnIndex(MediaStore.MediaColumns.DATE_ADDED)

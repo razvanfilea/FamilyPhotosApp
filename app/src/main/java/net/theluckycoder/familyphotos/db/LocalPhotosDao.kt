@@ -11,7 +11,12 @@ abstract class LocalPhotosDao {
     @Query("SELECT * FROM local_photo")
     protected abstract fun getAll(): List<LocalPhoto>
 
-    @Query("SELECT folder, id, uri, COUNT(id) FROM local_photo GROUP BY local_photo.folder ORDER BY local_photo.folder ASC")
+    @Query(
+        """
+        SELECT folder, id, uri, COUNT(id) FROM (
+            SELECT * FROM local_photo ORDER BY local_photo.timeCreated DESC
+        ) GROUP BY folder ORDER BY folder ASC"""
+    )
     abstract fun getFolders(): Flow<List<LocalFolder>>
 
     @Query("SELECT * FROM local_photo WHERE local_photo.folder = :folder ORDER BY local_photo.timeCreated DESC")
