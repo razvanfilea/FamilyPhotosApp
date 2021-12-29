@@ -56,6 +56,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 @HiltViewModel
@@ -276,7 +277,7 @@ class MainViewModel @Inject constructor(
     fun clearAppCache(app: Application) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                withTimeout(Duration.seconds(10)) {
+                withTimeout(10.seconds) {
                     while (!app.cacheDir.deleteRecursively())
                         ensureActive()
 

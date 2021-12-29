@@ -27,13 +27,14 @@ import net.theluckycoder.familyphotos.ui.LocalPlayerController
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
 
 object VideoPlayer {
 
     @Composable
     fun Surface() {
-        val playerController = LocalPlayerController.current
+        val playerController = LocalPlayerController.current.get()
 
         AndroidView(
             modifier = Modifier.fillMaxSize(),
@@ -48,7 +49,7 @@ object VideoPlayer {
 
     @Composable
     fun PauseButton(modifier: Modifier = Modifier) {
-        val controller = LocalPlayerController.current
+        val controller = LocalPlayerController.current.get()
 
         val isPlaying by controller.isPlaying.collectAsState()
         val playbackState by controller.playbackState.collectAsState()
@@ -117,7 +118,7 @@ object VideoPlayer {
             }
         }
     ) {
-        val controller = LocalPlayerController.current
+        val controller = LocalPlayerController.current.get()
 
         var position by remember { mutableStateOf(Duration.ZERO)}
         val duration by controller.durationState.collectAsState()
@@ -161,7 +162,7 @@ object VideoPlayer {
             value = position.inWholeMilliseconds.toFloat(),
             valueRange = 0f..duration.inWholeMilliseconds.toFloat().coerceAtLeast(1f),
             onValueChange = {
-                position = Duration.milliseconds(it.roundToLong())
+                position = it.roundToLong().milliseconds
             },
             onValueChangeFinished = {
                 controller.seekTo(position.inWholeMilliseconds)

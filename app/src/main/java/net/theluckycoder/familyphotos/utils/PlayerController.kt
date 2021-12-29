@@ -5,24 +5,29 @@ import android.net.Uri
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
-import com.google.android.exoplayer2.util.Util
+import com.google.android.exoplayer2.upstream.DefaultDataSource
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
+import okhttp3.OkHttpClient
+import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
-@OptIn(ExperimentalTime::class)
-class PlayerController(
-    private val context: Context
+class PlayerController @Inject constructor(
+    @ApplicationContext
+    private val context: Context,
+    okHttpClient: OkHttpClient,
 ) {
+
+    private val dataSourceFactory = OkHttpDataSource.Factory(okHttpClient)
 
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying = _isPlaying.asStateFlow()
@@ -30,18 +35,18 @@ class PlayerController(
     private val _playbackState = MutableStateFlow(ExoPlayer.STATE_IDLE)
     val playbackState = _playbackState.asStateFlow()
 
-    private val _durationState = MutableStateFlow(Duration.seconds(1))
+    private val _durationState = MutableStateFlow(1.seconds)
     val durationState = _durationState.asStateFlow()
 
     val currentPositionFlow = flow {
         while (true) {
-            emit(Duration.milliseconds(exoPlayer.currentPosition))
+            emit(exoPlayer.currentPosition.milliseconds)
             delay(600)
         }
     }.distinctUntilChanged()
 
     private val exoPlayer by lazy {
-        SimpleExoPlayer.Builder(context).build().apply {
+        ExoPlayer.Builder(context).build().apply {
             playWhenReady = _isPlaying.value
 
             addListener(object : Player.Listener {
@@ -50,14 +55,14 @@ class PlayerController(
 
                     val newDuration = contentDuration
                     if (newDuration > 0)
-                        _durationState.value = Duration.milliseconds(newDuration)
+                        _durationState.value = newDuration.milliseconds
                 }
 
                 override fun onIsLoadingChanged(isLoading: Boolean) {
                     if (!isLoading) {
                         val newDuration = contentDuration
                         if (newDuration > 0)
-                            _durationState.value = Duration.milliseconds(newDuration)
+                            _durationState.value = newDuration.milliseconds
                     }
                 }
 
@@ -66,7 +71,7 @@ class PlayerController(
 
                     val newDuration = contentDuration
                     if (newDuration > 0)
-                        _durationState.value = Duration.milliseconds(newDuration)
+                        _durationState.value = newDuration.milliseconds
 
                     if (playbackState == ExoPlayer.STATE_ENDED)
                         _isPlaying.value = false
@@ -84,9 +89,9 @@ class PlayerController(
     }
 
     fun prepare(sourceUri: Uri) {
-        val dataSourceFactory: DataSource.Factory = DefaultDataSourceFactory(
+        val dataSourceFactory: DataSource.Factory = DefaultDataSource.Factory(
             context,
-            Util.getUserAgent(context, context.packageName)
+            dataSourceFactory,
         )
 
         val mediaItem = MediaItem.Builder()
@@ -106,10 +111,8 @@ class PlayerController(
 
     fun seekTo(positionMs: Long) = exoPlayer.seekTo(positionMs)
 
-    fun clear() {
+    fun reset() {
         exoPlayer.stop()
         exoPlayer.clearMediaItems()
-        exoPlayer.clearVideoSurface()
-        exoPlayer.release()
     }
 }

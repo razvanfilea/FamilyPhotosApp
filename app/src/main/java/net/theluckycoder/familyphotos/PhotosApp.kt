@@ -59,7 +59,6 @@ class PhotosApp : Application(), Configuration.Provider {
             .setExecutor(Dispatchers.Default.asExecutor())
             .build()
 
-    @SuppressWarnings("deprecation")
     private fun installServiceProviderIfNeeded() {
         try {
             ProviderInstaller.installIfNeeded(this)
@@ -67,6 +66,7 @@ class PhotosApp : Application(), Configuration.Provider {
             e.printStackTrace()
 
             // Prompt the user to install/update/enable Google Play services.
+            @Suppress("DEPRECATION")
             GooglePlayServicesUtil.showErrorNotification(e.connectionStatusCode, this)
         } catch (e: GooglePlayServicesNotAvailableException) {
             e.printStackTrace()

@@ -3,7 +3,7 @@ plugins {
 
     kotlin("android")
     kotlin("kapt")
-    kotlin("plugin.serialization") version "1.5.31"
+    kotlin("plugin.serialization") version "1.6.10"
     id("kotlin-parcelize")
 
     id("dagger.hilt.android.plugin")
@@ -68,7 +68,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = rootProject.extra["composeVersion"] as String
+        kotlinCompilerExtensionVersion = rootProject.extra["composeCompiler"] as String
     }
 }
 
@@ -83,29 +83,30 @@ dependencies {
     val kotlinVersion: String by rootProject.extra
     val composeVersion: String by rootProject.extra
     val hiltVersion: String by rootProject.extra
-    val roomVersion = "2.4.0-beta01"
-    val accompanistVersion = "0.19.0"
+    val roomVersion = "2.4.0"
+    val accompanistVersion = "0.22.0-rc"
     val coilVersion = "1.4.0"
-    val voyagerVersion = "1.0.0-beta12"
+    val voyagerVersion = "1.0.0-beta14"
 
     // Kotlin
     kotlin("kotlin-stdlib-jdk8", kotlinVersion)
     debugImplementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
 
     // Arrow
-    implementation(platform("io.arrow-kt:arrow-stack:1.0.0"))
+    implementation(platform("io.arrow-kt:arrow-stack:1.0.1"))
     implementation("io.arrow-kt:arrow-core")
 
     // AndroidX
-    implementation("androidx.activity:activity-ktx:1.3.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1")
+    implementation("androidx.activity:activity-ktx:1.4.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.0")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 //    implementation("androidx.heifwriter:heifwriter:1.0.0")
     implementation("androidx.exifinterface:exifinterface:1.3.3")
-    implementation("com.google.android.exoplayer:exoplayer:2.15.1")
+    implementation("com.google.android.exoplayer:exoplayer:2.16.1")
+    implementation("com.google.android.exoplayer:extension-okhttp:2.16.1")
 
     // Room
     implementation("androidx.room:room-runtime:$roomVersion")
@@ -114,7 +115,7 @@ dependencies {
     kapt("androidx.room:room-compiler:$roomVersion")
 
     // Paging
-    implementation("androidx.paging:paging-runtime-ktx:3.0.1")
+    implementation("androidx.paging:paging-runtime-ktx:3.1.0")
     implementation("androidx.paging:paging-compose:1.0.0-alpha14")
 
     // Compose
@@ -124,8 +125,8 @@ dependencies {
     implementation("androidx.compose.foundation:foundation:$composeVersion")
     implementation("androidx.compose.material:material:$composeVersion")
     implementation("androidx.compose.animation:animation:$composeVersion")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0-rc01")
-    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.0-rc01")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0")
+    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.0-rc02")
 
     // Voyager
     implementation("cafe.adriel.voyager:voyager-navigator:$voyagerVersion")
@@ -136,12 +137,12 @@ dependencies {
 
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("de.nycode:retrofit2-kotlinx-serialization-converter:0.9.3")
-    implementation("com.squareup.okhttp3:okhttp-tls:4.9.2")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.9.2")
+    implementation("de.nycode:retrofit2-kotlinx-serialization-converter:0.10.0")
+    implementation("com.squareup.okhttp3:okhttp-tls:4.9.3")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
 
     // WorkManager
-    implementation("androidx.work:work-runtime-ktx:2.7.0")
+    implementation("androidx.work:work-runtime-ktx:2.7.1")
 
     // Hilt
     implementation("com.google.dagger:hilt-android:$hiltVersion")
@@ -160,5 +161,5 @@ dependencies {
     implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
 
     implementation("com.jakewharton:process-phoenix:2.1.2")
-    implementation("com.google.android.gms:play-services-base:17.6.0")
+    implementation("com.google.android.gms:play-services-base:18.0.1")
 }

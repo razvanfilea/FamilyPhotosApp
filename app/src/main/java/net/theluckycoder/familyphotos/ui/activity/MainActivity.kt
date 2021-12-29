@@ -25,12 +25,10 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
-import net.theluckycoder.familyphotos.ui.AppTheme
-import net.theluckycoder.familyphotos.ui.DefaultSnackbar
-import net.theluckycoder.familyphotos.ui.LocalImageLoader
-import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
+import net.theluckycoder.familyphotos.ui.*
 import net.theluckycoder.familyphotos.ui.screen.tabs.*
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
+import net.theluckycoder.familyphotos.utils.PlayerController
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -38,6 +36,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var imageLoader: Lazy<ImageLoader>
+
+    @Inject
+    lateinit var playerController: Lazy<PlayerController>
 
     @OptIn(ExperimentalMaterialApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,7 +53,7 @@ class MainActivity : ComponentActivity() {
                         systemUiController.setSystemBarsColor(Color.Black, darkIcons = false)
                     }
 
-                    CompositionLocalProvider(LocalImageLoader provides imageLoader) {
+                    CompositionLocalProvider(LocalImageLoader provides imageLoader, LocalPlayerController provides playerController) {
                         AppContent()
                     }
                 }

@@ -8,8 +8,9 @@ import net.theluckycoder.familyphotos.utils.PlayerController
 
 val LocalImageLoader = compositionLocalOf<Lazy<ImageLoader>> { error("No ImageLoader found!") }
 
-val LocalSnackbarHostState = compositionLocalOf<SnackbarHostState> { error("No SnackbarHostState found!") }
+val LocalSnackbarHostState =
+    compositionLocalOf<SnackbarHostState> { error("No SnackbarHostState found!") }
 
-val LocalPlayerController = compositionLocalOf<PlayerController> {
-    error("PlayerController is not provided for this scope.")
+val LocalPlayerController = compositionLocalOf<Lazy<PlayerController>> {
+    error("No PlayerController found!")
 }
