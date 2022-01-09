@@ -58,9 +58,8 @@ object SslUtils {
     """.trimIndent())
 
     fun getCertificates(): HandshakeCertificates {
-        val certificates: HandshakeCertificates = HandshakeCertificates.Builder()
+        return HandshakeCertificates.Builder()
             .addTrustedCertificate(certificate.certificate)
             .build()
-        return certificates
     }
 }

@@ -40,6 +40,7 @@ class PlayerController @Inject constructor(
 
     val currentPositionFlow = flow {
         while (true) {
+//            exoPlayer.
             emit(exoPlayer.currentPosition.milliseconds)
             delay(600)
         }

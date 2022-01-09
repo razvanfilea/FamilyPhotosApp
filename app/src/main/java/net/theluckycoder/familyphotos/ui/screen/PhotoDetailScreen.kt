@@ -34,6 +34,8 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import coil.size.Precision
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -46,7 +48,9 @@ import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.model.getUri
 import net.theluckycoder.familyphotos.model.isVideo
-import net.theluckycoder.familyphotos.ui.*
+import net.theluckycoder.familyphotos.ui.LocalImageLoader
+import net.theluckycoder.familyphotos.ui.LocalPlayerController
+import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.composables.*
 import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.MoveDialog
@@ -54,16 +58,19 @@ import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @Parcelize
 data class PhotoDetailScreen(
-    val photo: Photo,
+    var index: Int,
     val allPhotos: List<Photo>,
 ) : Screen, Parcelable {
 
     override val key: ScreenKey
-        get() = "PhotoDetailScreen ${photo.hashCode()}"
+        get() = "PhotoDetailScreen ${allPhotos[index].hashCode()}"
 
-    constructor(photo: Photo) : this(photo, listOf(photo))
+    constructor(photo: Photo, allPhotos: List<Photo>) : this(allPhotos.indexOf(photo), allPhotos)
 
-    @OptIn(ExperimentalAnimationApi::class)
+    @OptIn(
+        ExperimentalAnimationApi::class,
+        com.google.accompanist.pager.ExperimentalPagerApi::class
+    )
     @Composable
     override fun Content() = Box(Modifier.fillMaxSize()) {
         val mainViewModel: MainViewModel = viewModel()
@@ -72,38 +79,63 @@ data class PhotoDetailScreen(
             mainViewModel.showBottomAppBar.value = false
         }
 
-        var showAppBar by remember { mutableStateOf(true) }
-        var isMoveDialogVisible by remember { mutableStateOf(false) }
+        val pagerState = rememberPagerState(index)
 
-        val isVideo = remember { photo.isVideo }
+        HorizontalPager(
+            count = allPhotos.size,
+            state = pagerState,
+            key = { allPhotos[it] }
+        ) { page ->
+            val photo = remember(page) { allPhotos[page] }
+            var showAppBar by remember { mutableStateOf(true) }
+            var isMoveDialogVisible by remember { mutableStateOf(false) }
 
-        if (photo is NetworkPhoto && isMoveDialogVisible) {
-            val scope = rememberCoroutineScope()
-            val snackbarHostState = LocalSnackbarHostState.current
+            LaunchedEffect(page) {
+                index = page
+            }
 
-            val moveSuccess = stringResource(R.string.images_move_success)
-            val moveFailure = stringResource(R.string.images_move_failure)
+            if (photo is NetworkPhoto && isMoveDialogVisible) {
+                MovePhotoDialog(photo, onDismiss = { isMoveDialogVisible = false }, mainViewModel)
+            }
 
-            MoveDialog(
-                onDismissRequest = { isMoveDialogVisible = false },
-                onConfirm = { makePublic, newFolder ->
-                    isMoveDialogVisible = false
+            val dateTime = getPhotoDate(photo)
 
-                    scope.launch {
-                        val result = mainViewModel.changePhotosLocationAsync(
-                            listOf(photo.id),
-                            makePublic,
-                            newFolder
-                        ).await()
+            AnimatedVisibility(
+                visible = showAppBar,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                val navigator = LocalNavigator.currentOrThrow
 
-                        val message = if (result) moveSuccess else moveFailure
+                NavBackTopAppBar(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.TopCenter),
+                    title = dateTime,
+                    subtitle = photo.name,
+                    navIconOnClick = { navigator.pop() }
+                )
+            }
 
-                        snackbarHostState.showSnackbar(message)
-                    }
-                }
+            PagerContent(
+                photo,
+                showAppBar,
+                onShowAppBarChanged = { showAppBar = it },
+                onShowMoveDialog = { isMoveDialogVisible = true },
+                mainViewModel
             )
         }
+    }
 
+    @Composable
+    private fun BoxScope.PagerContent(
+        photo: Photo,
+        showAppBar: Boolean,
+        onShowAppBarChanged: (Boolean) -> Unit,
+        onShowMoveDialog: () -> Unit,
+        mainViewModel: MainViewModel
+    ) {
+        val isVideo = remember(photo) { photo.isVideo }
         val playerControllerLazy = LocalPlayerController.current
 
         if (!isVideo) {
@@ -112,7 +144,7 @@ data class PhotoDetailScreen(
                     .fillMaxSize()
                     .align(Alignment.Center),
                 photo = photo,
-                onTap = { showAppBar = !showAppBar }
+                onTap = { onShowAppBarChanged(!showAppBar) }
             )
         } else {
             val playerController = playerControllerLazy.get()
@@ -129,7 +161,7 @@ data class PhotoDetailScreen(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
             ) {
-                showAppBar = !showAppBar
+                onShowAppBarChanged(!showAppBar)
             }) {
                 VideoPlayer.Surface()
             }
@@ -138,29 +170,6 @@ data class PhotoDetailScreen(
                 VideoPlayer.PauseButton(Modifier.align(Alignment.Center))
         }
 
-        val dateTime = getPhotoDate()
-
-        AnimatedVisibility(
-            visible = showAppBar,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            val navigator = LocalNavigator.currentOrThrow
-
-            NavBackTopAppBar(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopCenter),
-                title = dateTime,
-                subtitle = photo.name,
-                navIconOnClick = { navigator.pop() }
-            )
-        }
-
-        val photoIndex = remember(allPhotos) { allPhotos.indexOf(photo) }
-        val previousPhoto = remember(photoIndex) { allPhotos.getOrNull(photoIndex - 1) }
-        val nextPhoto = remember(photoIndex) { allPhotos.getOrNull(photoIndex + 1) }
-
         if (showAppBar) {
             Column(Modifier.align(Alignment.BottomCenter)) {
                 if (isVideo) {
@@ -168,9 +177,8 @@ data class PhotoDetailScreen(
                 }
 
                 BottomBar(
-                    previousPhoto = previousPhoto,
-                    nextPhoto = nextPhoto,
-                    onMoveButtonClicked = { isMoveDialogVisible = true },
+                    photo = photo,
+                    onMoveButtonClicked = onShowMoveDialog,
                     mainViewModel = mainViewModel,
                 )
             }
@@ -178,7 +186,39 @@ data class PhotoDetailScreen(
     }
 
     @Composable
-    private fun getPhotoDate() = remember {
+    private fun MovePhotoDialog(
+        photo: Photo,
+        onDismiss: () -> Unit,
+        mainViewModel: MainViewModel
+    ) {
+        val scope = rememberCoroutineScope()
+        val snackbarHostState = LocalSnackbarHostState.current
+
+        val moveSuccess = stringResource(R.string.images_move_success)
+        val moveFailure = stringResource(R.string.images_move_failure)
+
+        MoveDialog(
+            onDismissRequest = onDismiss,
+            onConfirm = { makePublic, newFolder ->
+                onDismiss()
+
+                scope.launch {
+                    val result = mainViewModel.changePhotosLocationAsync(
+                        listOf(photo.id),
+                        makePublic,
+                        newFolder
+                    ).await()
+
+                    val message = if (result) moveSuccess else moveFailure
+
+                    snackbarHostState.showSnackbar(message)
+                }
+            }
+        )
+    }
+
+    @Composable
+    private fun getPhotoDate(photo: Photo) = remember(photo) {
         val instant = Instant.fromEpochMilliseconds(photo.timeCreated)
         val date = instant.toLocalDateTime(timeZone)
 
@@ -196,14 +236,12 @@ data class PhotoDetailScreen(
 
     @Composable
     private fun BottomBar(
-        previousPhoto: Photo?,
-        nextPhoto: Photo?,
+        photo: Photo,
         onMoveButtonClicked: () -> Unit,
         mainViewModel: MainViewModel = viewModel()
     ) {
         val snackbarHostState = LocalSnackbarHostState.current
         val bottomSheetNavigator = LocalBottomSheetNavigator.current
-        val navigator = LocalNavigator.currentOrThrow
 
         val scope = rememberCoroutineScope()
 
@@ -223,20 +261,6 @@ data class PhotoDetailScreen(
         ) {
             val context = LocalContext.current
             val sendTo = stringResource(R.string.send_to)
-
-            if (previousPhoto != null) {
-                IconButtonText(
-                    onClick = {
-                        navigator.replace(PhotoDetailScreen(previousPhoto, allPhotos))
-                    },
-                    text = stringResource(id = R.string.action_previous)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_skip_previous_outline),
-                        contentDescription = null
-                    )
-                }
-            }
 
             IconButtonText(
                 onClick = {
@@ -318,21 +342,6 @@ data class PhotoDetailScreen(
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_move_folder),
-                        contentDescription = null
-                    )
-                }
-            }
-
-            if (nextPhoto != null) {
-                IconButtonText(
-                    onClick = {
-                        navigator.pop()
-                        navigator.push(PhotoDetailScreen(nextPhoto, allPhotos))
-                    },
-                    text = stringResource(R.string.action_next),
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_skip_next_outline),
                         contentDescription = null
                     )
                 }

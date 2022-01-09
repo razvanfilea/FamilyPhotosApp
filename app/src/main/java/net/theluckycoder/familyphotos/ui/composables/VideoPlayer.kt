@@ -24,11 +24,9 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.collectLatest
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.ui.LocalPlayerController
-import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.ExperimentalTime
 
 object VideoPlayer {
 
@@ -84,7 +82,6 @@ object VideoPlayer {
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     @Composable
     fun Seekbar() = ConstraintLayout(
         modifier = Modifier

@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.ui.screen.tabs
 
+import android.os.Parcelable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -12,6 +13,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.tab.TabOptions
+import kotlinx.parcelize.Parcelize
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.screen.MemoriesList
@@ -32,9 +34,12 @@ object FamilyTab : BottomTab {
         @Composable get() = painterResource(R.drawable.ic_family_filled)
 
     @Composable
-    override fun Content() = Navigator(FamilyScreen)
+    override fun Content() = Navigator(FamilyScreen())
 
-    private object FamilyScreen : Screen {
+    @Parcelize
+    private class FamilyScreen(
+        var initialPhotoId: Long = 0L
+    ) : Screen, Parcelable {
 
         @Composable
         override fun Content() {
@@ -59,7 +64,9 @@ object FamilyTab : BottomTab {
                     }
                 },
                 photosPagingList = mainViewModel.publicPhotosPaging,
-                mainViewModel = mainViewModel
+                mainViewModel = mainViewModel,
+                initialPhotoId = initialPhotoId,
+                onSaveInitialPhotoId = { it?.let { initialPhotoId = it } },
             )
         }
     }

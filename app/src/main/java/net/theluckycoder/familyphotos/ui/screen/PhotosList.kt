@@ -5,26 +5,13 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -103,6 +90,8 @@ fun PhotosList(
     headerContent: (@Composable () -> Unit),
     photosPagingList: Flow<PagingData<Any>>,
     mainViewModel: MainViewModel,
+    initialPhotoId: Long = 0L,
+    onSaveInitialPhotoId: (Long?) -> Unit = {}
 ) = Column(Modifier.fillMaxSize()) {
     val bottomSheetNavigator = LocalBottomSheetNavigator.current
 
@@ -110,7 +99,6 @@ fun PhotosList(
 
     val columnCount =
         if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 5 else 10
-    val listState = rememberLazyListState()
 
     val selectedPhotoIds = remember { mutableStateListOf<Long>() }
     val scope = rememberCoroutineScope()
@@ -155,11 +143,13 @@ fun PhotosList(
         )
     }
 
+    val listState = rememberLazyListState()
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         state = listState
     ) {
-        item("header") {
+        item(-1) {
             headerContent()
         }
 
@@ -213,6 +203,33 @@ fun PhotosList(
             }
         }
     }
+
+    var restored by remember { mutableStateOf(false) }
+
+    if (!restored) {
+        LaunchedEffect(photos.itemSnapshotList.size) {
+            if (initialPhotoId != 0L) {
+                val index = photos.itemSnapshotList.items
+                    .indexOfFirst { (it as? Photo)?.id == initialPhotoId }
+
+                if (index != -1) {
+                    listState.scrollToItem(index)
+                    restored = true
+                }
+            }
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            var index = listState.firstVisibleItemIndex
+
+            while ((photos.peek(index) as? Photo?) == null)
+                ++index
+
+            onSaveInitialPhotoId((photos.peek(index) as Photo).id)
+        }
+    }
 }
 
 @Composable
@@ -243,7 +260,7 @@ private fun PhotoRow(
                             else
                                 selectedItems += photo.id
                         } else {
-                            navigator.push(PhotoDetailScreen(photo))
+                            navigator.push(PhotoDetailScreen(photo, list))
                         }
                     }
                 ) {

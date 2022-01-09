@@ -1,22 +1,11 @@
 package net.theluckycoder.familyphotos.ui.screen.tabs
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import android.os.Parcelable
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
@@ -35,6 +24,7 @@ import cafe.adriel.voyager.navigator.tab.TabOptions
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.parcelize.Parcelize
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.screen.MemoriesList
@@ -56,9 +46,12 @@ object PersonalTab : BottomTab {
         @Composable get() = painterResource(R.drawable.ic_person_filled)
 
     @Composable
-    override fun Content() = Navigator(PersonalScreen)
+    override fun Content() = Navigator(PersonalScreen())
 
-    private object PersonalScreen : Screen {
+    @Parcelize
+    private class PersonalScreen(
+        var initialPhotoId: Long = 0
+    ) : Screen, Parcelable {
 
         @Composable
         override fun Content() {
@@ -92,6 +85,8 @@ object PersonalTab : BottomTab {
                 },
                 photosPagingList = mainViewModel.allPhotosPaging,
                 mainViewModel = mainViewModel,
+                initialPhotoId = initialPhotoId,
+                onSaveInitialPhotoId = { it?.let { initialPhotoId = it } }
             )
         }
 
@@ -158,7 +153,7 @@ object PersonalTab : BottomTab {
                 painter = painterResource(res), contentDescription = null
             )
         }
-
-        private val timeZone = TimeZone.of("Europe/Bucharest")
     }
+
+    private val timeZone = TimeZone.of("Europe/Bucharest")
 }
