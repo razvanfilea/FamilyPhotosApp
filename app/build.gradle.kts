@@ -126,7 +126,7 @@ dependencies {
     implementation("androidx.compose.material:material:$composeVersion")
     implementation("androidx.compose.animation:animation:$composeVersion")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0")
-    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.0-rc02")
+    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.0")
 
     // Voyager
     implementation("cafe.adriel.voyager:voyager-navigator:$voyagerVersion")
