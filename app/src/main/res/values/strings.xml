@@ -57,4 +57,5 @@
     <string name="pref_cache_size">Cache Size (MB)</string>
     <string name="pref_restart_needed">A restart is needed to apply these changes</string>
     <string name="pref_clear_cache">Clear all cache</string>
+    <string name="folder_name">Folder Name</string>
 </resources>

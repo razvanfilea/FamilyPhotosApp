@@ -1,6 +1,7 @@
 package net.theluckycoder.familyphotos.ui.screen
 
 import android.content.res.Configuration
+import androidx.compose.animation.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,19 +11,17 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
+import androidx.compose.material.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,6 +29,29 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.Photo
+
+@Composable
+fun FolderFilterTextField(folderNameFilter: String, onFilterChange: (String) -> Unit) {
+    OutlinedTextField(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        value = folderNameFilter,
+        onValueChange = onFilterChange,
+        label = { Text(stringResource(R.string.folder_name)) },
+        trailingIcon = {
+            AnimatedVisibility(
+                folderNameFilter.isNotEmpty(),
+                enter = fadeIn() + expandIn(expandFrom = Alignment.Center),
+                exit = fadeOut() + shrinkOut(shrinkTowards = Alignment.Center),
+            ) {
+                IconButton(onClick = { onFilterChange("") }) {
+                    Icon(painterResource(R.drawable.ic_close), contentDescription = null)
+                }
+            }
+        }
+    )
+}
 
 @Composable
 fun LazyItemScope.FolderPreviewItem(

@@ -3,6 +3,7 @@ package net.theluckycoder.familyphotos.ui.screen.tabs
 import android.content.res.Configuration
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
@@ -22,6 +23,7 @@ import cafe.adriel.voyager.navigator.tab.TabOptions
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.ui.PhotosSlideTransition
+import net.theluckycoder.familyphotos.ui.screen.FolderFilterTextField
 import net.theluckycoder.familyphotos.ui.screen.FolderPreviewItem
 import net.theluckycoder.familyphotos.ui.screen.LocalFolderScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
@@ -51,24 +53,31 @@ object LocalFoldersTab : BottomTab {
 
         @OptIn(ExperimentalFoundationApi::class)
         @Composable
-        override fun Content() {
+        override fun Content() = Column {
             val mainViewModel: MainViewModel = viewModel()
+            val navigator = LocalNavigator.currentOrThrow
 
             SideEffect {
                 mainViewModel.showBottomAppBar.value = true
             }
 
+            var folderNameFilter by remember { mutableStateOf("") }
+            FolderFilterTextField(folderNameFilter, onFilterChange = { folderNameFilter = it })
+
             val albums by mainViewModel.localFolders.collectAsState(emptyList())
+            val filteredAlbums = remember(albums, folderNameFilter) {
+                val searchFilter = folderNameFilter.lowercase()
+                albums.filter { it.name.lowercase().contains(searchFilter) }
+            }
+
             val columnCount =
                 if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 2 else 5
-
-            val navigator = LocalNavigator.currentOrThrow
 
             LazyVerticalGrid(
                 modifier = Modifier.fillMaxSize(),
                 cells = GridCells.Fixed(columnCount),
             ) {
-                items(albums) { folder ->
+                items(filteredAlbums) { folder ->
                     key(folder.coverPhotoId) {
                         val photo = LocalPhoto(
                             id = folder.coverPhotoId,

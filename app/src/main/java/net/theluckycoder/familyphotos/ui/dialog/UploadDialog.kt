@@ -40,14 +40,7 @@ fun UploadDialogContent(
     foldersList: List<String>
 ) = Column(modifier) {
 
-    Text(
-        text = title,
-        fontSize = 24.sp,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 16.dp),
-        textAlign = TextAlign.Center
-    )
+
 
     Row(
         modifier = Modifier
@@ -101,75 +94,7 @@ fun UploadDialogContent(
     }
 }
 
-@Composable
-private fun RowScope.UploadDialogButtons(
-    onDismissRequest: () -> Unit,
-    onConfirm: (uploadToPublic: Boolean, uploadFolder: String?) -> Unit,
-    choiceIndex: Int,
-    folderName: String
-) {
-    TextButton(
-        modifier = Modifier
-            .weight(1f)
-            .padding(end = 4.dp),
-        onClick = onDismissRequest
-    ) {
-        Text(text = stringResource(android.R.string.cancel))
-    }
-
-    Button(
-        modifier = Modifier
-            .weight(1f)
-            .padding(start = 4.dp),
-        onClick = {
-            onConfirm(
-                choiceIndex == choices.lastIndex,
-                folderName.trim().takeIf { it.isNotEmpty() }
-            )
-        }
-    ) {
-        Text(text = stringResource(android.R.string.ok))
-    }
-}
-
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-fun UploadDialog(
-    onDismissRequest: () -> Unit,
-    onConfirm: (uploadToPublic: Boolean, uploadFolder: String?) -> Unit,
-    mainViewModel: MainViewModel = viewModel(),
-) {
-    var choiceIndex by remember { mutableStateOf(0) }
-    var folderName by remember { mutableStateOf("") }
-
-    CustomDialog(
-        onDismissRequest = onDismissRequest,
-        buttons = {
-            UploadDialogButtons(onDismissRequest, onConfirm, choiceIndex, folderName)
-        },
-    ) {
-        val foldersList by mainViewModel.networkFolders.collectAsState(emptyList())
-
-        val filteredFoldersList = remember(foldersList, choiceIndex, folderName) {
-            foldersList.asSequence()
-                .filter { it.isPublic == (choiceIndex == choices.lastIndex) }
-                .map { it.name }
-                .filter { it.startsWith(folderName, ignoreCase = true) }
-                .toList()
-        }
-
-        UploadDialogContent(
-            modifier = Modifier.fillMaxWidth(),
-            title = stringResource(R.string.action_upload_photos),
-            choiceIndex = choiceIndex,
-            onChoiceIndexChange = { choiceIndex = it },
-            folderName = folderName,
-            onFolderNameChange = { folderName = it },
-            foldersList = filteredFoldersList
-        )
-    }
-}
-
+// TODO UploadPhotosScreen
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun MoveDialog(
@@ -205,5 +130,36 @@ fun MoveDialog(
             onFolderNameChange = { folderName = it },
             foldersList = filteredFoldersList
         )
+    }
+}
+
+@Composable
+private fun RowScope.UploadDialogButtons(
+    onDismissRequest: () -> Unit,
+    onConfirm: (uploadToPublic: Boolean, uploadFolder: String?) -> Unit,
+    choiceIndex: Int,
+    folderName: String
+) {
+    TextButton(
+        modifier = Modifier
+            .weight(1f)
+            .padding(end = 4.dp),
+        onClick = onDismissRequest
+    ) {
+        Text(text = stringResource(android.R.string.cancel))
+    }
+
+    Button(
+        modifier = Modifier
+            .weight(1f)
+            .padding(start = 4.dp),
+        onClick = {
+            onConfirm(
+                choiceIndex == choices.lastIndex,
+                folderName.trim().takeIf { it.isNotEmpty() }
+            )
+        }
+    ) {
+        Text(text = stringResource(android.R.string.ok))
     }
 }

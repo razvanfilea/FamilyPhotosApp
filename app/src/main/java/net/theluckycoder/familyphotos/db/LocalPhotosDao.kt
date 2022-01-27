@@ -15,7 +15,7 @@ abstract class LocalPhotosDao {
         """
         SELECT folder, id, uri, COUNT(id) FROM (
             SELECT * FROM local_photo ORDER BY local_photo.timeCreated DESC
-        ) GROUP BY folder ORDER BY folder ASC"""
+        ) WHERE folder IS NOT NULL GROUP BY folder ORDER BY folder ASC"""
     )
     abstract fun getFolders(): Flow<List<LocalFolder>>
 

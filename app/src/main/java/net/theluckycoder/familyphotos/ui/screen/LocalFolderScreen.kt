@@ -19,7 +19,6 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.isVideo
 import net.theluckycoder.familyphotos.ui.composables.SelectableItem
 import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
-import net.theluckycoder.familyphotos.ui.dialog.UploadDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 data class LocalFolderScreen(
@@ -36,23 +35,6 @@ data class LocalFolderScreen(
 
         val scope = rememberCoroutineScope()
         val selectedItems = remember { mutableStateListOf<Long>() }
-
-        var isUploadDialogVisible by remember { mutableStateOf(false) }
-
-        if (isUploadDialogVisible) {
-            UploadDialog(
-                onDismissRequest = { isUploadDialogVisible = false },
-                onConfirm = { uploadToPublic, uploadFolder ->
-                    isUploadDialogVisible = false
-                    val items = selectedItems.toList()
-                    selectedItems.clear()
-
-                    scope.launch {
-                        mainViewModel.uploadPhotosAsync(items, uploadToPublic, uploadFolder)
-                    }
-                }
-            )
-        }
 
         val navigator = LocalNavigator.currentOrThrow
         val bottomSheetNavigator = LocalBottomSheetNavigator.current
@@ -83,7 +65,8 @@ data class LocalFolderScreen(
                     }
 
                     IconButton(onClick = {
-                        isUploadDialogVisible = true
+                        navigator.push(UploadPhotosScreen(selectedItems.toList()))
+                        selectedItems.clear()
                     }) {
                         Icon(
                             painter = painterResource(R.drawable.ic_cloud_upload_outline),
@@ -104,7 +87,7 @@ data class LocalFolderScreen(
                         else
                             selectedItems += photo.id
                     } else {
-                        navigator.push(PhotoDetailScreen(photo, photosList))
+                        navigator.push(PhotoDetailScreen(photo, photosList.toList()))
                     }
                 }
             ) {

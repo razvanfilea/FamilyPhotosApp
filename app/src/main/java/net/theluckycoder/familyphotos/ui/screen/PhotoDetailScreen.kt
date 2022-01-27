@@ -65,7 +65,11 @@ data class PhotoDetailScreen(
     override val key: ScreenKey
         get() = "PhotoDetailScreen ${allPhotos[index].hashCode()}"
 
-    constructor(photo: Photo, allPhotos: List<Photo>) : this(allPhotos.indexOf(photo), allPhotos)
+    constructor(photo: Photo, allPhotos: List<Photo>) : this(allPhotos.indexOfFirst { it.id == photo.id }, allPhotos)
+
+    init {
+        require(index != -1)
+    }
 
     @OptIn(
         ExperimentalAnimationApi::class,
@@ -81,6 +85,12 @@ data class PhotoDetailScreen(
 
         val pagerState = rememberPagerState(index)
 
+        DisposableEffect(Unit) {
+            onDispose {
+                index = pagerState.currentPage
+            }
+        }
+
         HorizontalPager(
             count = allPhotos.size,
             state = pagerState,
@@ -89,10 +99,6 @@ data class PhotoDetailScreen(
             val photo = remember(page) { allPhotos[page] }
             var showAppBar by remember { mutableStateOf(true) }
             var isMoveDialogVisible by remember { mutableStateOf(false) }
-
-            LaunchedEffect(page) {
-                index = page
-            }
 
             if (photo is NetworkPhoto && isMoveDialogVisible) {
                 MovePhotoDialog(photo, onDismiss = { isMoveDialogVisible = false }, mainViewModel)
@@ -136,7 +142,6 @@ data class PhotoDetailScreen(
         mainViewModel: MainViewModel
     ) {
         val isVideo = remember(photo) { photo.isVideo }
-        val playerControllerLazy = LocalPlayerController.current
 
         if (!isVideo) {
             ZoomableImage(
@@ -147,7 +152,7 @@ data class PhotoDetailScreen(
                 onTap = { onShowAppBarChanged(!showAppBar) }
             )
         } else {
-            val playerController = playerControllerLazy.get()
+            val playerController = LocalPlayerController.current.get()
 
             DisposableEffect(photo) {
                 playerController.prepare(photo.getUri())
