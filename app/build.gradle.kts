@@ -97,7 +97,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.2")
 
     // Arrow
-    implementation(platform("io.arrow-kt:arrow-stack:1.0.1"))
+    implementation(platform("io.arrow-kt:arrow-stack:1.1.0"))
     implementation("io.arrow-kt:arrow-core")
 
     // AndroidX
