@@ -49,8 +49,11 @@ class MainActivity : ComponentActivity() {
             AppTheme {
                 ProvideWindowInsets {
                     val systemUiController = rememberSystemUiController()
+                    val primaryColor = MaterialTheme.colors.primary
+
                     SideEffect {
-                        systemUiController.setSystemBarsColor(Color.Black, darkIcons = false)
+                        systemUiController.setStatusBarColor(Color.Black)
+                        systemUiController.setNavigationBarColor(primaryColor)
                     }
 
                     CompositionLocalProvider(LocalImageLoader provides imageLoader, LocalPlayerController provides playerController) {

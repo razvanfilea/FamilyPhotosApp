@@ -1,7 +1,6 @@
 package net.theluckycoder.familyphotos.datastore
 
 import android.content.Context
-import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -21,9 +20,9 @@ class SettingsDataStore @Inject constructor(@ApplicationContext context: Context
     val cacheSizeMbFlow: Flow<Int> =
         settingsDataStore.data.map { it[CACHE_SIZE] ?: DEFAULT_CACHE_SIZE }.distinctUntilChanged()
 
-    suspend fun setCacheSizeMb(value: Int) = settingsDataStore.edit { preferences ->
+    /*suspend fun setCacheSizeMb(value: Int) = settingsDataStore.edit { preferences ->
         preferences[CACHE_SIZE] = value
-    }
+    }*/
 
     companion object {
         private val Context.settingsDataStore by preferencesDataStore("settings_prefs")

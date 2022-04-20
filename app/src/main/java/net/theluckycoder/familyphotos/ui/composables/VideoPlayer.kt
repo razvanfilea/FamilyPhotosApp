@@ -1,5 +1,7 @@
 package net.theluckycoder.familyphotos.ui.composables
 
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,7 +21,7 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.ConstraintSet
 import androidx.constraintlayout.compose.Dimension
 import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.ui.PlayerView
+import com.google.android.exoplayer2.ui.StyledPlayerView
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.collectLatest
 import net.theluckycoder.familyphotos.R
@@ -37,9 +39,16 @@ object VideoPlayer {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { context ->
-                PlayerView(context).apply {
+                // TODO Replace StyledPlayerView with something lighter
+                StyledPlayerView(context).apply {
                     playerController.setPlayerView(this)
                     useController = false
+                    layoutParams = FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams
+                            .MATCH_PARENT,
+                        ViewGroup.LayoutParams
+                            .MATCH_PARENT
+                    )
                 }
             }
         )
@@ -54,7 +63,8 @@ object VideoPlayer {
 
         IconButton(
             onClick = { controller.playPause() },
-            modifier = modifier.size(72.dp)
+            modifier = modifier
+                .size(72.dp)
                 .clip(CircleShape)
                 .background(Color(0xBB444444))
         ) {
@@ -117,7 +127,7 @@ object VideoPlayer {
     ) {
         val controller = LocalPlayerController.current.get()
 
-        var position by remember { mutableStateOf(Duration.ZERO)}
+        var position by remember { mutableStateOf(Duration.ZERO) }
         val duration by controller.durationState.collectAsState()
 
         LaunchedEffect(Unit) {

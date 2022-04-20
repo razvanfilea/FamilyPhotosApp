@@ -1,11 +1,12 @@
 package net.theluckycoder.familyphotos.network
 
 import android.content.Context
+import coil.ComponentRegistry
 import coil.ImageLoader
 import coil.decode.ImageDecoderDecoder
 import coil.decode.VideoFrameDecoder
-import coil.fetch.VideoFrameFileFetcher
-import coil.fetch.VideoFrameUriFetcher
+import coil.disk.DiskCache
+import coil.memory.MemoryCache
 import coil.util.DebugLogger
 import dagger.Module
 import dagger.Provides
@@ -26,13 +27,10 @@ import net.theluckycoder.familyphotos.datastore.UserDataStore
 import net.theluckycoder.familyphotos.network.service.PhotosService
 import net.theluckycoder.familyphotos.network.service.UserService
 import net.theluckycoder.familyphotos.utils.IOCoroutineScope
-import okhttp3.Cache
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
-import java.io.File
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -66,36 +64,18 @@ object NetworkModule {
         }
     }
 
-    /**
-     * Cloud Response Header Interceptor for Configuring Caching Policies
-     * Dangerous interceptor that rewrites the server's cache-control header.
-     */
-    @Provides
-    @Named("cacheControl")
-    fun providesCacheControlInterceptor(): Interceptor = CacheFirstInterceptor()
-
     @Singleton
     @Provides
     fun providesOkHttpClient(
-        @ApplicationContext context: Context,
         @Named("auth") authInterceptor: Interceptor,
-        @Named("cacheControl") cacheControlInterceptor: Interceptor,
-        settingsDataStore: SettingsDataStore,
     ): OkHttpClient = runBlocking {
-        val cache = Cache(
-            File(context.cacheDir, "okhttp"),
-            settingsDataStore.cacheSizeMbFlow.first() * (1024L * 1024L)
-        )
-
         val certificates = SslUtils.getCertificates()
 
         OkHttpClient.Builder()
             .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager)
             .hostnameVerifier { _, _ -> true }
             .addInterceptor(authInterceptor)
-            .addInterceptor(cacheControlInterceptor)
 //            .addInterceptor(HttpLoggingInterceptor())
-            .cache(cache)
             .build()
     }
 
@@ -127,19 +107,29 @@ object NetworkModule {
     @Provides
     fun provideImageLoader(
         @ApplicationContext context: Context,
-        okHttpClient: OkHttpClient
-    ): ImageLoader = ImageLoader.Builder(context)
-        .availableMemoryPercentage(0.3)
-        .bitmapPoolPercentage(0.0)
-        .logger(DebugLogger().takeIf { BuildConfig.DEBUG })
-        .componentRegistry {
-            add(ImageDecoderDecoder(context))
-            add(VideoFrameFileFetcher(context))
-            add(VideoFrameUriFetcher(context))
-            add(VideoFrameDecoder(context))
-        }
-        .okHttpClient(okHttpClient)
-        .build()
+        okHttpClient: OkHttpClient,
+        settingsDataStore: SettingsDataStore
+    ): ImageLoader =
+        ImageLoader.Builder(context)
+            .logger(DebugLogger().takeIf { BuildConfig.DEBUG })
+            .components(fun ComponentRegistry.Builder.() {
+                add(ImageDecoderDecoder.Factory())
+                add(VideoFrameDecoder.Factory())
+            })
+            .okHttpClient(okHttpClient)
+            // Cache
+            .memoryCache { MemoryCache.Builder(context).maxSizePercent(0.35).build() }
+            .diskCache {
+                runBlocking {
+                    DiskCache.Builder()
+                        .directory(context.cacheDir.resolve("image_cache"))
+                        .minimumMaxSizeBytes(1024L * 1024L * 1024L * 1024L)
+                        .maximumMaxSizeBytes(settingsDataStore.cacheSizeMbFlow.first() * 1024L)
+                        .build()
+                }
+            }
+            .respectCacheHeaders(false) // Cache-First
+            .build()
 
     const val BASE_URL = "https://razvanrares.go.ro:9002/"
 }

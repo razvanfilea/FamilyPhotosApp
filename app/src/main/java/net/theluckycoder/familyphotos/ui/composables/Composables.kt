@@ -23,29 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun ReadonlyTextField(
-    modifier: Modifier,
-    fieldModifier: Modifier = Modifier,
-    value: TextFieldValue,
-    onValueChange: (TextFieldValue) -> Unit,
-    onClick: () -> Unit,
-    label: @Composable () -> Unit
-) = Box(modifier) {
-    TextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = fieldModifier,
-        label = label
-    )
-    Box(
-        modifier = Modifier
-            .matchParentSize()
-            .alpha(0f)
-            .clickable(onClick = onClick),
-    )
-}
-
-@Composable
 fun IconButtonText(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,

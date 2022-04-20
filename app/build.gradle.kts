@@ -4,6 +4,7 @@ plugins {
     kotlin("android")
     kotlin("kapt")
     kotlin("plugin.serialization") version "1.6.20"
+//    id("com.google.devtools.ksp") version "1.5.31-1.0.0"
     id("kotlin-parcelize")
 
     id("dagger.hilt.android.plugin")
@@ -17,8 +18,8 @@ android {
         applicationId = "net.theluckycoder.familyphotos"
         minSdk = 29
         targetSdk = 30
-        versionCode = 13
-        versionName = "1.3"
+        versionCode = 14
+        versionName = "1.4"
         resourceConfigurations += listOf("en", "ro")
 
         javaCompileOptions {
@@ -68,7 +69,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = rootProject.extra["composeCompiler"] as String
+        kotlinCompilerExtensionVersion = rootProject.extra["composeVersion"] as String
     }
 }
 
@@ -85,7 +86,7 @@ dependencies {
     val hiltVersion: String by rootProject.extra
     val roomVersion = "2.4.2"
     val accompanistVersion = "0.23.1"
-    val coilVersion = "1.4.0"
+    val coilVersion = "2.0.0-rc03"
     val voyagerVersion = "1.0.0-beta16"
 
     // Kotlin

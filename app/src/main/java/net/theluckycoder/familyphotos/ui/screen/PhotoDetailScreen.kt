@@ -8,11 +8,11 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,9 +31,8 @@ import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.bottomSheet.LocalBottomSheetNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import coil.compose.rememberImagePainter
-import coil.request.ImageRequest
-import coil.size.Precision
+import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.Dispatchers
@@ -65,7 +64,10 @@ data class PhotoDetailScreen(
     override val key: ScreenKey
         get() = "PhotoDetailScreen ${allPhotos[index].hashCode()}"
 
-    constructor(photo: Photo, allPhotos: List<Photo>) : this(allPhotos.indexOfFirst { it.id == photo.id }, allPhotos)
+    constructor(
+        photo: Photo,
+        allPhotos: List<Photo>
+    ) : this(allPhotos.indexOfFirst { it.id == photo.id }, allPhotos)
 
     init {
         require(index != -1)
@@ -284,7 +286,7 @@ data class PhotoDetailScreen(
             IconButtonText(
                 onClick = {
                     scope.launch(Dispatchers.IO) {
-                        val uri = mainViewModel.getLocalPhotoUri(photo).await()
+                        val uri = mainViewModel.getLocalPhotoUriAsync(photo).await()
 
                         withContext(Dispatchers.Main) {
                             if (uri != null) {
@@ -375,19 +377,13 @@ fun CoilPhoto(
     modifier: Modifier = Modifier,
     photo: Photo,
     contentScale: ContentScale = ContentScale.Fit,
-    builder: ImageRequest.Builder.() -> Unit = {},
 ) {
-    val request = photo.getUri()
-
-    Image(
+    AsyncImage(
         modifier = modifier,
-        painter = rememberImagePainter(
-            imageLoader = LocalImageLoader.current.get(),
-            data = request,
-            builder = builder
-        ),
+        model = photo.getUri(),
         contentScale = contentScale,
         contentDescription = photo.name,
+        imageLoader = LocalImageLoader.current.get()
     )
 }
 
@@ -401,15 +397,6 @@ private fun ZoomableImage(
         maxScale = 5f
     )
 
-    val ctx = LocalContext.current
-
-    val request = remember {
-        ImageRequest.Builder(ctx)
-            .data(photo.getUri())
-            .precision(Precision.INEXACT)
-            .build()
-    }
-
     Zoomable(
         state = zoomableState,
         onTap = onTap,
@@ -420,13 +407,13 @@ private fun ZoomableImage(
             }
         }
     ) {
-        Image(
+        SubcomposeAsyncImage(
             modifier = modifier,
-            painter = rememberImagePainter(
-                imageLoader = LocalImageLoader.current.get(),
-                request = request,
-            ),
+            model = photo.getUri(),
             contentDescription = photo.name,
+            loading = { CircularProgressIndicator() },
+            imageLoader = LocalImageLoader.current.get(),
+            contentScale = ContentScale.None
         )
     }
 }

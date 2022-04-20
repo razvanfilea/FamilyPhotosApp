@@ -71,7 +71,7 @@ class SettingsScreen : Screen {
                     icon = painterResource(id = R.drawable.ic_cloud_download_outline),
                     prefKey = SettingsDataStore.CACHE_SIZE,
                     defaultValue = SettingsDataStore.DEFAULT_CACHE_SIZE,
-                    valueRange = 512..2048
+                    valueRange = 1024..4096
                 ),
                 EmptyPreferenceItem(
                     title = stringResource(id = R.string.pref_clear_cache),

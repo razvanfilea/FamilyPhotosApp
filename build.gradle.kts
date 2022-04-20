@@ -1,8 +1,7 @@
 buildscript {
     val kotlinVersion: String by rootProject.extra("1.6.10")
-    val composeVersion: String by rootProject.extra("1.1.0-rc01")
-    val composeCompiler: String by rootProject.extra("1.1.0-rc02")
-    val hiltVersion: String by rootProject.extra("2.40.5")
+    val composeVersion: String by rootProject.extra("1.1.1")
+    val hiltVersion: String by rootProject.extra("2.41")
 
     repositories {
         google()
@@ -20,7 +19,6 @@ allprojects {
         google()
         mavenCentral()
         maven { setUrl("https://jitpack.io") }
-        maven { setUrl("https://maven.pkg.jetbrains.space/public/p/compose/dev") }
     }
 }
 
@@ -41,7 +39,8 @@ plugins {
 
 tasks.named("dependencyUpdates", com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask::class.java).configure {
     rejectVersionIf {
-        candidate.version.contains("alpha") && !this@rejectVersionIf.currentVersion.contains("alpha")
+        (candidate.version.contains("alpha") && !currentVersion.contains("alpha")) ||
+            (candidate.version.contains("beta") && !currentVersion.contains("beta"))
     }
 }
 

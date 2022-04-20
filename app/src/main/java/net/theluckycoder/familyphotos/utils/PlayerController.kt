@@ -7,7 +7,7 @@ import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.ui.PlayerView
+import com.google.android.exoplayer2.ui.StyledPlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSource
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -106,7 +106,7 @@ class PlayerController @Inject constructor(
         exoPlayer.prepare()
     }
 
-    fun setPlayerView(playerView: PlayerView) {
+    fun setPlayerView(playerView: StyledPlayerView) {
         playerView.player = exoPlayer
     }
 

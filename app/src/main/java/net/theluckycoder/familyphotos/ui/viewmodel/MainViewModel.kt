@@ -220,7 +220,7 @@ class MainViewModel @Inject constructor(
     /**
      * TODO: Document this
      */
-    fun getLocalPhotoUri(photo: Photo): Deferred<Uri?> = viewModelScope.async(Dispatchers.IO) {
+    fun getLocalPhotoUriAsync(photo: Photo): Deferred<Uri?> = viewModelScope.async(Dispatchers.IO) {
         when (photo) {
             is LocalPhoto -> photo.uri
             is NetworkPhoto -> {
