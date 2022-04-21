@@ -33,6 +33,8 @@ import cafe.adriel.voyager.navigator.bottomSheet.LocalBottomSheetNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
+import coil.size.Size
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.Dispatchers
@@ -43,16 +45,12 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.parcelize.Parcelize
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.model.NetworkPhoto
-import net.theluckycoder.familyphotos.model.Photo
-import net.theluckycoder.familyphotos.model.getUri
-import net.theluckycoder.familyphotos.model.isVideo
+import net.theluckycoder.familyphotos.model.*
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.LocalPlayerController
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.composables.*
 import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
-import net.theluckycoder.familyphotos.ui.dialog.MoveDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @Parcelize
@@ -100,11 +98,6 @@ data class PhotoDetailScreen(
         ) { page ->
             val photo = remember(page) { allPhotos[page] }
             var showAppBar by remember { mutableStateOf(true) }
-            var isMoveDialogVisible by remember { mutableStateOf(false) }
-
-            if (photo is NetworkPhoto && isMoveDialogVisible) {
-                MovePhotoDialog(photo, onDismiss = { isMoveDialogVisible = false }, mainViewModel)
-            }
 
             val dateTime = getPhotoDate(photo)
 
@@ -129,7 +122,6 @@ data class PhotoDetailScreen(
                 photo,
                 showAppBar,
                 onShowAppBarChanged = { showAppBar = it },
-                onShowMoveDialog = { isMoveDialogVisible = true },
                 mainViewModel
             )
         }
@@ -140,7 +132,6 @@ data class PhotoDetailScreen(
         photo: Photo,
         showAppBar: Boolean,
         onShowAppBarChanged: (Boolean) -> Unit,
-        onShowMoveDialog: () -> Unit,
         mainViewModel: MainViewModel
     ) {
         val isVideo = remember(photo) { photo.isVideo }
@@ -185,43 +176,10 @@ data class PhotoDetailScreen(
 
                 BottomBar(
                     photo = photo,
-                    onMoveButtonClicked = onShowMoveDialog,
                     mainViewModel = mainViewModel,
                 )
             }
         }
-    }
-
-    @Composable
-    private fun MovePhotoDialog(
-        photo: Photo,
-        onDismiss: () -> Unit,
-        mainViewModel: MainViewModel
-    ) {
-        val scope = rememberCoroutineScope()
-        val snackbarHostState = LocalSnackbarHostState.current
-
-        val moveSuccess = stringResource(R.string.images_move_success)
-        val moveFailure = stringResource(R.string.images_move_failure)
-
-        MoveDialog(
-            onDismissRequest = onDismiss,
-            onConfirm = { makePublic, newFolder ->
-                onDismiss()
-
-                scope.launch {
-                    val result = mainViewModel.changePhotosLocationAsync(
-                        listOf(photo.id),
-                        makePublic,
-                        newFolder
-                    ).await()
-
-                    val message = if (result) moveSuccess else moveFailure
-
-                    snackbarHostState.showSnackbar(message)
-                }
-            }
-        )
     }
 
     @Composable
@@ -244,12 +202,11 @@ data class PhotoDetailScreen(
     @Composable
     private fun BottomBar(
         photo: Photo,
-        onMoveButtonClicked: () -> Unit,
         mainViewModel: MainViewModel = viewModel()
     ) {
         val snackbarHostState = LocalSnackbarHostState.current
         val bottomSheetNavigator = LocalBottomSheetNavigator.current
-
+        val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
 
         Row(
@@ -314,37 +271,21 @@ data class PhotoDetailScreen(
                 )
             }
 
-            /*if (photo is LocalPhoto) {
-                val uploadSuccess = stringResource(R.string.image_upload_success)
-                val uploadFailure = stringResource(R.string.image_upload_failure)
-
-                IconButton(
-                    enabled = !photo.isSavedToCloud,
-                    onClick = {
-                        TODO()
-                        scope.launch {
-                            val str = if (mainViewModel.uploadPhotoAsync(photo).await())
-                                uploadSuccess
-                            else
-                                uploadFailure
-
-                            snackbarHostState.showSnackbar(str)
-                        }
-                    },
+            if (photo is LocalPhoto && !photo.isSavedToCloud) {
+                IconButtonText(
+                    onClick = { navigator.push(UploadPhotosScreen(listOf(photo.id))) },
+                    text = stringResource(id = R.string.action_upload),
                 ) {
-                    val iconRes =
-                        if (photo.isSavedToCloud) R.drawable.ic_cloud_done_outline else R.drawable.ic_cloud_upload_outline
-
                     Icon(
-                        painter = painterResource(id = iconRes),
-                        contentDescription = stringResource(id = R.string.action_upload)
+                        painter = painterResource(R.drawable.ic_cloud_upload_outline),
+                        contentDescription = null
                     )
                 }
-            }*/
+            }
 
             if (photo is NetworkPhoto) {
                 IconButtonText(
-                    onClick = onMoveButtonClicked,
+                    onClick = { navigator.push(MovePhotosScreen(listOf(photo.id))) },
                     text = stringResource(id = R.string.action_move),
                 ) {
                     Icon(
@@ -393,9 +334,7 @@ private fun ZoomableImage(
     photo: Photo,
     onTap: ((Offset) -> Unit)? = null
 ) {
-    val zoomableState = rememberZoomableState(
-        maxScale = 5f
-    )
+    val zoomableState = rememberZoomableState(maxScale = 5f)
 
     Zoomable(
         state = zoomableState,
@@ -407,13 +346,26 @@ private fun ZoomableImage(
             }
         }
     ) {
+        val request = ImageRequest.Builder(LocalContext.current)
+            .data(photo.getUri())
+            .size(Size.ORIGINAL)
+            .build()
+
         SubcomposeAsyncImage(
             modifier = modifier,
-            model = photo.getUri(),
+            model = request,
             contentDescription = photo.name,
-            loading = { CircularProgressIndicator() },
+            loading = {
+                Box(Modifier.fillMaxSize()) {
+                    CircularProgressIndicator(
+                        Modifier
+                            .align(Alignment.Center)
+                            .padding(32.dp)
+                    )
+                }
+            },
             imageLoader = LocalImageLoader.current.get(),
-            contentScale = ContentScale.None
+            contentScale = ContentScale.Fit
         )
     }
 }

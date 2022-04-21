@@ -12,7 +12,8 @@ import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +40,9 @@ fun FolderFilterTextField(folderNameFilter: String, onFilterChange: (String) -> 
         value = folderNameFilter,
         onValueChange = onFilterChange,
         label = { Text(stringResource(R.string.folder_name)) },
+        leadingIcon = {
+            Icon(painterResource(R.drawable.ic_search), contentDescription = null)
+        },
         trailingIcon = {
             AnimatedVisibility(
                 folderNameFilter.isNotEmpty(),

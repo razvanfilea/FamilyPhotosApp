@@ -93,6 +93,7 @@ fun PhotosList(
     initialPhotoId: Long = 0L,
     onSaveInitialPhotoId: (Long?) -> Unit = {}
 ) = Column(Modifier.fillMaxSize()) {
+    val navigator = LocalNavigator.currentOrThrow
     val bottomSheetNavigator = LocalBottomSheetNavigator.current
 
     val photos = photosPagingList.collectAsLazyPagingItems()
@@ -134,6 +135,18 @@ fun PhotosList(
                     Icon(
                         painter = painterResource(R.drawable.ic_action_delete),
                         contentDescription = stringResource(R.string.action_delete),
+                        tint = Color.White,
+                    )
+                }
+
+                IconButton(onClick = {
+                    if (selectedPhotoIds.isNotEmpty()) {
+                        navigator.push(MovePhotosScreen(selectedPhotoIds.toList()))
+                    }
+                }) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_move_folder),
+                        contentDescription = stringResource(R.string.action_move),
                         tint = Color.White,
                     )
                 }

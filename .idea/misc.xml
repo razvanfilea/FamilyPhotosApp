@@ -7,6 +7,7 @@
         <entry key="../../../../../../../layout/compose-model-1630766804691.xml" value="0.8731481481481481" />
         <entry key="../../../../../../../layout/compose-model-1632242590086.xml" value="0.8435185185185186" />
         <entry key="../../../../../../../layout/compose-model-1643058563904.xml" value="0.1" />
+        <entry key="../../../../../layout/compose-model-1650534840587.xml" value="0.24259259259259258" />
         <entry key="../../../../Data/Linux/gradle/caches/transforms-3/3bf65a7206f3434c39134a58f8c44428/transformed/exoplayer-ui-2.15.0/res/drawable-anydpi-v21/exo_icon_play.xml" value="0.843385707045109" />
         <entry key="../../../../Data/Linux/gradle/caches/transforms-3/b189157dba5c389d46c1ceba2267fc70/transformed/exoplayer-ui-2.15.1/res/drawable-anydpi-v21/exo_icon_pause.xml" value="0.843385707045109" />
         <entry key="app/src/main/res/drawable/ic_action_done.xml" value="0.2155" />
@@ -14,11 +15,13 @@
         <entry key="app/src/main/res/drawable/ic_close.xml" value="0.2155" />
         <entry key="app/src/main/res/drawable/ic_cloud_download_outline.xml" value="0.5307291666666667" />
         <entry key="app/src/main/res/drawable/ic_cloud_off_outline.xml" value="0.5307291666666667" />
+        <entry key="app/src/main/res/drawable/ic_cloud_upload_outline.xml" value="0.131" />
         <entry key="app/src/main/res/drawable/ic_home_outlined.xml" value="0.2435" />
         <entry key="app/src/main/res/drawable/ic_more_options_vertical.xml" value="0.2435" />
         <entry key="app/src/main/res/drawable/ic_pause_circle_outline.xml" value="0.843385707045109" />
         <entry key="app/src/main/res/drawable/ic_play_circle_filled.xml" value="0.5307291666666667" />
         <entry key="app/src/main/res/drawable/ic_play_circle_outline.xml" value="0.5307291666666667" />
+        <entry key="app/src/main/res/drawable/ic_search.xml" value="0.2785" />
         <entry key="app/src/main/res/drawable/ic_settings_outline.xml" value="0.5307291666666667" />
         <entry key="app/src/main/res/drawable/ic_skip_next.xml" value="0.5307291666666667" />
         <entry key="app/src/main/res/drawable/ic_skip_next_outline.xml" value="0.5307291666666667" />

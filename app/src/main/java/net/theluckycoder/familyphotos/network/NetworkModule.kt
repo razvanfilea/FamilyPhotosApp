@@ -123,7 +123,7 @@ object NetworkModule {
                 runBlocking {
                     DiskCache.Builder()
                         .directory(context.cacheDir.resolve("image_cache"))
-                        .minimumMaxSizeBytes(1024L * 1024L * 1024L * 1024L)
+                        .minimumMaxSizeBytes(1024L * 1024L * 1024L * 1024L) // 1GB
                         .maximumMaxSizeBytes(settingsDataStore.cacheSizeMbFlow.first() * 1024L)
                         .build()
                 }

@@ -1,6 +1,7 @@
 package net.theluckycoder.familyphotos.ui.screen.tabs
 
 import android.os.Parcelable
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -27,6 +28,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.parcelize.Parcelize
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.NetworkPhoto
+import net.theluckycoder.familyphotos.ui.PhotosSlideTransition
 import net.theluckycoder.familyphotos.ui.screen.MemoriesList
 import net.theluckycoder.familyphotos.ui.screen.PhotosList
 import net.theluckycoder.familyphotos.ui.screen.SettingsScreen
@@ -45,8 +47,13 @@ object PersonalTab : BottomTab {
     override val selectedIcon: Painter
         @Composable get() = painterResource(R.drawable.ic_person_filled)
 
+    @OptIn(ExperimentalAnimationApi::class)
     @Composable
-    override fun Content() = Navigator(PersonalScreen())
+    override fun Content() {
+        Navigator(PersonalScreen()) {
+            PhotosSlideTransition(navigator = it)
+        }
+    }
 
     @Parcelize
     private class PersonalScreen(

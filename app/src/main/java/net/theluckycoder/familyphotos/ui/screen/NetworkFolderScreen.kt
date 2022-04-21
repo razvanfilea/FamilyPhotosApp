@@ -13,10 +13,8 @@ import cafe.adriel.voyager.navigator.bottomSheet.LocalBottomSheetNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.composables.SelectableItem
 import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
-import net.theluckycoder.familyphotos.ui.dialog.MoveDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 data class NetworkFolderScreen(
@@ -33,33 +31,6 @@ data class NetworkFolderScreen(
 
         val scope = rememberCoroutineScope()
         val selectedItems = remember(folderName) { mutableStateListOf<Long>() }
-
-        val snackbarHostState = LocalSnackbarHostState.current
-
-        var isMoveDialogVisible by remember { mutableStateOf(false) }
-        if (isMoveDialogVisible) {
-            val moveSuccess = stringResource(R.string.images_move_success)
-            val moveFailure = stringResource(R.string.images_move_failure)
-
-            MoveDialog(
-                onDismissRequest = { isMoveDialogVisible = false },
-                onConfirm = { makePublic, newFolder ->
-                    isMoveDialogVisible = false
-                    val items = selectedItems.toList()
-                    selectedItems.clear()
-
-                    scope.launch {
-                        val result =
-                            mainViewModel.changePhotosLocationAsync(items, makePublic, newFolder)
-                                .await()
-
-                        val message = if (result) moveSuccess else moveFailure
-
-                        snackbarHostState.showSnackbar(message)
-                    }
-                }
-            )
-        }
 
         val navigator = LocalNavigator.currentOrThrow
         val bottomSheetNavigator = LocalBottomSheetNavigator.current
@@ -89,9 +60,8 @@ data class NetworkFolderScreen(
                         )
                     }
 
-                    IconButton(onClick = {
-                        isMoveDialogVisible = true
-                    }) {
+                    IconButton(onClick = { navigator.push(MovePhotosScreen(selectedItems.toList())) }
+                    ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_move_folder),
                             contentDescription = null,

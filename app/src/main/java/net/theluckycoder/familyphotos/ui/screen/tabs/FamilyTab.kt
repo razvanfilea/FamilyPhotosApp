@@ -1,11 +1,8 @@
 package net.theluckycoder.familyphotos.ui.screen.tabs
 
 import android.os.Parcelable
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -16,6 +13,7 @@ import cafe.adriel.voyager.navigator.tab.TabOptions
 import kotlinx.parcelize.Parcelize
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.NetworkPhoto
+import net.theluckycoder.familyphotos.ui.PhotosSlideTransition
 import net.theluckycoder.familyphotos.ui.screen.MemoriesList
 import net.theluckycoder.familyphotos.ui.screen.PhotosList
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
@@ -33,8 +31,13 @@ object FamilyTab : BottomTab {
     override val selectedIcon: Painter
         @Composable get() = painterResource(R.drawable.ic_family_filled)
 
+    @OptIn(ExperimentalAnimationApi::class)
     @Composable
-    override fun Content() = Navigator(FamilyScreen())
+    override fun Content() {
+        Navigator(FamilyScreen()) {
+            PhotosSlideTransition(navigator = it)
+        }
+    }
 
     @Parcelize
     private class FamilyScreen(
