@@ -87,7 +87,7 @@ dependencies {
     val roomVersion = "2.4.2"
     val accompanistVersion = "0.23.1"
     val coilVersion = "2.0.0-rc03"
-    val voyagerVersion = "1.0.0-rc01"
+    val voyagerVersion = "1.0.0-rc02"
 
     // Kotlin
     kotlin("kotlin-stdlib-jdk8", kotlinVersion)
