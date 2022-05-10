@@ -86,7 +86,7 @@ dependencies {
     val hiltVersion: String by rootProject.extra
     val roomVersion = "2.4.2"
     val accompanistVersion = "0.23.1"
-    val coilVersion = "2.0.0-rc03"
+    val coilVersion = "2.0.0"
     val voyagerVersion = "1.0.0-rc02"
 
     // Kotlin
