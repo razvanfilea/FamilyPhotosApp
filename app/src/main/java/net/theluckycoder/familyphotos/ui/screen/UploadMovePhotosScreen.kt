@@ -47,7 +47,7 @@ private fun UploadDialogContent(
     LazyRow(Modifier.fillMaxWidth()) {
         items(photosToShowcase) { photo ->
             Box(Modifier.size(72.dp)) {
-                SimpleSquarePhotoItem(photo)
+                SimpleSquarePhoto(photo)
             }
         }
     }
@@ -143,7 +143,7 @@ private fun UploadPhotosLayout(
                 backgroundColor = Color.Transparent,
             )
         },
-    ) {
+    ) { contentPadding ->
         val foldersList by mainViewModel.networkFolders.collectAsState(emptyList())
 
         val filteredFoldersList = remember(foldersList, choiceIndex, folderName) {
@@ -154,14 +154,16 @@ private fun UploadPhotosLayout(
                 .toList()
         }
 
-        UploadDialogContent(
-            photosToShowcase = photosToShowcase,
-            choiceIndex = choiceIndex,
-            onChoiceIndexChange = { choiceIndex = it },
-            folderName = folderName,
-            onFolderNameChange = { folderName = it },
-            foldersList = filteredFoldersList
-        )
+        Box(Modifier.padding(contentPadding)) {
+            UploadDialogContent(
+                photosToShowcase = photosToShowcase,
+                choiceIndex = choiceIndex,
+                onChoiceIndexChange = { choiceIndex = it },
+                folderName = folderName,
+                onFolderNameChange = { folderName = it },
+                foldersList = filteredFoldersList
+            )
+        }
     }
 }
 

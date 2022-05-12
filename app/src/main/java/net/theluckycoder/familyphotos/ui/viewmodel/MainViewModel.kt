@@ -28,7 +28,6 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -244,7 +243,6 @@ class MainViewModel @Inject constructor(
 
     // endregion
 
-    @OptIn(ExperimentalTime::class)
     fun clearAppCache(app: Application) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {

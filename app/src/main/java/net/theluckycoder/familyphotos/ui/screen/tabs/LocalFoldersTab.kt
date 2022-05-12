@@ -2,12 +2,11 @@ package net.theluckycoder.familyphotos.ui.screen.tabs
 
 import android.content.res.Configuration
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
@@ -51,7 +50,6 @@ object LocalFoldersTab : BottomTab {
 
     private object PhoneFoldersScreen : Screen {
 
-        @OptIn(ExperimentalFoundationApi::class)
         @Composable
         override fun Content() = Column {
             val mainViewModel: MainViewModel = viewModel()
@@ -74,8 +72,8 @@ object LocalFoldersTab : BottomTab {
                 if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 2 else 5
 
             LazyVerticalGrid(
+                columns = GridCells.Fixed(columnCount),
                 modifier = Modifier.fillMaxSize(),
-                cells = GridCells.Fixed(columnCount),
             ) {
                 items(filteredAlbums) { folder ->
                     key(folder.coverPhotoId) {

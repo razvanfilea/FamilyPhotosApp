@@ -3,7 +3,6 @@ package net.theluckycoder.familyphotos.ui.activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.*
@@ -13,13 +12,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.navigator.bottomSheet.BottomSheetNavigator
 import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import coil.ImageLoader
-import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -40,14 +39,15 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var playerController: Lazy<PlayerController>
 
-    @OptIn(ExperimentalMaterialApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         val view = ComposeView(this)
         view.setContent {
             AppTheme {
-                ProvideWindowInsets {
+                Box(Modifier.systemBarsPadding()) {
                     val systemUiController = rememberSystemUiController()
                     val primaryColor = MaterialTheme.colors.primary
 
@@ -86,7 +86,6 @@ private fun RowScope.TabNavigationItem(tab: BottomTab) {
 }
 
 @OptIn(
-    ExperimentalAnimationApi::class,
     ExperimentalMaterialApi::class,
 )
 @Composable

@@ -8,7 +8,6 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.webkit.MimeTypeMap
-import coil.annotation.ExperimentalCoilApi
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import net.theluckycoder.familyphotos.db.LocalPhotosDao
@@ -53,7 +52,6 @@ class PhotosRepository @Inject constructor(
         return successful
     }
 
-    @OptIn(ExperimentalCoilApi::class)
     suspend fun saveNetworkPhotoToStorage(networkPhoto: NetworkPhoto): LocalPhoto? {
 
         val body = photosService.get().downloadPhoto(networkPhoto.ownerUserId, networkPhoto.id)

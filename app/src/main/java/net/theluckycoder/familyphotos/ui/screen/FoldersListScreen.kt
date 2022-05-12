@@ -2,14 +2,13 @@ package net.theluckycoder.familyphotos.ui.screen
 
 import android.content.res.Configuration
 import androidx.compose.animation.*
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyItemScope
-import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridItemScope
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
@@ -58,18 +57,18 @@ fun FolderFilterTextField(folderNameFilter: String, onFilterChange: (String) -> 
 }
 
 @Composable
-fun LazyItemScope.FolderPreviewItem(
+fun FolderPreviewItem(
     photo: Photo,
     name: String,
     photosCount: Int,
     onClick: () -> Unit,
-    content: (@Composable BoxScope.() -> Unit)? = null
+    content: @Composable (BoxScope.() -> Unit)? = null
 ) = Column(
     modifier = Modifier.padding(8.dp)
 ) {
     Box(
         Modifier
-            .fillParentMaxWidth()
+            .fillMaxWidth()
             .aspectRatio(1f)
             .clip(RoundedCornerShape(8.dp))
             .background(Color.DarkGray)
@@ -100,14 +99,13 @@ fun LazyItemScope.FolderPreviewItem(
     )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun <T : Photo> FolderPhotos(
     folderName: String,
     photosList: List<T>,
     selectedItems: SnapshotStateList<Long>,
     appBarActions: @Composable RowScope.() -> Unit,
-    itemContent: @Composable LazyItemScope.(photo: T) -> Unit
+    itemContent: @Composable LazyGridItemScope.(photo: T) -> Unit
 ) = Column(Modifier.fillMaxSize()) {
     val navigator = LocalNavigator.currentOrThrow
 
@@ -142,8 +140,8 @@ fun <T : Photo> FolderPhotos(
         if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 3 else 8
 
     LazyVerticalGrid(
+        columns = GridCells.Fixed(columnCount),
         modifier = Modifier.fillMaxSize(),
-        cells = GridCells.Fixed(columnCount),
     ) {
         items(photosList) { photo ->
             key(photo.id) {
@@ -154,10 +152,10 @@ fun <T : Photo> FolderPhotos(
 }
 
 @Composable
-fun LazyItemScope.SimpleSquarePhotoItem(photo: Photo) {
+fun SimpleSquarePhoto(photo: Photo) {
     CoilPhoto(
         modifier = Modifier
-            .fillParentMaxWidth()
+            .fillMaxWidth()
             .aspectRatio(1f)
             .padding(1.dp),
         photo = photo,

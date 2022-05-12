@@ -91,7 +91,7 @@ data class LocalFolderScreen(
                     }
                 }
             ) {
-                SimpleSquarePhotoItem(photo)
+                SimpleSquarePhoto(photo)
 
                 val isVideo = remember(photo) { photo.isVideo }
 

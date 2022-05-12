@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import net.theluckycoder.familyphotos.BuildConfig
 import net.theluckycoder.familyphotos.datastore.SettingsDataStore
@@ -83,7 +82,6 @@ object NetworkModule {
         ignoreUnknownKeys = true
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
     @Singleton
     @Provides
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit =

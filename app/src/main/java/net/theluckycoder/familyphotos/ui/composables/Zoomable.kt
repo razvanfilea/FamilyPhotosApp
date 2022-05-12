@@ -6,16 +6,13 @@ import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.pointer.*
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.layout
 import kotlinx.coroutines.launch
 
@@ -82,7 +79,7 @@ fun Zoomable(
                     detectDrag(
                         onDrag = { change, dragAmount ->
                             if (state.zooming && enable) {
-                                change.consumePositionChange()
+                                if (change.positionChange() != Offset.Zero) change.consume()
                                 scope.launch {
                                     state.drag(dragAmount)
                                     state.addPosition(
@@ -147,7 +144,7 @@ private suspend fun PointerInputScope.detectDrag(
             var drag: PointerInputChange?
             do {
                 drag = awaitTouchSlopOrCancellation(down.id, onDrag)
-            } while (drag != null && !drag.positionChangeConsumed())
+            } while (drag != null && !drag.isConsumed)
             if (drag != null) {
                 onDragStart.invoke(drag.position)
                 if (

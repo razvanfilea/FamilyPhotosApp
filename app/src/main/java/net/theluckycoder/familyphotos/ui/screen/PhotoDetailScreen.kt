@@ -5,7 +5,6 @@ import android.os.Parcelable
 import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -72,7 +71,6 @@ data class PhotoDetailScreen(
     }
 
     @OptIn(
-        ExperimentalAnimationApi::class,
         com.google.accompanist.pager.ExperimentalPagerApi::class
     )
     @Composable

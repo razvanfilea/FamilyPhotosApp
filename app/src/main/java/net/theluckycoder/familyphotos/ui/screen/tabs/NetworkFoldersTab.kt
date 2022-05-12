@@ -2,14 +2,13 @@ package net.theluckycoder.familyphotos.ui.screen.tabs
 
 import android.content.res.Configuration
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -57,7 +56,6 @@ object NetworkFoldersTab : BottomTab {
 
     private object NetworkFoldersScreen : Screen {
 
-        @OptIn(ExperimentalFoundationApi::class)
         @Composable
         override fun Content() = Column {
             val mainViewModel: MainViewModel = viewModel()
@@ -80,9 +78,9 @@ object NetworkFoldersTab : BottomTab {
                 if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 2 else 5
 
             LazyVerticalGrid(
+                columns = GridCells.Fixed(columnCount),
                 modifier = Modifier.fillMaxSize(),
-                cells = GridCells.Fixed(columnCount),
-            ) {
+            ) { // Make a fake Network Photo to load the thumbnail
                 items(filteredFolders) { folder ->
                     key(folder.coverPhotoId) {
                         // Make a fake Network Photo to load the thumbnail

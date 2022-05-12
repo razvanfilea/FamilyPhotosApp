@@ -85,7 +85,7 @@ data class NetworkFolderScreen(
                     }
                 }
             ) {
-                SimpleSquarePhotoItem(photo)
+                SimpleSquarePhoto(photo)
             }
         }
     }

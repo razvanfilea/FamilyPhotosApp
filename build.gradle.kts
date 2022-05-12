@@ -1,14 +1,14 @@
 buildscript {
-    val kotlinVersion: String by rootProject.extra("1.6.10")
-    val composeVersion: String by rootProject.extra("1.1.1")
-    val hiltVersion: String by rootProject.extra("2.41")
+    val kotlinVersion: String by rootProject.extra("1.6.21")
+    val composeVersion: String by rootProject.extra("1.2.0-beta01")
+    val hiltVersion: String by rootProject.extra("2.42")
 
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:7.1.3")
+        classpath("com.android.tools.build:gradle:7.2.0")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
         classpath("com.google.dagger:hilt-android-gradle-plugin:${hiltVersion}")
     }

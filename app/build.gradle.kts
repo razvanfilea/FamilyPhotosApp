@@ -3,7 +3,7 @@ plugins {
 
     kotlin("android")
     kotlin("kapt")
-    kotlin("plugin.serialization") version "1.6.20"
+    kotlin("plugin.serialization") version "1.6.21"
 //    id("com.google.devtools.ksp") version "1.5.31-1.0.0"
     id("kotlin-parcelize")
 
@@ -13,6 +13,7 @@ plugins {
 android {
     compileSdk = 31
     buildToolsVersion = "31.0.0"
+    namespace = "net.theluckycoder.familyphotos"
 
     defaultConfig {
         applicationId = "net.theluckycoder.familyphotos"
@@ -76,7 +77,7 @@ android {
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).configureEach {
     kotlinOptions {
         jvmTarget = "11"
-        freeCompilerArgs = freeCompilerArgs + listOf("-Xjvm-default=all", "-Xopt-in=kotlin.RequiresOptIn")
+        freeCompilerArgs = freeCompilerArgs + listOf("-Xjvm-default=all", "-opt-in=kotlin.RequiresOptIn")
     }
 }
 
@@ -85,7 +86,7 @@ dependencies {
     val composeVersion: String by rootProject.extra
     val hiltVersion: String by rootProject.extra
     val roomVersion = "2.4.2"
-    val accompanistVersion = "0.23.1"
+    val accompanistVersion = "0.24.8-beta"
     val coilVersion = "2.0.0"
     val voyagerVersion = "1.0.0-rc02"
 
@@ -94,7 +95,7 @@ dependencies {
     debugImplementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.3")
 
     // Arrow
     implementation(platform("io.arrow-kt:arrow-stack:1.1.2"))
@@ -159,7 +160,6 @@ dependencies {
     // Accompanist
     implementation("com.google.accompanist:accompanist-swiperefresh:$accompanistVersion")
     implementation("com.google.accompanist:accompanist-pager:$accompanistVersion")
-    implementation("com.google.accompanist:accompanist-insets:$accompanistVersion")
     implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
     implementation("com.google.accompanist:accompanist-pager:$accompanistVersion")
 
