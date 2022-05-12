@@ -94,7 +94,7 @@ dependencies {
     kotlin("kotlin-stdlib-jdk8", kotlinVersion)
     debugImplementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.3")
 
     // Arrow
