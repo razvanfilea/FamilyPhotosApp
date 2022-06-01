@@ -118,7 +118,7 @@ dependencies {
 
     // Paging
     implementation("androidx.paging:paging-runtime-ktx:3.1.1")
-    implementation("androidx.paging:paging-compose:1.0.0-alpha14")
+    implementation("androidx.paging:paging-compose:1.0.0-alpha15")
 
     // Compose
     implementation("androidx.compose.ui:ui:$composeVersion")
