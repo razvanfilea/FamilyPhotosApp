@@ -1,6 +1,6 @@
 buildscript {
     val kotlinVersion: String by rootProject.extra("1.6.21")
-    val composeVersion: String by rootProject.extra("1.2.0-beta01")
+    val composeVersion: String by rootProject.extra("1.2.0-beta03")
     val hiltVersion: String by rootProject.extra("2.42")
 
     repositories {

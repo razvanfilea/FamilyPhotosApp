@@ -11,8 +11,7 @@ plugins {
 }
 
 android {
-    compileSdk = 31
-    buildToolsVersion = "31.0.0"
+    compileSdk = 32
     namespace = "net.theluckycoder.familyphotos"
 
     defaultConfig {
@@ -20,7 +19,7 @@ android {
         minSdk = 29
         targetSdk = 30
         versionCode = 14
-        versionName = "1.4"
+        versionName = "1.4.2"
         resourceConfigurations += listOf("en", "ro")
 
         javaCompileOptions {
@@ -86,14 +85,14 @@ dependencies {
     val composeVersion: String by rootProject.extra
     val hiltVersion: String by rootProject.extra
     val roomVersion = "2.4.2"
-    val accompanistVersion = "0.24.8-beta"
+    val accompanistVersion = "0.24.9-beta"
     val coilVersion = "2.1.0"
     val voyagerVersion = "1.0.0-rc02"
 
     // Kotlin
     kotlin("kotlin-stdlib-jdk8", kotlinVersion)
     debugImplementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.2")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.3")
 
