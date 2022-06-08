@@ -3,7 +3,7 @@ plugins {
 
     kotlin("android")
     kotlin("kapt")
-    kotlin("plugin.serialization") version "1.6.21"
+    kotlin("plugin.serialization") version "1.7.0"
 //    id("com.google.devtools.ksp") version "1.5.31-1.0.0"
     id("kotlin-parcelize")
 
