@@ -34,14 +34,13 @@ import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.size.Size
+import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.parcelize.Parcelize
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.*
@@ -50,16 +49,23 @@ import net.theluckycoder.familyphotos.ui.LocalPlayerController
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.composables.*
 import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
+import net.theluckycoder.familyphotos.ui.dialog.NetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
+@Suppress("DataClassPrivateConstructor")
 @Parcelize
-data class PhotoDetailScreen(
+data class PhotoDetailScreen private constructor(
+    val allPhotos: MutableList<Photo>, // is actually a SnapshotStateList
     var index: Int,
-    val allPhotos: List<Photo>,
 ) : Screen, Parcelable {
 
     override val key: ScreenKey
-        get() = "PhotoDetailScreen ${allPhotos[index].hashCode()}"
+        get() = "PhotoDetailScreen ${allPhotos.hashCode()}"
+
+    constructor(
+        index: Int,
+        allPhotos: List<Photo>,
+    ) : this(mutableStateListOf(*allPhotos.toTypedArray()), index)
 
     constructor(
         photo: Photo,
@@ -70,20 +76,23 @@ data class PhotoDetailScreen(
         require(index != -1)
     }
 
-    @OptIn(
-        com.google.accompanist.pager.ExperimentalPagerApi::class
-    )
+    @OptIn(ExperimentalPagerApi::class)
     @Composable
     override fun Content() = Box(Modifier.fillMaxSize()) {
         val mainViewModel: MainViewModel = viewModel()
+        val navigator = LocalNavigator.currentOrThrow
 
         SideEffect {
             mainViewModel.showBottomAppBar.value = false
         }
 
         val pagerState = rememberPagerState(index)
+        var showAppBar by remember { mutableStateOf(true) }
 
-        DisposableEffect(Unit) {
+        DisposableEffect(allPhotos.size) {
+            if (allPhotos.size == 0)
+                navigator.pop()
+
             onDispose {
                 index = pagerState.currentPage
             }
@@ -92,36 +101,51 @@ data class PhotoDetailScreen(
         HorizontalPager(
             count = allPhotos.size,
             state = pagerState,
-            key = { allPhotos[it] }
+            key = { allPhotos.getOrNull(it)?.id ?: it }
         ) { page ->
-            val photo = remember(page) { allPhotos[page] }
-            var showAppBar by remember { mutableStateOf(true) }
+            val photo = allPhotos.getOrNull(page) ?: return@HorizontalPager
+            val photoFlow: Flow<Photo?> = remember(photo.id) {
+                if (photo is LocalPhoto)
+                    mainViewModel.getLocalPhotoFlow(photo.id)
+                else
+                    mainViewModel.getNetworkPhotoFlow(photo.id)
+            }
 
-            val dateTime = getPhotoDate(photo)
+            val updatedPhoto by photoFlow.collectAsState(photo)
+            LaunchedEffect(updatedPhoto) {
+                if (updatedPhoto == null) {
+                    index = pagerState.currentPage.coerceAtMost(allPhotos.size - 1)
 
+                    // The photo must have been deleted so we remove it as well
+                    allPhotos.removeAt(page)
+                }
+            }
+
+            PagerContent(
+                updatedPhoto ?: photo,
+                showAppBar,
+                onShowAppBarChanged = { showAppBar = it },
+                mainViewModel
+            )
+        }
+
+        val currentPhoto = allPhotos.getOrNull(pagerState.currentPage)
+
+        if (currentPhoto != null) {
             AnimatedVisibility(
                 visible = showAppBar,
                 enter = fadeIn(),
                 exit = fadeOut()
             ) {
-                val navigator = LocalNavigator.currentOrThrow
-
                 NavBackTopAppBar(
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.TopCenter),
-                    title = dateTime,
-                    subtitle = photo.name,
+                    title = currentPhoto.getPhotoDate(),
+                    subtitle = currentPhoto.name,
                     navIconOnClick = { navigator.pop() }
                 )
             }
-
-            PagerContent(
-                photo,
-                showAppBar,
-                onShowAppBarChanged = { showAppBar = it },
-                mainViewModel
-            )
         }
     }
 
@@ -176,23 +200,6 @@ data class PhotoDetailScreen(
                     photo = photo,
                     mainViewModel = mainViewModel,
                 )
-            }
-        }
-    }
-
-    @Composable
-    private fun getPhotoDate(photo: Photo) = remember(photo) {
-        val instant = Instant.fromEpochMilliseconds(photo.timeCreated)
-        val date = instant.toLocalDateTime(timeZone)
-
-        buildString {
-            append(date.dayOfMonth).append(' ')
-            append(date.month).append(' ')
-            append(date.year)
-
-            if (date.hour != 0 || date.minute != 0) {
-                append(" - ")
-                append(date.hour).append(':').append(date.minute)
             }
         }
     }
@@ -269,18 +276,39 @@ data class PhotoDetailScreen(
                 )
             }
 
-            if (photo is LocalPhoto && !photo.isSavedToCloud) {
-                IconButtonText(
-                    onClick = { navigator.push(UploadPhotosScreen(listOf(photo.id))) },
-                    text = stringResource(id = R.string.action_upload),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_cloud_upload_outline),
-                        contentDescription = null
-                    )
+            // Local only
+            if (photo is LocalPhoto) {
+                if (!photo.isSavedToCloud) {
+                    IconButtonText(
+                        onClick = { navigator.push(UploadPhotosScreen(listOf(photo.id))) },
+                        text = stringResource(id = R.string.action_upload),
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_cloud_upload_outline),
+                            contentDescription = null
+                        )
+                    }
+                } else {
+                    val networkPhotoState = mainViewModel.getNetworkPhotoFlow(photo.networkPhotoId)
+                        .collectAsState(null)
+
+                    IconButtonText(
+                        onClick = {
+                            val networkPhoto = networkPhotoState.value
+                            if (networkPhoto != null)
+                                bottomSheetNavigator.show(NetworkPhotoInfoDialog(networkPhoto))
+                        },
+                        text = stringResource(id = R.string.status_saved),
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_cloud_done_filled),
+                            contentDescription = null
+                        )
+                    }
                 }
             }
 
+            // Network only
             if (photo is NetworkPhoto) {
                 IconButtonText(
                     onClick = { navigator.push(MovePhotosScreen(listOf(photo.id))) },
@@ -304,10 +332,6 @@ data class PhotoDetailScreen(
             }*/
 
         }
-    }
-
-    companion object {
-        private val timeZone = TimeZone.of("Europe/Bucharest")
     }
 }
 

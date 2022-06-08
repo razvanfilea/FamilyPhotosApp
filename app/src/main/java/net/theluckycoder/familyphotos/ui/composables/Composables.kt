@@ -19,6 +19,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import net.theluckycoder.familyphotos.model.Photo
 
 @Composable
 fun IconButtonText(
@@ -115,3 +119,21 @@ fun SelectableItem(
     }
 }
 
+private val timeZone = TimeZone.of("Europe/Bucharest")
+
+@Composable
+fun Photo.getPhotoDate() = remember(this) {
+    val instant = Instant.fromEpochMilliseconds(this.timeCreated)
+    val date = instant.toLocalDateTime(timeZone)
+
+    buildString {
+        append(date.dayOfMonth).append(' ')
+        append(date.month).append(' ')
+        append(date.year)
+
+        if (date.hour != 0 || date.minute != 0) {
+            append(" - ")
+            append(date.hour).append(':').append(date.minute)
+        }
+    }
+}

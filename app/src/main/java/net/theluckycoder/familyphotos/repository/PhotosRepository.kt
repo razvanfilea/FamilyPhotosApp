@@ -33,9 +33,9 @@ class PhotosRepository @Inject constructor(
     private val networkPhotosDao: NetworkPhotosDao,
 ) {
 
-    suspend fun getLocalPhoto(photoId: Long) = localPhotosDao.findById(photoId)
+    fun getLocalPhoto(photoId: Long) = localPhotosDao.findById(photoId)
 
-    suspend fun getNetworkPhoto(photoId: Long) = networkPhotosDao.findById(photoId)
+    fun getNetworkPhoto(photoId: Long) = networkPhotosDao.findById(photoId)
 
     suspend fun deleteNetworkPhoto(userId: Long, photoId: Long): Boolean {
         val successful = photosService.get().deletePhoto(userId, photoId).isSuccessful

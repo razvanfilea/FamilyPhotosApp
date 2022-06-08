@@ -20,6 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import net.theluckycoder.familyphotos.R
@@ -178,7 +179,7 @@ data class UploadPhotosScreen(
         val photosToShowcase = remember { mutableStateOf(emptyList<Photo>()) }
 
         LaunchedEffect(photoIds) {
-            photosToShowcase.value = photoIds.mapNotNull { mainViewModel.getLocalPhoto(it) }
+            photosToShowcase.value = photoIds.mapNotNull { mainViewModel.getLocalPhotoFlow(it).first() }
         }
 
         UploadPhotosLayout(
@@ -207,11 +208,11 @@ data class MovePhotosScreen(
         val snackbarHostState = LocalSnackbarHostState.current
 
         LaunchedEffect(photoIds) {
-            photosToShowcase.value = photoIds.mapNotNull { mainViewModel.getNetworkPhoto(it) }
+            photosToShowcase.value = photoIds.mapNotNull { mainViewModel.getNetworkPhotoFlow(it).first() }
         }
 
-        val moveSuccess = stringResource(R.string.images_move_success)
-        val moveFailure = stringResource(R.string.images_move_failure)
+        val moveSuccess = stringResource(R.string.status_move_success)
+        val moveFailure = stringResource(R.string.status_move_failure)
 
         UploadPhotosLayout(
             mainViewModel,

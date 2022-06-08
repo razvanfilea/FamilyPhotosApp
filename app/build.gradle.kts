@@ -19,7 +19,7 @@ android {
         minSdk = 29
         targetSdk = 30
         versionCode = 14
-        versionName = "1.4.2"
+        versionName = "1.4.3"
         resourceConfigurations += listOf("en", "ro")
 
         javaCompileOptions {
@@ -85,7 +85,7 @@ dependencies {
     val composeVersion: String by rootProject.extra
     val hiltVersion: String by rootProject.extra
     val roomVersion = "2.4.2"
-    val accompanistVersion = "0.24.9-beta"
+    val accompanistVersion = "0.24.10-beta"
     val coilVersion = "2.1.0"
     val voyagerVersion = "1.0.0-rc02"
 

@@ -23,7 +23,7 @@ abstract class LocalPhotosDao {
     abstract fun getFolderPhotos(folder: String): Flow<List<LocalPhoto>>
 
     @Query("SELECT * FROM local_photo WHERE id = :photoId")
-    abstract suspend fun findById(photoId: Long): LocalPhoto?
+    abstract fun findById(photoId: Long): Flow<LocalPhoto?>
 
     @Query("SELECT * FROM local_photo WHERE local_photo.networkPhotoId = :networkPhotoId")
     abstract suspend fun findByNetworkId(networkPhotoId: Long): LocalPhoto?

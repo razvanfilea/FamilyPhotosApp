@@ -157,7 +157,7 @@ class MainViewModel @Inject constructor(
     ): Deferred<Boolean> = viewModelScope.async(Dispatchers.IO) {
         networkPhotos.map { id ->
             try {
-                val photo = photosRepository.getNetworkPhoto(id) ?: return@map false
+                val photo = photosRepository.getNetworkPhoto(id).firstOrNull() ?: return@map false
 
                 photosRepository.changePhotoLocation(
                     photo = photo,
@@ -173,13 +173,11 @@ class MainViewModel @Inject constructor(
 
     // region Individual Photos Actions
 
-    suspend fun getLocalPhoto(photoId: Long): LocalPhoto? = withContext(Dispatchers.IO) {
+    fun getLocalPhotoFlow(photoId: Long): Flow<LocalPhoto?> =
         photosRepository.getLocalPhoto(photoId)
-    }
 
-    suspend fun getNetworkPhoto(photoId: Long): NetworkPhoto? = withContext(Dispatchers.IO) {
+    fun getNetworkPhotoFlow(photoId: Long): Flow<NetworkPhoto?> =
         photosRepository.getNetworkPhoto(photoId)
-    }
 
     /**
      * Receives a list of [LocalPhoto] ids that will be uploaded

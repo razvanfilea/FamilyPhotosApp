@@ -11,6 +11,7 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.bottomSheet.LocalBottomSheetNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.ui.composables.SelectableItem
@@ -48,7 +49,7 @@ data class NetworkFolderScreen(
                         val items = selectedItems.toList()
 
                         scope.launch {
-                            val photos = items.mapNotNull { mainViewModel.getNetworkPhoto(it) }
+                            val photos = items.mapNotNull { mainViewModel.getNetworkPhotoFlow(it).first() }
                             bottomSheetNavigator.show(DeletePhotosDialog(photos))
                             selectedItems.clear()
                         }

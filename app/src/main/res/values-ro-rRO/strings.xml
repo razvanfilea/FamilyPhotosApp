@@ -11,10 +11,10 @@
     <string name="action_more">Mai mult</string>
     <string name="action_cancel">Anulează</string>
     <string name="failed_download_image">Nu s-a putut descărca imaginea</string>
-    <string name="image_upload_success">Imagine încărcată cu succes</string>
-    <string name="images_move_success">Imagini mutate cu succes</string>
-    <string name="images_move_failure">Nu s-au putut muta pozele</string>
-    <string name="image_upload_failure">Nu s-a putut încărca poza</string>
+    <string name="status_upload_success">Imagine încărcată cu succes</string>
+    <string name="status_move_success">Imagini mutate cu succes</string>
+    <string name="status_move_failure">Nu s-au putut muta pozele</string>
+    <string name="status_upload_failure">Nu s-a putut încărca poza</string>
     <string name="action_share">Partajează</string>
     <string name="action_move">Mută</string>
     <string name="action_next">Următorul</string>
@@ -23,4 +23,15 @@
     <string name="message_morning">Bună dimineața %s!</string>
     <string name="message_normal">Bună, %s!</string>
     <string name="message_night">Noapte bună %s</string>
+    <string name="settings">Setări</string>
+    <string name="status_saved">Salvată</string>
+    <string name="send_to">Trimite la:</string>
+    <string name="pref_category_cache">Cache</string>
+    <string name="pref_cache_size">Dimensiune Cache (MB)</string>
+    <string name="pref_clear_cache">Șterge cache</string>
+    <string name="folder_name">Nume director</string>
+    <string name="notification_backup_fail_io">Eroare la fișiere</string>
+    <string name="notification_backup_fail_unknown">Motiv necunoscut</string>
+    <string name="notification_backup_fail_internet">Lipsă internet</string>
+    <string name="action_previous">Anterior</string>
 </resources>

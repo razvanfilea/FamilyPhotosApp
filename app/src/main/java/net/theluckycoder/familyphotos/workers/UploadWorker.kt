@@ -10,9 +10,13 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.work.HiltWorker
-import androidx.work.*
+import androidx.work.CoroutineWorker
+import androidx.work.ForegroundInfo
+import androidx.work.WorkManager
+import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.flow.first
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.repository.PhotosRepository
 import java.io.File
@@ -49,7 +53,7 @@ class UploadWorker @AssistedInject constructor(
             var total = ids.size
 
             ids.forEachIndexed { index, localPhotoId ->
-                val localPhoto = repository.getLocalPhoto(localPhotoId)
+                val localPhoto = repository.getLocalPhoto(localPhotoId).first()
                 if (localPhoto == null || localPhoto.networkPhotoId != 0L) {
                     total--
                     return@forEachIndexed

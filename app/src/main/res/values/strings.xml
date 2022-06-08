@@ -37,10 +37,11 @@
         <item quantity="other">Failed to delete %d images</item>
     </plurals>
 
-    <string name="images_move_success">Images moved successfully</string>
-    <string name="images_move_failure">Failed to move images</string>
-    <string name="image_upload_success">Image uploaded successfully</string>
-    <string name="image_upload_failure">Failed to upload image</string>
+    <string name="status_move_success">Images moved successfully</string>
+    <string name="status_move_failure">Failed to move images</string>
+    <string name="status_upload_success">Image uploaded successfully</string>
+    <string name="status_upload_failure">Failed to upload image</string>
+    <string name="status_saved">Saved</string>
 
     <string name="send_to">Send to:</string>
     <string name="failed_download_image">Failed to download image</string>

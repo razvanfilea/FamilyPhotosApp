@@ -14,6 +14,7 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.bottomSheet.LocalBottomSheetNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.isVideo
@@ -52,7 +53,7 @@ data class LocalFolderScreen(
                         val items = selectedItems.toList()
 
                         scope.launch {
-                            val photos = items.mapNotNull { mainViewModel.getLocalPhoto(it) }
+                            val photos = items.mapNotNull { mainViewModel.getLocalPhotoFlow(it).first() }
                             bottomSheetNavigator.show(DeletePhotosDialog(photos))
                             selectedItems.clear()
                         }
@@ -87,7 +88,7 @@ data class LocalFolderScreen(
                         else
                             selectedItems += photo.id
                     } else {
-                        navigator.push(PhotoDetailScreen(photo, photosList.toList()))
+                        navigator.push(PhotoDetailScreen(photo, photosList))
                     }
                 }
             ) {

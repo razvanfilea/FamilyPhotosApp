@@ -1,13 +1,7 @@
 package net.theluckycoder.familyphotos.db
 
 import androidx.paging.PagingSource
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Transaction
-import androidx.room.Update
+import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.model.NetworkFolder
 import net.theluckycoder.familyphotos.model.NetworkPhoto
@@ -32,20 +26,24 @@ abstract class NetworkPhotosDao {
     @Query("SELECT * FROM network_photo WHERE network_photo.folder = :folder ORDER BY network_photo.timeCreated ASC")
     abstract fun getFolderPhotos(folder: String): Flow<List<NetworkPhoto>>
 
-    @Query("""SELECT folder, id, ownerUserId, COUNT(id) FROM network_photo 
+    @Query(
+        """SELECT folder, id, ownerUserId, COUNT(id) FROM network_photo 
         WHERE folder IS NOT NULL GROUP BY folder
-        ORDER BY network_photo.folder ASC""")
+        ORDER BY network_photo.folder ASC"""
+    )
     abstract fun getFolders(): Flow<List<NetworkFolder>>
 
-    @Query("""SELECT * FROM network_photo
+    @Query(
+        """SELECT * FROM network_photo
         WHERE ownerUserId = :userId
         AND ROUND(timeCreated / 1000 / 3600 / 24) = ROUND(:timestamp / 1000 / 3600 / 24)
         ORDER BY network_photo.timeCreated DESC
-    """)
+    """
+    )
     abstract suspend fun getPhotosOnThisDay(userId: Long, timestamp: Long): List<NetworkPhoto>
 
     @Query("SELECT * FROM network_photo WHERE id = :photoId")
-    abstract suspend fun findById(photoId: Long): NetworkPhoto?
+    abstract fun findById(photoId: Long): Flow<NetworkPhoto?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract suspend fun insert(photo: NetworkPhoto)

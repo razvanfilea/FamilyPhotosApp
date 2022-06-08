@@ -29,6 +29,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.bottomSheet.LocalBottomSheetNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.NetworkPhoto
@@ -126,7 +127,7 @@ fun PhotosList(
 
                         scope.launch {
                             val selectedPhotos =
-                                items.mapNotNull { mainViewModel.getNetworkPhoto(it) }
+                                items.mapNotNull { mainViewModel.getNetworkPhotoFlow(it).first() }
                             bottomSheetNavigator.show(DeletePhotosDialog(selectedPhotos))
                             selectedPhotoIds.clear()
                         }
