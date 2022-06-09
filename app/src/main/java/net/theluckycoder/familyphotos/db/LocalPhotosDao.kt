@@ -1,47 +1,35 @@
 package net.theluckycoder.familyphotos.db
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Query
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.model.LocalFolder
 import net.theluckycoder.familyphotos.model.LocalPhoto
 
 @Dao
-abstract class LocalPhotosDao {
+abstract class LocalPhotosDao : AbstractPhotosDao<LocalPhoto>("local_photo") {
 
-    @Query("SELECT * FROM local_photo")
-    protected abstract fun getAll(): List<LocalPhoto>
+    @Query("SELECT * FROM local_photo WHERE id = :photoId")
+    abstract fun findById(photoId: Long): Flow<LocalPhoto?>
 
     @Query(
         """
         SELECT folder, id, uri, COUNT(id) FROM (
             SELECT * FROM local_photo ORDER BY local_photo.timeCreated DESC
-        ) WHERE folder IS NOT NULL GROUP BY folder ORDER BY folder ASC"""
+        ) WHERE folder <> '' GROUP BY folder ORDER BY folder ASC"""
     )
     abstract fun getFolders(): Flow<List<LocalFolder>>
 
     @Query("SELECT * FROM local_photo WHERE local_photo.folder = :folder ORDER BY local_photo.timeCreated DESC")
     abstract fun getFolderPhotos(folder: String): Flow<List<LocalPhoto>>
 
-    @Query("SELECT * FROM local_photo WHERE id = :photoId")
-    abstract fun findById(photoId: Long): Flow<LocalPhoto?>
-
     @Query("SELECT * FROM local_photo WHERE local_photo.networkPhotoId = :networkPhotoId")
     abstract suspend fun findByNetworkId(networkPhotoId: Long): LocalPhoto?
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
-    abstract suspend fun insert(photo: LocalPhoto)
-
-    @Insert(onConflict = OnConflictStrategy.ABORT)
-    protected abstract fun insertAll(list: Collection<LocalPhoto>)
-
-    @Update(onConflict = OnConflictStrategy.REPLACE)
-    abstract suspend fun update(photo: LocalPhoto)
-
-    @Query("DELETE FROM local_photo WHERE id = :photoId")
-    abstract suspend fun delete(photoId: Long)
-
     @Delete
-    protected abstract fun deleteAll(photos: Collection<LocalPhoto>)
+    protected abstract fun delete(photos: Collection<LocalPhoto>)
 
     @Transaction
     open suspend fun replaceAllChanged(list: List<LocalPhoto>) {
@@ -65,6 +53,6 @@ abstract class LocalPhotosDao {
         if (toInsert.isNotEmpty())
             insertAll(toInsert.map { it.value })
         if (toDelete.isNotEmpty())
-            deleteAll(toDelete.map { it.value })
+            delete(toDelete.map { it.value })
     }
 }

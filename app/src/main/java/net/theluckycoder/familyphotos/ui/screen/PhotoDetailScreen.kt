@@ -1,9 +1,5 @@
 package net.theluckycoder.familyphotos.ui.screen
 
-import android.content.Intent
-import android.os.Parcelable
-import android.util.Log
-import android.webkit.MimeTypeMap
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -14,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -37,27 +34,22 @@ import coil.size.Size
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.parcelize.Parcelize
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.*
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.LocalPlayerController
-import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.composables.*
 import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.NetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @Suppress("DataClassPrivateConstructor")
-@Parcelize
+//@Parcelize
 data class PhotoDetailScreen private constructor(
-    val allPhotos: MutableList<Photo>, // is actually a SnapshotStateList
+    val allPhotos: SnapshotStateList<Photo>, // is actually a SnapshotStateList
     var index: Int,
-) : Screen, Parcelable {
+) : Screen /*Parcelable*/ {
 
     override val key: ScreenKey
         get() = "PhotoDetailScreen ${allPhotos.hashCode()}"
@@ -124,7 +116,7 @@ data class PhotoDetailScreen private constructor(
             PagerContent(
                 updatedPhoto ?: photo,
                 showAppBar,
-                onShowAppBarChanged = { showAppBar = it },
+                toggleShowAppBar = { showAppBar = !showAppBar },
                 mainViewModel
             )
         }
@@ -153,7 +145,7 @@ data class PhotoDetailScreen private constructor(
     private fun BoxScope.PagerContent(
         photo: Photo,
         showAppBar: Boolean,
-        onShowAppBarChanged: (Boolean) -> Unit,
+        toggleShowAppBar: () -> Unit,
         mainViewModel: MainViewModel
     ) {
         val isVideo = remember(photo) { photo.isVideo }
@@ -164,7 +156,7 @@ data class PhotoDetailScreen private constructor(
                     .fillMaxSize()
                     .align(Alignment.Center),
                 photo = photo,
-                onTap = { onShowAppBarChanged(!showAppBar) }
+                onTap = { toggleShowAppBar() }
             )
         } else {
             val playerController = LocalPlayerController.current.get()
@@ -181,7 +173,7 @@ data class PhotoDetailScreen private constructor(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
             ) {
-                onShowAppBarChanged(!showAppBar)
+                toggleShowAppBar()
             }) {
                 VideoPlayer.Surface()
             }
@@ -209,10 +201,8 @@ data class PhotoDetailScreen private constructor(
         photo: Photo,
         mainViewModel: MainViewModel = viewModel()
     ) {
-        val snackbarHostState = LocalSnackbarHostState.current
         val bottomSheetNavigator = LocalBottomSheetNavigator.current
         val navigator = LocalNavigator.currentOrThrow
-        val scope = rememberCoroutineScope()
 
         Row(
             modifier = Modifier
@@ -220,21 +210,14 @@ data class PhotoDetailScreen private constructor(
                 .padding(horizontal = 4.dp)
                 .background(
                     brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            Color.Black,
-                        )
+                        colors = listOf(Color.Transparent, Color.Black)
                     )
                 ),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            val context = LocalContext.current
-            val sendTo = stringResource(R.string.send_to)
 
             IconButtonText(
-                onClick = {
-                    bottomSheetNavigator.show(DeletePhotosDialog(listOf(photo)))
-                },
+                onClick = { bottomSheetNavigator.show(DeletePhotosDialog(listOf(photo))) },
                 text = stringResource(id = R.string.action_delete),
             ) {
                 Icon(
@@ -243,38 +226,7 @@ data class PhotoDetailScreen private constructor(
                 )
             }
 
-            val failedToDownloadImage = stringResource(R.string.failed_download_image)
-
-            IconButtonText(
-                onClick = {
-                    scope.launch(Dispatchers.IO) {
-                        val uri = mainViewModel.getLocalPhotoUriAsync(photo).await()
-
-                        withContext(Dispatchers.Main) {
-                            if (uri != null) {
-                                Log.d("URI Image", uri.toString())
-                                val shareIntent: Intent = Intent().apply {
-                                    action = Intent.ACTION_SEND
-                                    putExtra(Intent.EXTRA_STREAM, uri)
-                                    type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(
-                                        photo.name.substringAfterLast('.')
-                                    )
-                                }
-
-                                context.startActivity(Intent.createChooser(shareIntent, sendTo))
-                            } else {
-                                snackbarHostState.showSnackbar(failedToDownloadImage)
-                            }
-                        }
-                    }
-                },
-                text = stringResource(id = R.string.action_share),
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_action_share),
-                    contentDescription = null
-                )
-            }
+            SharePhotoIconButton(true, getPhotos = { listOf(photo) }, mainViewModel)
 
             // Local only
             if (photo is LocalPhoto) {
@@ -319,18 +271,17 @@ data class PhotoDetailScreen private constructor(
                         contentDescription = null
                     )
                 }
+
+                IconButtonText(
+                    onClick = { bottomSheetNavigator.show(NetworkPhotoInfoDialog(photo)) },
+                    text = stringResource(id = R.string.action_info),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_outline_info),
+                        contentDescription = null
+                    )
+                }
             }
-
-            /*IconButton(
-                enabled = false,
-                onClick = {}
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_more_options_vertical),
-                    contentDescription = stringResource(id = R.string.action_more)
-                )
-            }*/
-
         }
     }
 }
@@ -368,10 +319,13 @@ private fun ZoomableImage(
             }
         }
     ) {
-        val request = ImageRequest.Builder(LocalContext.current)
-            .data(photo.getUri())
-            .size(Size.ORIGINAL)
-            .build()
+        val ctx = LocalContext.current
+        val request = remember {
+            ImageRequest.Builder(ctx)
+                .data(photo.getUri())
+                .size(Size.ORIGINAL)
+                .build()
+        }
 
         SubcomposeAsyncImage(
             modifier = modifier,

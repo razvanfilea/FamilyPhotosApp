@@ -2,24 +2,20 @@ package net.theluckycoder.familyphotos.ui.screen
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.bottomSheet.LocalBottomSheetNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.isVideo
+import net.theluckycoder.familyphotos.ui.composables.PhotoUtilitiesActions
 import net.theluckycoder.familyphotos.ui.composables.SelectableItem
-import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 data class LocalFolderScreen(
@@ -34,11 +30,9 @@ data class LocalFolderScreen(
             mainViewModel.showBottomAppBar.value = true
         }
 
-        val scope = rememberCoroutineScope()
         val selectedItems = remember { mutableStateListOf<Long>() }
 
         val navigator = LocalNavigator.currentOrThrow
-        val bottomSheetNavigator = LocalBottomSheetNavigator.current
 
         val photosFlow = remember(folderName) { mainViewModel.getLocalFolderPhotos(folderName) }
         val photosList by photosFlow.collectAsState(emptyList())
@@ -47,36 +41,7 @@ data class LocalFolderScreen(
             folderName = folderName,
             selectedItems = selectedItems,
             photosList = photosList,
-            appBarActions = {
-                if (selectedItems.isNotEmpty()) {
-                    IconButton(onClick = {
-                        val items = selectedItems.toList()
-
-                        scope.launch {
-                            val photos = items.mapNotNull { mainViewModel.getLocalPhotoFlow(it).first() }
-                            bottomSheetNavigator.show(DeletePhotosDialog(photos))
-                            selectedItems.clear()
-                        }
-                    }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_action_delete),
-                            contentDescription = null,
-                            tint = Color.White,
-                        )
-                    }
-
-                    IconButton(onClick = {
-                        navigator.push(UploadPhotosScreen(selectedItems.toList()))
-                        selectedItems.clear()
-                    }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_cloud_upload_outline),
-                            contentDescription = null,
-                            tint = Color.White,
-                        )
-                    }
-                }
-            }
+            appBarActions = { PhotoUtilitiesActions(LocalPhoto::class, selectedItems, mainViewModel) }
         ) { photo ->
             SelectableItem(
                 selected = selectedItems.contains(photo.id),

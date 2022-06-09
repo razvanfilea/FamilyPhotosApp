@@ -48,6 +48,7 @@ class UploadWorker @AssistedInject constructor(
         val ids = inputData.getLongArray(KEY_INPUT_LIST) ?: return Result.failure()
         val userOwnerId = inputData.getLong(KEY_USER_OWNER_ID, -1).takeUnless { it == -1L }
         val uploadFolder = inputData.getString(KEY_UPLOAD_FOLDER)
+            .orEmpty().trim().takeIf { it.isNotBlank() }
 
         val result = try {
             var total = ids.size

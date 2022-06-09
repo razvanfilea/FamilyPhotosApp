@@ -13,6 +13,7 @@
     <string name="section_storage">Storage</string>
 
     <!-- Actions -->
+    <string name="action_info">Info</string>
     <string name="action_share">Share</string>
     <string name="action_delete">Delete</string>
     <string name="action_upload">Upload</string>

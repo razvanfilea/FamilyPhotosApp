@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -29,14 +28,12 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.bottomSheet.LocalBottomSheetNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.model.isVideo
+import net.theluckycoder.familyphotos.ui.composables.PhotoUtilitiesActions
 import net.theluckycoder.familyphotos.ui.composables.SelectableItem
-import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @Composable
@@ -121,36 +118,7 @@ fun PhotosList(
                 Text(text = "${selectedPhotoIds.size} Selected")
             },
             actions = {
-                IconButton(onClick = {
-                    if (selectedPhotoIds.isNotEmpty()) {
-                        val items = selectedPhotoIds.toList()
-
-                        scope.launch {
-                            val selectedPhotos =
-                                items.mapNotNull { mainViewModel.getNetworkPhotoFlow(it).first() }
-                            bottomSheetNavigator.show(DeletePhotosDialog(selectedPhotos))
-                            selectedPhotoIds.clear()
-                        }
-                    }
-                }) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_action_delete),
-                        contentDescription = stringResource(R.string.action_delete),
-                        tint = Color.White,
-                    )
-                }
-
-                IconButton(onClick = {
-                    if (selectedPhotoIds.isNotEmpty()) {
-                        navigator.push(MovePhotosScreen(selectedPhotoIds.toList()))
-                    }
-                }) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_move_folder),
-                        contentDescription = stringResource(R.string.action_move),
-                        tint = Color.White,
-                    )
-                }
+                PhotoUtilitiesActions(NetworkPhoto::class, selectedPhotoIds, mainViewModel)
             },
             elevation = 0.dp,
             backgroundColor = Color.Transparent
