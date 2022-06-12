@@ -140,7 +140,7 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("de.nycode:retrofit2-kotlinx-serialization-converter:0.11.0")
     implementation("com.squareup.okhttp3:okhttp-tls:4.9.3")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
 
     // WorkManager
     implementation("androidx.work:work-runtime-ktx:2.7.1")
