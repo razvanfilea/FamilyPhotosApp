@@ -90,7 +90,7 @@ object PersonalTab : BottomTab {
                         }
                     }
                 },
-                photosPagingList = mainViewModel.allPhotosPaging,
+                photosPagingList = mainViewModel.personalPhotosPager,
                 mainViewModel = mainViewModel,
                 initialPhotoId = initialPhotoId,
                 onSaveInitialPhotoId = { it?.let { initialPhotoId = it } }

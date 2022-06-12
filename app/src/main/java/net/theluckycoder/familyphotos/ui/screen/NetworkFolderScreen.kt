@@ -1,8 +1,13 @@
 package net.theluckycoder.familyphotos.ui.screen
 
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import net.theluckycoder.familyphotos.model.NetworkPhoto
@@ -13,6 +18,9 @@ import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 data class NetworkFolderScreen(
     val folderName: String
 ) : Screen {
+
+    override val key: ScreenKey
+        get() = "NetworkFolderScreen($folderName)"
 
     @Composable
     override fun Content() {
@@ -32,7 +40,16 @@ data class NetworkFolderScreen(
             folderName = folderName,
             selectedItems = selectedItems,
             photosList = photosList,
-            appBarActions = { PhotoUtilitiesActions(NetworkPhoto::class, selectedItems, mainViewModel) }
+            appBarActions = {
+                if (selectedItems.isEmpty()) {
+                    IconButton(onClick = {
+                        navigator.push(MovePhotosScreen(photosList.map { it.id }))
+                    }) {
+                        Icon(Icons.Default.Edit, contentDescription = null)
+                    }
+                }
+                PhotoUtilitiesActions(NetworkPhoto::class, selectedItems, mainViewModel)
+            }
         ) { photo ->
             SelectableItem(
                 selected = selectedItems.contains(photo.id),

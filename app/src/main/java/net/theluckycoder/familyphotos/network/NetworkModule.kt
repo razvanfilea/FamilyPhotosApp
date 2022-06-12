@@ -7,7 +7,6 @@ import coil.decode.ImageDecoderDecoder
 import coil.decode.VideoFrameDecoder
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
-import coil.util.DebugLogger
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,7 +19,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
-import net.theluckycoder.familyphotos.BuildConfig
 import net.theluckycoder.familyphotos.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.datastore.UserDataStore
 import net.theluckycoder.familyphotos.network.service.PhotosService
@@ -109,13 +107,14 @@ object NetworkModule {
         settingsDataStore: SettingsDataStore
     ): ImageLoader =
         ImageLoader.Builder(context)
-            .logger(DebugLogger().takeIf { BuildConfig.DEBUG })
+//            .logger(DebugLogger().takeIf { BuildConfig.DEBUG })
             .components(fun ComponentRegistry.Builder.() {
                 add(ImageDecoderDecoder.Factory())
                 add(VideoFrameDecoder.Factory())
             })
             .okHttpClient(okHttpClient)
             // Cache
+            .memoryCache { MemoryCache.Builder(context).maxSizePercent(0.35).build() }
             .memoryCache { MemoryCache.Builder(context).maxSizePercent(0.35).build() }
             .diskCache {
                 runBlocking {

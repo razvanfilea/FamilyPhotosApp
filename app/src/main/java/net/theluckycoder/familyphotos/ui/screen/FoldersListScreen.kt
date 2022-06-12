@@ -39,6 +39,7 @@ fun FolderFilterTextField(folderNameFilter: String, onFilterChange: (String) -> 
         value = folderNameFilter,
         onValueChange = onFilterChange,
         label = { Text(stringResource(R.string.folder_name)) },
+        singleLine = true,
         leadingIcon = {
             Icon(painterResource(R.drawable.ic_search), contentDescription = null)
         },
@@ -74,7 +75,6 @@ fun FolderPreviewItem(
             .background(Color.DarkGray)
             .clickable(onClick = onClick)
     ) {
-
         CoilPhoto(
             modifier = Modifier.fillMaxSize(),
             photo = photo,
@@ -93,7 +93,7 @@ fun FolderPreviewItem(
 
     Text(
         modifier = Modifier.padding(bottom = 8.dp),
-        text = "$photosCount items",
+        text = "$photosCount photos",
         fontSize = 14.sp,
         fontWeight = FontWeight.Light
     )

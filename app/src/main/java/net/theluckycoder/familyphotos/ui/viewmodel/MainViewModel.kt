@@ -22,6 +22,7 @@ import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.repository.FoldersRepository
 import net.theluckycoder.familyphotos.repository.PhotosListRepository
 import net.theluckycoder.familyphotos.repository.PhotosRepository
+import net.theluckycoder.familyphotos.workers.BackupWorker
 import net.theluckycoder.familyphotos.workers.UploadWorker
 import java.time.format.TextStyle
 import java.util.*
@@ -35,7 +36,7 @@ class MainViewModel @Inject constructor(
     private val photosRepository: PhotosRepository,
     private val photosListRepository: PhotosListRepository,
     private val foldersRepository: FoldersRepository,
-    userDataStore: UserDataStore,
+    private val userDataStore: UserDataStore,
     val settingsDataStore: SettingsDataStore,
 ) : ViewModel() {
 
@@ -48,14 +49,15 @@ class MainViewModel @Inject constructor(
     val isOnline = isOnlineFlow.asStateFlow()
 
     val displayNameFlow = userDataStore.displayNameFlow
+    val autoBackupFlow = userDataStore.autoBackup
 
-    val allPhotosPaging = Pager(PagingConfig(pageSize = 100, enablePlaceholders = false)) {
+    val personalPhotosPager = Pager(PagingConfig(pageSize = 100, enablePlaceholders = false)) {
         photosListRepository.getPersonalPhotosPaged(userId)
     }.flow.flowOn(Dispatchers.Default)
         .cachedIn(viewModelScope)
         .mapPagingPhotos()
 
-    val publicPhotosPaging = Pager(PagingConfig(pageSize = 100, enablePlaceholders = false)) {
+    val publicPhotosPager = Pager(PagingConfig(pageSize = 100, enablePlaceholders = false)) {
         photosListRepository.getPublicPhotosPaged()
     }.flow.flowOn(Dispatchers.Default)
         .cachedIn(viewModelScope)
@@ -79,6 +81,46 @@ class MainViewModel @Inject constructor(
                 if (userId != newId) {
                     userId = newId
                     refreshPhotos()
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            autoBackupFlow.collectLatest { autoUpload ->
+                ensureActive()
+
+                if (autoUpload) {
+                    val constraints = Constraints.Builder()
+                        .setRequiresCharging(true)
+                        .setRequiredNetworkType(NetworkType.UNMETERED)
+                        .build()
+
+                    val periodicUpload =
+                        PeriodicWorkRequestBuilder<BackupWorker>(1, TimeUnit.DAYS)
+                            .setConstraints(constraints)
+                            .build()
+
+                    try {
+                        WorkManager.getInstance(app)
+                            .enqueueUniquePeriodicWork(
+                                UNIQUE_PERIODIC_UPLOAD,
+                                ExistingPeriodicWorkPolicy.KEEP,
+                                periodicUpload
+                            )
+                            .await()
+                        Log.i(BackupWorker::class.simpleName, "Backup has been enabled")
+                    } catch (e: Throwable) {
+                        Log.e(BackupWorker::class.simpleName, "Backup failed to be enabled", e)
+                    }
+                } else {
+                    try {
+                        WorkManager.getInstance(app)
+                            .cancelUniqueWork(UNIQUE_PERIODIC_UPLOAD)
+                            .await()
+                        Log.i(BackupWorker::class.simpleName, "Backup has been disabled")
+                    } catch (e: Throwable) {
+                        Log.e(BackupWorker::class.simpleName, "Backup failed to be disabled", e)
+                    }
                 }
             }
         }
@@ -111,6 +153,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun setAutoBackup(value: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            userDataStore.setAutoBackup(value)
+        }
+    }
+
     private suspend fun getMemories(get: suspend (timestamp: Long) -> List<NetworkPhoto>) =
         withContext(Dispatchers.Default) {
             val instant = Clock.System.now()
@@ -134,7 +182,7 @@ class MainViewModel @Inject constructor(
         }
 
     suspend fun getPersonalMemories() = getMemories {
-        photosListRepository.getPersonalMemories(userId,it)
+        photosListRepository.getPersonalMemories(userId, it)
     }
 
     suspend fun getPublicMemories() = getMemories(photosListRepository::getPublicMemories)
@@ -159,13 +207,15 @@ class MainViewModel @Inject constructor(
             try {
                 val photo = photosRepository.getNetworkPhoto(id).firstOrNull() ?: return@map false
 
-                photosRepository.changePhotoLocation(
+                val result = photosRepository.changePhotoLocation(
                     photo = photo,
                     newUserOwnerId = userId.takeUnless { makePublic },
                     newFolderName = newFolderName
                 )
+                Log.d("Moving Photos", "Moved $id result=$result")
+                result
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("Moving Photos", "Moved $id failed!", e)
                 false
             }
         }.all { it }
@@ -249,9 +299,9 @@ class MainViewModel @Inject constructor(
                         ensureActive()
 
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(app, "App cache cleaned successfully", Toast.LENGTH_SHORT)
+                        Toast.makeText(app, "Cache cleaned successfully", Toast.LENGTH_SHORT)
                             .show()
-                        Log.d("Cache", "App cache cleaned successfully")
+                        Log.d("Cache", "Cache cleaned successfully")
                     }
                 }
             }
@@ -261,6 +311,8 @@ class MainViewModel @Inject constructor(
     }
 
     companion object {
+        private const val UNIQUE_PERIODIC_UPLOAD = "periodic_upload"
+
         private val timeZone = TimeZone.of("Europe/Bucharest")
         private val currentDate = Clock.System.now().toLocalDateTime(timeZone)
 

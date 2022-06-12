@@ -140,8 +140,8 @@ class PhotosRepository @Inject constructor(
     suspend fun uploadFile(
         ownerUserId: Long?,
         localPhoto: LocalPhoto,
-        fileToUpload: File?,
-        uploadFolder: String?
+        uploadFolder: String?,
+        fileToUpload: File? = null,
     ): Boolean {
         val bytes = fileToUpload?.readBytes()
             ?: context.contentResolver.openInputStream(localPhoto.uri)?.buffered()?.use {

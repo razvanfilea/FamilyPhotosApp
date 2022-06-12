@@ -5,10 +5,12 @@ import androidx.compose.material.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import net.theluckycoder.familyphotos.R
@@ -21,6 +23,9 @@ import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 data class LocalFolderScreen(
     val folderName: String
 ) : Screen {
+
+    override val key: ScreenKey
+        get() = "LocalFolderScreen($folderName)"
 
     @Composable
     override fun Content() {
@@ -77,7 +82,8 @@ data class LocalFolderScreen(
                             .padding(8.dp)
                             .align(Alignment.BottomEnd),
                         painter = painterResource(R.drawable.ic_cloud_done_filled),
-                        contentDescription = null
+                        tint = Color.White,
+                        contentDescription = null,
                     )
                 }
             }

@@ -20,6 +20,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
@@ -131,7 +133,6 @@ private fun UploadPhotosLayout(
                 actions = {
                     IconButton(onClick = {
                         doneAction(choiceIndex, folderName)
-                        navigator.pop()
                     }) {
                         Icon(
                             painterResource(R.drawable.ic_action_done),
@@ -177,6 +178,7 @@ data class UploadPhotosScreen(
     override fun Content() {
         val mainViewModel: MainViewModel = viewModel()
         val photosToShowcase = remember { mutableStateOf(emptyList<Photo>()) }
+        val navigator = LocalNavigator.currentOrThrow
 
         LaunchedEffect(photoIds) {
             photosToShowcase.value = photoIds.mapNotNull { mainViewModel.getLocalPhotoFlow(it).first() }
@@ -190,6 +192,7 @@ data class UploadPhotosScreen(
                     photoIds,
                     choiceIndex == choices.lastIndex,
                     folderName.trim().takeIf { it.isNotEmpty() })
+                navigator.pop()
             }
         )
     }
@@ -200,12 +203,13 @@ data class MovePhotosScreen(
     val photoIds: List<Long>,
 ) : Screen, Parcelable {
 
+    @OptIn(DelicateCoroutinesApi::class)
     @Composable
     override fun Content() {
         val mainViewModel: MainViewModel = viewModel()
         val photosToShowcase = remember { mutableStateOf(emptyList<Photo>()) }
-        val scope = rememberCoroutineScope()
         val snackbarHostState = LocalSnackbarHostState.current
+        val navigator = LocalNavigator.currentOrThrow
 
         LaunchedEffect(photoIds) {
             photosToShowcase.value = photoIds.mapNotNull { mainViewModel.getNetworkPhotoFlow(it).first() }
@@ -218,7 +222,7 @@ data class MovePhotosScreen(
             mainViewModel,
             photosToShowcase.value,
             doneAction = { choiceIndex, folderName ->
-                scope.launch {
+                GlobalScope.launch {
                     val result = mainViewModel.changePhotosLocationAsync(
                         photoIds,
                         choiceIndex == 1,
@@ -229,6 +233,7 @@ data class MovePhotosScreen(
 
                     snackbarHostState.showSnackbar(message)
                 }
+                navigator.pop()
             }
         )
     }

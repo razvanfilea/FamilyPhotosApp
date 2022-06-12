@@ -66,7 +66,7 @@ object FamilyTab : BottomTab {
                         )
                     }
                 },
-                photosPagingList = mainViewModel.publicPhotosPaging,
+                photosPagingList = mainViewModel.publicPhotosPager,
                 mainViewModel = mainViewModel,
                 initialPhotoId = initialPhotoId,
                 onSaveInitialPhotoId = { it?.let { initialPhotoId = it } },

@@ -3,16 +3,22 @@ package net.theluckycoder.familyphotos.ui.screen.tabs
 import android.content.res.Configuration
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.Switch
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -68,6 +74,18 @@ object LocalFoldersTab : BottomTab {
                 albums.filter { it.name.lowercase().contains(searchFilter) }
             }
 
+            val autoUpload by mainViewModel.autoBackupFlow.collectAsState(false)
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "Backup Camera Photos",
+                    Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp)
+                )
+                Switch(autoUpload, onCheckedChange = { mainViewModel.setAutoBackup(it) })
+            }
+
             val columnCount =
                 if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 2 else 5
 
@@ -75,6 +93,7 @@ object LocalFoldersTab : BottomTab {
                 columns = GridCells.Fixed(columnCount),
                 modifier = Modifier.fillMaxSize(),
             ) {
+
                 items(filteredAlbums) { folder ->
                     key(folder.coverPhotoId) {
                         val photo = LocalPhoto(

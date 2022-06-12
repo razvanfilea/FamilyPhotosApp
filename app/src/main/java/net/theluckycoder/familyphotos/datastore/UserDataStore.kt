@@ -46,6 +46,13 @@ class UserDataStore @Inject constructor(@ApplicationContext context: Context) {
         preferences[DISPLAY_NAME] = value
     }
 
+    val autoBackup: Flow<Boolean> =
+        userDataStore.data.map { it[AUTO_BACKUP] ?: false }.distinctUntilChanged()
+
+    suspend fun setAutoBackup(value: Boolean) = userDataStore.edit { preferences ->
+        preferences[AUTO_BACKUP] = value
+    }
+
     private companion object {
         private val Context.userDataStore by preferencesDataStore("user_prefs")
 
@@ -54,6 +61,7 @@ class UserDataStore @Inject constructor(@ApplicationContext context: Context) {
         private const val KEY_DISPLAY_NAME = "display_name"
 
         private val FIRST_START = booleanPreferencesKey("first_start")
+        private val AUTO_BACKUP = booleanPreferencesKey("auto_backup")
         private val CREDENTIALS = stringPreferencesKey(KEY_CREDENTIALS)
         private val USER_ID = intPreferencesKey(KEY_USER_ID)
         private val DISPLAY_NAME = stringPreferencesKey(KEY_DISPLAY_NAME)

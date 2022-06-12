@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.bottomSheet.LocalBottomSheetNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.R
@@ -52,7 +51,7 @@ fun MemoriesList(
 
             Box(
                 Modifier
-                    .width(160.dp)
+                    .width(162.dp)
                     .aspectRatio(0.75f)
                     .padding(4.dp)
                     .clip(RoundedCornerShape(16.dp))
@@ -91,8 +90,6 @@ fun PhotosList(
     initialPhotoId: Long = 0L,
     onSaveInitialPhotoId: (Long?) -> Unit = {}
 ) = Column(Modifier.fillMaxSize()) {
-    val navigator = LocalNavigator.currentOrThrow
-    val bottomSheetNavigator = LocalBottomSheetNavigator.current
 
     val photos = photosPagingList.collectAsLazyPagingItems()
 
@@ -100,7 +97,6 @@ fun PhotosList(
         if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 5 else 10
 
     val selectedPhotoIds = remember { mutableStateListOf<Long>() }
-    val scope = rememberCoroutineScope()
 
     AnimatedVisibility(
         visible = selectedPhotoIds.isNotEmpty(),
@@ -115,7 +111,7 @@ fun PhotosList(
                 }
             },
             title = {
-                Text(text = "${selectedPhotoIds.size} Selected")
+                Text("${selectedPhotoIds.size} Selected")
             },
             actions = {
                 PhotoUtilitiesActions(NetworkPhoto::class, selectedPhotoIds, mainViewModel)
@@ -126,6 +122,9 @@ fun PhotosList(
     }
 
     val listState = rememberLazyListState()
+    val getCurrentSnapshot = {
+        photos.itemSnapshotList.mapNotNull { it as? Photo? }
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -135,19 +134,20 @@ fun PhotosList(
             headerContent()
         }
 
-        val list = ArrayList<Int>(columnCount)
+        val rowItems = ArrayList<Int>(columnCount)
 
         for (mainIndex in 0 until photos.itemCount) {
             when (val data = photos.peek(mainIndex)) {
                 is String -> {
-                    val listCopy = list.toList()
-                    list.clear()
+                    val listCopy = rowItems.toList()
+                    rowItems.clear()
                     if (listCopy.isNotEmpty()) {
                         item(key = (photos.peek(listCopy.first()) as Photo).id) {
                             PhotoRow(
                                 columnCount,
                                 listCopy.map { photos[it] as Photo },
                                 selectedPhotoIds,
+                                getCurrentSnapshot,
                             )
                         }
                     }
@@ -169,15 +169,16 @@ fun PhotosList(
                     }
                 }
                 is Photo -> {
-                    list.add(mainIndex)
-                    if (list.size == columnCount) {
-                        val listCopy = list.toList()
-                        list.clear()
+                    rowItems.add(mainIndex)
+                    if (rowItems.size == columnCount) {
+                        val listCopy = rowItems.toList()
+                        rowItems.clear()
                         item(key = (photos.peek(listCopy.first()) as Photo).id) {
                             PhotoRow(
                                 columnCount,
                                 listCopy.map { photos[it] as Photo },
                                 selectedPhotoIds,
+                                getCurrentSnapshot,
                             )
                         }
                     }
@@ -204,12 +205,16 @@ fun PhotosList(
 
     DisposableEffect(Unit) {
         onDispose {
-            var index = listState.firstVisibleItemIndex
+            try {
+                var index = listState.firstVisibleItemIndex
 
-            while ((photos.peek(index) as? Photo?) == null)
-                ++index
+                while ((photos.peek(index) as? Photo?) == null)
+                    ++index
 
-            onSaveInitialPhotoId((photos.peek(index) as Photo).id)
+                onSaveInitialPhotoId((photos.peek(index) as Photo).id)
+            } catch (e: Exception) {
+                // It's really not necessary for this to actually happen
+            }
         }
     }
 }
@@ -219,6 +224,7 @@ private fun PhotoRow(
     columnCount: Int,
     list: List<Photo>,
     selectedItems: SnapshotStateList<Long>,
+    getCurrentSnapshotList: () -> List<Photo>,
 ) {
     val navigator = LocalNavigator.currentOrThrow
 
@@ -242,7 +248,7 @@ private fun PhotoRow(
                             else
                                 selectedItems += photo.id
                         } else {
-                            navigator.push(PhotoDetailScreen(photo, list))
+                            navigator.push(PhotoDetailScreen(photo, getCurrentSnapshotList()))
                         }
                     }
                 ) {

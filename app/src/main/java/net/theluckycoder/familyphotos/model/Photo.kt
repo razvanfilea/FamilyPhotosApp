@@ -16,6 +16,7 @@ sealed class Photo : Parcelable {
     abstract val id: Long
     abstract val name: String
     abstract val timeCreated: Long
+    abstract val folder: String?
 
     override fun hashCode(): Int {
         throw NotImplementedError("This should not be used directly")
@@ -36,7 +37,7 @@ data class LocalPhoto(
     val networkPhotoId: Long = 0L,
     override val name: String,
     override val timeCreated: Long,
-    val folder: String?,
+    override val folder: String?,
     @Serializable(UriAsStringSerializer::class)
     val uri: Uri,
     val mimeType: String? = null,
@@ -65,7 +66,7 @@ data class NetworkPhoto(
     val ownerUserId: Long,
     override val name: String,
     override val timeCreated: Long,
-    val folder: String?,
+    override val folder: String?,
 ) : Photo(), Parcelable {
 
     /*override fun hashCode(): Int = id.hashCode()

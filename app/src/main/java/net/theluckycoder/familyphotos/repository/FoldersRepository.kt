@@ -9,13 +9,13 @@ import android.util.Log
 import androidx.core.database.getLongOrNull
 import androidx.core.database.getStringOrNull
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.scopes.ViewModelScoped
 import net.theluckycoder.familyphotos.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import javax.inject.Inject
+import javax.inject.Singleton
 
-@ViewModelScoped
+@Singleton // Needed for WorkManager
 class FoldersRepository @Inject constructor(
     @ApplicationContext
     private val context: Context,
