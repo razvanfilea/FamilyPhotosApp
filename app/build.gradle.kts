@@ -107,7 +107,7 @@ dependencies {
 //    implementation("androidx.heifwriter:heifwriter:1.0.0")
     implementation("androidx.exifinterface:exifinterface:1.3.3")
     implementation("com.google.android.exoplayer:exoplayer:2.18.0")
-    implementation("com.google.android.exoplayer:extension-okhttp:2.17.1")
+    implementation("com.google.android.exoplayer:extension-okhttp:2.18.0")
 
     // Room
     implementation("androidx.room:room-runtime:$roomVersion")
