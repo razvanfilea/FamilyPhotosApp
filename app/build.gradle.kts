@@ -163,5 +163,5 @@ dependencies {
     implementation("com.google.accompanist:accompanist-pager:$accompanistVersion")
 
     implementation("com.jakewharton:process-phoenix:2.1.2")
-    implementation("com.google.android.gms:play-services-base:18.0.1")
+    implementation("com.google.android.gms:play-services-base:18.1.0")
 }
