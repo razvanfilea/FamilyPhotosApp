@@ -3,6 +3,7 @@ package net.theluckycoder.familyphotos.model
 import android.net.Uri
 import android.os.Parcelable
 import androidx.annotation.Keep
+import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
@@ -27,6 +28,7 @@ sealed class Photo : Parcelable {
     }
 }
 
+@Immutable
 @Keep
 @Serializable
 @Parcelize
@@ -56,6 +58,7 @@ data class LocalPhoto(
         get() = networkPhotoId != 0L
 }
 
+@Immutable
 @Keep
 @Serializable
 @Parcelize

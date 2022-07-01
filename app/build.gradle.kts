@@ -3,7 +3,7 @@ plugins {
 
     kotlin("android")
     kotlin("kapt")
-    kotlin("plugin.serialization") version "1.6.21"
+    kotlin("plugin.serialization") version "1.7.0"
 //    id("com.google.devtools.ksp") version "1.5.31-1.0.0"
     id("kotlin-parcelize")
 
@@ -69,31 +69,26 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = rootProject.extra["composeVersion"] as String
+        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
     }
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).configureEach {
     kotlinOptions {
         jvmTarget = "11"
-        freeCompilerArgs = freeCompilerArgs + listOf("-Xjvm-default=all", "-opt-in=kotlin.RequiresOptIn")
+        freeCompilerArgs = freeCompilerArgs + listOf("-Xjvm-default=all")
     }
 }
 
 dependencies {
-    val kotlinVersion: String by rootProject.extra
-    val composeVersion: String by rootProject.extra
     val hiltVersion: String by rootProject.extra
-    val roomVersion = "2.4.2"
-    val accompanistVersion = "0.24.10-beta"
-    val coilVersion = "2.1.0"
     val voyagerVersion = "1.0.0-rc02"
 
     // Kotlin
-    kotlin("kotlin-stdlib-jdk8", kotlinVersion)
-    debugImplementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
+    kotlin("kotlin-stdlib-jdk8")
+    debugImplementation(libs.kotlinReflect)
+    implementation(libs.kotlinCoroutinesAndroid)
+    implementation(libs.kotlinSerializationJson)
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
 
     // Arrow
@@ -110,22 +105,22 @@ dependencies {
     implementation("com.google.android.exoplayer:extension-okhttp:2.18.0")
 
     // Room
-    implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
-    implementation("androidx.room:room-paging:$roomVersion")
-    kapt("androidx.room:room-compiler:$roomVersion")
+    implementation(libs.room.runtime)
+    implementation(libs.room.paging)
+    kapt(libs.room.compiler)
 
     // Paging
-    implementation("androidx.paging:paging-runtime-ktx:3.1.1")
-    implementation("androidx.paging:paging-compose:1.0.0-alpha15")
+    implementation(libs.paging.runtime)
+    implementation(libs.paging.compose)
 
     // Compose
-    implementation("androidx.compose.ui:ui:$composeVersion")
-    implementation("androidx.compose.ui:ui-tooling-preview:$composeVersion")
-    debugImplementation("androidx.compose.ui:ui-tooling:$composeVersion")
-    implementation("androidx.compose.foundation:foundation:$composeVersion")
-    implementation("androidx.compose.material:material:$composeVersion")
-    implementation("androidx.compose.animation:animation:$composeVersion")
+    implementation(libs.compose.compiler)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.toolingPreview)
+    debugImplementation(libs.compose.tooling)
+    implementation(libs.compose.foundation)
+    implementation(libs.compose.material)
+    implementation(libs.compose.animation)
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.0")
     implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
 
@@ -152,15 +147,14 @@ dependencies {
     implementation("androidx.hilt:hilt-work:1.0.0")
 
     // Coil
-    implementation("io.coil-kt:coil-compose-base:$coilVersion")
-    implementation("io.coil-kt:coil-gif:$coilVersion")
-    implementation("io.coil-kt:coil-video:$coilVersion")
+    implementation(libs.coil.base)
+    implementation(libs.coil.gif)
+    implementation(libs.coil.video)
 
     // Accompanist
-    implementation("com.google.accompanist:accompanist-swiperefresh:$accompanistVersion")
-    implementation("com.google.accompanist:accompanist-pager:$accompanistVersion")
-    implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
-    implementation("com.google.accompanist:accompanist-pager:$accompanistVersion")
+    implementation(libs.accompanist.pager)
+    implementation(libs.accompanist.swipeRefresh)
+    implementation(libs.accompanist.systemUi)
 
     implementation("com.jakewharton:process-phoenix:2.1.2")
     implementation("com.google.android.gms:play-services-base:18.1.0")

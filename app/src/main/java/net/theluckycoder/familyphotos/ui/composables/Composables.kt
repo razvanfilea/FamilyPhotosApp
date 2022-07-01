@@ -38,9 +38,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.TIME_ZONE
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
@@ -145,12 +145,10 @@ fun SelectableItem(
     }
 }
 
-private val timeZone = TimeZone.of("Europe/Bucharest")
-
 @Composable
 fun Photo.getPhotoDate() = remember(this) {
     val instant = Instant.fromEpochMilliseconds(this.timeCreated)
-    val date = instant.toLocalDateTime(timeZone)
+    val date = instant.toLocalDateTime(TIME_ZONE)
 
     buildString {
         append(date.dayOfMonth).append(' ')

@@ -13,7 +13,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.datetime.*
-import kotlinx.datetime.TimeZone
+import net.theluckycoder.familyphotos.TIME_ZONE
 import net.theluckycoder.familyphotos.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.datastore.UserDataStore
 import net.theluckycoder.familyphotos.model.LocalPhoto
@@ -162,7 +162,7 @@ class MainViewModel @Inject constructor(
     private suspend fun getMemories(get: suspend (timestamp: Long) -> List<NetworkPhoto>) =
         withContext(Dispatchers.Default) {
             val instant = Clock.System.now()
-            val today = instant.toLocalDateTime(timeZone).date
+            val today = instant.toLocalDateTime(TIME_ZONE).date
 
             listOf(
                 today.minus(DateTimeUnit.YEAR),
@@ -173,7 +173,7 @@ class MainViewModel @Inject constructor(
                 today.minus(DateTimeUnit.YEAR * 6),
             ).map {
                 val yearsUntil = it.yearsUntil(today)
-                val timestamp = it.atTime(12, 0).toInstant(timeZone).toEpochMilliseconds()
+                val timestamp = it.atTime(12, 0).toInstant(TIME_ZONE).toEpochMilliseconds()
 
                 yearsUntil to get(timestamp)
             }.filterNot {
@@ -313,8 +313,7 @@ class MainViewModel @Inject constructor(
     companion object {
         private const val UNIQUE_PERIODIC_UPLOAD = "periodic_upload"
 
-        private val timeZone = TimeZone.of("Europe/Bucharest")
-        private val currentDate = Clock.System.now().toLocalDateTime(timeZone)
+        private val currentDate = Clock.System.now().toLocalDateTime(TIME_ZONE)
 
         private fun Flow<PagingData<NetworkPhoto>>.mapPagingPhotos() = map { pagingData ->
             pagingData
@@ -323,11 +322,11 @@ class MainViewModel @Inject constructor(
 
                     val beforeDate = before?.let {
                         val instant = Instant.fromEpochMilliseconds(it.timeCreated)
-                        instant.toLocalDateTime(timeZone)
+                        instant.toLocalDateTime(TIME_ZONE)
                     }
 
                     val afterDate =
-                        Instant.fromEpochMilliseconds(after.timeCreated).toLocalDateTime(timeZone)
+                        Instant.fromEpochMilliseconds(after.timeCreated).toLocalDateTime(TIME_ZONE)
 
                     if (beforeDate == null
                         || beforeDate.monthNumber != afterDate.monthNumber

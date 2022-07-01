@@ -1,6 +1,4 @@
 buildscript {
-    val kotlinVersion: String by rootProject.extra("1.6.21")
-    val composeVersion: String by rootProject.extra("1.2.0-beta03")
     val hiltVersion: String by rootProject.extra("2.42")
 
     repositories {
@@ -8,8 +6,8 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:7.2.1")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
+        classpath(libs.agp)
+        classpath(libs.kotlinGradlePlugin)
         classpath("com.google.dagger:hilt-android-gradle-plugin:${hiltVersion}")
     }
 }
@@ -31,16 +29,36 @@ subprojects {
         exclude(group = "androidx.appcompat", module = "appcompat")
         exclude(group = "com.google.android.material", module = "material")
     }
+
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).configureEach {
+        kotlinOptions {
+            if (project.findProperty("composeCompilerReports") == true) {
+                freeCompilerArgs = freeCompilerArgs + listOf(
+                    "-P",
+                    "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=" + project.buildDir.absolutePath + "/compose_compiler"
+                )
+            }
+            if (project.findProperty("composeCompilerMetrics") == true) {
+                freeCompilerArgs = freeCompilerArgs + listOf(
+                    "-P",
+                    "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=" + project.buildDir.absolutePath + "/compose_compiler"
+                )
+            }
+        }
+    }
 }
 
 plugins {
     id("com.github.ben-manes.versions") version "0.42.0"
 }
 
-tasks.named("dependencyUpdates", com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask::class.java).configure {
+tasks.named(
+    "dependencyUpdates",
+    com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask::class.java
+).configure {
     rejectVersionIf {
         (candidate.version.contains("alpha") && !currentVersion.contains("alpha")) ||
-            (candidate.version.contains("beta") && !currentVersion.contains("beta"))
+                (candidate.version.contains("beta") && !currentVersion.contains("beta"))
     }
 }
 

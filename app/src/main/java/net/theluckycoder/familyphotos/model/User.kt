@@ -1,8 +1,10 @@
 package net.theluckycoder.familyphotos.model
 
 import androidx.annotation.Keep
+import androidx.compose.runtime.Immutable
 import kotlinx.serialization.Serializable
 
+@Immutable
 @Keep
 @Serializable
 data class User(

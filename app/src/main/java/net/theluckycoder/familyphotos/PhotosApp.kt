@@ -12,8 +12,11 @@ import com.google.android.gms.security.ProviderInstaller
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
+import kotlinx.datetime.TimeZone
 import net.theluckycoder.familyphotos.datastore.UserDataStore
 import javax.inject.Inject
+
+val TIME_ZONE = TimeZone.of("Europe/Bucharest")
 
 @HiltAndroidApp
 class PhotosApp : Application(), Configuration.Provider {

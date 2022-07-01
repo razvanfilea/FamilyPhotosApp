@@ -1,9 +1,11 @@
 package net.theluckycoder.familyphotos.model
 
 import android.net.Uri
+import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Ignore
 
+@Immutable
 data class NetworkFolder @JvmOverloads constructor(
     @ColumnInfo(name = "folder")
     val name: String,
@@ -36,6 +38,7 @@ data class NetworkFolder @JvmOverloads constructor(
     }
 }
 
+@Immutable
 class LocalFolder(
     @ColumnInfo(name = "folder")
     val name: String,
