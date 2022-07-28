@@ -3,7 +3,7 @@ plugins {
 
     kotlin("android")
     kotlin("kapt")
-    kotlin("plugin.serialization") version "1.7.0"
+    kotlin("plugin.serialization") version "1.7.10"
 //    id("com.google.devtools.ksp") version "1.5.31-1.0.0"
     id("kotlin-parcelize")
 
@@ -96,13 +96,13 @@ dependencies {
     implementation("io.arrow-kt:arrow-core")
 
     // AndroidX
-    implementation("androidx.activity:activity-ktx:1.5.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.0")
+    implementation("androidx.activity:activity-ktx:1.5.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 //    implementation("androidx.heifwriter:heifwriter:1.0.0")
     implementation("androidx.exifinterface:exifinterface:1.3.3")
-    implementation("com.google.android.exoplayer:exoplayer:2.18.0")
-    implementation("com.google.android.exoplayer:extension-okhttp:2.18.0")
+    implementation("com.google.android.exoplayer:exoplayer:2.18.1")
+    implementation("com.google.android.exoplayer:extension-okhttp:2.18.1")
 
     // Room
     implementation(libs.room.runtime)
@@ -121,7 +121,7 @@ dependencies {
     implementation(libs.compose.foundation)
     implementation(libs.compose.material)
     implementation(libs.compose.animation)
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1")
     implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
 
     // Voyager
