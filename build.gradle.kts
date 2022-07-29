@@ -1,5 +1,5 @@
 buildscript {
-    val hiltVersion: String by rootProject.extra("2.42")
+    val hiltVersion: String by rootProject.extra("2.43")
 
     repositories {
         google()

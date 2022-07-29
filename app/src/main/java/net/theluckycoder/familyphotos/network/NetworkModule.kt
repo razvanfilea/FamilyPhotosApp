@@ -66,11 +66,11 @@ object NetworkModule {
     fun providesOkHttpClient(
         @Named("auth") authInterceptor: Interceptor,
     ): OkHttpClient = runBlocking {
-        val certificates = SslUtils.getCertificates()
+//        val certificates = SslUtils.getCertificates() // TODO Remove this
 
         OkHttpClient.Builder()
-            .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager)
-            .hostnameVerifier { _, _ -> true }
+//            .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager)
+//            .hostnameVerifier { _, _ -> true }
             .addInterceptor(authInterceptor)
 //            .addInterceptor(HttpLoggingInterceptor())
             .build()
@@ -115,7 +115,6 @@ object NetworkModule {
             .okHttpClient(okHttpClient)
             // Cache
             .memoryCache { MemoryCache.Builder(context).maxSizePercent(0.35).build() }
-            .memoryCache { MemoryCache.Builder(context).maxSizePercent(0.35).build() }
             .diskCache {
                 runBlocking {
                     DiskCache.Builder()
@@ -128,5 +127,5 @@ object NetworkModule {
             .respectCacheHeaders(false) // Cache-First
             .build()
 
-    const val BASE_URL = "https://razvanrares.go.ro:9002/"
+    const val BASE_URL = "https://server.aaconsl.com/photos/"
 }

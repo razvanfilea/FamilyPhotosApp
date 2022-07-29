@@ -19,7 +19,7 @@ android {
         minSdk = 29
         targetSdk = 30
         versionCode = 15
-        versionName = "1.5.0"
+        versionName = "1.5.1"
         resourceConfigurations += listOf("en", "ro")
 
         javaCompileOptions {
@@ -89,7 +89,7 @@ dependencies {
     debugImplementation(libs.kotlinReflect)
     implementation(libs.kotlinCoroutinesAndroid)
     implementation(libs.kotlinSerializationJson)
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
+    implementation(libs.kotlinDateTime)
 
     // Arrow
     implementation(platform("io.arrow-kt:arrow-stack:1.1.2"))

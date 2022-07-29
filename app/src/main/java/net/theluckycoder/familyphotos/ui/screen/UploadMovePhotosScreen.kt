@@ -77,7 +77,7 @@ private fun UploadDialogContent(
             ) {
                 Column {
                     Icon(
-                        modifier = Modifier.size(54.dp),
+                        modifier = Modifier.size(48.dp),
                         painter = painterResource(choice.painterRes),
                         tint = Color.Unspecified,
                         contentDescription = stringResource(choice.stringRes),

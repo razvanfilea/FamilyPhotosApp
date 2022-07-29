@@ -94,7 +94,7 @@ class UploadWorker @AssistedInject constructor(
 
         try {
             backupFolder.deleteRecursively()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
         }
 
         return result
