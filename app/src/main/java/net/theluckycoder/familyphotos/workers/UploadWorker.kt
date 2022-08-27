@@ -74,7 +74,9 @@ class UploadWorker @AssistedInject constructor(
                     null
                 }*/
 
-                repository.uploadFile(userOwnerId, localPhoto, uploadFolder, null)
+                if (!repository.uploadFile(userOwnerId, localPhoto, uploadFolder, null)) {
+                    Log.e(TAG, "Failed to upload $localPhotoId")
+                }
             }
 
             Result.success()

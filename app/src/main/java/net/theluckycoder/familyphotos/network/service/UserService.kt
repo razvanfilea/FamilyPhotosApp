@@ -8,7 +8,7 @@ import retrofit2.http.Path
 
 interface UserService {
 
-    @GET("/user/{userName}")
+    @GET("/user/name/{userName}")
     suspend fun getUser(
         @Header("Authorization") auth: String,
         @Path("userName") userName: String,

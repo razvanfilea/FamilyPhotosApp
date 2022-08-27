@@ -1,6 +1,10 @@
 package net.theluckycoder.familyphotos.ui.screen.tabs
 
+import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
+import android.os.Environment
+import android.provider.Settings
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -25,6 +30,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.TabOptions
+import net.theluckycoder.familyphotos.BuildConfig
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.ui.PhotosSlideTransition
@@ -60,6 +66,19 @@ object LocalFoldersTab : BottomTab {
         override fun Content() = Column {
             val mainViewModel: MainViewModel = viewModel()
             val navigator = LocalNavigator.currentOrThrow
+            val ctx = LocalContext.current
+
+            LaunchedEffect(Unit) {
+                if (!Environment.isExternalStorageManager()) {
+                    val uri = Uri.parse("package:${BuildConfig.APPLICATION_ID}")
+                    ctx.startActivity(
+                        Intent(
+                            Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                            uri
+                        )
+                    )
+                }
+            }
 
             SideEffect {
                 mainViewModel.showBottomAppBar.value = true

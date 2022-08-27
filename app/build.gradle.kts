@@ -11,15 +11,15 @@ plugins {
 }
 
 android {
-    compileSdk = 32
+    compileSdk = 33
     namespace = "net.theluckycoder.familyphotos"
 
     defaultConfig {
         applicationId = "net.theluckycoder.familyphotos"
-        minSdk = 29
-        targetSdk = 30
+        minSdk = 30
+        targetSdk = 31
         versionCode = 15
-        versionName = "1.5.1"
+        versionName = "1.5.3"
         resourceConfigurations += listOf("en", "ro")
 
         javaCompileOptions {
@@ -136,6 +136,7 @@ dependencies {
     implementation("de.nycode:retrofit2-kotlinx-serialization-converter:0.11.0")
     implementation("com.squareup.okhttp3:okhttp-tls:4.10.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
+    implementation("com.squareup.okhttp3:okhttp-brotli:4.10.0")
 
     // WorkManager
     implementation("androidx.work:work-runtime-ktx:2.7.1")
@@ -157,5 +158,4 @@ dependencies {
     implementation(libs.accompanist.systemUi)
 
     implementation("com.jakewharton:process-phoenix:2.1.2")
-    implementation("com.google.android.gms:play-services-base:18.1.0")
 }

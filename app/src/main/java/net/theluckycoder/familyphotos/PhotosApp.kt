@@ -5,10 +5,6 @@ import android.os.StrictMode
 import android.os.StrictMode.ThreadPolicy
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException
-import com.google.android.gms.common.GooglePlayServicesRepairableException
-import com.google.android.gms.common.GooglePlayServicesUtil
-import com.google.android.gms.security.ProviderInstaller
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
@@ -50,7 +46,7 @@ class PhotosApp : Application(), Configuration.Provider {
 
         GlobalScope.launch(Dispatchers.IO) {
             if (userDataStore.firstStart.first()) {
-                installServiceProviderIfNeeded()
+//                installServiceProviderIfNeeded()
                 userDataStore.setFirstStart()
             }
         }
@@ -62,7 +58,7 @@ class PhotosApp : Application(), Configuration.Provider {
             .setExecutor(Dispatchers.Default.asExecutor())
             .build()
 
-    private fun installServiceProviderIfNeeded() {
+    /*private fun installServiceProviderIfNeeded() {
         try {
             ProviderInstaller.installIfNeeded(this)
         } catch (e: GooglePlayServicesRepairableException) {
@@ -74,5 +70,5 @@ class PhotosApp : Application(), Configuration.Provider {
         } catch (e: GooglePlayServicesNotAvailableException) {
             e.printStackTrace()
         }
-    }
+    }*/
 }

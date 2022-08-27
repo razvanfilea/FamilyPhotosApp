@@ -161,13 +161,13 @@ class PhotosRepository @Inject constructor(
         val response = if (ownerUserId != null) {
             photosService.get().uploadPhoto(
                 userId = ownerUserId,
-                timeCreated = localPhoto.timeCreated,
+                timeCreated = localPhoto.timeCreated.toString(),
                 file = fileBody,
                 folderName = uploadFolder,
             )
         } else {
             photosService.get().uploadPublicPhoto(
-                timeCreated = localPhoto.timeCreated,
+                timeCreated = localPhoto.timeCreated.toString(),
                 file = fileBody,
                 folderName = uploadFolder,
             )

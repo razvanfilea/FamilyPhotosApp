@@ -8,6 +8,7 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.theluckycoder.familyphotos.network.NetworkModule
 
@@ -66,6 +67,7 @@ data class LocalPhoto(
 data class NetworkPhoto(
     @PrimaryKey
     override val id: Long,
+    @SerialName("owner")
     val ownerUserId: Long,
     override val name: String,
     override val timeCreated: Long,

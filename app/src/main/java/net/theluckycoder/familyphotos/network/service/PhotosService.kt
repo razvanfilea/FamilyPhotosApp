@@ -4,18 +4,11 @@ import net.theluckycoder.familyphotos.model.NetworkPhoto
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.Response
-import retrofit2.http.DELETE
-import retrofit2.http.GET
-import retrofit2.http.Multipart
-import retrofit2.http.POST
-import retrofit2.http.Part
-import retrofit2.http.Path
-import retrofit2.http.Query
-import retrofit2.http.Streaming
+import retrofit2.http.*
 
 interface PhotosService {
 
-    @GET("/")
+    @GET("/ping")
     suspend fun ping(): Response<Void>
 
     @GET("/photos/{userId}")
@@ -34,7 +27,7 @@ interface PhotosService {
     @POST("/photos/{userId}/upload")
     suspend fun uploadPhoto(
         @Path("userId") userId: Long,
-        @Query("timeCreated") timeCreated: Long,
+        @Query("timeCreated") timeCreated: String,
         @Query("folderName") folderName: String?,
         @Part file: MultipartBody.Part,
     ): Response<NetworkPhoto>
@@ -59,7 +52,7 @@ interface PhotosService {
     @Multipart
     @POST("/public_photos/upload")
     suspend fun uploadPublicPhoto(
-        @Query("timeCreated") timeCreated: Long,
+        @Query("timeCreated") timeCreated: String,
         @Query("folderName") folderName: String?,
         @Part file: MultipartBody.Part,
     ): Response<NetworkPhoto>

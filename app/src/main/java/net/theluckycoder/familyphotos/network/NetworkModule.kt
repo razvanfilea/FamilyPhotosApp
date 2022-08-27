@@ -7,6 +7,7 @@ import coil.decode.ImageDecoderDecoder
 import coil.decode.VideoFrameDecoder
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
+import coil.util.DebugLogger
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import net.theluckycoder.familyphotos.BuildConfig
 import net.theluckycoder.familyphotos.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.datastore.UserDataStore
 import net.theluckycoder.familyphotos.network.service.PhotosService
@@ -27,6 +29,7 @@ import net.theluckycoder.familyphotos.utils.IOCoroutineScope
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.brotli.BrotliInterceptor
 import retrofit2.Retrofit
 import javax.inject.Named
 import javax.inject.Singleton
@@ -66,11 +69,8 @@ object NetworkModule {
     fun providesOkHttpClient(
         @Named("auth") authInterceptor: Interceptor,
     ): OkHttpClient = runBlocking {
-//        val certificates = SslUtils.getCertificates() // TODO Remove this
-
         OkHttpClient.Builder()
-//            .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager)
-//            .hostnameVerifier { _, _ -> true }
+            .addInterceptor(BrotliInterceptor)
             .addInterceptor(authInterceptor)
 //            .addInterceptor(HttpLoggingInterceptor())
             .build()
@@ -107,7 +107,7 @@ object NetworkModule {
         settingsDataStore: SettingsDataStore
     ): ImageLoader =
         ImageLoader.Builder(context)
-//            .logger(DebugLogger().takeIf { BuildConfig.DEBUG })
+            .logger(DebugLogger().takeIf { BuildConfig.DEBUG })
             .components(fun ComponentRegistry.Builder.() {
                 add(ImageDecoderDecoder.Factory())
                 add(VideoFrameDecoder.Factory())
@@ -127,5 +127,5 @@ object NetworkModule {
             .respectCacheHeaders(false) // Cache-First
             .build()
 
-    const val BASE_URL = "https://server.aaconsl.com/photos/"
+    const val BASE_URL = "https://server.aaconsl.com/"
 }

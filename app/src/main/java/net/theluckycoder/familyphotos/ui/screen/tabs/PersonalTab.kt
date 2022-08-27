@@ -68,7 +68,7 @@ object PersonalTab : BottomTab {
                 mainViewModel.showBottomAppBar.value = true
             }
 
-            val isOnline by mainViewModel.isOnline.collectAsState()
+            val isOnline by mainViewModel.isOnlineFlow.collectAsState()
             val displayName by mainViewModel.displayNameFlow.collectAsState(null)
             val memoriesList = remember { mutableStateListOf<Pair<Int, List<NetworkPhoto>>>() }
 

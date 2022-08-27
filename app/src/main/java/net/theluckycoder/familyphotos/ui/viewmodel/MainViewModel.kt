@@ -45,8 +45,8 @@ class MainViewModel @Inject constructor(
     private var userId = -1L
 
     // Data
-    private val isOnlineFlow = MutableStateFlow(false)
-    val isOnline = isOnlineFlow.asStateFlow()
+    private val _isOnlineFlow = MutableStateFlow(false)
+    val isOnlineFlow = _isOnlineFlow.asStateFlow()
 
     val displayNameFlow = userDataStore.displayNameFlow
     val autoBackupFlow = userDataStore.autoBackup
@@ -132,7 +132,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val ping = async {
                 try {
-                    isOnlineFlow.value = photosListRepository.pingServer()
+                    _isOnlineFlow.value = photosListRepository.pingServer()
                 } catch (e: Exception) {
                     false
                 }

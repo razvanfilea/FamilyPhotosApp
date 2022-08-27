@@ -14,7 +14,6 @@
 
 ## KotlinX Serialization
 -keepattributes *Annotation*, InnerClasses
--dontnote kotlinx.serialization.AnnotationsKt # core serialization annotations
 
 -keepclassmembers class kotlinx.serialization.json.** {
     *** Companion;
