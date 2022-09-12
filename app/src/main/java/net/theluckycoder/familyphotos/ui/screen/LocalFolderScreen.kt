@@ -1,6 +1,8 @@
 package net.theluckycoder.familyphotos.ui.screen
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,7 +30,7 @@ data class LocalFolderScreen(
         get() = "LocalFolderScreen($folderName)"
 
     @Composable
-    override fun Content() {
+    override fun Content() = Box {
         val mainViewModel: MainViewModel = viewModel()
 
         SideEffect {
@@ -46,7 +48,13 @@ data class LocalFolderScreen(
             folderName = folderName,
             selectedItems = selectedItems,
             photosList = photosList,
-            appBarActions = { PhotoUtilitiesActions(LocalPhoto::class, selectedItems, mainViewModel) }
+            appBarActions = {
+                PhotoUtilitiesActions(
+                    LocalPhoto::class,
+                    selectedItems,
+                    mainViewModel
+                )
+            }
         ) { photo ->
             SelectableItem(
                 selected = selectedItems.contains(photo.id),
@@ -86,6 +94,23 @@ data class LocalFolderScreen(
                         contentDescription = null,
                     )
                 }
+            }
+        }
+
+        if (selectedItems.isNotEmpty()) {
+            FloatingActionButton(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+                onClick = {
+                    navigator.push(UploadPhotosScreen(selectedItems.toList()))
+                    selectedItems.clear()
+                }) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_cloud_upload_outline),
+                    contentDescription = null,
+                    tint = Color.Black,
+                )
             }
         }
     }

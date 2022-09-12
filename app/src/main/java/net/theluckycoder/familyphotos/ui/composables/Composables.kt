@@ -46,7 +46,6 @@ import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
-import net.theluckycoder.familyphotos.ui.screen.UploadPhotosScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import kotlin.reflect.KClass
 
@@ -266,19 +265,6 @@ fun <T : Photo> PhotoUtilitiesActions(
         }
 
         SharePhotoIconButton(false, getPhotos = { getPhotos() }, mainViewModel)
-
-        if (isLocalPhoto) {
-            IconButton(onClick = {
-                navigator.push(UploadPhotosScreen(selectedItems.toList()))
-                selectedItems.clear()
-            }) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_cloud_upload_outline),
-                    contentDescription = null,
-                    tint = Color.White,
-                )
-            }
-        }
 
         if (!isLocalPhoto) {
             IconButton(

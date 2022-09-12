@@ -1,19 +1,19 @@
 package net.theluckycoder.familyphotos.ui.screen
 
+import android.annotation.SuppressLint
 import android.content.res.Configuration
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -81,7 +82,6 @@ fun MemoriesList(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PhotosList(
     headerContent: (@Composable () -> Unit),
@@ -91,6 +91,7 @@ fun PhotosList(
     onSaveInitialPhotoId: (Long?) -> Unit = {}
 ) = Column(Modifier.fillMaxSize()) {
 
+    val navigator = LocalNavigator.currentOrThrow
     val photos = photosPagingList.collectAsLazyPagingItems()
 
     val columnCount =
@@ -121,64 +122,75 @@ fun PhotosList(
         )
     }
 
-    val listState = rememberLazyListState()
+    val listState = rememberLazyGridState()
     val getCurrentSnapshot = {
         photos.itemSnapshotList.mapNotNull { it as? Photo? }
     }
 
-    LazyColumn(
+    LazyVerticalGrid(
+        state = listState,
         modifier = Modifier.fillMaxSize(),
-        state = listState
+        columns = GridCells.Fixed(columnCount)
     ) {
-        item(-1) {
-            headerContent()
-        }
+        header(-1) { headerContent() }
 
-        val rowItems = ArrayList<Int>(columnCount)
-
-        for (mainIndex in 0 until photos.itemCount) {
-            when (val data = photos.peek(mainIndex)) {
+        items(
+            items = photos,
+            key = { if (it is Photo) it.id else it },
+            span = { GridItemSpan(if (it is String) columnCount else 1) },
+            contentType = { if (it is String) "string" else "photo"}
+        ) { item ->
+            when (item) {
                 is String -> {
-                    val listCopy = rowItems.toList()
-                    rowItems.clear()
-                    if (listCopy.isNotEmpty()) {
-                        item(key = (photos.peek(listCopy.first()) as Photo).id) {
-                            PhotoRow(
-                                columnCount,
-                                listCopy.map { photos[it] as Photo },
-                                selectedPhotoIds,
-                                getCurrentSnapshot,
-                            )
-                        }
-                    }
-
-                    stickyHeader(key = data) {
-                        Text(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(MaterialTheme.colors.background)
-                                .padding(
-                                    top = 42.dp,
-                                    bottom = 16.dp,
-                                    start = 16.dp,
-                                    end = 16.dp
-                                ),
-                            text = photos[mainIndex] as String,
-                            style = MaterialTheme.typography.h4
-                        )
-                    }
+                    Text(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colors.background)
+                            .padding(
+                                top = 42.dp,
+                                bottom = 16.dp,
+                                start = 16.dp,
+                                end = 16.dp
+                            ),
+                        text = item,
+                        style = MaterialTheme.typography.h4
+                    )
                 }
                 is Photo -> {
-                    rowItems.add(mainIndex)
-                    if (rowItems.size == columnCount) {
-                        val listCopy = rowItems.toList()
-                        rowItems.clear()
-                        item(key = (photos.peek(listCopy.first()) as Photo).id) {
-                            PhotoRow(
-                                columnCount,
-                                listCopy.map { photos[it] as Photo },
-                                selectedPhotoIds,
-                                getCurrentSnapshot,
+                    val isVideo = remember(item) { item.isVideo }
+
+                    SelectableItem(
+                        modifier = Modifier
+                            .aspectRatio(1f)
+                            .padding(1.5.dp)
+                            .background(Color.DarkGray),
+                        selected = selectedPhotoIds.contains(item.id),
+                        enabled = selectedPhotoIds.isNotEmpty(),
+                        onClick = { longPress ->
+                            if (selectedPhotoIds.isNotEmpty() || longPress) {
+                                if (selectedPhotoIds.contains(item.id))
+                                    selectedPhotoIds -= item.id
+                                else
+                                    selectedPhotoIds += item.id
+                            } else {
+                                navigator.push(
+                                    PhotoDetailScreen(item, getCurrentSnapshot())
+                                )
+                            }
+                        }
+                    ) {
+                        CoilPhoto(
+                            photo = item,
+                            contentScale = ContentScale.Crop,
+                        )
+
+                        if (isVideo) {
+                            Icon(
+                                modifier = Modifier
+                                    .padding(8.dp)
+                                    .align(Alignment.TopEnd),
+                                painter = painterResource(R.drawable.ic_play_circle_filled),
+                                contentDescription = null
                             )
                         }
                     }
@@ -219,63 +231,77 @@ fun PhotosList(
     }
 }
 
-@Composable
-private fun PhotoRow(
-    columnCount: Int,
-    list: List<Photo>,
-    selectedItems: SnapshotStateList<Long>,
-    getCurrentSnapshotList: () -> List<Photo>,
+@SuppressLint("BanParcelableUsage")
+private data class PagingPlaceholderKey(private val index: Int) : Parcelable {
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeInt(index)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object {
+        @Suppress("unused")
+        @JvmField
+        val CREATOR: Parcelable.Creator<PagingPlaceholderKey> =
+            object : Parcelable.Creator<PagingPlaceholderKey> {
+                override fun createFromParcel(parcel: Parcel) =
+                    PagingPlaceholderKey(parcel.readInt())
+
+                override fun newArray(size: Int) = arrayOfNulls<PagingPlaceholderKey?>(size)
+            }
+    }
+}
+
+private fun <T : Any> LazyGridScope.items(
+    items: LazyPagingItems<T>,
+    key: ((item: T) -> Any)? = null,
+    span: ((item: T) -> GridItemSpan)? = null,
+    contentType: ((item: T) -> Any)? = null,
+    itemContent: @Composable LazyGridItemScope.(value: T?) -> Unit
 ) {
-    val navigator = LocalNavigator.currentOrThrow
-
-    Row(Modifier.fillMaxWidth()) {
-        list.forEach { photo ->
-            key({ photo.id.takeIf { it != 0L } }) {
-                val isVideo = remember { photo.isVideo }
-
-                SelectableItem(
-                    modifier = Modifier
-                        .weight(1f)
-                        .aspectRatio(1f)
-                        .padding(1.5.dp)
-                        .background(Color.DarkGray),
-                    selected = selectedItems.contains(photo.id),
-                    enabled = selectedItems.isNotEmpty(),
-                    onClick = { longPress ->
-                        if (selectedItems.isNotEmpty() || longPress) {
-                            if (selectedItems.contains(photo.id))
-                                selectedItems -= photo.id
-                            else
-                                selectedItems += photo.id
-                        } else {
-                            navigator.push(PhotoDetailScreen(photo, getCurrentSnapshotList()))
-                        }
-                    }
-                ) {
-                    CoilPhoto(
-                        photo = photo,
-                        contentScale = ContentScale.Crop,
-                    )
-
-                    if (isVideo) {
-                        Icon(
-                            modifier = Modifier
-                                .padding(8.dp)
-                                .align(Alignment.TopEnd),
-                            painter = painterResource(R.drawable.ic_play_circle_filled),
-                            contentDescription = null
-                        )
-                    }
-                }
+    items(
+        count = items.itemCount,
+        key = if (key == null) null else { index ->
+            val item = items.peek(index)
+            if (item == null) {
+                PagingPlaceholderKey(index)
+            } else {
+                key(item)
+            }
+        },
+        span = if (span == null) null else { index ->
+            val item = items.peek(index)
+            if (item == null) {
+                GridItemSpan(1)
+            } else {
+                span(item)
+            }
+        },
+        contentType = if (contentType == null) {
+            { null }
+        } else { index ->
+            val item = items.peek(index)
+            if (item == null) {
+                null
+            } else {
+                contentType(item)
             }
         }
-        for (i in list.size until columnCount) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .aspectRatio(1f)
-                    .padding(1.dp)
-            )
-        }
+    ) { index ->
+        itemContent(items[index])
     }
+}
+
+private fun LazyGridScope.header(
+    key: Any? = null,
+    content: @Composable LazyGridItemScope.() -> Unit
+) {
+    item(
+        key = key,
+        contentType = "header",
+        span = { GridItemSpan(this.maxLineSpan) },
+        content = content
+    )
 }

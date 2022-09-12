@@ -330,7 +330,7 @@ class MainViewModel @Inject constructor(
 
                     if (beforeDate == null
                         || beforeDate.monthNumber != afterDate.monthNumber
-                        || beforeDate.year != beforeDate.year
+                        || beforeDate.year != afterDate.year
                     ) {
                         buildDateString(afterDate)
                     } else null
