@@ -92,11 +92,11 @@ dependencies {
     implementation(libs.kotlinDateTime)
 
     // Arrow
-    implementation(platform("io.arrow-kt:arrow-stack:1.1.2"))
+    implementation(platform("io.arrow-kt:arrow-stack:1.1.3"))
     implementation("io.arrow-kt:arrow-core")
 
     // AndroidX
-    implementation("androidx.activity:activity-ktx:1.5.1")
+    implementation("androidx.activity:activity-ktx:1.6.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 //    implementation("androidx.heifwriter:heifwriter:1.0.0")
