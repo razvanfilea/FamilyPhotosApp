@@ -3,10 +3,9 @@ package net.theluckycoder.familyphotos.ui.screen
 import android.app.Application
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -24,14 +23,13 @@ import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 class SettingsScreen : Screen {
 
-    @OptIn(ExperimentalMaterialApi::class)
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() = Scaffold(
         topBar = {
             val navigator = LocalNavigator.currentOrThrow
 
             TopAppBar(
-                backgroundColor = Color.Transparent,
                 title = {
                     Text(text = stringResource(id = R.string.settings))
                 },

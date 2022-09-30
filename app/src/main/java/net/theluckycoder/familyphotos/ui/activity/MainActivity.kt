@@ -2,11 +2,8 @@ package net.theluckycoder.familyphotos.ui.activity
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,14 +46,17 @@ class MainActivity : ComponentActivity() {
             AppTheme {
                 Box(Modifier.systemBarsPadding()) {
                     val systemUiController = rememberSystemUiController()
-                    val primaryColor = MaterialTheme.colors.primary
+                    val background = MaterialTheme.colorScheme.surface
 
                     SideEffect {
                         systemUiController.setStatusBarColor(Color.Black)
-                        systemUiController.setNavigationBarColor(primaryColor)
+                        systemUiController.setNavigationBarColor(background)
                     }
 
-                    CompositionLocalProvider(LocalImageLoader provides imageLoader, LocalPlayerController provides playerController) {
+                    CompositionLocalProvider(
+                        LocalImageLoader provides imageLoader,
+                        LocalPlayerController provides playerController
+                    ) {
                         AppContent()
                     }
                 }
@@ -72,7 +72,7 @@ private fun RowScope.TabNavigationItem(tab: BottomTab) {
     val tabNavigator = LocalTabNavigator.current
     val selected = tabNavigator.current == tab
 
-    BottomNavigationItem(
+    NavigationBarItem(
         selected = selected,
         onClick = { tabNavigator.current = tab },
         label = { Text(tab.options.title) },
@@ -85,33 +85,22 @@ private fun RowScope.TabNavigationItem(tab: BottomTab) {
     )
 }
 
-@OptIn(
-    ExperimentalMaterialApi::class,
-)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppContent(
     mainViewModel: MainViewModel = viewModel()
 ) = TabNavigator(PersonalTab) {
-    val scaffoldState = rememberScaffoldState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        scaffoldState = scaffoldState,
-        snackbarHost = {
-            scaffoldState.snackbarHostState
-        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             val isVisible by mainViewModel.showBottomAppBar.collectAsState()
 
-            AnimatedVisibility(
-                modifier = Modifier.fillMaxWidth(),
-                visible = isVisible,
-                enter = expandVertically(),
-                exit = shrinkVertically(),
-            ) {
-                BottomNavigation(
+            if (isVisible) {
+                NavigationBar(
                     modifier = Modifier.fillMaxWidth(),
-                    backgroundColor = MaterialTheme.colors.primary
                 ) {
                     TabNavigationItem(PersonalTab)
                     TabNavigationItem(FamilyTab)
@@ -123,11 +112,11 @@ private fun AppContent(
     ) { paddingValues ->
         val isRefreshing by mainViewModel.isRefreshing.collectAsState()
 
-        CompositionLocalProvider(LocalSnackbarHostState provides scaffoldState.snackbarHostState) {
+        CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
             SwipeRefresh(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
+                    .padding(bottom = paddingValues.calculateBottomPadding()),
                 onRefresh = { mainViewModel.refreshPhotos() },
                 state = rememberSwipeRefreshState(isRefreshing)
             ) {
@@ -138,9 +127,9 @@ private fun AppContent(
 
                     DefaultSnackbar(
                         modifier = Modifier.align(Alignment.BottomCenter),
-                        snackbarHostState = scaffoldState.snackbarHostState,
+                        snackbarHostState = snackbarHostState,
                         onDismiss = {
-                            scaffoldState.snackbarHostState.currentSnackbarData?.dismiss()
+                            snackbarHostState.currentSnackbarData?.dismiss()
                         }
                     )
                 }

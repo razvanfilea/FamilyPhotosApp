@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -110,7 +110,7 @@ fun DeleteDialogContent(
             .fillMaxWidth()
             .padding(top = 16.dp, bottom = 16.dp),
         text = stringResource(R.string.confirm_delete),
-        style = MaterialTheme.typography.h6,
+        style = MaterialTheme.typography.headlineSmall,
         textAlign = TextAlign.Center,
     )
 
@@ -119,7 +119,7 @@ fun DeleteDialogContent(
             .fillMaxWidth()
             .padding(bottom = 32.dp),
         text = stringResource(R.string.confirm_delete_detail),
-        style = MaterialTheme.typography.body1,
+        style = MaterialTheme.typography.bodyLarge,
         textAlign = TextAlign.Center,
     )
 
@@ -134,7 +134,7 @@ fun DeleteDialogContent(
         Button(
             modifier = Modifier.weight(1f),
             onClick = onDelete,
-            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFe53935))
+            colors = ButtonDefaults.buttonColors(contentColor = Color(0xFFe53935)) // TODO
         ) {
             Text(text = stringResource(R.string.action_delete))
         }

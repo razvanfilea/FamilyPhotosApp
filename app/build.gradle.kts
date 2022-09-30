@@ -17,9 +17,9 @@ android {
     defaultConfig {
         applicationId = "net.theluckycoder.familyphotos"
         minSdk = 30
-        targetSdk = 31
-        versionCode = 15
-        versionName = "1.5.4"
+        targetSdk = 32
+        versionCode = 16
+        versionName = "1.6.0"
         resourceConfigurations += listOf("en", "ro")
 
         javaCompileOptions {
@@ -81,7 +81,6 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).configure
 }
 
 dependencies {
-    val hiltVersion: String by rootProject.extra
     val voyagerVersion = "1.0.0-rc02"
 
     // Kotlin
@@ -92,8 +91,8 @@ dependencies {
     implementation(libs.kotlinDateTime)
 
     // Arrow
-    implementation(platform("io.arrow-kt:arrow-stack:1.1.3"))
-    implementation("io.arrow-kt:arrow-core")
+//    implementation(platform("io.arrow-kt:arrow-stack:1.1.3"))
+//    implementation("io.arrow-kt:arrow-core")
 
     // AndroidX
     implementation("androidx.activity:activity-ktx:1.6.0")
@@ -119,7 +118,8 @@ dependencies {
     implementation(libs.compose.toolingPreview)
     debugImplementation(libs.compose.tooling)
     implementation(libs.compose.foundation)
-    implementation(libs.compose.material)
+//    implementation(libs.compose.material)
+    implementation(libs.compose.material3)
     implementation(libs.compose.animation)
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1")
     implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
@@ -142,10 +142,10 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.7.1")
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:$hiltVersion")
-    kapt("com.google.dagger:hilt-android-compiler:$hiltVersion")
-    kapt("androidx.hilt:hilt-compiler:1.0.0")
-    implementation("androidx.hilt:hilt-work:1.0.0")
+    implementation(libs.dagger.android)
+    kapt(libs.dagger.compiler)
+    kapt(libs.dagger.hilt.compiler)
+    implementation(libs.dagger.hilt.work)
 
     // Coil
     implementation(libs.coil.base)

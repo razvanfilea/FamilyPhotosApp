@@ -8,7 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,7 +63,7 @@ private fun UploadDialogContent(
     ) {
         choices.forEachIndexed { index, choice ->
             val backgroundColor = if (choiceIndex == index)
-                MaterialTheme.colors.primary
+                MaterialTheme.colorScheme.primary
             else
                 Color.DarkGray
 
@@ -75,18 +75,12 @@ private fun UploadDialogContent(
                 checked = choiceIndex == index,
                 onCheckedChange = { onChoiceIndexChange(index) }
             ) {
-                Column {
                     Icon(
                         modifier = Modifier.size(48.dp),
                         painter = painterResource(choice.painterRes),
                         tint = Color.Unspecified,
                         contentDescription = stringResource(choice.stringRes),
                     )
-
-                    Spacer(Modifier.height(2.dp))
-
-                    Text(stringResource(choice.stringRes))
-                }
             }
         }
     }
@@ -110,6 +104,7 @@ private fun UploadDialogContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun UploadPhotosLayout(
     mainViewModel: MainViewModel,
@@ -141,8 +136,6 @@ private fun UploadPhotosLayout(
                         )
                     }
                 },
-                elevation = 0.dp,
-                backgroundColor = Color.Transparent,
             )
         },
     ) { contentPadding ->

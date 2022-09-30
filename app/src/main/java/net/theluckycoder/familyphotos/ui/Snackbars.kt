@@ -1,7 +1,7 @@
 package net.theluckycoder.familyphotos.ui
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -19,21 +19,21 @@ fun DefaultSnackbar(
             Snackbar(
                 modifier = Modifier.padding(16.dp),
                 action = {
-                    data.actionLabel?.let { actionLabel ->
+                    data.visuals.actionLabel?.let { actionLabel ->
                         TextButton(onClick = onDismiss) {
                             Text(
                                 text = actionLabel,
-                                style = MaterialTheme.typography.body2,
-                                color = MaterialTheme.colors.secondary,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.secondary,
                             )
                         }
                     }
                 }
             ) {
                 Text(
-                    text = data.message,
-                    style = MaterialTheme.typography.body2,
-                    color = MaterialTheme.colors.onPrimary,
+                    text = data.visuals.message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimary,
                 )
             }
         }

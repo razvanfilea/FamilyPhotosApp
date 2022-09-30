@@ -7,8 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Icon
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -70,7 +70,7 @@ data class PhotoDetailScreen private constructor(
 
     @OptIn(ExperimentalPagerApi::class)
     @Composable
-    override fun Content() = Box(Modifier.fillMaxSize()) {
+    override fun Content() = Box(Modifier.fillMaxSize().background(Color.Black)) {
         val mainViewModel: MainViewModel = viewModel()
         val navigator = LocalNavigator.currentOrThrow
 

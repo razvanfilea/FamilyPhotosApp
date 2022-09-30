@@ -1,6 +1,4 @@
 buildscript {
-    val hiltVersion: String by rootProject.extra("2.43.2")
-
     repositories {
         google()
         mavenCentral()
@@ -8,7 +6,7 @@ buildscript {
     dependencies {
         classpath(libs.agp)
         classpath(libs.kotlinGradlePlugin)
-        classpath("com.google.dagger:hilt-android-gradle-plugin:${hiltVersion}")
+        classpath(libs.dagger.hilt.plugin)
     }
 }
 

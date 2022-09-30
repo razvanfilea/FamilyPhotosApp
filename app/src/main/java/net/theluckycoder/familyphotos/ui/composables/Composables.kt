@@ -9,12 +9,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -53,7 +52,6 @@ import kotlin.reflect.KClass
 fun IconButtonText(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     text: String,
     content: @Composable () -> Unit
@@ -62,7 +60,6 @@ fun IconButtonText(
         modifier = modifier
             .clickable(
                 onClick = onClick,
-                enabled = enabled,
                 role = Role.Button,
                 interactionSource = interactionSource,
                 indication = rememberRipple(bounded = false, radius = 24.dp)
@@ -71,18 +68,16 @@ fun IconButtonText(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        val contentAlpha = if (enabled) LocalContentAlpha.current else ContentAlpha.disabled
-        CompositionLocalProvider(LocalContentAlpha provides contentAlpha) {
-            content()
-            Text(
-                modifier = Modifier.padding(top = 2.dp),
-                text = text,
-                fontSize = 12.sp,
-            )
-        }
+        content()
+        Text(
+            modifier = Modifier.padding(top = 2.dp),
+            text = text,
+            fontSize = 12.sp,
+        )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NavBackTopAppBar(
     modifier: Modifier = Modifier,
@@ -102,11 +97,10 @@ fun NavBackTopAppBar(
                 if (title != null)
                     Text(text = title)
                 if (subtitle != null)
-                    Text(text = subtitle, style = MaterialTheme.typography.subtitle1)
+                    Text(text = subtitle, style = MaterialTheme.typography.titleMedium)
             }
         },
-        elevation = 0.dp,
-        backgroundColor = Color.Transparent
+        colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = Color.Transparent)
     )
 }
 

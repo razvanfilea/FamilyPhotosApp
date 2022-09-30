@@ -12,7 +12,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -82,6 +82,7 @@ fun MemoriesList(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PhotosList(
     headerContent: (@Composable () -> Unit),
@@ -117,8 +118,6 @@ fun PhotosList(
             actions = {
                 PhotoUtilitiesActions(NetworkPhoto::class, selectedPhotoIds, mainViewModel)
             },
-            elevation = 0.dp,
-            backgroundColor = Color.Transparent
         )
     }
 
@@ -145,7 +144,7 @@ fun PhotosList(
                     Text(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(MaterialTheme.colors.background)
+                            .background(MaterialTheme.colorScheme.background)
                             .padding(
                                 top = 42.dp,
                                 bottom = 16.dp,
@@ -153,7 +152,7 @@ fun PhotosList(
                                 end = 16.dp
                             ),
                         text = item,
-                        style = MaterialTheme.typography.h4
+                        style = MaterialTheme.typography.headlineLarge
                     )
                 }
                 is Photo -> {

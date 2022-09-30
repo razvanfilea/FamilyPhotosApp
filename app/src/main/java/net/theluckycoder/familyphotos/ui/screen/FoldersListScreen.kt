@@ -10,7 +10,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridItemScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -30,6 +30,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.Photo
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FolderFilterTextField(folderNameFilter: String, onFilterChange: (String) -> Unit) {
     OutlinedTextField(
@@ -99,6 +100,7 @@ fun FolderPreviewItem(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T : Photo> FolderPhotos(
     folderName: String,
@@ -132,8 +134,6 @@ fun <T : Photo> FolderPhotos(
                 Text(text = "${selectedItems.size} Selected")
         },
         actions = appBarActions,
-        elevation = 0.dp,
-        backgroundColor = Color.Transparent
     )
 
     val columnCount =
@@ -157,7 +157,8 @@ fun SimpleSquarePhoto(photo: Photo) {
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-            .padding(1.dp),
+            .padding(1.dp)
+            .background(Color.DarkGray),
         photo = photo,
         contentScale = ContentScale.Crop,
     )
