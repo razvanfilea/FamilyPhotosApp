@@ -24,7 +24,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import net.theluckycoder.familyphotos.ui.*
 import net.theluckycoder.familyphotos.ui.screen.tabs.*
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
-import net.theluckycoder.familyphotos.utils.PlayerController
+import okhttp3.OkHttpClient
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
     lateinit var imageLoader: Lazy<ImageLoader>
 
     @Inject
-    lateinit var playerController: Lazy<PlayerController>
+    lateinit var playerController: Lazy<OkHttpClient>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
 
                     CompositionLocalProvider(
                         LocalImageLoader provides imageLoader,
-                        LocalPlayerController provides playerController
+                        LocalOkHttpClient provides playerController
                     ) {
                         AppContent()
                     }

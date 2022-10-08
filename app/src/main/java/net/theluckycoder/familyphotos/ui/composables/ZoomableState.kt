@@ -92,7 +92,7 @@ class ZoomableState(
     /**
      * Instantly sets scale of [Zoomable] to given [scale]
      */
-    suspend fun snapScaleTo(scale: Float) = coroutineScope {
+    private suspend fun snapScaleTo(scale: Float) = coroutineScope {
         _scale.snapTo(scale.coerceIn(minimumValue = minScale, maximumValue = maxScale))
     }
 

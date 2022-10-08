@@ -38,7 +38,6 @@ import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.*
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
-import net.theluckycoder.familyphotos.ui.LocalPlayerController
 import net.theluckycoder.familyphotos.ui.composables.*
 import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.NetworkPhotoInfoDialog
@@ -159,35 +158,18 @@ data class PhotoDetailScreen private constructor(
                 onTap = { toggleShowAppBar() }
             )
         } else {
-            val playerController = LocalPlayerController.current.get()
-
-            DisposableEffect(photo) {
-                playerController.prepare(photo.getUri())
-
-                onDispose {
-                    playerController.reset()
-                }
-            }
-
             Box(Modifier.clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
             ) {
                 toggleShowAppBar()
             }) {
-                VideoPlayer.Surface()
+                VideoPlayer(photo.getUri())
             }
-
-            if (showAppBar)
-                VideoPlayer.PauseButton(Modifier.align(Alignment.Center))
         }
 
         if (showAppBar) {
             Column(Modifier.align(Alignment.BottomCenter)) {
-                if (isVideo) {
-                    VideoPlayer.Seekbar()
-                }
-
                 BottomBar(
                     photo = photo,
                     mainViewModel = mainViewModel,

@@ -3,7 +3,6 @@ package net.theluckycoder.familyphotos.repository
 import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
@@ -207,16 +206,12 @@ class PhotosRepository @Inject constructor(
 
     suspend fun deleteLocalPhoto(photo: LocalPhoto): Boolean {
         val result = try {
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
-                context.contentResolver.delete(
-                    photo.uri,
-                    "${MediaStore.Images.Media._ID} = ?",
-                    arrayOf(photo.id.toString())
-                )
-                true
-            } else {
-                File(photo.uri.path!!).delete()
-            }
+            context.contentResolver.delete(
+                photo.uri,
+                "${MediaStore.Images.Media._ID} = ?",
+                arrayOf(photo.id.toString())
+            )
+            true
         } catch (securityException: SecurityException) {
             securityException.printStackTrace()
             false

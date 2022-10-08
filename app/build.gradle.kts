@@ -3,7 +3,7 @@ plugins {
 
     kotlin("android")
     kotlin("kapt")
-    kotlin("plugin.serialization") version "1.7.10"
+    kotlin("plugin.serialization") version "1.7.20"
 //    id("com.google.devtools.ksp") version "1.5.31-1.0.0"
     id("kotlin-parcelize")
 
@@ -19,7 +19,7 @@ android {
         minSdk = 30
         targetSdk = 32
         versionCode = 16
-        versionName = "1.6.0"
+        versionName = "1.6.1"
         resourceConfigurations += listOf("en", "ro")
 
         javaCompileOptions {
@@ -99,9 +99,12 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 //    implementation("androidx.heifwriter:heifwriter:1.0.0")
-    implementation("androidx.exifinterface:exifinterface:1.3.3")
-    implementation("com.google.android.exoplayer:exoplayer:2.18.1")
-    implementation("com.google.android.exoplayer:extension-okhttp:2.18.1")
+    implementation("androidx.exifinterface:exifinterface:1.3.4")
+
+    // Media 3
+    implementation(libs.media.ui)
+    implementation(libs.media.exoplayer)
+    implementation(libs.media.okhttp)
 
     // Room
     implementation(libs.room.runtime)
