@@ -95,11 +95,11 @@ dependencies {
 //    implementation("io.arrow-kt:arrow-core")
 
     // AndroidX
-    implementation("androidx.activity:activity-ktx:1.6.0")
+    implementation("androidx.activity:activity-ktx:1.6.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 //    implementation("androidx.heifwriter:heifwriter:1.0.0")
-    implementation("androidx.exifinterface:exifinterface:1.3.4")
+    implementation("androidx.exifinterface:exifinterface:1.3.5")
 
     // Media 3
     implementation(libs.media.ui)
