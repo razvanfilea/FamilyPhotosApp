@@ -25,7 +25,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.bottomSheet.LocalBottomSheetNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
@@ -41,6 +40,7 @@ import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.composables.*
 import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.NetworkPhotoInfoDialog
+import net.theluckycoder.familyphotos.ui.navigation.LocalBottomSheetNavigator
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @Suppress("DataClassPrivateConstructor")

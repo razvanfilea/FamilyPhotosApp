@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.bottomSheet.LocalBottomSheetNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -30,6 +29,7 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.ui.AppTheme
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
+import net.theluckycoder.familyphotos.ui.navigation.LocalBottomSheetNavigator
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @Parcelize
@@ -94,9 +94,8 @@ data class DeletePhotosDialog(
 
 }
 
-
 @Composable
-fun DeleteDialogContent(
+private fun DeleteDialogContent(
     onCancel: () -> Unit,
     onDelete: () -> Unit
 ) = Column(
@@ -134,7 +133,7 @@ fun DeleteDialogContent(
         Button(
             modifier = Modifier.weight(1f),
             onClick = onDelete,
-            colors = ButtonDefaults.buttonColors(contentColor = Color(0xFFe53935)) // TODO
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFe53935)) // TODO
         ) {
             Text(text = stringResource(R.string.action_delete))
         }

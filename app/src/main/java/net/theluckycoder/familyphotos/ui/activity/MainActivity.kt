@@ -11,7 +11,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cafe.adriel.voyager.navigator.bottomSheet.BottomSheetNavigator
 import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
@@ -22,6 +21,7 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import net.theluckycoder.familyphotos.ui.*
+import net.theluckycoder.familyphotos.ui.navigation.BottomSheetNavigator
 import net.theluckycoder.familyphotos.ui.screen.tabs.*
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import okhttp3.OkHttpClient

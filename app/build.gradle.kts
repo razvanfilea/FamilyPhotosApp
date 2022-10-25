@@ -19,7 +19,7 @@ android {
         minSdk = 30
         targetSdk = 32
         versionCode = 16
-        versionName = "1.6.1"
+        versionName = "1.6.2"
         resourceConfigurations += listOf("en", "ro")
 
         javaCompileOptions {
@@ -121,16 +121,17 @@ dependencies {
     implementation(libs.compose.toolingPreview)
     debugImplementation(libs.compose.tooling)
     implementation(libs.compose.foundation)
-//    implementation(libs.compose.material)
+    implementation(libs.compose.material)
     implementation(libs.compose.material3)
     implementation(libs.compose.animation)
+    implementation(libs.compose.activity)
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1")
     implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
 
     // Voyager
     implementation("cafe.adriel.voyager:voyager-navigator:$voyagerVersion")
     implementation("cafe.adriel.voyager:voyager-tab-navigator:$voyagerVersion")
-    implementation("cafe.adriel.voyager:voyager-bottom-sheet-navigator:$voyagerVersion")
+//    implementation("cafe.adriel.voyager:voyager-bottom-sheet-navigator:$voyagerVersion")
     implementation("cafe.adriel.voyager:voyager-transitions:$voyagerVersion")
     implementation("cafe.adriel.voyager:voyager-androidx:$voyagerVersion")
 
