@@ -59,7 +59,7 @@ object FamilyTab : BottomTab {
             }
 
             PhotosList(
-                headerContent = {
+                memoriesContent = {
                     if (memoriesList.isNotEmpty()) {
                         MemoriesList(
                             memoriesList = memoriesList

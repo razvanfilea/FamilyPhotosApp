@@ -2,7 +2,6 @@ package net.theluckycoder.familyphotos.ui.screen
 
 import android.content.res.Configuration
 import androidx.compose.animation.*
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -17,7 +16,6 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
@@ -73,7 +71,6 @@ fun FolderPreviewItem(
             .fillMaxWidth()
             .aspectRatio(1f)
             .clip(RoundedCornerShape(8.dp))
-            .background(Color.DarkGray)
             .clickable(onClick = onClick)
     ) {
         CoilPhoto(
@@ -137,7 +134,7 @@ fun <T : Photo> FolderPhotos(
     )
 
     val columnCount =
-        if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 3 else 8
+        if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 4 else 9
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(columnCount),
@@ -157,8 +154,7 @@ fun SimpleSquarePhoto(photo: Photo) {
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-            .padding(1.dp)
-            .background(Color.DarkGray),
+            .padding(1.dp),
         photo = photo,
         contentScale = ContentScale.Crop,
     )

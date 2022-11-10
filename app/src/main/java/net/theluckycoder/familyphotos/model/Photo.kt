@@ -100,5 +100,13 @@ fun Photo.getUri(): Uri = when (this) {
     is LocalPhoto -> uri
 }
 
+fun Photo.getThumbnailUri(): Uri = when (this) {
+    is NetworkPhoto -> Uri.parse(getThumbnailUrl())
+    is LocalPhoto -> uri
+}
+
 fun NetworkPhoto.getDownloadUrl(): String =
     "${NetworkModule.BASE_URL}photos/$ownerUserId/download/$id"
+
+fun NetworkPhoto.getThumbnailUrl(): String =
+    "${NetworkModule.BASE_URL}photos/$ownerUserId/thumbnail/$id"

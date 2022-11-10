@@ -5,6 +5,8 @@ import android.content.res.Configuration
 import android.os.Parcel
 import android.os.Parcelable
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,7 +19,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
@@ -85,7 +86,8 @@ fun MemoriesList(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PhotosList(
-    headerContent: (@Composable () -> Unit),
+    headerContent: (@Composable () -> Unit)? = null,
+    memoriesContent: @Composable () -> Unit,
     photosPagingList: Flow<PagingData<Any>>,
     mainViewModel: MainViewModel,
     initialPhotoId: Long = 0L,
@@ -99,9 +101,12 @@ fun PhotosList(
         if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 5 else 10
 
     val selectedPhotoIds = remember { mutableStateListOf<Long>() }
+    val isTopBarVisible = selectedPhotoIds.isNotEmpty()
 
     AnimatedVisibility(
-        visible = selectedPhotoIds.isNotEmpty(),
+        visible = isTopBarVisible,
+        enter = expandVertically(),
+        exit = shrinkVertically(),
     ) {
         TopAppBar(
             modifier = Modifier.fillMaxWidth(),
@@ -131,7 +136,18 @@ fun PhotosList(
         modifier = Modifier.fillMaxSize(),
         columns = GridCells.Fixed(columnCount)
     ) {
-        header(-1) { headerContent() }
+        if (headerContent != null) {
+            header(-2) {
+                AnimatedVisibility(
+                    visible = !isTopBarVisible,
+                        enter = expandVertically(),
+                        exit = shrinkVertically(),
+                ) {
+                    headerContent()
+                }
+            }
+        }
+        header(-1) { memoriesContent() }
 
         items(
             items = photos,
@@ -161,12 +177,11 @@ fun PhotosList(
                     SelectableItem(
                         modifier = Modifier
                             .aspectRatio(1f)
-                            .padding(1.5.dp)
-                            .background(Color.DarkGray),
+                            .padding(1.5.dp),
                         selected = selectedPhotoIds.contains(item.id),
-                        enabled = selectedPhotoIds.isNotEmpty(),
+                        enabled = isTopBarVisible,
                         onClick = { longPress ->
-                            if (selectedPhotoIds.isNotEmpty() || longPress) {
+                            if (isTopBarVisible || longPress) {
                                 if (selectedPhotoIds.contains(item.id))
                                     selectedPhotoIds -= item.id
                                 else
@@ -180,6 +195,7 @@ fun PhotosList(
                     ) {
                         CoilPhoto(
                             photo = item,
+                            thumbnail = true,
                             contentScale = ContentScale.Crop,
                         )
 
@@ -206,10 +222,12 @@ fun PhotosList(
                 val index = photos.itemSnapshotList.items
                     .indexOfFirst { (it as? Photo)?.id == initialPhotoId }
 
-                if (index != -1) {
+                if (index != -1 && index != 0) {
                     listState.scrollToItem(index)
                     restored = true
                 }
+            } else {
+                restored = true
             }
         }
     }
@@ -219,10 +237,14 @@ fun PhotosList(
             try {
                 var index = listState.firstVisibleItemIndex
 
-                while ((photos.peek(index) as? Photo?) == null)
-                    ++index
+                if (index < 10) { // No reason to save it
+                    onSaveInitialPhotoId(null)
+                } else {
+                    while ((photos.peek(index) as? Photo?) == null)
+                        ++index
 
-                onSaveInitialPhotoId((photos.peek(index) as Photo).id)
+                    onSaveInitialPhotoId((photos.peek(index) as Photo).id)
+                }
             } catch (e: Exception) {
                 // It's really not necessary for this to actually happen
             }
@@ -255,14 +277,14 @@ private data class PagingPlaceholderKey(private val index: Int) : Parcelable {
 
 private fun <T : Any> LazyGridScope.items(
     items: LazyPagingItems<T>,
-    key: ((item: T) -> Any)? = null,
-    span: ((item: T) -> GridItemSpan)? = null,
-    contentType: ((item: T) -> Any)? = null,
+    key: (item: T) -> Any,
+    span: (item: T) -> GridItemSpan,
+    contentType: (item: T) -> Any,
     itemContent: @Composable LazyGridItemScope.(value: T?) -> Unit
 ) {
     items(
         count = items.itemCount,
-        key = if (key == null) null else { index ->
+        key = { index ->
             val item = items.peek(index)
             if (item == null) {
                 PagingPlaceholderKey(index)
@@ -270,7 +292,7 @@ private fun <T : Any> LazyGridScope.items(
                 key(item)
             }
         },
-        span = if (span == null) null else { index ->
+        span = { index ->
             val item = items.peek(index)
             if (item == null) {
                 GridItemSpan(1)
@@ -278,9 +300,7 @@ private fun <T : Any> LazyGridScope.items(
                 span(item)
             }
         },
-        contentType = if (contentType == null) {
-            { null }
-        } else { index ->
+        contentType = { index ->
             val item = items.peek(index)
             if (item == null) {
                 null

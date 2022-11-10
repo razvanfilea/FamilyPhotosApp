@@ -6,15 +6,14 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.Settings
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,8 +61,9 @@ object LocalFoldersTab : BottomTab {
 
     private object PhoneFoldersScreen : Screen {
 
+        @OptIn(ExperimentalMaterial3Api::class)
         @Composable
-        override fun Content() = Column {
+        override fun Content() = Column(Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets)) {
             val mainViewModel: MainViewModel = viewModel()
             val navigator = LocalNavigator.currentOrThrow
             val ctx = LocalContext.current

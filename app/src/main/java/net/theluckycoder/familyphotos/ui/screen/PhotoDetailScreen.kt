@@ -1,5 +1,7 @@
 package net.theluckycoder.familyphotos.ui.screen
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -7,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
@@ -14,8 +17,8 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -35,6 +38,7 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.extensions.readList
 import net.theluckycoder.familyphotos.model.*
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.composables.*
@@ -44,14 +48,18 @@ import net.theluckycoder.familyphotos.ui.navigation.LocalBottomSheetNavigator
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @Suppress("DataClassPrivateConstructor")
-//@Parcelize
 data class PhotoDetailScreen private constructor(
     val allPhotos: SnapshotStateList<Photo>, // is actually a SnapshotStateList
     var index: Int,
-) : Screen /*Parcelable*/ {
+) : Screen , Parcelable {
 
     override val key: ScreenKey
         get() = "PhotoDetailScreen ${allPhotos.hashCode()}"
+
+    constructor(parcel: Parcel) : this(
+        parcel.readInt(),
+        parcel.readList<Photo>()
+    )
 
     constructor(
         index: Int,
@@ -105,10 +113,11 @@ data class PhotoDetailScreen private constructor(
             val updatedPhoto by photoFlow.collectAsState(photo)
             LaunchedEffect(updatedPhoto) {
                 if (updatedPhoto == null) {
-                    index = pagerState.currentPage.coerceAtMost(allPhotos.size - 1)
+                    index = (pagerState.currentPage + 1).coerceAtMost(allPhotos.size - 1)
 
                     // The photo must have been deleted so we remove it as well
                     allPhotos.removeAt(page)
+                    pagerState.animateScrollToPage(index)
                 }
             }
 
@@ -190,11 +199,7 @@ data class PhotoDetailScreen private constructor(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 4.dp)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black)
-                    )
-                ),
+                .windowInsetsPadding(BottomAppBarDefaults.windowInsets),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
 
@@ -266,20 +271,39 @@ data class PhotoDetailScreen private constructor(
             }
         }
     }
+
+    override fun describeContents(): Int = 0
+
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeInt(index)
+        dest.writeTypedList(allPhotos.toList())
+    }
+
+    companion object CREATOR : Parcelable.Creator<PhotoDetailScreen> {
+        override fun createFromParcel(parcel: Parcel): PhotoDetailScreen {
+            return PhotoDetailScreen(parcel)
+        }
+
+        override fun newArray(size: Int): Array<PhotoDetailScreen?> {
+            return arrayOfNulls(size)
+        }
+    }
 }
 
 @Composable
 fun CoilPhoto(
     modifier: Modifier = Modifier,
     photo: Photo,
+    thumbnail: Boolean = false,
     contentScale: ContentScale = ContentScale.Fit,
 ) {
     AsyncImage(
         modifier = modifier,
-        model = photo.getUri(),
+        model = if (!thumbnail) photo.getUri() else photo.getThumbnailUri(),
         contentScale = contentScale,
         contentDescription = photo.name,
-        imageLoader = LocalImageLoader.current.get()
+        imageLoader = LocalImageLoader.current.get(),
+        placeholder = ColorPainter(Color.DarkGray)
     )
 }
 

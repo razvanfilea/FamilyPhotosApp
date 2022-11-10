@@ -1,7 +1,9 @@
 package net.theluckycoder.familyphotos.ui.navigation
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.*
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme
@@ -70,8 +72,14 @@ fun BottomSheetNavigator(
                 sheetBackgroundColor = sheetBackgroundColor,
                 sheetContentColor = sheetContentColor,
                 sheetContent = {
-                    BottomSheetNavigatorBackHandler(bottomSheetNavigator, sheetState, hideOnBackPress)
-                    sheetContent(bottomSheetNavigator)
+                    Box(Modifier.windowInsetsPadding(BottomAppBarDefaults.windowInsets)) {
+                        BottomSheetNavigatorBackHandler(
+                            bottomSheetNavigator,
+                            sheetState,
+                            hideOnBackPress
+                        )
+                        sheetContent(bottomSheetNavigator)
+                    }
                 },
                 content = {
                     content(bottomSheetNavigator)

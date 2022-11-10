@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.navigator.tab.CurrentTab
@@ -44,21 +45,19 @@ class MainActivity : ComponentActivity() {
         val view = ComposeView(this)
         view.setContent {
             AppTheme {
-                Box(Modifier.systemBarsPadding()) {
-                    val systemUiController = rememberSystemUiController()
-                    val background = MaterialTheme.colorScheme.surface
+                val systemUiController = rememberSystemUiController()
+                val background = MaterialTheme.colorScheme.surface
 
-                    SideEffect {
-                        systemUiController.setStatusBarColor(Color.Black)
-                        systemUiController.setNavigationBarColor(background)
-                    }
+                LaunchedEffect(background) {
+                    systemUiController.setStatusBarColor(Color.Transparent)
+                    systemUiController.setNavigationBarColor(Color.Transparent)
+                }
 
-                    CompositionLocalProvider(
-                        LocalImageLoader provides imageLoader,
-                        LocalOkHttpClient provides playerController
-                    ) {
-                        AppContent()
-                    }
+                CompositionLocalProvider(
+                    LocalImageLoader provides imageLoader,
+                    LocalOkHttpClient provides playerController
+                ) {
+                    AppContent()
                 }
             }
         }
@@ -91,14 +90,13 @@ private fun AppContent(
     mainViewModel: MainViewModel = viewModel()
 ) = TabNavigator(PersonalTab) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val isBottomBarVisible by mainViewModel.showBottomAppBar.collectAsState()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            val isVisible by mainViewModel.showBottomAppBar.collectAsState()
-
-            if (isVisible) {
+            if (isBottomBarVisible) {
                 NavigationBar(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
@@ -116,9 +114,10 @@ private fun AppContent(
             SwipeRefresh(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = paddingValues.calculateBottomPadding()),
+                    .padding(bottom = if (isBottomBarVisible) paddingValues.calculateBottomPadding() else 0.dp),
                 onRefresh = { mainViewModel.refreshPhotos() },
-                state = rememberSwipeRefreshState(isRefreshing)
+                state = rememberSwipeRefreshState(isRefreshing),
+                swipeEnabled = isBottomBarVisible
             ) {
                 Box(Modifier.fillMaxSize()) {
                     BottomSheetNavigator {

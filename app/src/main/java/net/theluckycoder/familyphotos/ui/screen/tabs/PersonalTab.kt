@@ -3,9 +3,7 @@ package net.theluckycoder.familyphotos.ui.screen.tabs
 import android.os.Parcelable
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -77,17 +75,12 @@ object PersonalTab : BottomTab {
             }
 
             PhotosList(
-                headerContent = {
-                    Column {
-                        Header(isOnline, displayName)
-
-                        Spacer(Modifier.size(8.dp))
-
-                        if (memoriesList.isNotEmpty()) {
-                            MemoriesList(
-                                memoriesList = memoriesList
-                            )
-                        }
+                headerContent = { Header(isOnline, displayName) },
+                memoriesContent = {
+                    if (memoriesList.isNotEmpty()) {
+                        MemoriesList(
+                            memoriesList = memoriesList
+                        )
                     }
                 },
                 photosPagingList = mainViewModel.personalPhotosPager,
@@ -97,12 +90,15 @@ object PersonalTab : BottomTab {
             )
         }
 
+        @OptIn(ExperimentalMaterial3Api::class)
         @Composable
         private fun Header(isOnline: Boolean, displayName: String?) {
             val navigator = LocalNavigator.currentOrThrow
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(TopAppBarDefaults.windowInsets),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
