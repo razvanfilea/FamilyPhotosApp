@@ -3,7 +3,7 @@ plugins {
 
     kotlin("android")
     kotlin("kapt")
-    kotlin("plugin.serialization") version "1.7.20"
+    kotlin("plugin.serialization") version "1.7.21"
 //    id("com.google.devtools.ksp") version "1.5.31-1.0.0"
     id("kotlin-parcelize")
 
@@ -81,7 +81,7 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).configure
 }
 
 dependencies {
-    val voyagerVersion = "1.0.0-rc02"
+    val voyagerVersion = "1.0.0-rc03"
 
     // Kotlin
     kotlin("kotlin-stdlib-jdk8")
