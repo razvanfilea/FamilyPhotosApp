@@ -12,8 +12,6 @@ import kotlinx.datetime.TimeZone
 import net.theluckycoder.familyphotos.datastore.UserDataStore
 import javax.inject.Inject
 
-val TIME_ZONE = TimeZone.of("Europe/Bucharest")
-
 @HiltAndroidApp
 class PhotosApp : Application(), Configuration.Provider {
 
@@ -46,7 +44,6 @@ class PhotosApp : Application(), Configuration.Provider {
 
         GlobalScope.launch(Dispatchers.IO) {
             if (userDataStore.firstStart.first()) {
-//                installServiceProviderIfNeeded()
                 userDataStore.setFirstStart()
             }
         }
@@ -58,17 +55,7 @@ class PhotosApp : Application(), Configuration.Provider {
             .setExecutor(Dispatchers.Default.asExecutor())
             .build()
 
-    /*private fun installServiceProviderIfNeeded() {
-        try {
-            ProviderInstaller.installIfNeeded(this)
-        } catch (e: GooglePlayServicesRepairableException) {
-            e.printStackTrace()
-
-            // Prompt the user to install/update/enable Google Play services.
-            @Suppress("DEPRECATION")
-            GooglePlayServicesUtil.showErrorNotification(e.connectionStatusCode, this)
-        } catch (e: GooglePlayServicesNotAvailableException) {
-            e.printStackTrace()
-        }
-    }*/
+    companion object {
+        val TIME_ZONE = TimeZone.of("Europe/Bucharest")
+    }
 }

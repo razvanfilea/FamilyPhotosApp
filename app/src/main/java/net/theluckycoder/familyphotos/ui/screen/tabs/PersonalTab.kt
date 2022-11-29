@@ -23,8 +23,8 @@ import cafe.adriel.voyager.navigator.tab.TabOptions
 import kotlinx.datetime.Clock
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.parcelize.Parcelize
+import net.theluckycoder.familyphotos.PhotosApp
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.TIME_ZONE
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.PhotosSlideTransition
 import net.theluckycoder.familyphotos.ui.screen.MemoriesList
@@ -106,7 +106,7 @@ object PersonalTab : BottomTab {
 
                 if (!displayName.isNullOrEmpty()) {
                     val str = remember {
-                        val localDateTime = Clock.System.now().toLocalDateTime(TIME_ZONE)
+                        val localDateTime = Clock.System.now().toLocalDateTime(PhotosApp.TIME_ZONE)
                         val hour = localDateTime.hour
                         when {
                             hour in 6..10 -> R.string.message_morning

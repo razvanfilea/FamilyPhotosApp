@@ -3,7 +3,7 @@ plugins {
 
     kotlin("android")
     kotlin("kapt")
-    kotlin("plugin.serialization") version "1.7.22"
+    kotlin("plugin.serialization") version "1.7.21"
 //    id("com.google.devtools.ksp") version "1.5.31-1.0.0"
     id("kotlin-parcelize")
 
@@ -17,9 +17,9 @@ android {
     defaultConfig {
         applicationId = "net.theluckycoder.familyphotos"
         minSdk = 30
-        targetSdk = 32
+        targetSdk = 33
         versionCode = 18
-        versionName = "1.8.0"
+        versionName = "1.8.2"
         resourceConfigurations += listOf("en", "ro")
 
         javaCompileOptions {

@@ -101,10 +101,9 @@ fun PhotosList(
         if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 5 else 10
 
     val selectedPhotoIds = remember { mutableStateListOf<Long>() }
-    val isTopBarVisible = selectedPhotoIds.isNotEmpty()
 
     AnimatedVisibility(
-        visible = isTopBarVisible,
+        visible = selectedPhotoIds.isNotEmpty(),
         enter = expandVertically(),
         exit = shrinkVertically(),
     ) {
@@ -139,7 +138,7 @@ fun PhotosList(
         if (headerContent != null) {
             header(-2) {
                 AnimatedVisibility(
-                    visible = !isTopBarVisible,
+                    visible = selectedPhotoIds.isEmpty(),
                         enter = expandVertically(),
                         exit = shrinkVertically(),
                 ) {
@@ -179,9 +178,9 @@ fun PhotosList(
                             .aspectRatio(1f)
                             .padding(1.5.dp),
                         selected = selectedPhotoIds.contains(item.id),
-                        enabled = isTopBarVisible,
+                        enabled = selectedPhotoIds.isNotEmpty(),
                         onClick = { longPress ->
-                            if (isTopBarVisible || longPress) {
+                            if (selectedPhotoIds.isNotEmpty() || longPress) {
                                 if (selectedPhotoIds.contains(item.id))
                                     selectedPhotoIds -= item.id
                                 else

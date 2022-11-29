@@ -156,6 +156,7 @@ fun SimpleSquarePhoto(photo: Photo) {
             .aspectRatio(1f)
             .padding(1.dp),
         photo = photo,
+        thumbnail = true,
         contentScale = ContentScale.Crop,
     )
 }

@@ -3,6 +3,10 @@ package net.theluckycoder.familyphotos.ui.activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,8 +20,6 @@ import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import coil.ImageLoader
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
@@ -84,7 +86,7 @@ private fun RowScope.TabNavigationItem(tab: BottomTab) {
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 private fun AppContent(
     mainViewModel: MainViewModel = viewModel()
@@ -111,27 +113,32 @@ private fun AppContent(
         val isRefreshing by mainViewModel.isRefreshing.collectAsState()
 
         CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
-            SwipeRefresh(
+            val state = rememberPullRefreshState(isRefreshing, mainViewModel::refreshPhotos)
+
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = if (isBottomBarVisible) paddingValues.calculateBottomPadding() else 0.dp),
-                onRefresh = { mainViewModel.refreshPhotos() },
-                state = rememberSwipeRefreshState(isRefreshing),
-                swipeEnabled = isBottomBarVisible
+                    .padding(bottom = if (isBottomBarVisible) paddingValues.calculateBottomPadding() else 0.dp)
+                    .pullRefresh(state),
             ) {
-                Box(Modifier.fillMaxSize()) {
-                    BottomSheetNavigator {
-                        CurrentTab()
-                    }
-
-                    DefaultSnackbar(
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                        snackbarHostState = snackbarHostState,
-                        onDismiss = {
-                            snackbarHostState.currentSnackbarData?.dismiss()
-                        }
-                    )
+                BottomSheetNavigator {
+                    CurrentTab()
                 }
+
+                PullRefreshIndicator(
+                    refreshing = isRefreshing,
+                    state = state,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    contentColor = MaterialTheme.colorScheme.secondary
+                )
+
+                DefaultSnackbar(
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    snackbarHostState = snackbarHostState,
+                    onDismiss = {
+                        snackbarHostState.currentSnackbarData?.dismiss()
+                    }
+                )
             }
         }
     }

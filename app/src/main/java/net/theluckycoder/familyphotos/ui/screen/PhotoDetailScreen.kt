@@ -51,7 +51,7 @@ import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 data class PhotoDetailScreen private constructor(
     val allPhotos: SnapshotStateList<Photo>, // is actually a SnapshotStateList
     var index: Int,
-) : Screen , Parcelable {
+) : Screen, Parcelable {
 
     override val key: ScreenKey
         get() = "PhotoDetailScreen ${allPhotos.hashCode()}"
@@ -303,7 +303,8 @@ fun CoilPhoto(
         contentScale = contentScale,
         contentDescription = photo.name,
         imageLoader = LocalImageLoader.current.get(),
-        placeholder = ColorPainter(Color.DarkGray)
+        placeholder = ColorPainter(Color.DarkGray),
+        error = ColorPainter(Color(0xB6D63535))
     )
 }
 
@@ -326,7 +327,7 @@ private fun ZoomableImage(
         }
     ) {
         val ctx = LocalContext.current
-        val request = remember {
+        val request = remember(photo) {
             ImageRequest.Builder(ctx)
                 .data(photo.getUri())
                 .size(Size.ORIGINAL)

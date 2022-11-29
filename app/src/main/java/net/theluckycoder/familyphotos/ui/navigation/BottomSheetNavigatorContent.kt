@@ -9,7 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.SaveableStateHolder
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -94,7 +93,6 @@ class BottomSheetNavigator internal constructor(
     navigator: Navigator,
     private val sheetState: ModalBottomSheetState,
     private val coroutineScope: CoroutineScope,
-    val stateHolder: SaveableStateHolder = navigator.stateHolder
 ) : Stack<Screen> by navigator {
 
     val isVisible: Boolean
