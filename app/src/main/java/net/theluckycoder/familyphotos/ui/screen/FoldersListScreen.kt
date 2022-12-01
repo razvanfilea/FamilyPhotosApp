@@ -27,6 +27,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.Photo
+import net.theluckycoder.familyphotos.ui.VerticallyAnimatedInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,13 +59,14 @@ fun FolderFilterTextField(folderNameFilter: String, onFilterChange: (String) -> 
 
 @Composable
 fun FolderPreviewItem(
+    modifier: Modifier = Modifier,
     photo: Photo,
     name: String,
     photosCount: Int,
     onClick: () -> Unit,
     content: @Composable (BoxScope.() -> Unit)? = null
 ) = Column(
-    modifier = Modifier.padding(8.dp)
+    modifier = modifier.padding(8.dp)
 ) {
     Box(
         Modifier
@@ -125,10 +127,17 @@ fun <T : Photo> FolderPhotos(
             }
         },
         title = {
-            if (selectedItems.isEmpty())
+            if (selectedItems.isEmpty()) {
                 Text(text = folderName)
-            else
-                Text(text = "${selectedItems.size} Selected")
+            } else {
+                Row {
+                    VerticallyAnimatedInt(targetState = selectedItems.size) { count ->
+                        Text("$count ")
+                    }
+
+                    Text(stringResource(R.string.selected))
+                }
+            }
         },
         actions = appBarActions,
     )

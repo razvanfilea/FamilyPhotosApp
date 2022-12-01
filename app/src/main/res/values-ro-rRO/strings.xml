@@ -34,4 +34,8 @@
     <string name="notification_backup_fail_unknown">Motiv necunoscut</string>
     <string name="notification_backup_fail_internet">Lipsă internet</string>
     <string name="action_previous">Anterior</string>
+    <string name="action_info">Info</string>
+    <string name="selected">Selectate</string>
+    <string name="ascending">Crescător</string>
+    <string name="descending">Descrescător</string>
 </resources>

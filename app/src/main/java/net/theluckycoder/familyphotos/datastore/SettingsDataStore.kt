@@ -1,6 +1,8 @@
 package net.theluckycoder.familyphotos.datastore
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -20,14 +22,22 @@ class SettingsDataStore @Inject constructor(@ApplicationContext context: Context
     val cacheSizeMbFlow: Flow<Int> =
         settingsDataStore.data.map { it[CACHE_SIZE] ?: DEFAULT_CACHE_SIZE }.distinctUntilChanged()
 
+    val showFoldersAscending: Flow<Boolean> =
+        settingsDataStore.data.map { it[SHOW_FOLDERS_ASCENDING] ?: true }.distinctUntilChanged()
+
     /*suspend fun setCacheSizeMb(value: Int) = settingsDataStore.edit { preferences ->
         preferences[CACHE_SIZE] = value
     }*/
+
+    suspend fun setShowFoldersAscending(value: Boolean) = settingsDataStore.edit { preferences ->
+        preferences[SHOW_FOLDERS_ASCENDING] = value
+    }
 
     companion object {
         private val Context.settingsDataStore by preferencesDataStore("settings_prefs")
 
         val CACHE_SIZE = intPreferencesKey("cache_size")
+        val SHOW_FOLDERS_ASCENDING = booleanPreferencesKey("show_folders_ascending")
 
         const val DEFAULT_CACHE_SIZE = 1024
     }

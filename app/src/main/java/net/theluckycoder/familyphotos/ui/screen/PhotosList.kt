@@ -4,9 +4,7 @@ import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.os.Parcel
 import android.os.Parcelable
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
@@ -33,6 +32,7 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.model.isVideo
+import net.theluckycoder.familyphotos.ui.VerticallyAnimatedInt
 import net.theluckycoder.familyphotos.ui.composables.PhotoUtilitiesActions
 import net.theluckycoder.familyphotos.ui.composables.SelectableItem
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
@@ -83,7 +83,7 @@ fun MemoriesList(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun PhotosList(
     headerContent: (@Composable () -> Unit)? = null,
@@ -117,7 +117,13 @@ fun PhotosList(
                 }
             },
             title = {
-                Text("${selectedPhotoIds.size} Selected")
+                Row {
+                    VerticallyAnimatedInt(targetState = selectedPhotoIds.size) { count ->
+                        Text("$count ")
+                    }
+
+                    Text(stringResource(R.string.selected))
+                }
             },
             actions = {
                 PhotoUtilitiesActions(NetworkPhoto::class, selectedPhotoIds, mainViewModel)
@@ -139,8 +145,8 @@ fun PhotosList(
             header(-2) {
                 AnimatedVisibility(
                     visible = selectedPhotoIds.isEmpty(),
-                        enter = expandVertically(),
-                        exit = shrinkVertically(),
+                    enter = expandVertically(),
+                    exit = shrinkVertically(),
                 ) {
                     headerContent()
                 }
@@ -152,7 +158,7 @@ fun PhotosList(
             items = photos,
             key = { if (it is Photo) it.id else it },
             span = { GridItemSpan(if (it is String) columnCount else 1) },
-            contentType = { if (it is String) "string" else "photo"}
+            contentType = { if (it is String) "string" else "photo" }
         ) { item ->
             when (item) {
                 is String -> {

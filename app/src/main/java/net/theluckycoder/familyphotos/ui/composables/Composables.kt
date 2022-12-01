@@ -139,7 +139,7 @@ fun SelectableItem(
 }
 
 @Composable
-fun Photo.getPhotoDate() = remember(this) {
+fun Photo.photoDateText() = remember(this) {
     val instant = Instant.fromEpochMilliseconds(this.timeCreated)
     val date = instant.toLocalDateTime(PhotosApp.TIME_ZONE)
 
@@ -150,7 +150,13 @@ fun Photo.getPhotoDate() = remember(this) {
 
         if (date.hour != 0 || date.minute != 0) {
             append(" - ")
-            append(date.hour).append(':').append(date.minute)
+            if (date.hour < 10)
+                append(0)
+            append(date.hour).append(':')
+
+            if (date.minute < 10)
+                append(0)
+            append(date.minute)
         }
     }
 }
@@ -168,7 +174,7 @@ fun SharePhotoIconButton(
     val sendTo = stringResource(R.string.send_to)
     val failedToDownloadImage = stringResource(R.string.failed_download_image)
 
-    fun onClick() {
+    val onClick: () -> Unit = {
         scope.launch(Dispatchers.IO) {
             val photos = getPhotos()
             val uriList = photos.map { mainViewModel.getPhotoLocalUriAsync(it) }.awaitAll()
@@ -206,14 +212,14 @@ fun SharePhotoIconButton(
     }
 
     if (subtitle) {
-        IconButtonText(onClick = ::onClick, text = stringResource(id = R.string.action_share)) {
+        IconButtonText(onClick = onClick, text = stringResource(id = R.string.action_share)) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_action_share),
                 contentDescription = null,
             )
         }
     } else {
-        IconButton(onClick = ::onClick) {
+        IconButton(onClick = onClick) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_action_share),
                 contentDescription = null,

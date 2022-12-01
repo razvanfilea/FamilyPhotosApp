@@ -49,7 +49,7 @@ class SettingsScreen : Screen {
 
         Box(modifier = Modifier.padding(padding)) {
             PreferenceScreen(
-                dataStore = mainViewModel.settingsDataStore.dataStore(),
+                dataStore = mainViewModel.settingsStore.dataStore(),
                 items = getPreferenceItems(mainViewModel, app),
             )
         }

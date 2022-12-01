@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import kotlinx.parcelize.Parcelize
 import net.theluckycoder.familyphotos.model.NetworkPhoto
-import net.theluckycoder.familyphotos.ui.composables.getPhotoDate
+import net.theluckycoder.familyphotos.ui.composables.photoDateText
 
 @Parcelize
 data class NetworkPhotoInfoDialog(
@@ -32,7 +32,7 @@ data class NetworkPhotoInfoDialog(
 
             Spacer(Modifier.height(8.dp))
 
-            Text("Time: ${photo.getPhotoDate()}", fontSize = 18.sp)
+            Text("Time: ${photo.photoDateText()}", fontSize = 18.sp)
         }
     }
 }

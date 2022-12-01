@@ -141,7 +141,7 @@ data class PhotoDetailScreen private constructor(
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.TopCenter),
-                    title = currentPhoto.getPhotoDate(),
+                    title = currentPhoto.photoDateText(),
                     subtitle = currentPhoto.name,
                     navIconOnClick = { navigator.pop() }
                 )

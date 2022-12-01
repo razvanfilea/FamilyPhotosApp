@@ -19,7 +19,7 @@ android {
         minSdk = 30
         targetSdk = 33
         versionCode = 18
-        versionName = "1.8.2"
+        versionName = "1.8.3"
         resourceConfigurations += listOf("en", "ro")
 
         javaCompileOptions {

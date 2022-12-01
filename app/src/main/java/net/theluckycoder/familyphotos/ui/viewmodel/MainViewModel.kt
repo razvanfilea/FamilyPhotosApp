@@ -37,7 +37,7 @@ class MainViewModel @Inject constructor(
     private val photosListRepository: PhotosListRepository,
     private val foldersRepository: FoldersRepository,
     private val userDataStore: UserDataStore,
-    val settingsDataStore: SettingsDataStore,
+    val settingsStore: SettingsDataStore,
 ) : ViewModel() {
 
     private val workManager: WorkManager = WorkManager.getInstance(app)
@@ -51,13 +51,13 @@ class MainViewModel @Inject constructor(
     val displayNameFlow = userDataStore.displayNameFlow
     val autoBackupFlow = userDataStore.autoBackup
 
-    val personalPhotosPager = Pager(PagingConfig(pageSize = 100, enablePlaceholders = false)) {
+    val personalPhotosPager = Pager(PagingConfig(pageSize = 120, enablePlaceholders = false)) {
         photosListRepository.getPersonalPhotosPaged(userId)
     }.flow.flowOn(Dispatchers.Default)
         .cachedIn(viewModelScope)
         .mapPagingPhotos()
 
-    val publicPhotosPager = Pager(PagingConfig(pageSize = 100, enablePlaceholders = false)) {
+    val publicPhotosPager = Pager(PagingConfig(pageSize = 120, enablePlaceholders = false)) {
         photosListRepository.getPublicPhotosPaged()
     }.flow.flowOn(Dispatchers.Default)
         .cachedIn(viewModelScope)

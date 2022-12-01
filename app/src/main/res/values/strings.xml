@@ -46,6 +46,9 @@
 
     <string name="send_to">Send to:</string>
     <string name="failed_download_image">Failed to download image</string>
+    <string name="selected">Selected</string>
+    <string name="ascending">Ascending</string>
+    <string name="descending">Descending</string>
 
     <!-- Notifications -->
     <string name="notification_backup_title">Backup up files</string>

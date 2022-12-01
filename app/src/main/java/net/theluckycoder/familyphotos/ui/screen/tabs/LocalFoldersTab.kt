@@ -6,8 +6,10 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.Settings
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,16 +26,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.TabOptions
+import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.BuildConfig
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.model.LocalFolder
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.ui.PhotosSlideTransition
-import net.theluckycoder.familyphotos.ui.screen.FolderFilterTextField
 import net.theluckycoder.familyphotos.ui.screen.FolderPreviewItem
 import net.theluckycoder.familyphotos.ui.screen.LocalFolderScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
@@ -59,62 +61,74 @@ object LocalFoldersTab : BottomTab {
         }
     }
 
-    private object PhoneFoldersScreen : Screen {
+    private object PhoneFoldersScreen : FoldersTab<LocalFolder>() {
 
-        @OptIn(ExperimentalMaterial3Api::class)
+        @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
         @Composable
-        override fun Content() = Column(Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets)) {
-            val mainViewModel: MainViewModel = viewModel()
-            val navigator = LocalNavigator.currentOrThrow
-            val ctx = LocalContext.current
+        override fun Content() =
+            Column(Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets)) {
+                val mainViewModel: MainViewModel = viewModel()
+                val navigator = LocalNavigator.currentOrThrow
+                val ctx = LocalContext.current
+                val scope = rememberCoroutineScope()
 
-            LaunchedEffect(Unit) {
-                if (!Environment.isExternalStorageManager()) {
-                    val uri = Uri.parse("package:${BuildConfig.APPLICATION_ID}")
-                    ctx.startActivity(
-                        Intent(
-                            Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-                            uri
+                LaunchedEffect(Unit) {
+                    if (!Environment.isExternalStorageManager()) {
+                        val uri = Uri.parse("package:${BuildConfig.APPLICATION_ID}")
+                        ctx.startActivity(
+                            Intent(
+                                Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                                uri
+                            )
                         )
-                    )
+                    }
                 }
-            }
 
-            SideEffect {
-                mainViewModel.showBottomAppBar.value = true
-            }
+                SideEffect {
+                    mainViewModel.showBottomAppBar.value = true
+                }
 
-            var folderNameFilter by remember { mutableStateOf("") }
-            FolderFilterTextField(folderNameFilter, onFilterChange = { folderNameFilter = it })
+                val folders by mainViewModel.localFolders.collectAsState(emptyList())
+                val sortAscending by mainViewModel.settingsStore
+                    .showFoldersAscending.collectAsState(true)
+                val filteredFolders = rememberFiltering(folders, sortAscending)
 
-            val albums by mainViewModel.localFolders.collectAsState(emptyList())
-            val filteredAlbums = remember(albums, folderNameFilter) {
-                val searchFilter = folderNameFilter.lowercase()
-                albums.filter { it.name.lowercase().contains(searchFilter) }
-            }
+                val columnCount =
+                    if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 2 else 5
 
-            val autoUpload by mainViewModel.autoBackupFlow.collectAsState(false)
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(columnCount),
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    item(span = { GridItemSpan(columnCount) }) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                val autoUpload by mainViewModel.autoBackupFlow.collectAsState(false)
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    "Backup Camera Photos",
-                    Modifier
-                        .weight(1f)
-                        .padding(horizontal = 16.dp)
-                )
-                Switch(autoUpload, onCheckedChange = { mainViewModel.setAutoBackup(it) })
-            }
+                                Text(
+                                    "Backup Camera Photos",
+                                    Modifier
+                                        .weight(1f)
+                                        .padding(horizontal = 16.dp)
+                                )
+                                Switch(
+                                    autoUpload,
+                                    onCheckedChange = { mainViewModel.setAutoBackup(it) }
+                                )
+                            }
 
-            val columnCount =
-                if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 2 else 5
+                            SortButton(sortAscending) {
+                                scope.launch {
+                                    mainViewModel.settingsStore.setShowFoldersAscending(!sortAscending)
+                                }
+                            }
+                        }
+                    }
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(columnCount),
-                modifier = Modifier.fillMaxSize(),
-            ) {
-
-                items(filteredAlbums) { folder ->
-                    key(folder.coverPhotoId) {
+                    items(filteredFolders, key = { it.coverPhotoId }) { folder ->
                         val photo = LocalPhoto(
                             id = folder.coverPhotoId,
                             name = "",
@@ -124,6 +138,7 @@ object LocalFoldersTab : BottomTab {
                         )
 
                         FolderPreviewItem(
+                            modifier = Modifier.animateItemPlacement(),
                             photo = photo,
                             name = folder.name,
                             photosCount = folder.count,
@@ -134,6 +149,5 @@ object LocalFoldersTab : BottomTab {
                     }
                 }
             }
-        }
     }
 }

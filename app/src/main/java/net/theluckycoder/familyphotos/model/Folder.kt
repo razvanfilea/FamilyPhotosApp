@@ -5,19 +5,25 @@ import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import androidx.room.Ignore
 
+abstract class PhotoFolder {
+    abstract val name: String
+    abstract val coverPhotoId: Long
+    abstract val count: Int
+}
+
 @Immutable
 data class NetworkFolder @JvmOverloads constructor(
     @ColumnInfo(name = "folder")
-    val name: String,
+    override val name: String,
     @ColumnInfo(name = "id")
-    val coverPhotoId: Long,
+    override val coverPhotoId: Long,
     @ColumnInfo(name = "ownerUserId")
     val ownerUserId: Long,
     @ColumnInfo(name = "COUNT(id)")
-    val count: Int,
+    override val count: Int,
     @Ignore
     val isPublic: Boolean = false
-) {
+) : PhotoFolder() {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -39,13 +45,13 @@ data class NetworkFolder @JvmOverloads constructor(
 }
 
 @Immutable
-class LocalFolder(
+data class LocalFolder(
     @ColumnInfo(name = "folder")
-    val name: String,
+    override val name: String,
     @ColumnInfo(name = "id")
-    val coverPhotoId: Long,
+    override val coverPhotoId: Long,
     @ColumnInfo(name = "uri")
     val coverPhotoUri: Uri,
     @ColumnInfo(name = "COUNT(id)")
-    val count: Int,
-)
+    override val count: Int,
+) : PhotoFolder()
