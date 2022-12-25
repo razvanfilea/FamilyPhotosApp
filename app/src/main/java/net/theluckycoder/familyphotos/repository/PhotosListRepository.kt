@@ -21,10 +21,10 @@ class PhotosListRepository @Inject constructor(
     fun getPublicPhotosPaged() = networkPhotosDao.getPhotosPaged(PUBLIC_USER_ID)
 
     suspend fun getPersonalMemories(userId: Long, timestamp: Long) =
-        networkPhotosDao.getPhotosOnThisDay(userId, timestamp)
+        networkPhotosDao.getPhotosOnThisWeek(userId, timestamp)
 
     suspend fun getPublicMemories(timestamp: Long) =
-        networkPhotosDao.getPhotosOnThisDay(PUBLIC_USER_ID, timestamp)
+        networkPhotosDao.getPhotosOnThisWeek(PUBLIC_USER_ID, timestamp)
 
     suspend fun downloadAllPhotos(userId: Long) = coroutineScope {
         val service = photosService.get()

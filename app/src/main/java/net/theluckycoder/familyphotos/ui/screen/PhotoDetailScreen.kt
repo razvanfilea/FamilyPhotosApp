@@ -5,10 +5,11 @@ import android.os.Parcelable
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -33,9 +34,6 @@ import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.size.Size
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.extensions.readList
@@ -75,7 +73,7 @@ data class PhotoDetailScreen private constructor(
         require(index != -1)
     }
 
-    @OptIn(ExperimentalPagerApi::class)
+    @OptIn(ExperimentalFoundationApi::class)
     @Composable
     override fun Content() = Box(Modifier.fillMaxSize().background(Color.Black)) {
         val mainViewModel: MainViewModel = viewModel()
@@ -86,7 +84,7 @@ data class PhotoDetailScreen private constructor(
         }
 
         val pagerState = rememberPagerState(index)
-        var showAppBar by remember { mutableStateOf(true) }
+        var showUi by remember { mutableStateOf(true) }
 
         DisposableEffect(allPhotos.size) {
             if (allPhotos.size == 0)
@@ -98,7 +96,7 @@ data class PhotoDetailScreen private constructor(
         }
 
         HorizontalPager(
-            count = allPhotos.size,
+            pageCount = allPhotos.size,
             state = pagerState,
             key = { allPhotos.getOrNull(it)?.id ?: it }
         ) { page ->
@@ -123,8 +121,8 @@ data class PhotoDetailScreen private constructor(
 
             PagerContent(
                 updatedPhoto ?: photo,
-                showAppBar,
-                toggleShowAppBar = { showAppBar = !showAppBar },
+                showUi,
+                changeShowUi = { showUi = it },
                 mainViewModel
             )
         }
@@ -133,7 +131,7 @@ data class PhotoDetailScreen private constructor(
 
         if (currentPhoto != null) {
             AnimatedVisibility(
-                visible = showAppBar,
+                visible = showUi,
                 enter = fadeIn(),
                 exit = fadeOut()
             ) {
@@ -152,8 +150,8 @@ data class PhotoDetailScreen private constructor(
     @Composable
     private fun BoxScope.PagerContent(
         photo: Photo,
-        showAppBar: Boolean,
-        toggleShowAppBar: () -> Unit,
+        showUi: Boolean,
+        changeShowUi: (Boolean) -> Unit,
         mainViewModel: MainViewModel
     ) {
         val isVideo = remember(photo) { photo.isVideo }
@@ -164,20 +162,15 @@ data class PhotoDetailScreen private constructor(
                     .fillMaxSize()
                     .align(Alignment.Center),
                 photo = photo,
-                onTap = { toggleShowAppBar() }
+                onTap = { changeShowUi(!showUi) }
             )
         } else {
-            Box(Modifier.clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-            ) {
-                toggleShowAppBar()
-            }) {
-                VideoPlayer(photo.getUri())
+            Box(Modifier.padding(bottom = 64.dp)) {
+                VideoPlayer(photo.getUri(), showUI = changeShowUi)
             }
         }
 
-        if (showAppBar) {
+        if (showUi) {
             Column(Modifier.align(Alignment.BottomCenter)) {
                 BottomBar(
                     photo = photo,

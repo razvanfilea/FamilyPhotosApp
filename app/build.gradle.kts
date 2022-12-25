@@ -19,7 +19,7 @@ android {
         minSdk = 30
         targetSdk = 33
         versionCode = 18
-        versionName = "1.8.3"
+        versionName = "1.8.4"
         resourceConfigurations += listOf("en", "ro")
 
         javaCompileOptions {
@@ -36,7 +36,7 @@ android {
     buildTypes {
         debug {
             versionNameSuffix = "-debug"
-//            applicationIdSuffix = ".debug"
+            applicationIdSuffix = ".debug"
         }
         create("staging") {
             versionNameSuffix = "-staging"
@@ -98,7 +98,6 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.6.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
-//    implementation("androidx.heifwriter:heifwriter:1.0.0")
     implementation("androidx.exifinterface:exifinterface:1.3.5")
 
     // Media 3
@@ -157,8 +156,6 @@ dependencies {
     implementation(libs.coil.video)
 
     // Accompanist
-    implementation(libs.accompanist.pager)
-    implementation(libs.accompanist.swipeRefresh)
     implementation(libs.accompanist.systemUi)
 
     implementation("com.jakewharton:process-phoenix:2.1.2")

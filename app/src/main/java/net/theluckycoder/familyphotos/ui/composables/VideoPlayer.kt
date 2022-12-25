@@ -1,6 +1,7 @@
 package net.theluckycoder.familyphotos.ui.composables
 
 import android.net.Uri
+import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +25,7 @@ import androidx.media3.ui.PlayerView
 import net.theluckycoder.familyphotos.ui.LocalOkHttpClient
 
 @Composable
-fun VideoPlayer(sourceUri: Uri) {
+fun VideoPlayer(sourceUri: Uri, showUI: (Boolean) -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = rememberUpdatedState(LocalLifecycleOwner.current)
     val okHttpClient = LocalOkHttpClient.current.get()
@@ -67,6 +68,9 @@ fun VideoPlayer(sourceUri: Uri) {
                     setShowSubtitleButton(false)
                     setShowVrButton(false)
                     setShowShuffleButton(false)
+                    setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { visibility ->
+                        showUI(visibility == View.VISIBLE)
+                    })
                 }
             }
         )

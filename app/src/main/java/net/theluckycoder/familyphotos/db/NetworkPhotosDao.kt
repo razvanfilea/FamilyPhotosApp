@@ -40,9 +40,9 @@ abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>("network_photo
     @Query(
         """SELECT * FROM network_photo
         WHERE ownerUserId = :userId
-        AND ROUND(timeCreated / 1000 / 3600 / 24) = ROUND(:timestamp / 1000 / 3600 / 24)
+        AND ROUND(timeCreated / 1000 / 3600 / 24 / 7) = ROUND(:timestamp / 1000 / 3600 / 24 / 7)
         ORDER BY network_photo.timeCreated DESC
     """
     )
-    abstract suspend fun getPhotosOnThisDay(userId: Long, timestamp: Long): List<NetworkPhoto>
+    abstract suspend fun getPhotosOnThisWeek(userId: Long, timestamp: Long): List<NetworkPhoto>
 }

@@ -36,8 +36,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import net.theluckycoder.familyphotos.PhotosApp
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.Photo
@@ -100,7 +100,7 @@ fun NavBackTopAppBar(
                     Text(text = subtitle, style = MaterialTheme.typography.titleMedium)
             }
         },
-        colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = Color.Transparent)
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
     )
 }
 
@@ -141,7 +141,7 @@ fun SelectableItem(
 @Composable
 fun Photo.photoDateText() = remember(this) {
     val instant = Instant.fromEpochMilliseconds(this.timeCreated)
-    val date = instant.toLocalDateTime(PhotosApp.TIME_ZONE)
+    val date = instant.toLocalDateTime(TimeZone.UTC)
 
     buildString {
         append(date.dayOfMonth).append(' ')

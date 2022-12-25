@@ -2,7 +2,12 @@ package net.theluckycoder.familyphotos.ui.screen.tabs
 
 import android.os.Parcelable
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -44,6 +49,7 @@ object FamilyTab : BottomTab {
         var initialPhotoId: Long = 0L
     ) : Screen, Parcelable {
 
+        @OptIn(ExperimentalMaterial3Api::class)
         @Composable
         override fun Content() {
             val mainViewModel: MainViewModel = viewModel()
@@ -59,6 +65,9 @@ object FamilyTab : BottomTab {
             }
 
             PhotosList(
+                headerContent = {
+                    Spacer(Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets))
+                },
                 memoriesContent = {
                     if (memoriesList.isNotEmpty()) {
                         MemoriesList(
