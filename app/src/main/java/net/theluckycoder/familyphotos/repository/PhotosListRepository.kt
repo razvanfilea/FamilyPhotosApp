@@ -4,7 +4,7 @@ import dagger.Lazy
 import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import net.theluckycoder.familyphotos.db.NetworkPhotosDao
+import net.theluckycoder.familyphotos.db.dao.NetworkPhotosDao
 import net.theluckycoder.familyphotos.network.service.PhotosService
 import javax.inject.Inject
 

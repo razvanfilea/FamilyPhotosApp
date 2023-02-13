@@ -6,6 +6,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import net.theluckycoder.familyphotos.db.dao.LocalPhotosDao
+import net.theluckycoder.familyphotos.db.dao.NetworkPhotosDao
 
 @InstallIn(SingletonComponent::class)
 @Module

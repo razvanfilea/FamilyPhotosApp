@@ -9,8 +9,9 @@ import android.util.Log
 import android.webkit.MimeTypeMap
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
-import net.theluckycoder.familyphotos.db.LocalPhotosDao
-import net.theluckycoder.familyphotos.db.NetworkPhotosDao
+import net.theluckycoder.familyphotos.db.dao.LocalPhotosDao
+import net.theluckycoder.familyphotos.db.dao.NetworkPhotosDao
+import net.theluckycoder.familyphotos.model.ExifData
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.network.service.PhotosService
@@ -136,6 +137,14 @@ class PhotosRepository @Inject constructor(
         return localPhoto
     }
 
+    suspend fun getExifData(photo: NetworkPhoto): ExifData? {
+        photosService.get().getPhotoExif(photo.ownerUserId, photo.id).body()?.let {
+            return ExifData(it)
+        }
+
+        return null
+    }
+
     suspend fun uploadFile(
         ownerUserId: Long?,
         localPhoto: LocalPhoto,
@@ -192,6 +201,20 @@ class PhotosRepository @Inject constructor(
             newUserOwnerId,
             newFolderName
         )
+
+        val changedPhoto = response.body()
+        if (!response.isSuccessful || changedPhoto == null)
+            return false
+
+        networkPhotosDao.update(changedPhoto)
+        return true
+    }
+
+    suspend fun updateCaption(
+        photo: NetworkPhoto,
+        newCaption: String?
+    ): Boolean {
+        val response = photosService.get().updateCaption(photo.ownerUserId, photo.id, newCaption)
 
         val changedPhoto = response.body()
         if (!response.isSuccessful || changedPhoto == null)

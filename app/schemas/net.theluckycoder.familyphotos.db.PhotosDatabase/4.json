@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 3,
-    "identityHash": "b21f4dac09bae66b9a73f3693e3a5f89",
+    "version": 4,
+    "identityHash": "7d2bedd26a4b82327e7aae5ff86aef8b",
     "entities": [
       {
         "tableName": "local_photo",
@@ -62,7 +62,7 @@
       },
       {
         "tableName": "network_photo",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `ownerUserId` INTEGER NOT NULL, `name` TEXT NOT NULL, `timeCreated` INTEGER NOT NULL, `folder` TEXT, `caption` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `ownerUserId` INTEGER NOT NULL, `name` TEXT NOT NULL, `timeCreated` INTEGER NOT NULL, `fileSize` INTEGER NOT NULL, `folder` TEXT, `caption` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -85,6 +85,12 @@
           {
             "fieldPath": "timeCreated",
             "columnName": "timeCreated",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileSize",
+            "columnName": "fileSize",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -114,7 +120,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b21f4dac09bae66b9a73f3693e3a5f89')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7d2bedd26a4b82327e7aae5ff86aef8b')"
     ]
   }
 }

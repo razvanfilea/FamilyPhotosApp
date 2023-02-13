@@ -19,7 +19,7 @@ android {
         minSdk = 30
         targetSdk = 33
         versionCode = 18
-        versionName = "1.8.4"
+        versionName = "1.8.6"
         resourceConfigurations += listOf("en", "ro")
 
         javaCompileOptions {
@@ -81,18 +81,13 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).configure
 }
 
 dependencies {
-    val voyagerVersion = "1.0.0-rc03"
-
     // Kotlin
     kotlin("kotlin-stdlib-jdk8")
-    debugImplementation(libs.kotlinReflect)
-    implementation(libs.kotlinCoroutinesAndroid)
-    implementation(libs.kotlinSerializationJson)
-    implementation(libs.kotlinDateTime)
-
-    // Arrow
-//    implementation(platform("io.arrow-kt:arrow-stack:1.1.3"))
-//    implementation("io.arrow-kt:arrow-core")
+    debugImplementation(libs.kotlin.reflect)
+    implementation(libs.kotlin.coroutinesAndroid)
+    implementation(libs.kotlin.serializationJson)
+    implementation(libs.kotlin.dateTime)
+    implementation(libs.kotlin.collections)
 
     // AndroidX
     implementation("androidx.activity:activity-ktx:1.6.1")
@@ -128,11 +123,10 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
 
     // Voyager
-    implementation("cafe.adriel.voyager:voyager-navigator:$voyagerVersion")
-    implementation("cafe.adriel.voyager:voyager-tab-navigator:$voyagerVersion")
-//    implementation("cafe.adriel.voyager:voyager-bottom-sheet-navigator:$voyagerVersion")
-    implementation("cafe.adriel.voyager:voyager-transitions:$voyagerVersion")
-    implementation("cafe.adriel.voyager:voyager-androidx:$voyagerVersion")
+    implementation(libs.voyager.navigator)
+    implementation(libs.voyager.tabNavigator)
+    implementation(libs.voyager.transitions)
+    implementation(libs.voyager.androidx)
 
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
@@ -157,6 +151,8 @@ dependencies {
 
     // Accompanist
     implementation(libs.accompanist.systemUi)
+//    implementation(libs.accompanist.systemUi)
 
     implementation("com.jakewharton:process-phoenix:2.1.2")
+//    implementation("com.github.SmartToolFactory:Compose-Zoom:+")
 }

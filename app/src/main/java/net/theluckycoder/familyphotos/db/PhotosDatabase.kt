@@ -2,20 +2,16 @@ package net.theluckycoder.familyphotos.db
 
 import android.content.Context
 import androidx.room.*
-import androidx.room.migration.AutoMigrationSpec
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+import net.theluckycoder.familyphotos.db.dao.LocalPhotosDao
+import net.theluckycoder.familyphotos.db.dao.NetworkPhotosDao
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 
 @Database(
     entities = [LocalPhoto::class, NetworkPhoto::class],
-    version = 3,
-    autoMigrations = [
-        AutoMigration(
-            from = 2,
-            to = 3,
-            spec = PhotosDatabase.AutoMigrationV3::class
-        )
-    ],
+    version = 4,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -25,12 +21,16 @@ abstract class PhotosDatabase : RoomDatabase() {
 
     abstract fun networkPhotosDao(): NetworkPhotosDao
 
-    @DeleteColumn(tableName = "network_photo", columnName = "fileSize")
-    class AutoMigrationV3 : AutoMigrationSpec
-
     companion object {
         @Volatile
         private var INSTANCE: PhotosDatabase? = null
+
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE network_photo ADD COLUMN fileSize INTEGER DEFAULT 0 NOT NULL")
+                database.execSQL("ALTER TABLE network_photo ADD COLUMN caption TEXT")
+            }
+        }
 
         fun getDatabase(context: Context): PhotosDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -40,7 +40,8 @@ abstract class PhotosDatabase : RoomDatabase() {
                     context.applicationContext,
                     PhotosDatabase::class.java,
                     "photos_database"
-                ).build()
+                ).addMigrations(MIGRATION_3_4)
+                    .build()
 
                 INSTANCE = instance
 

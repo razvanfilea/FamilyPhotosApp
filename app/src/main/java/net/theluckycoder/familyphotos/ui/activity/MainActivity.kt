@@ -23,7 +23,10 @@ import coil.ImageLoader
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
-import net.theluckycoder.familyphotos.ui.*
+import net.theluckycoder.familyphotos.ui.AppTheme
+import net.theluckycoder.familyphotos.ui.LocalImageLoader
+import net.theluckycoder.familyphotos.ui.LocalOkHttpClient
+import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.navigation.BottomSheetNavigator
 import net.theluckycoder.familyphotos.ui.screen.tabs.*
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
@@ -130,14 +133,6 @@ private fun AppContent(
                     state = state,
                     modifier = Modifier.align(Alignment.TopCenter),
                     contentColor = MaterialTheme.colorScheme.secondary
-                )
-
-                DefaultSnackbar(
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                    snackbarHostState = snackbarHostState,
-                    onDismiss = {
-                        snackbarHostState.currentSnackbarData?.dismiss()
-                    }
                 )
             }
         }

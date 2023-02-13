@@ -4,6 +4,7 @@ kotlin = "1.8.10"
 kotlin_coroutines = "1.6.4"
 kotlin_serialization = "1.4.1"
 kotlin_datetime = "0.4.0"
+kotlin_collections = "0.3.5"
 compose_other = "1.4.0-beta01"
 compose_activity = "1.6.1"
 compose_compiler = "1.4.2"
@@ -22,10 +23,11 @@ dagger = "2.45"
 agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 
-kotlinCoroutinesAndroid = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlin_coroutines" }
-kotlinSerializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlin_serialization" }
-kotlinDateTime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlin_datetime" }
-kotlinReflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlin_coroutinesAndroid = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlin_coroutines" }
+kotlin_serializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlin_serialization" }
+kotlin_dateTime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlin_datetime" }
+kotlin_collections = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlin_collections" }
+kotlin_reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 
 androidX_dataStore = { module = "androidx.datastore:datastore-preferences", version.ref = "androidx_datastore" }
 
@@ -40,9 +42,12 @@ compose_toolingPreview = { module = "androidx.compose.ui:ui-tooling-preview", ve
 compose_activity = { module = "androidx.activity:activity-compose", version.ref = "compose_activity" }
 
 voyager_navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyager" }
+voyager_tabNavigator = { module = "cafe.adriel.voyager:voyager-tab-navigator", version.ref = "voyager" }
 voyager_transitions = { module = "cafe.adriel.voyager:voyager-transitions", version.ref = "voyager" }
+voyager_androidx = { module = "cafe.adriel.voyager:voyager-androidx", version.ref = "voyager" }
 
 accompanist_systemUi = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanist" }
+accompanist_pager = { module = "com.google.accompanist:accompanist-pager", version.ref = "accompanist" }
 
 room_runtime = { module = "androidx.room:room-ktx", version.ref = "androidx_room" }
 room_compiler = { module = "androidx.room:room-compiler", version.ref = "androidx_room" }

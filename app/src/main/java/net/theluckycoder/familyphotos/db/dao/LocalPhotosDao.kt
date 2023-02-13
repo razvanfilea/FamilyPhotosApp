@@ -1,4 +1,4 @@
-package net.theluckycoder.familyphotos.db
+package net.theluckycoder.familyphotos.db.dao
 
 import androidx.room.Dao
 import androidx.room.Delete

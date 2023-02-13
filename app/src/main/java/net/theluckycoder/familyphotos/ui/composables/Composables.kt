@@ -37,6 +37,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.LocalPhoto
@@ -46,6 +47,7 @@ import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.navigation.LocalBottomSheetNavigator
 import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
+import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
 
 @Composable
@@ -138,27 +140,13 @@ fun SelectableItem(
     }
 }
 
+private val PHOTO_DATE_FORMATTER = DateTimeFormatter.ofPattern("d MMM uuuu・HH:mm")
+
 @Composable
-fun Photo.photoDateText() = remember(this) {
+fun Photo.photoDateText(): String = remember(this) {
     val instant = Instant.fromEpochMilliseconds(this.timeCreated)
     val date = instant.toLocalDateTime(TimeZone.UTC)
-
-    buildString {
-        append(date.dayOfMonth).append(' ')
-        append(date.month).append(' ')
-        append(date.year)
-
-        if (date.hour != 0 || date.minute != 0) {
-            append(" - ")
-            if (date.hour < 10)
-                append(0)
-            append(date.hour).append(':')
-
-            if (date.minute < 10)
-                append(0)
-            append(date.minute)
-        }
-    }
+    PHOTO_DATE_FORMATTER.format(date.toJavaLocalDateTime())
 }
 
 @Composable

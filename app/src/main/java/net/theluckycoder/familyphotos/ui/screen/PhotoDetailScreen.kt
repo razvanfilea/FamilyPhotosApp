@@ -98,7 +98,8 @@ data class PhotoDetailScreen private constructor(
         HorizontalPager(
             pageCount = allPhotos.size,
             state = pagerState,
-            key = { allPhotos.getOrNull(it)?.id ?: it }
+            key = { allPhotos.getOrNull(it)?.id ?: it },
+            beyondBoundsPageCount = 1,
         ) { page ->
             val photo = allPhotos.getOrNull(page) ?: return@HorizontalPager
             val photoFlow: Flow<Photo?> = remember(photo.id) {
@@ -140,7 +141,6 @@ data class PhotoDetailScreen private constructor(
                         .fillMaxWidth()
                         .align(Alignment.TopCenter),
                     title = currentPhoto.photoDateText(),
-                    subtitle = currentPhoto.name,
                     navIconOnClick = { navigator.pop() }
                 )
             }
@@ -309,7 +309,7 @@ private fun ZoomableImage(
 ) {
     val zoomableState = rememberZoomableState(maxScale = 5f)
 
-    Zoomable(
+    /*Zoomable(
         state = zoomableState,
         onTap = onTap,
         doubleTapScale = {
@@ -318,7 +318,7 @@ private fun ZoomableImage(
                 else -> 2f
             }
         }
-    ) {
+    ) {*/
         val ctx = LocalContext.current
         val request = remember(photo) {
             ImageRequest.Builder(ctx)
@@ -343,5 +343,5 @@ private fun ZoomableImage(
             imageLoader = LocalImageLoader.current.get(),
             contentScale = ContentScale.Fit
         )
-    }
+//    }
 }

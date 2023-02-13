@@ -16,6 +16,7 @@ import kotlinx.datetime.*
 import net.theluckycoder.familyphotos.PhotosApp.Companion.TIME_ZONE
 import net.theluckycoder.familyphotos.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.datastore.UserDataStore
+import net.theluckycoder.familyphotos.model.ExifData
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.Photo
@@ -229,6 +230,10 @@ class MainViewModel @Inject constructor(
     fun getNetworkPhotoFlow(photoId: Long): Flow<NetworkPhoto?> =
         photosRepository.getNetworkPhoto(photoId)
 
+    suspend fun getExifData(photo: NetworkPhoto): ExifData? = withContext(Dispatchers.IO) {
+        photosRepository.getExifData(photo)
+    }
+
     /**
      * Receives a list of [LocalPhoto] ids that will be uploaded
      */
@@ -262,6 +267,12 @@ class MainViewModel @Inject constructor(
         workManager
 //            .beginUniqueWork("upload_work", ExistingWorkPolicy.APPEND, uploadRequest)
             .enqueue(uploadRequest)
+    }
+
+    fun updateCaption(photo: NetworkPhoto, newCaption: String?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            photosRepository.updateCaption(photo, newCaption)
+        }
     }
 
     /**

@@ -71,7 +71,9 @@ data class NetworkPhoto(
     val ownerUserId: Long,
     override val name: String,
     override val timeCreated: Long,
-    override val folder: String?,
+    val fileSize: Long = 0,
+    override val folder: String? = null,
+    val caption: String? = null,
 ) : Photo(), Parcelable {
 
     /*override fun hashCode(): Int = id.hashCode()

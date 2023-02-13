@@ -1,4 +1,4 @@
-package net.theluckycoder.familyphotos.db
+package net.theluckycoder.familyphotos.db.dao
 
 import androidx.room.*
 import androidx.sqlite.db.SimpleSQLiteQuery

@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.network.service
 
+import net.theluckycoder.familyphotos.model.ExifField
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
@@ -22,6 +23,11 @@ interface PhotosService {
         @Path("userId") userId: Long,
         @Path("id") id: Long
     ): ResponseBody?
+    @GET("photos/{userId}/exif/{id}")
+    suspend fun getPhotoExif(
+        @Path("userId") userId: Long,
+        @Path("id") id: Long
+    ): Response<List<ExifField>>
 
     @Multipart
     @POST("/photos/{userId}/upload")
@@ -30,6 +36,13 @@ interface PhotosService {
         @Query("timeCreated") timeCreated: String,
         @Query("folderName") folderName: String?,
         @Part file: MultipartBody.Part,
+    ): Response<NetworkPhoto>
+
+    @POST("/photos/{userId}/update_caption/{photoId}")
+    suspend fun updateCaption(
+        @Path("userId") userId: Long,
+        @Path("photoId") photoId: Long,
+        @Query("timeCreated") newCaption: String?
     ): Response<NetworkPhoto>
 
     @DELETE("/photos/{userId}/delete/{photoId}")
@@ -57,7 +70,7 @@ interface PhotosService {
         @Part file: MultipartBody.Part,
     ): Response<NetworkPhoto>
 
-    @POST("/public_photos/delete/{photoId}")
+    @DELETE("/public_photos/delete/{photoId}")
     suspend fun deletePublicPhoto(
         @Path("photoId") photoId: Long,
     ): Response<Void>
