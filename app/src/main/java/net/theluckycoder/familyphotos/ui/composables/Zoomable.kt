@@ -57,7 +57,7 @@ fun Zoomable(
                 }
             }
         }
-        val doubleTapModifier = if ((onTap != null || doubleTapScale != null) && enable) {
+        val doubleTapModifier = if (onTap != null || doubleTapScale != null) {
             Modifier.pointerInput(Unit) {
                 detectTapGestures(
                     onTap = onTap,
@@ -73,12 +73,13 @@ fun Zoomable(
         } else {
             Modifier
         }
-        Box(
-            modifier = Modifier
+
+        val draggableModifier = if (enable) {
+            Modifier
                 .pointerInput(Unit) {
                     detectDrag(
                         onDrag = { change, dragAmount ->
-                            if (state.zooming && enable) {
+                            if (state.zooming) {
                                 if (change.positionChange() != Offset.Zero) change.consume()
                                 scope.launch {
                                     state.drag(dragAmount)
@@ -89,13 +90,9 @@ fun Zoomable(
                                 }
                             }
                         },
-                        onDragCancel = {
-                            if (enable) {
-                                state.resetTracking()
-                            }
-                        },
+                        onDragCancel = { state.resetTracking() },
                         onDragEnd = {
-                            if (state.zooming && enable) {
+                            if (state.zooming) {
                                 scope.launch {
                                     state.dragEnd()
                                 }
@@ -103,8 +100,15 @@ fun Zoomable(
                         },
                     )
                 }
-                .then(doubleTapModifier)
                 .transformable(state = transformableState)
+        } else {
+            Modifier
+        }
+
+        Box(
+            modifier = Modifier
+                .then(doubleTapModifier)
+                .then(draggableModifier)
                 .layout { measurable, constraints ->
                     val placeable =
                         measurable.measure(constraints = constraints)
@@ -126,7 +130,7 @@ fun Zoomable(
                     }
                 }
         ) {
-            content.invoke(this)
+            content()
         }
     }
 }

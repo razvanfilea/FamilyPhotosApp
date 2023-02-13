@@ -34,6 +34,7 @@ interface PhotosService {
     suspend fun uploadPhoto(
         @Path("userId") userId: Long,
         @Query("timeCreated") timeCreated: String,
+        @Query("fileSize") fileSize: String,
         @Query("folderName") folderName: String?,
         @Part file: MultipartBody.Part,
     ): Response<NetworkPhoto>
@@ -66,6 +67,7 @@ interface PhotosService {
     @POST("/public_photos/upload")
     suspend fun uploadPublicPhoto(
         @Query("timeCreated") timeCreated: String,
+        @Query("fileSize") fileSize: String,
         @Query("folderName") folderName: String?,
         @Part file: MultipartBody.Part,
     ): Response<NetworkPhoto>

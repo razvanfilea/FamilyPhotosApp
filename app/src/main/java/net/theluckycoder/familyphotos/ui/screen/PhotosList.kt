@@ -33,6 +33,7 @@ import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.model.isVideo
 import net.theluckycoder.familyphotos.ui.VerticallyAnimatedInt
+import net.theluckycoder.familyphotos.ui.composables.CoilPhoto
 import net.theluckycoder.familyphotos.ui.composables.PhotoUtilitiesActions
 import net.theluckycoder.familyphotos.ui.composables.SelectableItem
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel

@@ -18,8 +18,8 @@ android {
         applicationId = "net.theluckycoder.familyphotos"
         minSdk = 30
         targetSdk = 33
-        versionCode = 18
-        versionName = "1.8.6"
+        versionCode = 19
+        versionName = "1.9.0"
         resourceConfigurations += listOf("en", "ro")
 
         javaCompileOptions {

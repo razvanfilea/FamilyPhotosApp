@@ -20,6 +20,7 @@ import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.isVideo
 import net.theluckycoder.familyphotos.ui.composables.PhotoUtilitiesActions
 import net.theluckycoder.familyphotos.ui.composables.SelectableItem
+import net.theluckycoder.familyphotos.ui.composables.SimpleSquarePhoto
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 data class NetworkFolderScreen(

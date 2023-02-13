@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -30,7 +29,6 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.size.Size
@@ -75,7 +73,11 @@ data class PhotoDetailScreen private constructor(
 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
-    override fun Content() = Box(Modifier.fillMaxSize().background(Color.Black)) {
+    override fun Content() = Box(
+        Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
         val mainViewModel: MainViewModel = viewModel()
         val navigator = LocalNavigator.currentOrThrow
 
@@ -84,7 +86,8 @@ data class PhotoDetailScreen private constructor(
         }
 
         val pagerState = rememberPagerState(index)
-        var showUi by remember { mutableStateOf(true) }
+        val showUi = remember { mutableStateOf(true) }
+        val scrollEnabled = remember { mutableStateOf(true) }
 
         DisposableEffect(allPhotos.size) {
             if (allPhotos.size == 0)
@@ -100,6 +103,7 @@ data class PhotoDetailScreen private constructor(
             state = pagerState,
             key = { allPhotos.getOrNull(it)?.id ?: it },
             beyondBoundsPageCount = 1,
+            userScrollEnabled = scrollEnabled.value
         ) { page ->
             val photo = allPhotos.getOrNull(page) ?: return@HorizontalPager
             val photoFlow: Flow<Photo?> = remember(photo.id) {
@@ -123,8 +127,7 @@ data class PhotoDetailScreen private constructor(
             PagerContent(
                 updatedPhoto ?: photo,
                 showUi,
-                changeShowUi = { showUi = it },
-                mainViewModel
+                scrollEnabled,
             )
         }
 
@@ -132,7 +135,7 @@ data class PhotoDetailScreen private constructor(
 
         if (currentPhoto != null) {
             AnimatedVisibility(
-                visible = showUi,
+                visible = showUi.value,
                 enter = fadeIn(),
                 exit = fadeOut()
             ) {
@@ -144,15 +147,26 @@ data class PhotoDetailScreen private constructor(
                     navIconOnClick = { navigator.pop() }
                 )
             }
+
+            AnimatedVisibility(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                visible = showUi.value,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                BottomBar(
+                    photo = currentPhoto,
+                    mainViewModel = mainViewModel,
+                )
+            }
         }
     }
 
     @Composable
     private fun BoxScope.PagerContent(
         photo: Photo,
-        showUi: Boolean,
-        changeShowUi: (Boolean) -> Unit,
-        mainViewModel: MainViewModel
+        showUi: MutableState<Boolean>,
+        scrollEnabled: MutableState<Boolean>,
     ) {
         val isVideo = remember(photo) { photo.isVideo }
 
@@ -162,20 +176,12 @@ data class PhotoDetailScreen private constructor(
                     .fillMaxSize()
                     .align(Alignment.Center),
                 photo = photo,
-                onTap = { changeShowUi(!showUi) }
+                scrollEnabled = scrollEnabled,
+                onTap = { showUi.value = !showUi.value }
             )
         } else {
             Box(Modifier.padding(bottom = 64.dp)) {
-                VideoPlayer(photo.getUri(), showUI = changeShowUi)
-            }
-        }
-
-        if (showUi) {
-            Column(Modifier.align(Alignment.BottomCenter)) {
-                BottomBar(
-                    photo = photo,
-                    mainViewModel = mainViewModel,
-                )
+                VideoPlayer(photo.getUri(), showUI = { showUi.value = !showUi.value })
             }
         }
     }
@@ -283,33 +289,21 @@ data class PhotoDetailScreen private constructor(
     }
 }
 
-@Composable
-fun CoilPhoto(
-    modifier: Modifier = Modifier,
-    photo: Photo,
-    thumbnail: Boolean = false,
-    contentScale: ContentScale = ContentScale.Fit,
-) {
-    AsyncImage(
-        modifier = modifier,
-        model = if (!thumbnail) photo.getUri() else photo.getThumbnailUri(),
-        contentScale = contentScale,
-        contentDescription = photo.name,
-        imageLoader = LocalImageLoader.current.get(),
-        placeholder = ColorPainter(Color.DarkGray),
-        error = ColorPainter(Color(0xB6D63535))
-    )
-}
 
 @Composable
 private fun ZoomableImage(
     modifier: Modifier = Modifier,
     photo: Photo,
+    scrollEnabled: MutableState<Boolean>,
     onTap: ((Offset) -> Unit)? = null
 ) {
     val zoomableState = rememberZoomableState(maxScale = 5f)
 
-    /*Zoomable(
+    LaunchedEffect(zoomableState.targetScale) {
+        scrollEnabled.value = zoomableState.targetScale == 1.0f
+    }
+
+    Zoomable(
         state = zoomableState,
         onTap = onTap,
         doubleTapScale = {
@@ -317,8 +311,9 @@ private fun ZoomableImage(
                 zoomableState.scale >= 2.0f -> 0f
                 else -> 2f
             }
-        }
-    ) {*/
+        },
+        enable = zoomableState.targetScale != 1.0f
+    ) {
         val ctx = LocalContext.current
         val request = remember(photo) {
             ImageRequest.Builder(ctx)
@@ -343,5 +338,5 @@ private fun ZoomableImage(
             imageLoader = LocalImageLoader.current.get(),
             contentScale = ContentScale.Fit
         )
-//    }
+    }
 }

@@ -28,6 +28,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.ui.VerticallyAnimatedInt
+import net.theluckycoder.familyphotos.ui.composables.CoilPhoto
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -155,17 +156,4 @@ fun <T : Photo> FolderPhotos(
             }
         }
     }
-}
-
-@Composable
-fun SimpleSquarePhoto(photo: Photo) {
-    CoilPhoto(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(1f)
-            .padding(1.dp),
-        photo = photo,
-        thumbnail = true,
-        contentScale = ContentScale.Crop,
-    )
 }

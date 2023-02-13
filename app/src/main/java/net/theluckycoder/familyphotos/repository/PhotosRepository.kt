@@ -170,12 +170,14 @@ class PhotosRepository @Inject constructor(
             photosService.get().uploadPhoto(
                 userId = ownerUserId,
                 timeCreated = localPhoto.timeCreated.toString(),
+                fileSize = bytes.size.toString(),
                 file = fileBody,
                 folderName = uploadFolder,
             )
         } else {
             photosService.get().uploadPublicPhoto(
                 timeCreated = localPhoto.timeCreated.toString(),
+                fileSize = bytes.size.toString(),
                 file = fileBody,
                 folderName = uploadFolder,
             )

@@ -19,6 +19,7 @@ import net.theluckycoder.familyphotos.model.ExifData
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.composables.photoDateText
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
+import java.text.DecimalFormat
 
 @Parcelize
 data class NetworkPhotoInfoDialog(
@@ -56,8 +57,16 @@ data class NetworkPhotoInfoDialog(
 
         var caption by remember { mutableStateOf(photo.caption.orEmpty()) }
 
+        DisposableEffect(Unit) {
+            onDispose {
+                viewModel.updateCaption(photo, caption)
+            }
+        }
+
         OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp, bottom = 16.dp),
             value = caption,
             onValueChange = { caption = it },
             label = { Text("Caption") },
@@ -65,7 +74,7 @@ data class NetworkPhotoInfoDialog(
 
         Text("Details", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
 
         DetailItem(
             photo.name,
@@ -81,9 +90,29 @@ data class NetworkPhotoInfoDialog(
             )
         }
 
-        if (photo.folder != null)
-            DetailItem(photo.folder, null, R.drawable.ic_folder_outlined)
+        DetailItem(
+            photo.folder ?: "No folder",
+            if (photo.fileSize != 0L) getStringSizeLengthFile(photo.fileSize) else null,
+            R.drawable.ic_folder_outlined
+        )
 
         Spacer(Modifier.height(12.dp))
     }
 }
+
+private const val sizeKb = 1024.0f
+private const val sizeMb = sizeKb * sizeKb
+private const val sizeGb = sizeMb * sizeKb
+private const val sizeTerra = sizeGb * sizeKb
+
+private fun getStringSizeLengthFile(size: Long): String {
+    val df = DecimalFormat("0.00")
+
+    return when {
+        size < sizeMb -> df.format(size / sizeKb) + " KB"
+        size < sizeGb -> df.format(size / sizeMb) + " MB"
+        size < sizeTerra -> df.format(size / sizeGb) + " GB"
+        else -> ""
+    }
+}
+

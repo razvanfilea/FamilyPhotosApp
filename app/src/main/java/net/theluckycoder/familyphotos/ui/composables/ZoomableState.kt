@@ -73,6 +73,13 @@ class ZoomableState(
         get() = _scale.value
 
     /**
+     * The current scale value for [Zoomable]
+     */
+    @get:FloatRange(from = 0.0)
+    val targetScale: Float
+        get() = _scale.targetValue
+
+    /**
      * The current translateY value for [Zoomable]
      */
     @get:FloatRange(from = 0.0)
