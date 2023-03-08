@@ -91,7 +91,7 @@ dependencies {
 
     // AndroidX
     implementation("androidx.activity:activity-ktx:1.6.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.0")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("androidx.exifinterface:exifinterface:1.3.6")
 
@@ -119,7 +119,7 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.animation)
     implementation(libs.compose.activity)
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.0")
     implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
 
     // Voyager
