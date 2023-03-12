@@ -10,7 +10,7 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
 import net.theluckycoder.familyphotos.datastore.UserDataStore
 import net.theluckycoder.familyphotos.repository.FoldersRepository
-import net.theluckycoder.familyphotos.repository.PhotosRepository
+import net.theluckycoder.familyphotos.repository.ServerRepository
 import java.io.IOException
 import java.net.ConnectException
 
@@ -19,7 +19,7 @@ class BackupWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
     private val foldersRepository: FoldersRepository,
-    private val photosRepository: PhotosRepository,
+    private val serverRepository: ServerRepository,
     private val userDataStore: UserDataStore,
 ) : CoroutineWorker(context, workerParams) {
 
@@ -35,7 +35,7 @@ class BackupWorker @AssistedInject constructor(
         val result = try {
 
             photos.forEach { localPhoto ->
-                photosRepository.uploadFile(userId, localPhoto, null)
+                serverRepository.uploadFile(userId, localPhoto, null)
             }
 
             Result.success()

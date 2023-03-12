@@ -64,8 +64,8 @@ android {
     buildFeatures.compose = true
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     composeOptions {
@@ -75,7 +75,7 @@ android {
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).configureEach {
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
         freeCompilerArgs = freeCompilerArgs + listOf("-Xjvm-default=all")
     }
 }
@@ -91,8 +91,8 @@ dependencies {
 
     // AndroidX
     implementation("androidx.activity:activity-ktx:1.6.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1")
-    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.0")
+    implementation(libs.androidX.dataStore)
     implementation("androidx.exifinterface:exifinterface:1.3.6")
 
     // Media 3
@@ -119,8 +119,7 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.animation)
     implementation(libs.compose.activity)
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1")
-    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.0")
 
     // Voyager
     implementation(libs.voyager.navigator)
@@ -149,10 +148,6 @@ dependencies {
     implementation(libs.coil.gif)
     implementation(libs.coil.video)
 
-    // Accompanist
-    implementation(libs.accompanist.systemUi)
-//    implementation(libs.accompanist.systemUi)
-
     implementation("com.jakewharton:process-phoenix:2.1.2")
-//    implementation("com.github.SmartToolFactory:Compose-Zoom:+")
+    implementation("com.github.SmartToolFactory:Compose-Zoom:+")
 }

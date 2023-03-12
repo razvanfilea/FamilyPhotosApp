@@ -21,6 +21,7 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
+import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.PlayerView
 import net.theluckycoder.familyphotos.ui.LocalOkHttpClient
 
@@ -68,6 +69,7 @@ fun VideoPlayer(sourceUri: Uri, showUI: (Boolean) -> Unit) {
                     setShowSubtitleButton(false)
                     setShowVrButton(false)
                     setShowShuffleButton(false)
+
                     setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { visibility ->
                         showUI(visibility == View.VISIBLE)
                     })

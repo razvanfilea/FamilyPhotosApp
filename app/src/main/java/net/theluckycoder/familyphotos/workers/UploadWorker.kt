@@ -19,6 +19,7 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.repository.PhotosRepository
+import net.theluckycoder.familyphotos.repository.ServerRepository
 import java.io.File
 import java.io.IOException
 import java.net.ConnectException
@@ -28,7 +29,8 @@ import kotlin.random.Random
 class UploadWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
-    private val repository: PhotosRepository,
+    private val photosRepository: PhotosRepository,
+    private val serverRepository: ServerRepository,
 ) : CoroutineWorker(context, workerParams) {
 
     private val notificationId = Random.nextInt(1, Int.MAX_VALUE)
@@ -54,7 +56,7 @@ class UploadWorker @AssistedInject constructor(
             var total = ids.size
 
             ids.forEachIndexed { index, localPhotoId ->
-                val localPhoto = repository.getLocalPhoto(localPhotoId).first()
+                val localPhoto = photosRepository.getLocalPhoto(localPhotoId).first()
                 if (localPhoto == null || localPhoto.networkPhotoId != 0L) {
                     total--
                     return@forEachIndexed
@@ -74,7 +76,7 @@ class UploadWorker @AssistedInject constructor(
                     null
                 }*/
 
-                if (!repository.uploadFile(userOwnerId, localPhoto, uploadFolder, null)) {
+                if (!serverRepository.uploadFile(userOwnerId, localPhoto, uploadFolder, null)) {
                     Log.e(TAG, "Failed to upload $localPhotoId")
                 }
             }

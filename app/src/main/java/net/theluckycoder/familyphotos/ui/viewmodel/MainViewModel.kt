@@ -6,13 +6,46 @@ import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.*
-import androidx.work.*
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import androidx.paging.insertSeparators
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.Data
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.await
 import com.jakewharton.processphoenix.ProcessPhoenix
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-import kotlinx.datetime.*
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.atTime
+import kotlinx.datetime.minus
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.yearsUntil
 import net.theluckycoder.familyphotos.PhotosApp.Companion.TIME_ZONE
 import net.theluckycoder.familyphotos.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.datastore.UserDataStore
@@ -21,12 +54,12 @@ import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.repository.FoldersRepository
-import net.theluckycoder.familyphotos.repository.PhotosListRepository
 import net.theluckycoder.familyphotos.repository.PhotosRepository
+import net.theluckycoder.familyphotos.repository.ServerRepository
 import net.theluckycoder.familyphotos.workers.BackupWorker
 import net.theluckycoder.familyphotos.workers.UploadWorker
 import java.time.format.TextStyle
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
@@ -35,7 +68,7 @@ import kotlin.time.Duration.Companion.seconds
 class MainViewModel @Inject constructor(
     app: Application,
     private val photosRepository: PhotosRepository,
-    private val photosListRepository: PhotosListRepository,
+    private val serverRepository: ServerRepository,
     private val foldersRepository: FoldersRepository,
     private val userDataStore: UserDataStore,
     val settingsStore: SettingsDataStore,
@@ -53,13 +86,13 @@ class MainViewModel @Inject constructor(
     val autoBackupFlow = userDataStore.autoBackup
 
     val personalPhotosPager = Pager(PagingConfig(pageSize = 120, enablePlaceholders = false)) {
-        photosListRepository.getPersonalPhotosPaged(userId)
+        photosRepository.getPersonalPhotosPaged(userId)
     }.flow.flowOn(Dispatchers.Default)
         .cachedIn(viewModelScope)
         .mapPagingPhotos()
 
     val publicPhotosPager = Pager(PagingConfig(pageSize = 120, enablePlaceholders = false)) {
-        photosListRepository.getPublicPhotosPaged()
+        photosRepository.getPublicPhotosPaged()
     }.flow.flowOn(Dispatchers.Default)
         .cachedIn(viewModelScope)
         .mapPagingPhotos()
@@ -133,7 +166,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val ping = async {
                 try {
-                    _isOnlineFlow.value = photosListRepository.pingServer()
+                    _isOnlineFlow.value = serverRepository.pingServer()
                 } catch (e: Exception) {
                     false
                 }
@@ -142,7 +175,7 @@ class MainViewModel @Inject constructor(
             val localPhotos = async { foldersRepository.updatePhoneAlbums() }
 
             try {
-                photosListRepository.downloadAllPhotos(userId)
+                serverRepository.downloadAllPhotos(userId)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -160,7 +193,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private suspend fun getMemories(get: suspend (timestamp: Long) -> List<NetworkPhoto>) =
+    private suspend fun getMemories(callback: suspend (timestamp: Long) -> List<NetworkPhoto>) =
         withContext(Dispatchers.Default) {
             val instant = Clock.System.now()
             val today = instant.toLocalDateTime(TIME_ZONE).date
@@ -176,17 +209,19 @@ class MainViewModel @Inject constructor(
                 val yearsUntil = it.yearsUntil(today)
                 val timestamp = it.atTime(12, 0).toInstant(TIME_ZONE).toEpochMilliseconds()
 
-                yearsUntil to get(timestamp)
+                yearsUntil to callback(timestamp)
             }.filterNot {
                 it.second.isEmpty()
             }
         }
 
     suspend fun getPersonalMemories() = getMemories {
-        photosListRepository.getPersonalMemories(userId, it)
+        photosRepository.getMemories(it, userId).first()
     }
 
-    suspend fun getPublicMemories() = getMemories(photosListRepository::getPublicMemories)
+    suspend fun getPublicMemories() = getMemories {
+        photosRepository.getMemories(it).first()
+    }
 
     fun getNetworkFolderPhotos(folder: String) =
         foldersRepository.networkPhotosFromFolder(folder)
@@ -208,7 +243,7 @@ class MainViewModel @Inject constructor(
             try {
                 val photo = photosRepository.getNetworkPhoto(id).firstOrNull() ?: return@map false
 
-                val result = photosRepository.changePhotoLocation(
+                val result = serverRepository.changePhotoLocation(
                     photo = photo,
                     newUserOwnerId = userId.takeUnless { makePublic },
                     newFolderName = newFolderName
@@ -231,7 +266,7 @@ class MainViewModel @Inject constructor(
         photosRepository.getNetworkPhoto(photoId)
 
     suspend fun getExifData(photo: NetworkPhoto): ExifData? = withContext(Dispatchers.IO) {
-        photosRepository.getExifData(photo)
+        serverRepository.getExifData(photo)
     }
 
     /**
@@ -271,19 +306,22 @@ class MainViewModel @Inject constructor(
 
     fun updateCaption(photo: NetworkPhoto, newCaption: String?) {
         viewModelScope.launch(Dispatchers.IO) {
-            photosRepository.updateCaption(photo, newCaption)
+            serverRepository.updateCaption(photo, newCaption)
         }
     }
 
     /**
-     * TODO: Document this
+     * This functions returns an Uri for a certain image,
+     * if it is a [LocalPhoto] it simply returns its location,
+     * if it is a [NetworkPhoto] it downloads and stores the image locally and then returns its Uri
+     * or returns null if the operations fails
      */
     fun getPhotoLocalUriAsync(photo: Photo): Deferred<Uri?> = viewModelScope.async(Dispatchers.IO) {
         when (photo) {
             is LocalPhoto -> photo.uri
             is NetworkPhoto -> {
                 val localPhoto = photosRepository.getLocalPhotoFromNetwork(photo.id)
-                    ?: photosRepository.saveNetworkPhotoToStorage(photo)
+                    ?: serverRepository.saveNetworkPhotoToStorage(photo)
 
                 localPhoto?.uri
             }
@@ -293,8 +331,12 @@ class MainViewModel @Inject constructor(
     fun deletePhotoAsync(photo: Photo): Deferred<Boolean> =
         viewModelScope.async(Dispatchers.IO) {
             when (photo) {
-                is NetworkPhoto ->
-                    photosRepository.deleteNetworkPhoto(photo.ownerUserId, photo.id)
+                is NetworkPhoto -> {
+                    if (serverRepository.deleteNetworkPhoto(photo.ownerUserId, photo.id)) {
+                        photosRepository.removeNetworkReference(photo)
+                        true
+                    } else false
+                }
                 is LocalPhoto ->
                     photosRepository.deleteLocalPhoto(photo)
             }

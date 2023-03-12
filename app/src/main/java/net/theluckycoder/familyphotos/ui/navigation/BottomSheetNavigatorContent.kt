@@ -41,9 +41,8 @@ fun BottomSheetNavigator(
 ) {
     var hideBottomSheet: (() -> Unit)? = null
     val coroutineScope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(
-        initialValue = ModalBottomSheetValue.Hidden,
-        confirmStateChange = { state ->
+    val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden,
+        confirmValueChange = { state ->
             when (state) {
                 ModalBottomSheetValue.Hidden -> {
                     hideBottomSheet?.invoke()

@@ -30,7 +30,6 @@ import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.ui.VerticallyAnimatedInt
 import net.theluckycoder.familyphotos.ui.composables.CoilPhoto
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FolderFilterTextField(folderNameFilter: String, onFilterChange: (String) -> Unit) {
     OutlinedTextField(

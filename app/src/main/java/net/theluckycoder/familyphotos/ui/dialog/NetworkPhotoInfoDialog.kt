@@ -2,15 +2,34 @@ package net.theluckycoder.familyphotos.ui.dialog
 
 import android.os.Parcelable
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.exifinterface.media.ExifInterface.*
+import androidx.exifinterface.media.ExifInterface.TAG_FOCAL_LENGTH
+import androidx.exifinterface.media.ExifInterface.TAG_F_NUMBER
+import androidx.exifinterface.media.ExifInterface.TAG_IMAGE_LENGTH
+import androidx.exifinterface.media.ExifInterface.TAG_IMAGE_WIDTH
+import androidx.exifinterface.media.ExifInterface.TAG_MAKE
+import androidx.exifinterface.media.ExifInterface.TAG_MODEL
+import androidx.exifinterface.media.ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import kotlinx.parcelize.Parcelize
@@ -29,8 +48,8 @@ data class NetworkPhotoInfoDialog(
     @Composable
     private fun DetailItem(title: String, summary: String?, @DrawableRes icon: Int) {
         ListItem(
-            headlineText = { Text(title) },
-            supportingText = if (summary != null) {
+            headlineContent = { Text(title) },
+            supportingContent = if (summary != null) {
                 { Text(summary) }
             } else null,
             leadingContent = {
@@ -39,7 +58,6 @@ data class NetworkPhotoInfoDialog(
         )
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() = Column(
         Modifier

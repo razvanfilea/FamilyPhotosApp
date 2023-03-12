@@ -4,7 +4,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
@@ -21,10 +25,10 @@ fun Preference(
 ) {
     StatusWrapper(enabled = item.enabled) {
         ListItem(
-            headlineText = {
+            headlineContent = {
                 Text(text = item.title, maxLines = if (item.singleLineTitle) 1 else Int.MAX_VALUE)
             },
-            supportingText = { Text(text = summary ?: item.summary) },
+            supportingContent = { Text(text = summary ?: item.summary) },
             leadingContent = { PreferenceIcon(painter = item.icon) },
             modifier = Modifier.clickable(onClick = { if (item.enabled) onClick() }),
             trailingContent = trailing,
@@ -42,13 +46,13 @@ fun Preference(
 ) {
     StatusWrapper(enabled = item.enabled) {
         ListItem(
-            headlineText = {
+            headlineContent = {
                 Text(
                     text = item.title,
                     maxLines = if (item.singleLineTitle) 1 else Int.MAX_VALUE
                 )
             },
-            supportingText = summary,
+            supportingContent = summary,
             leadingContent = { PreferenceIcon(painter = item.icon) },
             modifier = Modifier.clickable(onClick = { if (item.enabled) onClick() }),
             trailingContent = trailing,
@@ -77,7 +81,6 @@ private fun PreferenceIcon(painter: Painter?) {
 fun StatusWrapper(enabled: Boolean = true, content: @Composable () -> Unit) {
     val contentColor = LocalContentColor.current
     CompositionLocalProvider(LocalContentColor provides if (enabled) contentColor else contentColor.copy(alpha = 0.4f)) {
-//    CompositionLocalProvider(LocalContentAlpha provides if (enabled) ContentAlpha.high else ContentAlpha.disabled) {
         content()
     }
 }

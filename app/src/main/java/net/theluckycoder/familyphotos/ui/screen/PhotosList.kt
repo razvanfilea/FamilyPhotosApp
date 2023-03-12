@@ -59,7 +59,7 @@ fun MemoriesList(
                     .padding(4.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .clickable {
-                        navigator.push(PhotoDetailScreen(photos.first(), photos))
+                        navigator.push(PhotoScreen(photos.first(), PhotoScreen.ListSource.Memories))
                     }
             ) {
 
@@ -84,7 +84,7 @@ fun MemoriesList(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PhotosList(
     headerContent: (@Composable () -> Unit)? = null,
@@ -194,7 +194,7 @@ fun PhotosList(
                                     selectedPhotoIds += item.id
                             } else {
                                 navigator.push(
-                                    PhotoDetailScreen(item, getCurrentSnapshot())
+                                    PhotoScreen(item, PhotoScreen.ListSource.PagedList)
                                 )
                             }
                         }

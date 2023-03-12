@@ -43,6 +43,7 @@ import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.size.Size
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
@@ -304,7 +305,7 @@ fun Photo.photoDateText(): String = remember(this) {
 fun SharePhotoIconButton(
     subtitle: Boolean,
     getPhotos: suspend () -> List<Photo>,
-    mainViewModel: MainViewModel
+    getPhotoUri: (Photo) -> Deferred<Uri?>,
 ) {
     val context = LocalContext.current
     val snackbarHostState = LocalSnackbarHostState.current
@@ -316,8 +317,7 @@ fun SharePhotoIconButton(
     val onClick: () -> Unit = {
         scope.launch(Dispatchers.IO) {
             val photos = getPhotos()
-            val uriList = photos.map { mainViewModel.getPhotoLocalUriAsync(it) }.awaitAll()
-                .filterNotNull()
+            val uriList = photos.map(getPhotoUri).awaitAll().filterNotNull()
 
             withContext(Dispatchers.Main) {
                 if (uriList.isEmpty()) {
@@ -403,7 +403,7 @@ fun <T : Photo> PhotoUtilitiesActions(
             )
         }
 
-        SharePhotoIconButton(false, getPhotos = { getPhotos() }, mainViewModel)
+        SharePhotoIconButton(false, getPhotos = { getPhotos() }, mainViewModel::getPhotoLocalUriAsync)
 
         if (!isLocalPhoto) {
             IconButton(

@@ -2,16 +2,30 @@ package net.theluckycoder.familyphotos.ui.activity
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -20,7 +34,6 @@ import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import coil.ImageLoader
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import net.theluckycoder.familyphotos.ui.AppTheme
@@ -28,7 +41,11 @@ import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.LocalOkHttpClient
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.navigation.BottomSheetNavigator
-import net.theluckycoder.familyphotos.ui.screen.tabs.*
+import net.theluckycoder.familyphotos.ui.screen.tabs.BottomTab
+import net.theluckycoder.familyphotos.ui.screen.tabs.FamilyTab
+import net.theluckycoder.familyphotos.ui.screen.tabs.LocalFoldersTab
+import net.theluckycoder.familyphotos.ui.screen.tabs.NetworkFoldersTab
+import net.theluckycoder.familyphotos.ui.screen.tabs.PersonalTab
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import okhttp3.OkHttpClient
 import javax.inject.Inject
@@ -50,14 +67,6 @@ class MainActivity : ComponentActivity() {
         val view = ComposeView(this)
         view.setContent {
             AppTheme {
-                val systemUiController = rememberSystemUiController()
-                val background = MaterialTheme.colorScheme.surface
-
-                LaunchedEffect(background) {
-                    systemUiController.setStatusBarColor(Color.Transparent)
-                    systemUiController.setNavigationBarColor(Color.Transparent)
-                }
-
                 CompositionLocalProvider(
                     LocalImageLoader provides imageLoader,
                     LocalOkHttpClient provides playerController
@@ -89,7 +98,7 @@ private fun RowScope.TabNavigationItem(tab: BottomTab) {
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun AppContent(
     mainViewModel: MainViewModel = viewModel()
