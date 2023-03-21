@@ -1,6 +1,10 @@
 package net.theluckycoder.familyphotos.ui.screen.tabs
 
+import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
+import android.os.Environment
+import android.provider.Settings
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,24 +12,25 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -34,25 +39,26 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import kotlinx.coroutines.launch
+import net.theluckycoder.familyphotos.BuildConfig
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.model.NetworkFolder
-import net.theluckycoder.familyphotos.model.NetworkPhoto
+import net.theluckycoder.familyphotos.model.LocalFolder
+import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.ui.screen.FolderPreviewItem
-import net.theluckycoder.familyphotos.ui.screen.NetworkFolderScreen
+import net.theluckycoder.familyphotos.ui.screen.LocalFolderScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
-object NetworkFoldersTab : BottomTab, FoldersTab<NetworkFolder>() {
+object DeviceTab : BottomTab, FoldersTab<LocalFolder>() {
 
     override val options: TabOptions
         @Composable
         get() = TabOptions(
-            2.toUShort(),
-            stringResource(R.string.section_folders),
-            painterResource(R.drawable.tab_network_folder_outlined)
+            3.toUShort(),
+            stringResource(R.string.section_device),
+            painterResource(R.drawable.ic_storage_outline)
         )
 
     override val selectedIcon: Painter
-        @Composable get() = painterResource(R.drawable.tab_network_folder_filled)
+        @Composable get() = painterResource(R.drawable.ic_storage_filled)
 
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
     @Composable
@@ -61,10 +67,24 @@ object NetworkFoldersTab : BottomTab, FoldersTab<NetworkFolder>() {
     ) {
         val mainViewModel: MainViewModel = viewModel()
         val navigator = LocalNavigator.currentOrThrow
+        val ctx = LocalContext.current
         val scope = rememberCoroutineScope()
 
-        val folders by mainViewModel.networkFolders.collectAsState(emptyList())
-        val sortAscending by mainViewModel.settingsStore.showFoldersAscending.collectAsState(true)
+        LaunchedEffect(Unit) {
+            if (!Environment.isExternalStorageManager()) {
+                val uri = Uri.parse("package:${BuildConfig.APPLICATION_ID}")
+                ctx.startActivity(
+                    Intent(
+                        Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                        uri
+                    )
+                )
+            }
+        }
+
+        val folders by mainViewModel.localFolders.collectAsState(emptyList())
+        val sortAscending by mainViewModel.settingsStore
+            .showFoldersAscending.collectAsState(true)
         val filteredFolders = rememberFiltering(folders, sortAscending)
 
         val columnCount =
@@ -76,6 +96,23 @@ object NetworkFoldersTab : BottomTab, FoldersTab<NetworkFolder>() {
         ) {
             item(span = { GridItemSpan(columnCount) }) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        val autoUpload by mainViewModel.autoBackupFlow.collectAsState(false)
+
+                        Text(
+                            "Backup Camera Photos",
+                            Modifier
+                                .weight(1f)
+                                .padding(horizontal = 16.dp)
+                        )
+                        Switch(
+                            autoUpload,
+                            onCheckedChange = { mainViewModel.setAutoBackup(it) }
+                        )
+                    }
 
                     SortButton(sortAscending) {
                         scope.launch {
@@ -86,11 +123,10 @@ object NetworkFoldersTab : BottomTab, FoldersTab<NetworkFolder>() {
             }
 
             items(filteredFolders, key = { it.coverPhotoId }) { folder ->
-                // Make a fake Network Photo to load the thumbnail
-                val photo = NetworkPhoto(
+                val photo = LocalPhoto(
                     id = folder.coverPhotoId,
                     name = "",
-                    ownerUserId = folder.ownerUserId,
+                    uri = folder.coverPhotoUri,
                     timeCreated = 0L,
                     folder = folder.name
                 )
@@ -101,25 +137,10 @@ object NetworkFoldersTab : BottomTab, FoldersTab<NetworkFolder>() {
                     name = folder.name,
                     photosCount = folder.count,
                     onClick = {
-                        navigator.push(NetworkFolderScreen(folder.name))
+                        navigator.push(LocalFolderScreen(folder.name))
                     },
-                ) {
-                    if (folder.isPublic) {
-                        Icon(
-                            modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .size(36.dp)
-                                .padding(4.dp),
-                            painter = painterResource(R.drawable.ic_family_filled),
-                            tint = Color.White,
-                            contentDescription = null
-                        )
-                    }
-                }
-
+                )
             }
         }
-
     }
 }
-

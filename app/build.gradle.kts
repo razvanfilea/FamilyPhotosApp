@@ -18,8 +18,8 @@ android {
         applicationId = "net.theluckycoder.familyphotos"
         minSdk = 30
         targetSdk = 33
-        versionCode = 19
-        versionName = "1.9.0"
+        versionCode = 20
+        versionName = "2.0.0"
         resourceConfigurations += listOf("en", "ro")
 
         javaCompileOptions {
@@ -40,6 +40,7 @@ android {
         }
         create("staging") {
             versionNameSuffix = "-staging"
+            applicationIdSuffix = ".debug"
 
             isDebuggable = true
             buildConfigField("Boolean", "DEBUG", "false")
@@ -115,7 +116,6 @@ dependencies {
     implementation(libs.compose.toolingPreview)
     debugImplementation(libs.compose.tooling)
     implementation(libs.compose.foundation)
-    implementation(libs.compose.material)
     implementation(libs.compose.material3)
     implementation(libs.compose.animation)
     implementation(libs.compose.activity)

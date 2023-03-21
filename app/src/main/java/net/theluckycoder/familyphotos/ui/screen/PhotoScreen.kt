@@ -6,15 +6,17 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -35,47 +37,28 @@ import kotlinx.parcelize.Parcelize
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.*
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
+import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.composables.*
-import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
-import net.theluckycoder.familyphotos.ui.dialog.NetworkPhotoInfoDialog
-import net.theluckycoder.familyphotos.ui.navigation.LocalBottomSheetNavigator
-import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
+import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
+import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewModel
 
 @Suppress("DataClassPrivateConstructor")
 @Parcelize
 data class PhotoScreen private constructor(
-    val startPhoto: Photo,
-    val listSource: ListSource,
-    var index: Int,
+    private val startPhoto: Photo,
+    private val listSource: ListSource,
+    private var index: Int,
 ) : Screen, Parcelable {
-
-    override val key: ScreenKey
-        get() = "PhotoDetailScreen ${startPhoto.id}"
-
-    @Parcelize
-    enum class ListSource : Parcelable {
-        PagedList,
-        Folder,
-        Memories,
-    }
 
     constructor(startPhoto: Photo, listSource: ListSource) : this(startPhoto, listSource, -1)
 
-    @OptIn(ExperimentalFoundationApi::class)
-    @Composable
-    override fun Content() = Box(
-        Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-    ) {
-        val mainViewModel: MainViewModel = viewModel()
-        val photoViewModel: PhotoViewModel = viewModel()
-        val navigator = LocalNavigator.currentOrThrow
+    override val key: ScreenKey
+        get() = "PhotoDetailScreen ${startPhoto.id} $listSource"
 
-        SideEffect {
-            mainViewModel.showBottomAppBar.value = false
-        }
+    @Composable
+    override fun Content() = Box(Modifier.fillMaxSize()) {
+        val photoViewModel: PhotoViewModel = viewModel()
 
         val allPhotosState = remember {
             when (listSource) {
@@ -102,17 +85,67 @@ data class PhotoScreen private constructor(
         }
 
         if (allPhotos != null && index != -1) {
-            val pagerState = rememberPagerState(index)
-            val showUi = remember { mutableStateOf(true) }
+            PhotosPager(allPhotos, photoViewModel)
+        }
+    }
 
-            DisposableEffect(allPhotos.size) {
-                if (allPhotos.isEmpty())
-                    navigator.pop()
+    @Composable
+    @OptIn(ExperimentalFoundationApi::class)
+    private fun BoxScope.PhotosPager(
+        allPhotos: List<Photo>,
+        photoViewModel: PhotoViewModel
+    ) {
+        val navigator = LocalNavigator.currentOrThrow
+        val pagerState = rememberPagerState(index)
+        val showUi = remember { mutableStateOf(true) }
 
-                onDispose {
-                    index = pagerState.currentPage
+        DisposableEffect(allPhotos.size) {
+            if (allPhotos.isEmpty())
+                navigator.pop()
+
+            onDispose {
+                index = pagerState.currentPage
+            }
+        }
+
+        val currentPhoto = allPhotos.getOrNull(pagerState.currentPage)
+
+        Scaffold(
+            containerColor = Color.Black,
+            contentColor = Color.White,
+            snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
+            topBar = {
+                if (currentPhoto != null) {
+                    AnimatedVisibility(
+                        visible = showUi.value,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        NavBackTopAppBar(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .align(Alignment.TopCenter),
+                            title = currentPhoto.photoDateText(),
+                            navIconOnClick = { navigator.pop() }
+                        )
+                    }
+                }
+            },
+            bottomBar = {
+                if (currentPhoto != null) {
+                    AnimatedVisibility(
+                        visible = showUi.value,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        BottomBar(
+                            photo = currentPhoto,
+                            photoViewModel = photoViewModel,
+                        )
+                    }
                 }
             }
+        ) { paddingValues ->
 
             HorizontalPager(
                 pageCount = allPhotos.size,
@@ -127,35 +160,6 @@ data class PhotoScreen private constructor(
                 }
             }
 
-            val currentPhoto = allPhotos.getOrNull(pagerState.currentPage)
-
-            if (currentPhoto != null) {
-                AnimatedVisibility(
-                    visible = showUi.value,
-                    enter = fadeIn(),
-                    exit = fadeOut()
-                ) {
-                    NavBackTopAppBar(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.TopCenter),
-                        title = currentPhoto.photoDateText(),
-                        navIconOnClick = { navigator.pop() }
-                    )
-                }
-
-                AnimatedVisibility(
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                    visible = showUi.value,
-                    enter = fadeIn(),
-                    exit = fadeOut()
-                ) {
-                    BottomBar(
-                        photo = currentPhoto,
-                        photoViewModel = photoViewModel,
-                    )
-                }
-            }
         }
     }
 
@@ -183,19 +187,18 @@ data class PhotoScreen private constructor(
         photo: Photo,
         photoViewModel: PhotoViewModel = viewModel()
     ) {
-        val bottomSheetNavigator = LocalBottomSheetNavigator.current
+        val deletePhotosDialog = rememberDeletePhotosDialog()
         val navigator = LocalNavigator.currentOrThrow
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 4.dp)
-                .windowInsetsPadding(BottomAppBarDefaults.windowInsets),
+                .padding(horizontal = 4.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
 
             IconButtonText(
-                onClick = { bottomSheetNavigator.show(DeletePhotosDialog(listOf(photo))) },
+                onClick = { deletePhotosDialog.show(listOf(photo)) },
                 text = stringResource(id = R.string.action_delete),
             ) {
                 Icon(
@@ -226,11 +229,14 @@ data class PhotoScreen private constructor(
                     val networkPhotoState = photoViewModel.getNetworkPhotoFlow(photo.networkPhotoId)
                         .collectAsState(null)
 
+                    val networkPhotoInfoDialog =
+                        rememberNetworkPhotoInfoDialog(networkPhotoState.value)
+
                     IconButtonText(
                         onClick = {
                             val networkPhoto = networkPhotoState.value
                             if (networkPhoto != null)
-                                bottomSheetNavigator.show(NetworkPhotoInfoDialog(networkPhoto))
+                                networkPhotoInfoDialog.show()
                         },
                         text = stringResource(id = R.string.status_saved),
                     ) {
@@ -251,8 +257,10 @@ data class PhotoScreen private constructor(
                     )
                 }
 
+                val networkPhotoInfoDialog = rememberNetworkPhotoInfoDialog(photo)
+
                 IconButtonText(
-                    onClick = { bottomSheetNavigator.show(NetworkPhotoInfoDialog(photo)) },
+                    onClick = { networkPhotoInfoDialog.show() },
                     text = stringResource(id = R.string.action_info),
                 ) {
                     Icon(
@@ -262,6 +270,13 @@ data class PhotoScreen private constructor(
                 }
             }
         }
+    }
+
+    @Parcelize
+    enum class ListSource : Parcelable {
+        PagedList,
+        Folder,
+        Memories,
     }
 }
 
@@ -282,14 +297,17 @@ private fun ZoomableImage(
             .build()
     )
 
+    val size = request.intrinsicSize
+    val intSize = when {
+        size.isUnspecified -> IntSize(0, 0)
+        else -> IntSize(size.width.toInt(), size.height.toInt())
+    }
+
     Image(
         modifier = modifier.enhancedZoom(
             clip = false,
             enhancedZoomState = rememberEnhancedZoomState(
-                imageSize = IntSize(
-                    request.intrinsicSize.width.toInt(),
-                    request.intrinsicSize.height.toInt()
-                ),
+                imageSize = intSize,
                 rotatable = false,
                 limitPan = true,
                 maxZoom = 4f,
@@ -298,9 +316,10 @@ private fun ZoomableImage(
                 val enabled = zoom > 1f
                 showUI(!enabled)
                 enabled
-            }
+            },
+            key = intSize,
         ),
         painter = request,
-        contentDescription = photo.name
+        contentDescription = photo.name,
     )
 }

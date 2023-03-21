@@ -60,8 +60,7 @@ import net.theluckycoder.familyphotos.model.getThumbnailUri
 import net.theluckycoder.familyphotos.model.getUri
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
-import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
-import net.theluckycoder.familyphotos.ui.navigation.LocalBottomSheetNavigator
+import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import java.time.format.DateTimeFormatter
@@ -375,8 +374,8 @@ fun <T : Photo> PhotoUtilitiesActions(
     mainViewModel: MainViewModel = viewModel()
 ) {
     val navigator = LocalNavigator.currentOrThrow
-    val bottomSheetNavigator = LocalBottomSheetNavigator.current
     val scope = rememberCoroutineScope()
+    val deletePhotosDialog = rememberDeletePhotosDialog(onPhotosDeleted = { _, _ -> selectedItems.clear() })
 
     if (selectedItems.isNotEmpty()) {
         val isLocalPhoto = klass == LocalPhoto::class
@@ -390,10 +389,8 @@ fun <T : Photo> PhotoUtilitiesActions(
         }
 
         IconButton(onClick = {
-
             scope.launch {
-                bottomSheetNavigator.show(DeletePhotosDialog(getPhotos()))
-                selectedItems.clear()
+                deletePhotosDialog.show(getPhotos())
             }
         }) {
             Icon(

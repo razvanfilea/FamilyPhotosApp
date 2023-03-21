@@ -3,7 +3,7 @@
     <string name="section_personal">Personal</string>
     <string name="section_family">Familie</string>
     <string name="section_folders">Dosare</string>
-    <string name="section_storage">Stocare</string>
+    <string name="section_device">Telefon</string>
     <string name="action_delete">Șterge</string>
     <string name="action_upload">Încarcă</string>
     <string name="action_upload_photos">Încarcă pozele</string>
@@ -28,10 +28,15 @@
     <string name="send_to">Trimite la:</string>
     <string name="pref_category_cache">Cache</string>
     <string name="pref_cache_size">Dimensiune Cache (MB)</string>
+    <string name="pref_restart_needed">Un restart e necesar</string>
     <string name="pref_clear_cache">Șterge cache</string>
     <string name="folder_name">Nume director</string>
     <string name="notification_backup_fail_io">Eroare la fișiere</string>
     <string name="notification_backup_fail_unknown">Motiv necunoscut</string>
+    <string name="notification_missing_permission">Lipsă permisiune notificări</string>
+    <string name="notification_backup_title">Se încarcă fișierele</string>
+    <string name="notification_backup_finished">S-au încărcat pozele</string>
+    <string name="notification_backup_finished_desc">%d poze au fost încărcate cu succes și %d au eșuat</string>
     <string name="notification_backup_fail_internet">Lipsă internet</string>
     <string name="action_previous">Anterior</string>
     <string name="action_info">Info</string>

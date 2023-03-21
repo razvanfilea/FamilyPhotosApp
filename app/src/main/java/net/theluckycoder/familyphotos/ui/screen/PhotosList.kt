@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.os.Parcel
 import android.os.Parcelable
 import androidx.compose.animation.*
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -84,7 +85,7 @@ fun MemoriesList(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun PhotosList(
     headerContent: (@Composable () -> Unit)? = null,
@@ -133,9 +134,6 @@ fun PhotosList(
     }
 
     val listState = rememberLazyGridState()
-    val getCurrentSnapshot = {
-        photos.itemSnapshotList.mapNotNull { it as? Photo? }
-    }
 
     LazyVerticalGrid(
         state = listState,
@@ -183,7 +181,8 @@ fun PhotosList(
                     SelectableItem(
                         modifier = Modifier
                             .aspectRatio(1f)
-                            .padding(1.5.dp),
+                            .padding(1.5.dp)
+                            .animateItemPlacement(),
                         selected = selectedPhotoIds.contains(item.id),
                         enabled = selectedPhotoIds.isNotEmpty(),
                         onClick = { longPress ->

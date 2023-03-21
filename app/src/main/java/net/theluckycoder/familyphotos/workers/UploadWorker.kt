@@ -1,12 +1,15 @@
 package net.theluckycoder.familyphotos.workers
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.graphics.drawable.Icon
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.work.HiltWorker
@@ -54,6 +57,7 @@ class UploadWorker @AssistedInject constructor(
 
         val result = try {
             var total = ids.size
+            var failedCount = 0
 
             ids.forEachIndexed { index, localPhotoId ->
                 val localPhoto = photosRepository.getLocalPhoto(localPhotoId).first()
@@ -65,21 +69,14 @@ class UploadWorker @AssistedInject constructor(
                 setForeground(
                     createForegroundInfo("Uploaded $index/$total files", index, total)
                 )
-//                val mimeType = ctx.contentResolver.getType(localPhoto.uri)
-
-                /*val fileToUpload = try {
-                    if (mimeType?.startsWith("image") == true && !SKIPPED_MIME.contains(mimeType))
-                        transformToHeif(localPhoto)
-                    else null
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    null
-                }*/
 
                 if (!serverRepository.uploadFile(userOwnerId, localPhoto, uploadFolder, null)) {
                     Log.e(TAG, "Failed to upload $localPhotoId")
+                    failedCount++
                 }
             }
+
+            createSuccessNotification(total - failedCount, failedCount)
 
             Result.success()
         } catch (e: ConnectException) {
@@ -103,100 +100,6 @@ class UploadWorker @AssistedInject constructor(
 
         return result
     }
-
-    /*private fun transformToHeif(localPhoto: LocalPhoto): File {
-        val ctx = applicationContext
-        backupFolder.mkdir()
-
-        val bitmap = ImageDecoder.createSource(ctx.contentResolver, localPhoto.uri)
-            .decodeBitmap { _, _ ->
-                isMutableRequired = true // This will force the decode to avoid HARDWARE Bitmaps
-            }
-
-        val rotation = getRotation(localPhoto.uri)
-
-        val file = File(backupFolder, "${localPhoto.name.substringBeforeLast('.')}.heic")
-        HeifWriter.Builder(
-            file.absolutePath,
-            bitmap.width,
-            bitmap.height,
-            HeifWriter.INPUT_MODE_BITMAP
-        ).setRotation(rotation)
-            .setQuality(95)
-            .build().apply {
-                start()
-
-                addBitmap(bitmap)
-
-                stop(0)
-                close()
-            }
-
-        return file
-    }*/
-
-    /*private fun getRotation(uri: Uri): Int {
-        val ctx = applicationContext
-
-        val exif = try {
-            ctx.contentResolver.openInputStream(uri)?.use { stream ->
-                try {
-                    ExifInterface(stream)
-                } catch (e: IOException) {
-                    null
-                }
-            }
-        } catch (e: IOException) {
-            e.printStackTrace()
-            null
-        }
-
-        exif ?: return 0
-
-        val orientation = exif.getAttributeInt(
-            ExifInterface.TAG_ORIENTATION,
-            ExifInterface.ORIENTATION_NORMAL
-        )
-
-        return when (orientation) {
-            ExifInterface.ORIENTATION_ROTATE_90 -> 90
-            ExifInterface.ORIENTATION_ROTATE_180 -> 180
-            ExifInterface.ORIENTATION_ROTATE_270 -> 270
-            else -> 0
-        }
-    }*/
-
-    /*private fun HeifWriter.addExifData(exif: ExifInterface) {
-        val tagsToCheck = arrayOf(
-            ExifInterface.TAG_DATETIME,
-            ExifInterface.TAG_MAKE,
-            ExifInterface.TAG_MODEL,
-            ExifInterface.TAG_ORIENTATION,
-            ExifInterface.TAG_WHITE_BALANCE,
-            ExifInterface.TAG_FOCAL_LENGTH,
-            ExifInterface.TAG_FOCAL_LENGTH_IN_35MM_FILM,
-            ExifInterface.TAG_FLASH,
-            // GPS
-            ExifInterface.TAG_GPS_DATESTAMP,
-            ExifInterface.TAG_GPS_TIMESTAMP,
-            ExifInterface.TAG_GPS_LATITUDE,
-            ExifInterface.TAG_GPS_LATITUDE_REF,
-            ExifInterface.TAG_GPS_LONGITUDE,
-            ExifInterface.TAG_GPS_LONGITUDE_REF,
-            ExifInterface.TAG_GconstraintsPS_PROCESSING_METHOD,
-            // Exposure
-            ExifInterface.TAG_EXPOSURE_INDEX,
-            ExifInterface.TAG_EXPOSURE_BIAS_VALUE,
-            ExifInterface.TAG_EXPOSURE_TIME,
-            ExifInterface.TAG_EXPOSURE_MODE,
-        )
-
-        for (tag in tagsToCheck) {
-            val exifData = exif.getAttributeBytes(tag) ?: continue
-
-            addExifData(0, exifData, 0, exifData.size)
-        }
-    }*/
 
     private fun createForegroundInfo(
         text: String,
@@ -237,23 +140,51 @@ class UploadWorker @AssistedInject constructor(
 
         val title = ctx.getString(R.string.notification_backup_fail)
 
-        val message = when (failReason) {
+        val messageRes = when (failReason) {
             FailReason.NoInternet -> R.string.notification_backup_fail_internet
             FailReason.IoError -> R.string.notification_backup_fail_io
             FailReason.Other -> R.string.notification_backup_fail_unknown
         }
 
-        val m = str ?: ctx.getString(message)
+        val message = str ?: ctx.getString(messageRes)
 
         val notification = NotificationCompat.Builder(ctx, NOTIFICATION_CHANNEL)
             .setTicker(title)
             .setContentTitle(title)
-            .setContentText(m)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(m))
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
             .setSmallIcon(R.drawable.ic_error_outline)
             .build()
 
-        NotificationManagerCompat.from(ctx).notify(NOTIFICATION_FAIL_ID, notification)
+        if (ActivityCompat.checkSelfPermission(
+                ctx,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            NotificationManagerCompat.from(ctx).notify(NOTIFICATION_FAIL_ID, notification)
+        }
+    }
+
+    private fun createSuccessNotification(successfulCount: Int, failedCount: Int) {
+        val ctx = applicationContext
+        val title = ctx.getString(R.string.notification_backup_finished)
+        val content = ctx.getString(R.string.notification_backup_finished_desc, successfulCount, failedCount)
+
+        val notification = NotificationCompat.Builder(ctx, NOTIFICATION_CHANNEL)
+            .setTicker(title)
+            .setContentTitle(title)
+            .setContentText(content)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(content))
+            .setSmallIcon(R.drawable.ic_cloud_done_filled)
+            .build()
+
+        if (ActivityCompat.checkSelfPermission(
+                ctx,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            NotificationManagerCompat.from(ctx).notify(NOTIFICATION_FAIL_ID, notification)
+        }
     }
 
     enum class FailReason {
@@ -270,9 +201,5 @@ class UploadWorker @AssistedInject constructor(
         const val KEY_INPUT_LIST = "input_list"
         const val KEY_USER_OWNER_ID = "user_id"
         const val KEY_UPLOAD_FOLDER = "upload_folder"
-
-        private val SKIPPED_MIME = arrayOf(
-            "image/heif", "image/heic", "image/gif"
-        )
     }
 }

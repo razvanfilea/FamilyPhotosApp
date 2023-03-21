@@ -10,7 +10,7 @@
     <string name="section_personal">Personal</string>
     <string name="section_family">Family</string>
     <string name="section_folders">Folders</string>
-    <string name="section_storage">Storage</string>
+    <string name="section_device">Device</string>
 
     <!-- Actions -->
     <string name="action_info">Info</string>
@@ -51,7 +51,10 @@
     <string name="descending">Descending</string>
 
     <!-- Notifications -->
+    <string name="notification_missing_permission">Missing notification permission</string>
     <string name="notification_backup_title">Backup up files</string>
+    <string name="notification_backup_finished">Finished uploading photos</string>
+    <string name="notification_backup_finished_desc">%d photos uploaded successfully and %d failed</string>
     <string name="notification_backup_fail">Failed to backup up files</string>
     <string name="notification_backup_fail_internet">Missing internet connection</string>
     <string name="notification_backup_fail_io">Error in the files</string>

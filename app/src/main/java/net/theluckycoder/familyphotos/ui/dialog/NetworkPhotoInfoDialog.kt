@@ -1,14 +1,16 @@
 package net.theluckycoder.familyphotos.ui.dialog
 
-import android.os.Parcelable
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,8 +33,6 @@ import androidx.exifinterface.media.ExifInterface.TAG_MAKE
 import androidx.exifinterface.media.ExifInterface.TAG_MODEL
 import androidx.exifinterface.media.ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cafe.adriel.voyager.core.screen.Screen
-import kotlinx.parcelize.Parcelize
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.ExifData
 import net.theluckycoder.familyphotos.model.NetworkPhoto
@@ -40,82 +40,95 @@ import net.theluckycoder.familyphotos.ui.composables.photoDateText
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import java.text.DecimalFormat
 
-@Parcelize
-data class NetworkPhotoInfoDialog(
-    val photo: NetworkPhoto
-) : Screen, Parcelable {
+fun interface NetworkPhotoInfoDialogCaller {
+    fun show()
+}
 
-    @Composable
-    private fun DetailItem(title: String, summary: String?, @DrawableRes icon: Int) {
-        ListItem(
-            headlineContent = { Text(title) },
-            supportingContent = if (summary != null) {
-                { Text(summary) }
-            } else null,
-            leadingContent = {
-                Icon(painterResource(icon), contentDescription = null)
-            }
-        )
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun rememberNetworkPhotoInfoDialog(photo: NetworkPhoto?): NetworkPhotoInfoDialogCaller {
+    var visible by remember { mutableStateOf(false) }
+
+    if (visible && photo != null) {
+        ModalBottomSheet(onDismissRequest = { visible = false }) {
+            NetworkPhotoInfoDialogContent(photo)
+        }
     }
 
-    @Composable
-    override fun Content() = Column(
-        Modifier
+    return NetworkPhotoInfoDialogCaller {
+        visible = true
+    }
+}
+
+@Composable
+private fun DetailItem(title: String, summary: String?, @DrawableRes icon: Int) {
+    ListItem(
+        headlineContent = { Text(title) },
+        supportingContent = if (summary != null) {
+            { Text(summary) }
+        } else null,
+        leadingContent = {
+            Icon(painterResource(icon), contentDescription = null)
+        }
+    )
+}
+
+@Composable
+fun NetworkPhotoInfoDialogContent(photo: NetworkPhoto) = Column(
+    Modifier
+        .fillMaxWidth()
+        .safeDrawingPadding()
+        .padding(16.dp)
+) {
+    val viewModel: MainViewModel = viewModel()
+    var exif by remember { mutableStateOf(ExifData()) }
+
+    LaunchedEffect(Unit) {
+        exif = viewModel.getExifData(photo) ?: ExifData()
+    }
+
+    Text(photo.photoDateText(), fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+
+    var caption by remember { mutableStateOf(photo.caption.orEmpty()) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.updateCaption(photo, caption)
+        }
+    }
+
+    OutlinedTextField(
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 24.dp)
-    ) {
-        val viewModel: MainViewModel = viewModel()
-        var exif by remember { mutableStateOf(ExifData()) }
+            .padding(top = 4.dp, bottom = 16.dp),
+        value = caption,
+        onValueChange = { caption = it },
+        label = { Text("Caption") },
+    )
 
-        LaunchedEffect(Unit) {
-            exif = viewModel.getExifData(photo) ?: ExifData()
-        }
+    Text("Details", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
 
-        Text(photo.photoDateText(), fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+    Spacer(Modifier.height(4.dp))
 
-        var caption by remember { mutableStateOf(photo.caption.orEmpty()) }
+    DetailItem(
+        photo.name,
+        "${exif[TAG_IMAGE_WIDTH]} x ${exif[TAG_IMAGE_LENGTH]}".takeIf { exif.isNotEmpty },
+        R.drawable.ic_exif_image
+    )
 
-        DisposableEffect(Unit) {
-            onDispose {
-                viewModel.updateCaption(photo, caption)
-            }
-        }
-
-        OutlinedTextField(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp, bottom = 16.dp),
-            value = caption,
-            onValueChange = { caption = it },
-            label = { Text("Caption") },
-        )
-
-        Text("Details", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
-
-        Spacer(Modifier.height(4.dp))
-
+    if (exif.isNotEmpty) {
         DetailItem(
-            photo.name,
-            "${exif[TAG_IMAGE_WIDTH]} x ${exif[TAG_IMAGE_LENGTH]}".takeIf { exif.isNotEmpty },
-            R.drawable.ic_exif_image
+            "${exif[TAG_MAKE].orEmpty().trim('"')} ${exif[TAG_MODEL].orEmpty().trim('"')}",
+            "f${exif[TAG_F_NUMBER]}・${exif[TAG_FOCAL_LENGTH]}mm・ISO${exif[TAG_PHOTOGRAPHIC_SENSITIVITY]}",
+            R.drawable.ic_exif_camera
         )
-
-        if (exif.isNotEmpty) {
-            DetailItem(
-                "${exif[TAG_MAKE].orEmpty().trim('"')} ${exif[TAG_MODEL].orEmpty().trim('"')}",
-                "f${exif[TAG_F_NUMBER]}・${exif[TAG_FOCAL_LENGTH]}mm・ISO${exif[TAG_PHOTOGRAPHIC_SENSITIVITY]}",
-                R.drawable.ic_exif_camera
-            )
-        }
-
-        DetailItem(
-            photo.folder ?: "No folder",
-            if (photo.fileSize != 0L) getStringSizeLengthFile(photo.fileSize) else null,
-            R.drawable.ic_folder_outlined
-        )
-
-        Spacer(Modifier.height(12.dp))
     }
+
+    DetailItem(
+        photo.folder ?: "No folder",
+        if (photo.fileSize != 0L) getStringSizeLengthFile(photo.fileSize) else null,
+        R.drawable.ic_folder_outlined
+    )
 }
 
 private const val sizeKb = 1024.0f
