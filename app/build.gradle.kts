@@ -91,8 +91,8 @@ dependencies {
     implementation(libs.kotlin.collections)
 
     // AndroidX
-    implementation("androidx.activity:activity-ktx:1.6.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.0")
+    implementation("androidx.activity:activity-ktx:1.7.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
     implementation(libs.androidX.dataStore)
     implementation("androidx.exifinterface:exifinterface:1.3.6")
 
@@ -119,7 +119,7 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.animation)
     implementation(libs.compose.activity)
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
 
     // Voyager
     implementation(libs.voyager.navigator)
@@ -135,7 +135,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp-brotli:4.10.0")
 
     // WorkManager
-    implementation("androidx.work:work-runtime-ktx:2.8.0")
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
 
     // Hilt
     implementation(libs.dagger.android)
