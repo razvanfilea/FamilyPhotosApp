@@ -13,6 +13,7 @@ class LoginRepository @Inject constructor(
 ) {
 
     suspend fun login(userLogin: UserLogin): User? {
-        return userService.get().getUser("Basic " + userLogin.encodeBase64(), userLogin.userName).body()
+        val url = "/user/name/${userLogin.userName}"
+        return userService.get().getUser(url, "Basic " + userLogin.encodeBase64()).body()
     }
 }

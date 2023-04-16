@@ -48,6 +48,7 @@ class ServerRepository @Inject constructor(
 
             if (photos.isNotEmpty()) {
                 networkPhotosDao.replaceAll(photos)
+                Log.i("ServerRepository", "Downloaded all server photos")
                 return@coroutineScope true
             }
         }
@@ -56,7 +57,8 @@ class ServerRepository @Inject constructor(
     }
 
     suspend fun deleteNetworkPhoto(userId: Long, photoId: Long): Boolean {
-        val successful = photosService.get().deletePhoto(userId, photoId).isSuccessful
+        val deletePhoto = photosService.get().deletePhoto(userId, photoId)
+        val successful = deletePhoto.isSuccessful
 
         if (successful) {
             Log.d("PhotosListRepository", "Deleting $userId")

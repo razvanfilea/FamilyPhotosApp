@@ -23,11 +23,6 @@ class PhotoViewModel @Inject constructor(
     private val foldersRepository: FoldersRepository,
 ) : ViewModel() {
 
-    // region Individual Photos Actions
-
-    fun getLocalPhotoFlow(photoId: Long): Flow<LocalPhoto?> =
-        photosRepository.getLocalPhoto(photoId)
-
     fun getNetworkPhotoFlow(photoId: Long): Flow<NetworkPhoto?> =
         photosRepository.getNetworkPhoto(photoId)
 

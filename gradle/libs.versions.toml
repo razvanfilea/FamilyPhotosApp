@@ -1,44 +1,48 @@
 [versions]
-agp = "8.0.0-beta05"
-kotlin = "1.8.10"
+agp = "8.0.0"
+kotlin_base = "1.8.20"
 kotlin_coroutines = "1.6.4"
 kotlin_serialization = "1.5.0"
 kotlin_datetime = "0.4.0"
 kotlin_collections = "0.3.5"
-compose_other = "1.4.0"
+compose_base = "1.4.1"
 compose_activity = "1.7.0"
-compose_compiler = "1.4.4"
-compose_material3 = "1.1.0-beta01"
+compose_compiler = "1.4.5"
+compose_material3 = "1.1.0-beta02"
 accompanist = "0.30.0"
 voyager = "1.0.0-rc04"
 androidx_room = "2.5.1"
 androidx_media = "1.0.0"
+androidx_activity = "1.7.0"
 androidx_datastore = "1.0.0"
+androidx_exif = "1.3.6"
 paging_runtime = "3.1.1"
 paging_compose = "1.0.0-alpha18"
-coil = "2.2.2"
+coil = "2.3.0"
 dagger = "2.45"
 
 [libraries]
 agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
-kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin_base" }
 
 kotlin_coroutinesAndroid = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlin_coroutines" }
 kotlin_serializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlin_serialization" }
 kotlin_dateTime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlin_datetime" }
 kotlin_collections = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlin_collections" }
-kotlin_reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlin_reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin_base" }
 
-androidX_dataStore = { module = "androidx.datastore:datastore-preferences", version.ref = "androidx_datastore" }
+androidx_activity = { module = "androidx.activity:activity-ktx", version.ref = "androidx_activity" }
+androidx_dataStore = { module = "androidx.datastore:datastore-preferences", version.ref = "androidx_datastore" }
+androidx_exif = { module = "androidx.exifinterface:exifinterface", version.ref = "androidx_exif" }
 
 compose_compiler = { module = "androidx.compose.compiler:compiler", version.ref = "compose_compiler" }
-compose_foundation = { module = "androidx.compose.foundation:foundation", version.ref = "compose_other" }
-compose_ui = { module = "androidx.compose.ui:ui", version.ref = "compose_other" }
-compose_material = { module = "androidx.compose.material:material", version.ref = "compose_other" }
+compose_foundation = { module = "androidx.compose.foundation:foundation", version.ref = "compose_base" }
+compose_ui = { module = "androidx.compose.ui:ui", version.ref = "compose_base" }
+compose_material = { module = "androidx.compose.material:material", version.ref = "compose_base" }
 compose_material3 = { module = "androidx.compose.material3:material3", version.ref = "compose_material3" }
-compose_animation = { module = "androidx.compose.animation:animation", version.ref = "compose_other" }
-compose_tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose_other" }
-compose_toolingPreview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose_other" }
+compose_animation = { module = "androidx.compose.animation:animation", version.ref = "compose_base" }
+compose_tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose_base" }
+compose_toolingPreview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose_base" }
 compose_activity = { module = "androidx.activity:activity-compose", version.ref = "compose_activity" }
 
 voyager_navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyager" }

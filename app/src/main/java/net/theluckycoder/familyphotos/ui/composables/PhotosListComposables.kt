@@ -1,4 +1,4 @@
-package net.theluckycoder.familyphotos.ui.screen
+package net.theluckycoder.familyphotos.ui.composables
 
 import android.annotation.SuppressLint
 import android.content.res.Configuration
@@ -34,9 +34,7 @@ import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.model.isVideo
 import net.theluckycoder.familyphotos.ui.VerticallyAnimatedInt
-import net.theluckycoder.familyphotos.ui.composables.CoilPhoto
-import net.theluckycoder.familyphotos.ui.composables.PhotoUtilitiesActions
-import net.theluckycoder.familyphotos.ui.composables.SelectableItem
+import net.theluckycoder.familyphotos.ui.screen.PhotoScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @Composable
@@ -60,7 +58,7 @@ fun MemoriesList(
                     .padding(4.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .clickable {
-                        navigator.push(PhotoScreen(photos.first(), PhotoScreen.ListSource.Memories))
+                        navigator.push(PhotoScreen(photos.first(), PhotoScreen.Source.Memories))
                     }
             ) {
 
@@ -193,7 +191,7 @@ fun PhotosList(
                                     selectedPhotoIds += item.id
                             } else {
                                 navigator.push(
-                                    PhotoScreen(item, PhotoScreen.ListSource.PagedList)
+                                    PhotoScreen(item, PhotoScreen.Source.PagedList)
                                 )
                             }
                         }

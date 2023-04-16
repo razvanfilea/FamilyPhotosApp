@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.core.database.getLongOrNull
 import androidx.core.database.getStringOrNull
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.datetime.Instant
 import net.theluckycoder.familyphotos.db.dao.LocalPhotosDao
 import net.theluckycoder.familyphotos.db.dao.NetworkPhotosDao
 import net.theluckycoder.familyphotos.model.LocalPhoto
@@ -116,12 +117,8 @@ fun Cursor.parseUriToLocalImage(
     val bucketName = getString(bucketNameColumn)
     val displayName = getString(displayNameColumn)
     val mimeType = getStringOrNull(mimeTypeColumn)
-    var dateAdded = getLongOrNull(dateTakenColumn) ?: getLong(dateAddedColumn)
-
-    val currentTimeSeconds = System.currentTimeMillis() / 1000
-
-    if (dateAdded < currentTimeSeconds) // It means the dateAdded is in seconds
-        dateAdded *= 1000 // we transform it in milliseconds
+    val dateAdded = getLongOrNull(dateTakenColumn)?.let { Instant.fromEpochMilliseconds(it) }
+        ?: Instant.fromEpochSeconds(getLong(dateAddedColumn))
 
     val contentUriId = ContentUris.withAppendedId(contentUri, id)
 
@@ -130,7 +127,7 @@ fun Cursor.parseUriToLocalImage(
         folder = bucketName,
         uri = contentUriId,
         name = displayName,
-        timeCreated = dateAdded,
+        timeCreated = dateAdded.toEpochMilliseconds() / 1000,
         mimeType = mimeType,
     )
 }

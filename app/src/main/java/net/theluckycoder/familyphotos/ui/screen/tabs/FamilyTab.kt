@@ -13,8 +13,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.NetworkPhoto
-import net.theluckycoder.familyphotos.ui.screen.MemoriesList
-import net.theluckycoder.familyphotos.ui.screen.PhotosList
+import net.theluckycoder.familyphotos.ui.composables.MemoriesList
+import net.theluckycoder.familyphotos.ui.composables.PhotosList
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 object FamilyTab : BottomTab {

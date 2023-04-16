@@ -1,10 +1,6 @@
 package net.theluckycoder.familyphotos.ui.screen.tabs
 
-import android.content.Intent
 import android.content.res.Configuration
-import android.net.Uri
-import android.os.Environment
-import android.provider.Settings
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,7 +18,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -30,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -39,12 +33,11 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import kotlinx.coroutines.launch
-import net.theluckycoder.familyphotos.BuildConfig
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.LocalFolder
 import net.theluckycoder.familyphotos.model.LocalPhoto
-import net.theluckycoder.familyphotos.ui.screen.FolderPreviewItem
-import net.theluckycoder.familyphotos.ui.screen.LocalFolderScreen
+import net.theluckycoder.familyphotos.ui.composables.FolderPreviewItem
+import net.theluckycoder.familyphotos.ui.screen.DeviceFolderScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 object DeviceTab : BottomTab, FoldersTab<LocalFolder>() {
@@ -67,20 +60,7 @@ object DeviceTab : BottomTab, FoldersTab<LocalFolder>() {
     ) {
         val mainViewModel: MainViewModel = viewModel()
         val navigator = LocalNavigator.currentOrThrow
-        val ctx = LocalContext.current
         val scope = rememberCoroutineScope()
-
-        LaunchedEffect(Unit) {
-            if (!Environment.isExternalStorageManager()) {
-                val uri = Uri.parse("package:${BuildConfig.APPLICATION_ID}")
-                ctx.startActivity(
-                    Intent(
-                        Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-                        uri
-                    )
-                )
-            }
-        }
 
         val folders by mainViewModel.localFolders.collectAsState(emptyList())
         val sortAscending by mainViewModel.settingsStore
@@ -137,7 +117,7 @@ object DeviceTab : BottomTab, FoldersTab<LocalFolder>() {
                     name = folder.name,
                     photosCount = folder.count,
                     onClick = {
-                        navigator.push(LocalFolderScreen(folder.name))
+                        navigator.push(DeviceFolderScreen(folder.name))
                     },
                 )
             }

@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.ui.screen
 
+import android.app.Activity
 import android.os.Parcelable
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -18,7 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
@@ -30,6 +33,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import coil.size.Dimension
 import coil.size.Size
 import com.smarttoolfactory.zoom.enhancedZoom
 import com.smarttoolfactory.zoom.rememberEnhancedZoomState
@@ -41,34 +45,35 @@ import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.composables.*
 import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
+import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewModel
 
 @Suppress("DataClassPrivateConstructor")
 @Parcelize
 data class PhotoScreen private constructor(
     private val startPhoto: Photo,
-    private val listSource: ListSource,
+    private val source: Source,
     private var index: Int,
 ) : Screen, Parcelable {
 
-    constructor(startPhoto: Photo, listSource: ListSource) : this(startPhoto, listSource, -1)
+    constructor(startPhoto: Photo, source: Source) : this(startPhoto, source, -1)
 
     override val key: ScreenKey
-        get() = "PhotoDetailScreen ${startPhoto.id} $listSource"
+        get() = "PhotoDetailScreen ${startPhoto.id} $source"
 
     @Composable
     override fun Content() = Box(Modifier.fillMaxSize()) {
         val photoViewModel: PhotoViewModel = viewModel()
 
         val allPhotosState = remember {
-            when (listSource) {
-                ListSource.PagedList -> photoViewModel.getPhotosInMonth(startPhoto)
-                ListSource.Folder -> when (startPhoto) {
+            when (source) {
+                Source.PagedList -> photoViewModel.getPhotosInMonth(startPhoto)
+                Source.Folder -> when (startPhoto) {
                     is LocalPhoto -> photoViewModel.getLocalFolderPhotos(startPhoto.folder!!)
                     is NetworkPhoto -> photoViewModel.getNetworkFolderPhotos(startPhoto.folder!!)
                 }
 
-                ListSource.Memories -> photoViewModel.getPhotosInWeek(startPhoto as NetworkPhoto)
+                Source.Memories -> photoViewModel.getPhotosInWeek(startPhoto as NetworkPhoto)
             }
         }.collectAsState(null)
 
@@ -189,16 +194,24 @@ data class PhotoScreen private constructor(
     ) {
         val deletePhotosDialog = rememberDeletePhotosDialog()
         val navigator = LocalNavigator.currentOrThrow
+        val activity = LocalContext.current as Activity
+        val mainViewModel: MainViewModel = viewModel()
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 4.dp),
+                .padding(horizontal = 4.dp)
+                .windowInsetsPadding(BottomAppBarDefaults.windowInsets),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
 
             IconButtonText(
-                onClick = { deletePhotosDialog.show(listOf(photo)) },
+                onClick = {
+                    when (photo) {
+                        is NetworkPhoto -> deletePhotosDialog.show(listOf(photo))
+                        is LocalPhoto -> mainViewModel.deleteLocalPhotos(activity, listOf(photo))
+                    }
+                },
                 text = stringResource(id = R.string.action_delete),
             ) {
                 Icon(
@@ -226,6 +239,7 @@ data class PhotoScreen private constructor(
                         )
                     }
                 } else {
+                    // Find the network equivalent of this photo
                     val networkPhotoState = photoViewModel.getNetworkPhotoFlow(photo.networkPhotoId)
                         .collectAsState(null)
 
@@ -273,7 +287,7 @@ data class PhotoScreen private constructor(
     }
 
     @Parcelize
-    enum class ListSource : Parcelable {
+    enum class Source : Parcelable {
         PagedList,
         Folder,
         Memories,
@@ -287,13 +301,16 @@ private fun ZoomableImage(
     photo: Photo,
     showUI: (Boolean) -> Unit,
 ) {
+    val configuration = LocalConfiguration.current
+    val maxWidth = with(LocalDensity.current) { (configuration.screenWidthDp.dp * 2).roundToPx() }
+
     val ctx = LocalContext.current
     val request = rememberAsyncImagePainter(
         imageLoader = LocalImageLoader.current.get(),
         model = ImageRequest.Builder(ctx)
             .data(photo.getUri())
             .placeholder(R.drawable.ic_hourglass_bottom)
-            .size(Size.ORIGINAL)
+            .size(Size(width = maxWidth, height = Dimension.Undefined))
             .build()
     )
 

@@ -31,7 +31,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private val requestPermissionLauncher =
+    private val notificationPermissionLauncher =
         registerForActivityResult(
             ActivityResultContracts.RequestPermission()
         ) { isGranted: Boolean ->
@@ -39,6 +39,13 @@ class MainActivity : ComponentActivity() {
                 Toast.makeText(this, R.string.notification_missing_permission, Toast.LENGTH_SHORT)
                     .show()
             }
+        }
+
+    private val storagePermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { granted ->
+
         }
 
     @Inject
@@ -78,8 +85,21 @@ class MainActivity : ComponentActivity() {
                     Manifest.permission.POST_NOTIFICATIONS
                 ) == PackageManager.PERMISSION_DENIED
             ) {
-                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
+        }
+
+        val readImagePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+            arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)
+        else
+            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+
+        if (ContextCompat.checkSelfPermission(
+                this,
+                readImagePermission.first()
+            ) == PackageManager.PERMISSION_DENIED
+        ) {
+            storagePermissionLauncher.launch(readImagePermission)
         }
     }
 }

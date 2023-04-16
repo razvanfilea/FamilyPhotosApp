@@ -1,7 +1,9 @@
 package net.theluckycoder.familyphotos.ui.viewmodel
 
+import android.app.Activity
 import android.app.Application
 import android.net.Uri
+import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
@@ -62,6 +64,7 @@ import java.time.format.TextStyle
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.streams.toList
 import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
@@ -105,7 +108,6 @@ class MainViewModel @Inject constructor(
 
     // Ui
     val isRefreshing = MutableStateFlow(false)
-    val showBottomAppBar = MutableStateFlow(true)
 
     init {
         viewModelScope.launch {
@@ -207,7 +209,7 @@ class MainViewModel @Inject constructor(
                 today.minus(DateTimeUnit.YEAR * 6),
             ).map {
                 val yearsUntil = it.yearsUntil(today)
-                val timestamp = it.atTime(12, 0).toInstant(TIME_ZONE).toEpochMilliseconds()
+                val timestamp = it.atTime(12, 0).toInstant(TIME_ZONE).toEpochMilliseconds() / 1000
 
                 yearsUntil to callback(timestamp)
             }.filterNot {
@@ -328,21 +330,30 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun deletePhotoAsync(photo: Photo): Deferred<Boolean> =
-        viewModelScope.async(Dispatchers.IO) {
-            when (photo) {
-                is NetworkPhoto -> {
+    // endregion
+
+    suspend fun deleteNetworkPhotos(photos: List<NetworkPhoto>) {
+        withContext(Dispatchers.IO) {
+            photos.parallelStream().map { photo ->
+                async {
                     if (serverRepository.deleteNetworkPhoto(photo.ownerUserId, photo.id)) {
                         photosRepository.removeNetworkReference(photo)
-                        true
-                    } else false
+                    }
                 }
-                is LocalPhoto ->
-                    photosRepository.deleteLocalPhoto(photo)
-            }
+            }.toList().map { it.await() }
         }
+    }
 
-    // endregion
+    fun deleteLocalPhotos(activity: Activity, photos: List<LocalPhoto>) {
+        val pendingIntent = MediaStore.createTrashRequest(
+            activity.contentResolver,
+            photos.map { it.uri },
+            true
+        )
+
+        activity.startIntentSenderForResult(pendingIntent.intentSender, 12345, null, 0, 0, 0)
+    }
+
 
     fun clearAppCache(app: Application) {
         viewModelScope.launch {
@@ -374,12 +385,12 @@ class MainViewModel @Inject constructor(
                     after ?: return@insertSeparators null
 
                     val beforeDate = before?.let {
-                        val instant = Instant.fromEpochMilliseconds(it.timeCreated)
+                        val instant = Instant.fromEpochSeconds(it.timeCreated)
                         instant.toLocalDateTime(TIME_ZONE)
                     }
 
                     val afterDate =
-                        Instant.fromEpochMilliseconds(after.timeCreated).toLocalDateTime(TIME_ZONE)
+                        Instant.fromEpochSeconds(after.timeCreated).toLocalDateTime(TIME_ZONE)
 
                     if (beforeDate == null
                         || beforeDate.monthNumber != afterDate.monthNumber

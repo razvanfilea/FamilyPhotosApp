@@ -1,8 +1,5 @@
 package net.theluckycoder.familyphotos.repository
 
-import android.content.Context
-import android.provider.MediaStore
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.db.dao.LocalPhotosDao
 import net.theluckycoder.familyphotos.db.dao.NetworkPhotosDao
@@ -14,8 +11,6 @@ import javax.inject.Singleton
 
 @Singleton // Needed for WorkManager
 class PhotosRepository @Inject constructor(
-    @ApplicationContext
-    private val context: Context,
     private val localPhotosDao: LocalPhotosDao,
     private val networkPhotosDao: NetworkPhotosDao,
 ) {
@@ -41,25 +36,6 @@ class PhotosRepository @Inject constructor(
         getLocalPhotoFromNetwork(photo.id)?.let { localPhoto ->
             localPhotosDao.update(localPhoto.copy(networkPhotoId = 0L))
         }
-    }
-
-    suspend fun deleteLocalPhoto(photo: LocalPhoto): Boolean {
-        val result = try {
-            context.contentResolver.delete(
-                photo.uri,
-                "${MediaStore.Images.Media._ID} = ?",
-                arrayOf(photo.id.toString())
-            )
-            true
-        } catch (securityException: SecurityException) {
-            securityException.printStackTrace()
-            false
-        }
-
-        if (result)
-            localPhotosDao.delete(photo.id)
-
-        return result
     }
 
     fun getPersonalPhotosPaged(userId: Long) = networkPhotosDao.getPhotosPaged(userId)

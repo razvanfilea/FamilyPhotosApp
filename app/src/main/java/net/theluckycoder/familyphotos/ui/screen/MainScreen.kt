@@ -46,21 +46,18 @@ object MainScreen : Screen {
 
         TabNavigator(PersonalTab) {
             val snackbarHostState = LocalSnackbarHostState.current
-            val isBottomBarVisible by mainViewModel.showBottomAppBar.collectAsState()
 
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
                 snackbarHost = { SnackbarHost(snackbarHostState) },
                 bottomBar = {
-                    if (isBottomBarVisible) {
-                        NavigationBar(
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            TabNavigationItem(PersonalTab)
-                            TabNavigationItem(FamilyTab)
-                            TabNavigationItem(NetworkFoldersTab)
-                            TabNavigationItem(DeviceTab)
-                        }
+                    NavigationBar(
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        TabNavigationItem(PersonalTab)
+                        TabNavigationItem(FamilyTab)
+                        TabNavigationItem(NetworkFoldersTab)
+                        TabNavigationItem(DeviceTab)
                     }
                 }
             ) { paddingValues ->
@@ -71,7 +68,7 @@ object MainScreen : Screen {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(bottom = if (isBottomBarVisible) paddingValues.calculateBottomPadding() else 0.dp)
+                        .padding(bottom = paddingValues.calculateBottomPadding())
                         .pullRefresh(state),
                 ) {
                     CompositionLocalProvider(LocalNavigator provides navigator) {

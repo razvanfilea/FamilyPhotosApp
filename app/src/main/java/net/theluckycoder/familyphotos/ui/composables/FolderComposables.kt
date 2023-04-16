@@ -1,4 +1,4 @@
-package net.theluckycoder.familyphotos.ui.screen
+package net.theluckycoder.familyphotos.ui.composables
 
 import android.content.res.Configuration
 import androidx.compose.animation.*
@@ -13,7 +13,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -28,7 +27,6 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.ui.VerticallyAnimatedInt
-import net.theluckycoder.familyphotos.ui.composables.CoilPhoto
 
 @Composable
 fun FolderFilterTextField(folderNameFilter: String, onFilterChange: (String) -> Unit) {
@@ -46,8 +44,8 @@ fun FolderFilterTextField(folderNameFilter: String, onFilterChange: (String) -> 
         trailingIcon = {
             AnimatedVisibility(
                 folderNameFilter.isNotEmpty(),
-                enter = fadeIn() + expandIn(expandFrom = Alignment.Center),
-                exit = fadeOut() + shrinkOut(shrinkTowards = Alignment.Center),
+                enter = fadeIn(),
+                exit = fadeOut(),
             ) {
                 IconButton(onClick = { onFilterChange("") }) {
                     Icon(painterResource(R.drawable.ic_close), contentDescription = null)

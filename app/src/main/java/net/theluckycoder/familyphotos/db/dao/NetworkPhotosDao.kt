@@ -40,7 +40,7 @@ abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>("network_photo
     @Query(
         """SELECT * FROM network_photo
         WHERE ownerUserId = :userId
-        AND ROUND(timeCreated / 1000 / 3600 / 24 / 7) = ROUND(:timestamp / 1000 / 3600 / 24 / 7)
+        AND ROUND(timeCreated / 3600 / 24 / 7) = ROUND(:timestamp / 3600 / 24 / 7)
         ORDER BY network_photo.timeCreated DESC
     """
     )
@@ -49,7 +49,7 @@ abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>("network_photo
     @Query(
         """SELECT * FROM network_photo
         WHERE ownerUserId = :userId
-        AND ROUND(timeCreated / 1000 / 3600 / 24 / 7 / 30) = ROUND(:timestamp / 1000 / 3600 / 24 / 7 / 30)
+        AND ROUND(timeCreated / 3600 / 24 / 7 / 30) = ROUND(:timestamp / 3600 / 24 / 7 / 30)
         ORDER BY network_photo.timeCreated DESC
     """
     )

@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.ui.dialog
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,79 +21,49 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.model.Photo
+import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.AppTheme
-import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
-fun interface DeletePhotosDialogCaller {
-    fun show(photos: List<Photo>)
+
+fun interface DeletePhotosDialogCaller  {
+    fun show(photos: List<NetworkPhoto>)
 }
 
-@OptIn(ExperimentalMaterial3Api::class, DelicateCoroutinesApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun rememberDeletePhotosDialog(
-    onPhotosDeleted: (successCount: Int, failCount: Int) -> Unit = { _, _ -> }
+    onPhotosDeleted: (() -> Unit)? = null
 ): DeletePhotosDialogCaller {
     var visible by remember { mutableStateOf(false) }
+    var receivedData by remember { mutableStateOf(emptyList<NetworkPhoto>()) }
 
     val mainViewModel: MainViewModel = viewModel()
-    val res = LocalContext.current.resources
-    val snackbarHostState = LocalSnackbarHostState.current
     val scope = rememberCoroutineScope()
 
-    var receivedData = remember { emptyList<Photo>() }
-
     if (visible) {
-        ModalBottomSheet(onDismissRequest = { visible = false }) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                visible = false
+                receivedData = emptyList()
+            }
+        ) {
             DeleteDialogContent(
                 onCancel = { visible = false },
                 onDelete = {
                     scope.launch {
-                        val results = receivedData
-                            .map { mainViewModel.deletePhotoAsync(it) }
-                            .map { it.await() }
+                        mainViewModel.deleteNetworkPhotos(receivedData)
 
-                        val success = results.count { it }
-                        val failure = results.count { !it }
-
-                        onPhotosDeleted(success, failure)
-
-                        GlobalScope.launch {
-                            if (success != 0) {
-                                snackbarHostState.showSnackbar(
-                                    res.getQuantityString(
-                                        R.plurals.images_deleted_success,
-                                        success,
-                                        success
-                                    )
-                                )
-                            }
-
-                            if (failure != 0) {
-                                snackbarHostState.showSnackbar(
-                                    res.getQuantityString(
-                                        R.plurals.images_deleted_failure,
-                                        failure,
-                                        failure
-                                    )
-                                )
-                            }
-                        }
+                        onPhotosDeleted?.invoke()
 
                         visible = false
-//                        if (success != 0)
-//                            navigator.pop()
                     }
                 }
             )
@@ -100,8 +71,12 @@ fun rememberDeletePhotosDialog(
     }
 
     return DeletePhotosDialogCaller { photos ->
-        receivedData = photos
-        visible = true
+        if (photos.isNotEmpty()) {
+            receivedData = photos
+            visible = true
+        } else {
+            Log.e("DeletePhotosDialog", "Failed to open dialog, no photos to delete")
+        }
     }
 }
 

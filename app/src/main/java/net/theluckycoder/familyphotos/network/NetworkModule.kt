@@ -80,7 +80,6 @@ object NetworkModule {
         ignoreUnknownKeys = true
     }
 
-    @Singleton
     @Provides
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit =
         Retrofit.Builder()

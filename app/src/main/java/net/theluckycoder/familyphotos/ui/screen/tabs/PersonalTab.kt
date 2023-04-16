@@ -21,8 +21,8 @@ import kotlinx.datetime.toLocalDateTime
 import net.theluckycoder.familyphotos.PhotosApp
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.NetworkPhoto
-import net.theluckycoder.familyphotos.ui.screen.MemoriesList
-import net.theluckycoder.familyphotos.ui.screen.PhotosList
+import net.theluckycoder.familyphotos.ui.composables.MemoriesList
+import net.theluckycoder.familyphotos.ui.composables.PhotosList
 import net.theluckycoder.familyphotos.ui.screen.SettingsScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
@@ -132,7 +132,9 @@ object PersonalTab : BottomTab {
             modifier = modifier
                 .size(48.dp)
                 .padding(8.dp),
-            painter = painterResource(res), contentDescription = null
+            painter = painterResource(res),
+            contentDescription = null,
+            tint = if (online) LocalContentColor.current else MaterialTheme.colorScheme.error
         )
     }
 }

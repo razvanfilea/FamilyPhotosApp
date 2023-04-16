@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.PhotoFolder
-import net.theluckycoder.familyphotos.ui.screen.FolderFilterTextField
+import net.theluckycoder.familyphotos.ui.composables.FolderFilterTextField
 
 abstract class FoldersTab<T : PhotoFolder> : Screen {
 

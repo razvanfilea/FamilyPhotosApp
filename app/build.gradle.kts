@@ -3,7 +3,7 @@ plugins {
 
     kotlin("android")
     kotlin("kapt")
-    kotlin("plugin.serialization") version "1.8.10"
+    kotlin("plugin.serialization") version libs.versions.kotlin.base.get()
 //    id("com.google.devtools.ksp") version "1.5.31-1.0.0"
     id("kotlin-parcelize")
 
@@ -18,8 +18,8 @@ android {
         applicationId = "net.theluckycoder.familyphotos"
         minSdk = 30
         targetSdk = 33
-        versionCode = 20
-        versionName = "2.0.0"
+        versionCode = 22
+        versionName = "2.2.0"
         resourceConfigurations += listOf("en", "ro")
 
         javaCompileOptions {
@@ -91,10 +91,9 @@ dependencies {
     implementation(libs.kotlin.collections)
 
     // AndroidX
-    implementation("androidx.activity:activity-ktx:1.7.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
-    implementation(libs.androidX.dataStore)
-    implementation("androidx.exifinterface:exifinterface:1.3.6")
+    implementation(libs.androidx.activity)
+    implementation(libs.androidx.dataStore)
+    implementation(libs.androidx.exif)
 
     // Media 3
     implementation(libs.media.ui)
@@ -127,7 +126,7 @@ dependencies {
     implementation(libs.voyager.transitions)
     implementation(libs.voyager.androidx)
 
-    // Retrofit
+    // Networking
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("de.nycode:retrofit2-kotlinx-serialization-converter:0.11.0")
     implementation("com.squareup.okhttp3:okhttp-tls:4.10.0")

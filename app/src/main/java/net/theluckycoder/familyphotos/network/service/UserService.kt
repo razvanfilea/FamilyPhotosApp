@@ -4,13 +4,13 @@ import net.theluckycoder.familyphotos.model.User
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Header
-import retrofit2.http.Path
+import retrofit2.http.Url
 
 interface UserService {
 
-    @GET("/user/name/{userName}")
+    @GET
     suspend fun getUser(
+        @Url url: String,
         @Header("Authorization") auth: String,
-        @Path("userName") userName: String,
     ): Response<User>
 }

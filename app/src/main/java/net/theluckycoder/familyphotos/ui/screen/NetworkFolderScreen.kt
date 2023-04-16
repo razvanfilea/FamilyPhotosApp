@@ -6,7 +6,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -23,6 +22,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.isVideo
+import net.theluckycoder.familyphotos.ui.composables.FolderPhotos
 import net.theluckycoder.familyphotos.ui.composables.PhotoUtilitiesActions
 import net.theluckycoder.familyphotos.ui.composables.SelectableItem
 import net.theluckycoder.familyphotos.ui.composables.SimpleSquarePhoto
@@ -38,11 +38,6 @@ data class NetworkFolderScreen(
     @Composable
     override fun Content() {
         val mainViewModel: MainViewModel = viewModel()
-
-        SideEffect {
-            mainViewModel.showBottomAppBar.value = true
-        }
-
         val navigator = LocalNavigator.currentOrThrow
 
         val selectedItems = remember(folderName) { mutableStateListOf<Long>() }
@@ -74,7 +69,7 @@ data class NetworkFolderScreen(
                         else
                             selectedItems += photo.id
                     } else {
-                        navigator.push(PhotoScreen(photo, PhotoScreen.ListSource.Folder))
+                        navigator.push(PhotoScreen(photo, PhotoScreen.Source.Folder))
                     }
                 }
             ) {
