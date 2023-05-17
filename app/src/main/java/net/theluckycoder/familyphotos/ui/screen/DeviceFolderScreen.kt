@@ -67,7 +67,7 @@ data class DeviceFolderScreen(
                     }
                 }
             }
-        ) {
+        ) { paddingValues ->
 
             val photosFlow = remember(folderName) { mainViewModel.getLocalFolderPhotos(folderName) }
             val photosList by photosFlow.collectAsState(emptyList())

@@ -6,7 +6,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -17,27 +16,25 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.size.Dimension
 import coil.size.Size
-import com.smarttoolfactory.zoom.enhancedZoom
-import com.smarttoolfactory.zoom.rememberEnhancedZoomState
 import kotlinx.parcelize.Parcelize
+import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage
+import me.saket.telephoto.zoomable.rememberZoomableImageState
+import me.saket.telephoto.zoomable.rememberZoomableState
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.*
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
@@ -305,38 +302,25 @@ private fun ZoomableImage(
     val maxWidth = with(LocalDensity.current) { (configuration.screenWidthDp.dp * 2).roundToPx() }
 
     val ctx = LocalContext.current
-    val request = rememberAsyncImagePainter(
-        imageLoader = LocalImageLoader.current.get(),
-        model = ImageRequest.Builder(ctx)
-            .data(photo.getUri())
-            .placeholder(R.drawable.ic_hourglass_bottom)
-            .size(Size(width = maxWidth, height = Dimension.Undefined))
-            .build()
-    )
 
-    val size = request.intrinsicSize
-    val intSize = when {
-        size.isUnspecified -> IntSize(0, 0)
-        else -> IntSize(size.width.toInt(), size.height.toInt())
+    val zoomableState = rememberZoomableState()
+
+    LaunchedEffect(zoomableState.zoomFraction) {
+        zoomableState.zoomFraction?.let { zoom ->
+            showUI(zoom == 0.0f)
+        }
     }
 
-    Image(
-        modifier = modifier.enhancedZoom(
-            clip = false,
-            enhancedZoomState = rememberEnhancedZoomState(
-                imageSize = intSize,
-                rotatable = false,
-                limitPan = true,
-                maxZoom = 4f,
-            ),
-            enabled = { zoom, _, _ ->
-                val enabled = zoom > 1f
-                showUI(!enabled)
-                enabled
-            },
-            key = intSize,
-        ),
-        painter = request,
+    ZoomableAsyncImage(
+        modifier = modifier,
+        model = ImageRequest.Builder(ctx)
+            .data(photo.getUri())
+            .placeholderMemoryCacheKey(photo.getThumbnailUri().toString())
+            .placeholder(R.drawable.ic_hourglass_bottom)
+            .size(Size(width = maxWidth, height = Dimension.Undefined))
+            .build(),
+        imageLoader = LocalImageLoader.current.get(),
+        state = rememberZoomableImageState(zoomableState),
         contentDescription = photo.name,
     )
 }

@@ -57,8 +57,7 @@ class ServerRepository @Inject constructor(
     }
 
     suspend fun deleteNetworkPhoto(userId: Long, photoId: Long): Boolean {
-        val deletePhoto = photosService.get().deletePhoto(userId, photoId)
-        val successful = deletePhoto.isSuccessful
+        val successful = photosService.get().deletePhoto(userId, photoId).isSuccessful
 
         if (successful) {
             Log.d("PhotosListRepository", "Deleting $userId")
@@ -239,9 +238,5 @@ class ServerRepository @Inject constructor(
 
         networkPhotosDao.update(changedPhoto)
         return true
-    }
-
-    companion object {
-        const val PUBLIC_USER_ID = 1L
     }
 }

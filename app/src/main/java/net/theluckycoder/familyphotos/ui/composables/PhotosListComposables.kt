@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.flow.Flow
@@ -149,15 +151,17 @@ fun PhotosList(
                 }
             }
         }
+
         header(-1) { memoriesContent() }
 
         items(
-            items = photos,
-            key = { if (it is Photo) it.id else it },
-            span = { GridItemSpan(if (it is String) columnCount else 1) },
-            contentType = { if (it is String) "string" else "photo" }
-        ) { item ->
-            when (item) {
+            count = photos.itemCount,
+            key = photos.itemKey { if (it is Photo) it.id else it },
+            span = photos.itemSpan { GridItemSpan(if (it is String) columnCount else 1) },
+            contentType = photos.itemContentType { if (it is String) "title" else "photo" }
+        ) { index ->
+
+            when (val item = photos[index]) {
                 is String -> {
                     Text(
                         modifier = Modifier
@@ -173,6 +177,7 @@ fun PhotosList(
                         style = MaterialTheme.typography.headlineLarge
                     )
                 }
+
                 is Photo -> {
                     val isVideo = remember(item) { item.isVideo }
 
@@ -214,6 +219,7 @@ fun PhotosList(
                     }
                 }
             }
+
         }
     }
 
@@ -255,6 +261,15 @@ fun PhotosList(
     }
 }
 
+fun <T : Any> LazyPagingItems<T>.itemSpan(
+    span: (LazyGridItemSpanScope.(item: @JvmSuppressWildcards T) -> GridItemSpan)
+): LazyGridItemSpanScope.(index: Int) -> GridItemSpan {
+    return { index ->
+        val item = peek(index)
+        if (item == null) GridItemSpan(1) else span(item)
+    }
+}
+
 @SuppressLint("BanParcelableUsage")
 private data class PagingPlaceholderKey(private val index: Int) : Parcelable {
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -275,44 +290,6 @@ private data class PagingPlaceholderKey(private val index: Int) : Parcelable {
 
                 override fun newArray(size: Int) = arrayOfNulls<PagingPlaceholderKey?>(size)
             }
-    }
-}
-
-private fun <T : Any> LazyGridScope.items(
-    items: LazyPagingItems<T>,
-    key: (item: T) -> Any,
-    span: (item: T) -> GridItemSpan,
-    contentType: (item: T) -> Any,
-    itemContent: @Composable LazyGridItemScope.(value: T?) -> Unit
-) {
-    items(
-        count = items.itemCount,
-        key = { index ->
-            val item = items.peek(index)
-            if (item == null) {
-                PagingPlaceholderKey(index)
-            } else {
-                key(item)
-            }
-        },
-        span = { index ->
-            val item = items.peek(index)
-            if (item == null) {
-                GridItemSpan(1)
-            } else {
-                span(item)
-            }
-        },
-        contentType = { index ->
-            val item = items.peek(index)
-            if (item == null) {
-                null
-            } else {
-                contentType(item)
-            }
-        }
-    ) { index ->
-        itemContent(items[index])
     }
 }
 

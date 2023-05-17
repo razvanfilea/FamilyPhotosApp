@@ -3,7 +3,6 @@ package net.theluckycoder.familyphotos.model
 import android.net.Uri
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
-import androidx.room.Ignore
 
 abstract class PhotoFolder {
     abstract val name: String
@@ -12,7 +11,7 @@ abstract class PhotoFolder {
 }
 
 @Immutable
-data class NetworkFolder @JvmOverloads constructor(
+data class NetworkFolder(
     @ColumnInfo(name = "folder")
     override val name: String,
     @ColumnInfo(name = "id")
@@ -21,8 +20,6 @@ data class NetworkFolder @JvmOverloads constructor(
     val ownerUserId: Long,
     @ColumnInfo(name = "COUNT(id)")
     override val count: Int,
-    @Ignore
-    val isPublic: Boolean = false
 ) : PhotoFolder() {
 
     override fun equals(other: Any?): Boolean {
@@ -43,6 +40,9 @@ data class NetworkFolder @JvmOverloads constructor(
         return result
     }
 }
+
+val NetworkFolder.isPublic
+    get() = this.ownerUserId == PUBLIC_USER_ID
 
 @Immutable
 data class LocalFolder(

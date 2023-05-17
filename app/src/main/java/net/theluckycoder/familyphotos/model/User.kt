@@ -12,3 +12,6 @@ data class User(
     val displayName: String,
     val userName: String,
 )
+
+const val PUBLIC_USER_ID = 1L
+

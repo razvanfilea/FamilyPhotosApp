@@ -14,6 +14,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
+import cafe.adriel.voyager.core.annotation.ExperimentalVoyagerApi
+import cafe.adriel.voyager.core.lifecycle.LocalNavigatorScreenLifecycleProvider
+import cafe.adriel.voyager.core.lifecycle.NavigatorScreenLifecycleProvider
+import cafe.adriel.voyager.core.lifecycle.ScreenLifecycleOwner
+import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.Navigator
 import coil.ImageLoader
 import dagger.Lazy
@@ -28,6 +33,7 @@ import net.theluckycoder.familyphotos.ui.screen.MainScreen
 import okhttp3.OkHttpClient
 import javax.inject.Inject
 
+@OptIn(ExperimentalVoyagerApi::class)
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
@@ -44,8 +50,7 @@ class MainActivity : ComponentActivity() {
     private val storagePermissionLauncher =
         registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
-        ) { granted ->
-
+        ) { _ ->
         }
 
     @Inject
@@ -61,6 +66,11 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         val view = ComposeView(this)
+        val emptyLifecycleProvider = object : NavigatorScreenLifecycleProvider {
+            @ExperimentalVoyagerApi
+            override fun provide(screen: Screen): List<ScreenLifecycleOwner> = emptyList()
+        }
+
         view.setContent {
             AppTheme {
                 val snackbarHostState = remember { SnackbarHostState() }
@@ -68,7 +78,8 @@ class MainActivity : ComponentActivity() {
                 CompositionLocalProvider(
                     LocalImageLoader provides imageLoader,
                     LocalOkHttpClient provides playerController,
-                    LocalSnackbarHostState provides snackbarHostState
+                    LocalSnackbarHostState provides snackbarHostState,
+                    LocalNavigatorScreenLifecycleProvider provides emptyLifecycleProvider
                 ) {
                     Navigator(MainScreen) {
                         PhotosSlideTransition(navigator = it)

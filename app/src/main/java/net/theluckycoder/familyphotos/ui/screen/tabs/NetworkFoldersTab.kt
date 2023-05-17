@@ -37,6 +37,7 @@ import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.NetworkFolder
 import net.theluckycoder.familyphotos.model.NetworkPhoto
+import net.theluckycoder.familyphotos.model.isPublic
 import net.theluckycoder.familyphotos.ui.composables.FolderPreviewItem
 import net.theluckycoder.familyphotos.ui.screen.NetworkFolderScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel

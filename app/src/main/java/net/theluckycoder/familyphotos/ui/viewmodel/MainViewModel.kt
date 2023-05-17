@@ -102,9 +102,7 @@ class MainViewModel @Inject constructor(
 
     val localFolders = foldersRepository.localFoldersFlow
 
-    val networkFolders = foldersRepository.networkFoldersFlow.map {
-        it.map { folder -> folder.copy(isPublic = folder.ownerUserId != userId) }
-    }
+    val networkFolders = foldersRepository.networkFoldersFlow
 
     // Ui
     val isRefreshing = MutableStateFlow(false)

@@ -1,8 +1,6 @@
 package net.theluckycoder.familyphotos
 
 import android.app.Application
-import android.os.StrictMode
-import android.os.StrictMode.ThreadPolicy
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
@@ -23,7 +21,7 @@ class PhotosApp : Application(), Configuration.Provider {
 
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate() {
-        if (BuildConfig.DEBUG) {
+        /*if (BuildConfig.DEBUG) {
             StrictMode.setThreadPolicy(
                 ThreadPolicy.Builder()
                     .detectDiskReads()
@@ -32,14 +30,7 @@ class PhotosApp : Application(), Configuration.Provider {
                     .penaltyLog()
                     .build()
             )
-            /*StrictMode.setVmPolicy(
-                VmPolicy.Builder()
-                    .detectLeakedSqlLiteObjects()
-                    .detectLeakedClosableObjects()
-                    .penaltyLog()
-                    .build()
-            )*/
-        }
+        }*/
         super.onCreate()
 
         GlobalScope.launch(Dispatchers.IO) {

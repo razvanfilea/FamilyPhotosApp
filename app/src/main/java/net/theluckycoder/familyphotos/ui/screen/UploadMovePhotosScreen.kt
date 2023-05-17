@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.Photo
+import net.theluckycoder.familyphotos.model.isPublic
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.composables.FolderFilterTextField
 import net.theluckycoder.familyphotos.ui.composables.SimpleSquarePhoto

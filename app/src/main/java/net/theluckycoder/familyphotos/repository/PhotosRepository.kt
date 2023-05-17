@@ -5,6 +5,7 @@ import net.theluckycoder.familyphotos.db.dao.LocalPhotosDao
 import net.theluckycoder.familyphotos.db.dao.NetworkPhotosDao
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
+import net.theluckycoder.familyphotos.model.PUBLIC_USER_ID
 import net.theluckycoder.familyphotos.model.Photo
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -23,7 +24,7 @@ class PhotosRepository @Inject constructor(
         localPhotosDao.findByNetworkId(networkPhotoId)
 
     fun getMemories(timestamp: Long, userId: Long? = null) =
-        networkPhotosDao.getPhotosInThisWeek(userId ?: ServerRepository.PUBLIC_USER_ID, timestamp)
+        networkPhotosDao.getPhotosInThisWeek(userId ?: PUBLIC_USER_ID, timestamp)
 
     fun getPhotosInProximity(photo: Photo): Flow<List<NetworkPhoto>> {
         return when (photo) {
@@ -40,5 +41,5 @@ class PhotosRepository @Inject constructor(
 
     fun getPersonalPhotosPaged(userId: Long) = networkPhotosDao.getPhotosPaged(userId)
 
-    fun getPublicPhotosPaged() = networkPhotosDao.getPhotosPaged(ServerRepository.PUBLIC_USER_ID)
+    fun getPublicPhotosPaged() = networkPhotosDao.getPhotosPaged(PUBLIC_USER_ID)
 }

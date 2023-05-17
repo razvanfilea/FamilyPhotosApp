@@ -249,7 +249,7 @@ fun SharePhotoIconButton(
 
     val icon = painterResource(
         if (isLoading)
-            android.R.drawable.stat_sys_download
+            R.drawable.ic_downloading
         else
             R.drawable.ic_action_share
     )

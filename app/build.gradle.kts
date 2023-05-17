@@ -4,7 +4,7 @@ plugins {
     kotlin("android")
     kotlin("kapt")
     kotlin("plugin.serialization") version libs.versions.kotlin.base.get()
-//    id("com.google.devtools.ksp") version "1.5.31-1.0.0"
+    id("com.google.devtools.ksp") version "1.8.21-1.0.11"
     id("kotlin-parcelize")
 
     id("dagger.hilt.android.plugin")
@@ -18,19 +18,9 @@ android {
         applicationId = "net.theluckycoder.familyphotos"
         minSdk = 30
         targetSdk = 33
-        versionCode = 22
-        versionName = "2.2.0"
+        versionCode = 23
+        versionName = "2.3.0"
         resourceConfigurations += listOf("en", "ro")
-
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments += mapOf(
-                    "room.schemaLocation" to "$projectDir/schemas",
-                    "room.incremental" to "true",
-                    "room.expandProjection" to "true"
-                )
-            }
-        }
     }
 
     buildTypes {
@@ -74,6 +64,12 @@ android {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+    arg("room.incremental", true.toString())
+    arg("room.expandProjection", true.toString())
+}
+
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).configureEach {
     kotlinOptions {
         jvmTarget = "17"
@@ -83,7 +79,6 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).configure
 
 dependencies {
     // Kotlin
-    kotlin("kotlin-stdlib-jdk8")
     debugImplementation(libs.kotlin.reflect)
     implementation(libs.kotlin.coroutinesAndroid)
     implementation(libs.kotlin.serializationJson)
@@ -103,7 +98,7 @@ dependencies {
     // Room
     implementation(libs.room.runtime)
     implementation(libs.room.paging)
-    kapt(libs.room.compiler)
+    ksp(libs.room.compiler)
 
     // Paging
     implementation(libs.paging.runtime)
@@ -147,6 +142,8 @@ dependencies {
     implementation(libs.coil.gif)
     implementation(libs.coil.video)
 
+    // Other
     implementation("com.jakewharton:process-phoenix:2.1.2")
-    implementation("com.github.SmartToolFactory:Compose-Zoom:+")
+//    implementation("com.github.SmartToolFactory:Compose-Zoom:+")
+    implementation("me.saket.telephoto:zoomable-image-coil:0.3.0")
 }
