@@ -19,7 +19,7 @@ android {
         minSdk = 30
         targetSdk = 33
         versionCode = 23
-        versionName = "2.3.0"
+        versionName = "2.3.1"
         resourceConfigurations += listOf("en", "ro")
     }
 
@@ -86,7 +86,6 @@ dependencies {
     implementation(libs.kotlin.collections)
 
     // AndroidX
-    implementation(libs.androidx.activity)
     implementation(libs.androidx.dataStore)
     implementation(libs.androidx.exif)
 
@@ -124,7 +123,6 @@ dependencies {
     // Networking
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("de.nycode:retrofit2-kotlinx-serialization-converter:0.11.0")
-    implementation("com.squareup.okhttp3:okhttp-tls:4.11.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
     implementation("com.squareup.okhttp3:okhttp-brotli:4.11.0")
 
@@ -144,6 +142,5 @@ dependencies {
 
     // Other
     implementation("com.jakewharton:process-phoenix:2.1.2")
-//    implementation("com.github.SmartToolFactory:Compose-Zoom:+")
-    implementation("me.saket.telephoto:zoomable-image-coil:0.3.0")
+    implementation("me.saket.telephoto:zoomable-image-coil:0.4.0")
 }

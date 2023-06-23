@@ -85,7 +85,7 @@ object PersonalTab : BottomTab {
 
             if (!displayName.isNullOrEmpty()) {
                 val str = remember {
-                    val localDateTime = Clock.System.now().toLocalDateTime(PhotosApp.TIME_ZONE)
+                    val localDateTime = Clock.System.now().toLocalDateTime(PhotosApp.LOCAL_TIME_ZONE)
                     val hour = localDateTime.hour
                     when {
                         hour in 6..10 -> R.string.message_morning

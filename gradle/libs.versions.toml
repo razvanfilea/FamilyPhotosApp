@@ -1,23 +1,21 @@
 [versions]
 agp = "8.0.2"
 kotlin_base = "1.8.21"
-kotlin_coroutines = "1.7.0"
-kotlin_serialization = "1.5.0"
+kotlin_coroutines = "1.7.1"
+kotlin_serialization = "1.5.1"
 kotlin_datetime = "0.4.0"
 kotlin_collections = "0.3.5"
 compose_base = "1.4.3"
-compose_activity = "1.7.1"
+compose_activity = "1.7.2"
 compose_compiler = "1.4.7"
-compose_material3 = "1.1.0-rc01"
+compose_material3 = "1.1.1"
 accompanist = "0.30.1"
 voyager = "1.0.0-rc06"
-androidx_room = "2.5.1"
-androidx_media = "1.0.1"
-androidx_activity = "1.7.1"
+androidx_room = "2.5.2"
+androidx_media = "1.0.2"
 androidx_datastore = "1.0.0"
 androidx_exif = "1.3.6"
-paging_runtime = "3.1.1"
-paging_compose = "1.0.0-alpha19"
+androidx_paging = "3.2.0-rc01"
 coil = "2.4.0"
 dagger = "2.46.1"
 
@@ -31,7 +29,6 @@ kotlin_dateTime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.r
 kotlin_collections = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlin_collections" }
 kotlin_reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin_base" }
 
-androidx_activity = { module = "androidx.activity:activity-ktx", version.ref = "androidx_activity" }
 androidx_dataStore = { module = "androidx.datastore:datastore-preferences", version.ref = "androidx_datastore" }
 androidx_exif = { module = "androidx.exifinterface:exifinterface", version.ref = "androidx_exif" }
 
@@ -62,8 +59,8 @@ media_exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "
 media_ui = { module = "androidx.media3:media3-ui", version.ref = "androidx_media" }
 media_okhttp = { module = "androidx.media3:media3-datasource-okhttp", version.ref = "androidx_media" }
 
-paging_runtime = { module = "androidx.paging:paging-runtime-ktx", version.ref = "paging_runtime" }
-paging_compose = { module = "androidx.paging:paging-compose", version.ref = "paging_compose" }
+paging_runtime = { module = "androidx.paging:paging-runtime-ktx", version.ref = "androidx_paging" }
+paging_compose = { module = "androidx.paging:paging-compose", version.ref = "androidx_paging" }
 
 coil_base = { module = "io.coil-kt:coil-compose-base", version.ref = "coil" }
 coil_gif = { module = "io.coil-kt:coil-gif", version.ref = "coil" }

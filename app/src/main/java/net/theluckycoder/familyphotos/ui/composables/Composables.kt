@@ -41,9 +41,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
+import net.theluckycoder.familyphotos.PhotosApp
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
@@ -188,7 +188,7 @@ private val PHOTO_DATE_FORMATTER = DateTimeFormatter.ofPattern("d MMM uuuu・HH:
 @Composable
 fun Photo.photoDateText(): String = remember(this) {
     val instant = Instant.fromEpochSeconds(this.timeCreated)
-    val date = instant.toLocalDateTime(TimeZone.UTC)
+    val date = instant.toLocalDateTime(PhotosApp.LOCAL_TIME_ZONE)
     PHOTO_DATE_FORMATTER.format(date.toJavaLocalDateTime())
 }
 
