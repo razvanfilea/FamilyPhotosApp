@@ -1,6 +1,5 @@
 package net.theluckycoder.familyphotos.ui.composables
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
@@ -282,7 +281,6 @@ fun <T : Photo> PhotoUtilitiesActions(
     selectedItems: SnapshotStateList<Long>,
     mainViewModel: MainViewModel = viewModel()
 ) {
-    val activity = LocalContext.current as Activity
     val navigator = LocalNavigator.currentOrThrow
     val scope = rememberCoroutineScope()
     val deletePhotosDialog = rememberDeletePhotosDialog(onPhotosDeleted = { selectedItems.clear() })
@@ -303,10 +301,12 @@ fun <T : Photo> PhotoUtilitiesActions(
                 @Suppress("UNCHECKED_CAST")
                 when (klass) {
                     NetworkPhoto::class -> deletePhotosDialog.show(getPhotos() as List<NetworkPhoto>)
-                    LocalPhoto::class -> mainViewModel.deleteLocalPhotos(
-                        activity,
-                        getPhotos() as List<LocalPhoto>
-                    )
+                    LocalPhoto::class -> {
+                        mainViewModel.deleteLocalPhotos(
+                            getPhotos() as List<LocalPhoto>
+                        )
+                        selectedItems.clear()
+                    }
                 }
             }
         }) {

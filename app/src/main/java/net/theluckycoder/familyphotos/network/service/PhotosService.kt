@@ -12,54 +12,40 @@ interface PhotosService {
     @GET("/ping")
     suspend fun ping(): Response<Void>
 
-    @GET("/photos/{userId}")
-    suspend fun getPhotosList(
-        @Path("userId") userId: Long
-    ): Response<List<NetworkPhoto>>
+    @GET("/photos")
+    suspend fun getPhotosList(): Response<List<NetworkPhoto>>
 
     @Streaming
-    @GET("photos/{userId}/download/{id}")
+    @GET("photos/download/{id}")
     suspend fun downloadPhoto(
-        @Path("userId") userId: Long,
         @Path("id") id: Long
     ): ResponseBody?
-    @GET("photos/{userId}/exif/{id}")
+    @GET("photos/exif/{id}")
     suspend fun getPhotoExif(
-        @Path("userId") userId: Long,
         @Path("id") id: Long
     ): Response<List<ExifField>>
 
     @Multipart
-    @POST("/photos/{userId}/upload")
+    @POST("/photos/upload")
     suspend fun uploadPhoto(
-        @Path("userId") userId: Long,
         @Query("timeCreated") timeCreated: String,
         @Query("fileSize") fileSize: String,
         @Query("folderName") folderName: String?,
         @Part file: MultipartBody.Part,
     ): Response<NetworkPhoto>
 
-    @POST("/photos/{userId}/update_caption/{photoId}")
-    suspend fun updateCaption(
-        @Path("userId") userId: Long,
-        @Path("photoId") photoId: Long,
-        @Query("timeCreated") newCaption: String?
-    ): Response<NetworkPhoto>
-
-    @DELETE("/photos/{userId}/delete/{photoId}")
+    @DELETE("/photos/delete/{photoId}")
     suspend fun deletePhoto(
-        @Path("userId") userId: Long,
         @Path("photoId") photoId: Long,
     ): Response<Void>
 
-    @GET("/public_photos/")
+    @GET("/public_photos")
     suspend fun getPublicPhotosList(): Response<List<NetworkPhoto>>
 
-    @POST("/photos/{userId}/change_location/{photoId}")
+    @POST("/photos/change_location/{photoId}")
     suspend fun changePhotoLocation(
-        @Path("userId") userId: Long,
         @Path("photoId") photoId: Long,
-        @Query("targetUserId") newUserId: Long?,
+        @Query("targetUserName") newUserName: String?,
         @Query("targetFolderName") newFolderName: String?,
     ): Response<NetworkPhoto>
 
@@ -71,9 +57,4 @@ interface PhotosService {
         @Query("folderName") folderName: String?,
         @Part file: MultipartBody.Part,
     ): Response<NetworkPhoto>
-
-    @DELETE("/public_photos/delete/{photoId}")
-    suspend fun deletePublicPhoto(
-        @Path("photoId") photoId: Long,
-    ): Response<Void>
 }

@@ -1,12 +1,8 @@
 package net.theluckycoder.familyphotos.ui.activity
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,7 +25,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -45,19 +40,6 @@ import net.theluckycoder.familyphotos.ui.viewmodel.LoginViewModel
 class LoginActivity : ComponentActivity() {
 
     private val viewModel: LoginViewModel by viewModels()
-
-    private val requestPermissionLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { isGranted: Boolean ->
-            if (!isGranted) {
-                Toast.makeText(
-                    this,
-                    "Vezi ca nu te lasa sa iti vezi pozele de pe telefon",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,11 +67,6 @@ class LoginActivity : ComponentActivity() {
                 }
             }
         }
-
-        val permission = Manifest.permission.READ_EXTERNAL_STORAGE
-        if (ContextCompat.checkSelfPermission(this, permission)
-            == PackageManager.PERMISSION_DENIED && shouldShowRequestPermissionRationale(permission)
-        ) requestPermissionLauncher.launch(permission)
 
         setContentView(view)
     }

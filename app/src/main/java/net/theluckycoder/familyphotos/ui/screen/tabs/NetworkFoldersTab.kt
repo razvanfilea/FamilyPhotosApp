@@ -91,7 +91,7 @@ object NetworkFoldersTab : BottomTab, FoldersTab<NetworkFolder>() {
                 val photo = NetworkPhoto(
                     id = folder.coverPhotoId,
                     name = "",
-                    ownerUserId = folder.ownerUserId,
+                    userId = folder.userId,
                     timeCreated = 0L,
                     folder = folder.name
                 )

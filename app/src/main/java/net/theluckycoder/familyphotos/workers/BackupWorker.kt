@@ -30,12 +30,10 @@ class BackupWorker @AssistedInject constructor(
             .take(20)
             .filter { it.networkPhotoId == 0L } // Photos not uploaded
 
-        val userId = userDataStore.userIdFlow.first().toLong()
-
         val result = try {
 
             photos.forEach { localPhoto ->
-                serverRepository.uploadFile(userId, localPhoto, null)
+                serverRepository.uploadFile(localPhoto, false, null)
             }
 
             Result.success()

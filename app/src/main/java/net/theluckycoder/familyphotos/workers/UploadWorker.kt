@@ -51,7 +51,7 @@ class UploadWorker @AssistedInject constructor(
         setForeground(createForegroundInfo("Starting upload", 0, 0))
 
         val ids = inputData.getLongArray(KEY_INPUT_LIST) ?: return Result.failure()
-        val userOwnerId = inputData.getLong(KEY_USER_OWNER_ID, -1).takeUnless { it == -1L }
+        val makePublic = inputData.getBoolean(KEY_MAKE_PUBLIC, false)
         val uploadFolder = inputData.getString(KEY_UPLOAD_FOLDER)
             .orEmpty().trim().takeIf { it.isNotEmpty() }
 
@@ -70,7 +70,7 @@ class UploadWorker @AssistedInject constructor(
                     createForegroundInfo("Uploaded $index/$total files", index, total)
                 )
 
-                if (!serverRepository.uploadFile(userOwnerId, localPhoto, uploadFolder, null)) {
+                if (!serverRepository.uploadFile(localPhoto, makePublic, uploadFolder, null)) {
                     Log.e(TAG, "Failed to upload $localPhotoId")
                     failedCount++
                 }
@@ -199,7 +199,7 @@ class UploadWorker @AssistedInject constructor(
         const val TAG = "upload"
 
         const val KEY_INPUT_LIST = "input_list"
-        const val KEY_USER_OWNER_ID = "user_id"
+        const val KEY_MAKE_PUBLIC = "make_public"
         const val KEY_UPLOAD_FOLDER = "upload_folder"
     }
 }

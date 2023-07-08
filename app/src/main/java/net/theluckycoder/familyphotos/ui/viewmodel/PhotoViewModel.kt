@@ -28,7 +28,7 @@ class PhotoViewModel @Inject constructor(
 
     fun getPhotosInMonth(photo: Photo) = photosRepository.getPhotosInProximity(photo)
 
-    fun getPhotosInWeek(photo: NetworkPhoto) = photosRepository.getMemories(photo.timeCreated, photo.ownerUserId)
+    fun getPhotosInWeek(photo: NetworkPhoto) = photosRepository.getMemories(photo.timeCreated, photo.userId)
 
     fun getPhotoLocalUriAsync(photo: Photo): Deferred<Uri?> = viewModelScope.async(Dispatchers.IO) {
         when (photo) {

@@ -4,8 +4,8 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
 import kotlinx.datetime.TimeZone
 import net.theluckycoder.familyphotos.datastore.UserDataStore
 import javax.inject.Inject
@@ -19,7 +19,6 @@ class PhotosApp : Application(), Configuration.Provider {
     @Inject
     lateinit var userDataStore: UserDataStore
 
-    @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate() {
         /*if (BuildConfig.DEBUG) {
             StrictMode.setThreadPolicy(
@@ -32,12 +31,6 @@ class PhotosApp : Application(), Configuration.Provider {
             )
         }*/
         super.onCreate()
-
-        GlobalScope.launch(Dispatchers.IO) {
-            if (userDataStore.firstStart.first()) {
-                userDataStore.setFirstStart()
-            }
-        }
     }
 
     override fun getWorkManagerConfiguration() =

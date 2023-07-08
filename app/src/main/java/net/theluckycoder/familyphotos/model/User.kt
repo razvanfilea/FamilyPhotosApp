@@ -8,10 +8,9 @@ import kotlinx.serialization.Serializable
 @Keep
 @Serializable
 data class User(
-    val id: Int,
+    val userId: String,
     val displayName: String,
-    val userName: String,
 )
 
-const val PUBLIC_USER_ID = 1L
+const val PUBLIC_USER_ID = "public"
 

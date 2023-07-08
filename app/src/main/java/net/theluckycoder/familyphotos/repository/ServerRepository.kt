@@ -37,9 +37,9 @@ class ServerRepository @Inject constructor(
 
     suspend fun pingServer(): Boolean = photosService.get().ping().isSuccessful
 
-    suspend fun downloadAllPhotos(userId: Long) = coroutineScope {
+    suspend fun downloadAllPhotos() = coroutineScope {
         val service = photosService.get()
-        val userPhotosAsync = async { service.getPhotosList(userId) }
+        val userPhotosAsync = async { service.getPhotosList() }
         val publicPhotos = service.getPublicPhotosList()
 
         val userPhotos = userPhotosAsync.await()
@@ -56,11 +56,11 @@ class ServerRepository @Inject constructor(
         false
     }
 
-    suspend fun deleteNetworkPhoto(userId: Long, photoId: Long): Boolean {
-        val successful = photosService.get().deletePhoto(userId, photoId).isSuccessful
+    suspend fun deleteNetworkPhoto(photoId: Long): Boolean {
+        val successful = photosService.get().deletePhoto(photoId).isSuccessful
 
         if (successful) {
-            Log.d("PhotosListRepository", "Deleting $userId")
+            Log.d("PhotosListRepository", "Deleting photo $photoId")
             networkPhotosDao.delete(photoId)
         }
 
@@ -68,7 +68,7 @@ class ServerRepository @Inject constructor(
     }
 
     suspend fun saveNetworkPhotoToStorage(networkPhoto: NetworkPhoto): LocalPhoto? {
-        val body = photosService.get().downloadPhoto(networkPhoto.ownerUserId, networkPhoto.id)
+        val body = photosService.get().downloadPhoto(networkPhoto.id)
             ?: run {
                 Log.d("Share NetworkPhoto", "Failed to download file")
                 return null
@@ -152,7 +152,7 @@ class ServerRepository @Inject constructor(
     }
 
     suspend fun getExifData(photo: NetworkPhoto): ExifData? {
-        photosService.get().getPhotoExif(photo.ownerUserId, photo.id).body()?.let {
+        photosService.get().getPhotoExif(photo.id).body()?.let {
             return ExifData(it)
         }
 
@@ -160,8 +160,8 @@ class ServerRepository @Inject constructor(
     }
 
     suspend fun uploadFile(
-        ownerUserId: Long?,
         localPhoto: LocalPhoto,
+        public: Boolean,
         uploadFolder: String?,
         fileToUpload: File? = null,
     ): Boolean {
@@ -180,16 +180,15 @@ class ServerRepository @Inject constructor(
         val name = fileToUpload?.name ?: localPhoto.name
         val fileBody = MultipartBody.Part.createFormData("file", name, requestFile)
 
-        val response = if (ownerUserId != null) {
-            photosService.get().uploadPhoto(
-                userId = ownerUserId,
+        val response = if (public) {
+            photosService.get().uploadPublicPhoto(
                 timeCreated = localPhoto.timeCreated.toString(),
                 fileSize = bytes.size.toString(),
                 file = fileBody,
                 folderName = uploadFolder,
             )
         } else {
-            photosService.get().uploadPublicPhoto(
+            photosService.get().uploadPhoto(
                 timeCreated = localPhoto.timeCreated.toString(),
                 fileSize = bytes.size.toString(),
                 file = fileBody,
@@ -203,36 +202,24 @@ class ServerRepository @Inject constructor(
             return true
         }
 
+        Log.e("Error uploading ${localPhoto.id}", response.errorBody()?.string().orEmpty())
+
         return false
     }
 
     suspend fun changePhotoLocation(
         photo: NetworkPhoto,
-        newUserOwnerId: Long?,
+        newUserOwnerName: String?,
         newFolderName: String?,
     ): Boolean {
         val response = photosService.get().changePhotoLocation(
-            photo.ownerUserId,
-            photo.id,
-            newUserOwnerId,
-            newFolderName
+            photoId = photo.id,
+            newUserName = newUserOwnerName,
+            newFolderName = newFolderName
         )
 
         val changedPhoto = response.body()
-        if (!response.isSuccessful || changedPhoto == null)
-            return false
-
-        networkPhotosDao.update(changedPhoto)
-        return true
-    }
-
-    suspend fun updateCaption(
-        photo: NetworkPhoto,
-        newCaption: String?
-    ): Boolean {
-        val response = photosService.get().updateCaption(photo.ownerUserId, photo.id, newCaption)
-
-        val changedPhoto = response.body()
+        Log.d("Moving Photos", response.errorBody()?.string().orEmpty())
         if (!response.isSuccessful || changedPhoto == null)
             return false
 

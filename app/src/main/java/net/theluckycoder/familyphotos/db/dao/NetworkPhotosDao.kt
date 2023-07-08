@@ -15,14 +15,14 @@ abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>("network_photo
 
     @Query(
         """SELECT * FROM network_photo
-            WHERE network_photo.ownerUserId = :userId
+            WHERE network_photo.userId = :userName
             ORDER BY network_photo.timeCreated DESC"""
     )
-    abstract fun getPhotosPaged(userId: Long): PagingSource<Int, NetworkPhoto>
+    abstract fun getPhotosPaged(userName: String): PagingSource<Int, NetworkPhoto>
 
     @Query(
         """SELECT * FROM network_photo
-            WHERE network_photo.ownerUserId = :userId
+            WHERE network_photo.userId = :userId
             ORDER BY network_photo.timeCreated DESC"""
     )
     abstract fun getPhotos(userId: Long): List<NetworkPhoto>
@@ -31,7 +31,7 @@ abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>("network_photo
     abstract fun getFolderPhotos(folder: String): Flow<List<NetworkPhoto>>
 
     @Query(
-        """SELECT folder, id, ownerUserId, COUNT(id) FROM network_photo 
+        """SELECT folder, id, userId, COUNT(id) FROM network_photo 
         WHERE folder <> '' GROUP BY folder
         ORDER BY network_photo.folder ASC"""
     )
@@ -39,19 +39,19 @@ abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>("network_photo
 
     @Query(
         """SELECT * FROM network_photo
-        WHERE ownerUserId = :userId
-        AND ROUND(timeCreated / 3600 / 24 / 7) = ROUND(:timestamp / 3600 / 24 / 7)
+        WHERE network_photo.userId = :userId
+        AND ROUND(network_photo.timeCreated / 3600 / 24 / 7) = ROUND(:timestamp / 3600 / 24 / 7)
         ORDER BY network_photo.timeCreated DESC
     """
     )
-    abstract fun getPhotosInThisWeek(userId: Long, timestamp: Long): Flow<List<NetworkPhoto>>
+    abstract fun getPhotosInThisWeek(userId: String, timestamp: Long): Flow<List<NetworkPhoto>>
 
     @Query(
         """SELECT * FROM network_photo
-        WHERE ownerUserId = :userId
-        AND ROUND(timeCreated / 3600 / 24 / 7 / 30) = ROUND(:timestamp / 3600 / 24 / 7 / 30)
+        WHERE network_photo.userId = :userId
+        AND ROUND(network_photo.timeCreated / 3600 / 24 / 7 / 30) = ROUND(:timestamp / 3600 / 24 / 7 / 30)
         ORDER BY network_photo.timeCreated DESC
     """
     )
-    abstract fun getPhotosInThisMonth(userId: Long, timestamp: Long): Flow<List<NetworkPhoto>>
+    abstract fun getPhotosInThisMonth(userId: String, timestamp: Long): Flow<List<NetworkPhoto>>
 }

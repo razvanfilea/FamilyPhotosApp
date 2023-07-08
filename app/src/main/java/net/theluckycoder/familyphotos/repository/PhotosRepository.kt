@@ -23,12 +23,12 @@ class PhotosRepository @Inject constructor(
     suspend fun getLocalPhotoFromNetwork(networkPhotoId: Long) =
         localPhotosDao.findByNetworkId(networkPhotoId)
 
-    fun getMemories(timestamp: Long, userId: Long? = null) =
-        networkPhotosDao.getPhotosInThisWeek(userId ?: PUBLIC_USER_ID, timestamp)
+    fun getMemories(timestamp: Long, userName: String? = null) =
+        networkPhotosDao.getPhotosInThisWeek(userName ?: PUBLIC_USER_ID, timestamp)
 
     fun getPhotosInProximity(photo: Photo): Flow<List<NetworkPhoto>> {
         return when (photo) {
-            is NetworkPhoto -> networkPhotosDao.getPhotosInThisMonth(photo.ownerUserId, photo.timeCreated)
+            is NetworkPhoto -> networkPhotosDao.getPhotosInThisMonth(photo.userId, photo.timeCreated)
             is LocalPhoto -> TODO()
         }
     }
@@ -39,7 +39,7 @@ class PhotosRepository @Inject constructor(
         }
     }
 
-    fun getPersonalPhotosPaged(userId: Long) = networkPhotosDao.getPhotosPaged(userId)
+    fun getPersonalPhotosPaged(userName: String) = networkPhotosDao.getPhotosPaged(userName)
 
     fun getPublicPhotosPaged() = networkPhotosDao.getPhotosPaged(PUBLIC_USER_ID)
 }

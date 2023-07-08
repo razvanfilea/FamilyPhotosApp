@@ -191,7 +191,6 @@ data class PhotoScreen private constructor(
     ) {
         val deletePhotosDialog = rememberDeletePhotosDialog()
         val navigator = LocalNavigator.currentOrThrow
-        val activity = LocalContext.current as Activity
         val mainViewModel: MainViewModel = viewModel()
 
         Row(
@@ -206,7 +205,7 @@ data class PhotoScreen private constructor(
                 onClick = {
                     when (photo) {
                         is NetworkPhoto -> deletePhotosDialog.show(listOf(photo))
-                        is LocalPhoto -> mainViewModel.deleteLocalPhotos(activity, listOf(photo))
+                        is LocalPhoto -> mainViewModel.deleteLocalPhotos(listOf(photo))
                     }
                 },
                 text = stringResource(id = R.string.action_delete),

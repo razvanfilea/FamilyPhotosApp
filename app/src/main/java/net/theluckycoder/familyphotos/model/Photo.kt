@@ -67,13 +67,12 @@ data class LocalPhoto(
 data class NetworkPhoto(
     @PrimaryKey
     override val id: Long,
-    @SerialName("owner")
-    val ownerUserId: Long,
+    val userId: String,
     override val name: String,
+    @SerialName("createdAt")
     override val timeCreated: Long,
     val fileSize: Long = 0,
     override val folder: String? = null,
-    val caption: String? = null,
 ) : Photo(), Parcelable {
 
     /*override fun hashCode(): Int = id.hashCode()
@@ -85,6 +84,7 @@ data class NetworkPhoto(
     }*/
 }
 
+// TODO Transform to Mime
 private val videoExtensions = arrayOf(
     "WEBM", "MPG", "MP2", "MPEG", "MPE", "MPV", "OGG", "MP4", "M4P", "M4V", "AVI", "WMV",
     "MOV", "MKV"
@@ -108,7 +108,7 @@ fun Photo.getThumbnailUri(): Uri = when (this) {
 }
 
 fun NetworkPhoto.getDownloadUrl(): String =
-    "${NetworkModule.BASE_URL}photos/$ownerUserId/download/$id"
+    "${NetworkModule.BASE_URL}photos/download/$id"
 
 fun NetworkPhoto.getThumbnailUrl(): String =
-    "${NetworkModule.BASE_URL}photos/$ownerUserId/thumbnail/$id"
+    "${NetworkModule.BASE_URL}photos/thumbnail/$id"

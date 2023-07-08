@@ -11,7 +11,7 @@ import net.theluckycoder.familyphotos.model.NetworkPhoto
 
 @Database(
     entities = [LocalPhoto::class, NetworkPhoto::class],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -32,6 +32,13 @@ abstract class PhotosDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("DROP TABLE network_photo")
+                database.execSQL("CREATE TABLE network_photo (name TEXT NOT NULL, timeCreated INTEGER NOT NULL, id INTEGER NOT NULL PRIMARY KEY, userId TEXT NOT NULL, fileSize INTEGER NOT NULL, folder TEXT)")
+            }
+        }
+
         fun getDatabase(context: Context): PhotosDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE?.let { return it }
@@ -40,7 +47,7 @@ abstract class PhotosDatabase : RoomDatabase() {
                     context.applicationContext,
                     PhotosDatabase::class.java,
                     "photos_database"
-                ).addMigrations(MIGRATION_3_4)
+                ).addMigrations(MIGRATION_3_4, MIGRATION_4_5)
                     .build()
 
                 INSTANCE = instance

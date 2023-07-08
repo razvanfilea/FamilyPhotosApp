@@ -16,8 +16,8 @@ data class NetworkFolder(
     override val name: String,
     @ColumnInfo(name = "id")
     override val coverPhotoId: Long,
-    @ColumnInfo(name = "ownerUserId")
-    val ownerUserId: Long,
+    @ColumnInfo(name = "userId")
+    val userId: String,
     @ColumnInfo(name = "COUNT(id)")
     override val count: Int,
 ) : PhotoFolder() {
@@ -29,20 +29,20 @@ data class NetworkFolder(
         other as NetworkFolder
 
         if (name != other.name) return false
-        if (ownerUserId != other.ownerUserId) return false
+        if (userId != other.userId) return false
 
         return true
     }
 
     override fun hashCode(): Int {
         var result = name.hashCode()
-        result = 31 * result + ownerUserId.hashCode()
+        result = 31 * result + userId.hashCode()
         return result
     }
 }
 
 val NetworkFolder.isPublic
-    get() = this.ownerUserId == PUBLIC_USER_ID
+    get() = this.userId == PUBLIC_USER_ID
 
 @Immutable
 data class LocalFolder(

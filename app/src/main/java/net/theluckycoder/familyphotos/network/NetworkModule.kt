@@ -1,6 +1,7 @@
 package net.theluckycoder.familyphotos.network
 
 import android.content.Context
+import android.util.Log
 import coil.ComponentRegistry
 import coil.ImageLoader
 import coil.decode.ImageDecoderDecoder
@@ -29,50 +30,81 @@ import net.theluckycoder.familyphotos.utils.IOCoroutineScope
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.Response
 import okhttp3.brotli.BrotliInterceptor
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import javax.inject.Named
 import javax.inject.Singleton
+
 
 @InstallIn(SingletonComponent::class)
 @Module
 object NetworkModule {
 
     @Provides
-    @Named("auth")
-    fun providesAuthInterceptor(
+    @Named("setCookie")
+    fun providesSetCookieInterceptor(
         userDataStore: UserDataStore,
         scope: IOCoroutineScope
     ): Interceptor {
-        var authenticationCredentials: String? = null
+        var sessionCookie: String? = null
 
         scope.launch {
-            userDataStore.credentials.collectLatest {
+            userDataStore.sessionCookie.collectLatest {
                 ensureActive()
-                authenticationCredentials = it
+                sessionCookie = it
             }
         }
 
         return Interceptor { chain ->
             chain.proceed(
                 chain.request().newBuilder().apply {
-                    authenticationCredentials?.let {
-                        addHeader("Authorization", "Basic $authenticationCredentials")
+                    sessionCookie?.let {
+                        addHeader("Cookie", it)
                     }
                 }.build()
             )
         }
     }
 
+    @Provides
+    @Named("receiveCookie")
+    fun providesReceiveCookieInterceptor(
+        userDataStore: UserDataStore,
+        scope: IOCoroutineScope
+    ): Interceptor {
+        return Interceptor { chain ->
+            val originalResponse: Response = chain.proceed(chain.request())
+
+            if (originalResponse.headers("Set-Cookie").isNotEmpty()) {
+                val cookies = HashSet<String>()
+                for (header in originalResponse.headers("Set-Cookie")) {
+                    cookies.add(header)
+                }
+
+                Log.i("Cookies", cookies.toString())
+
+                scope.launch {
+                    userDataStore.setSessionCookie(cookies.first())
+                }
+            }
+
+            originalResponse
+        }
+    }
+
     @Singleton
     @Provides
     fun providesOkHttpClient(
-        @Named("auth") authInterceptor: Interceptor,
+        @Named("setCookie") setCookieInterceptor: Interceptor,
+        @Named("receiveCookie") receiveCookieInterceptor: Interceptor,
     ): OkHttpClient = runBlocking {
         OkHttpClient.Builder()
             .addInterceptor(BrotliInterceptor)
-            .addInterceptor(authInterceptor)
-//            .addInterceptor(HttpLoggingInterceptor())
+            .addInterceptor(setCookieInterceptor)
+            .addInterceptor(receiveCookieInterceptor)
+            .addInterceptor(HttpLoggingInterceptor())
             .build()
     }
 

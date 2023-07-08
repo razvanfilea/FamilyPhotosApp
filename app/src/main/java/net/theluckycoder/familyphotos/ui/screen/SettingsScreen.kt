@@ -79,5 +79,15 @@ class SettingsScreen : Screen {
                 ),
             ),
         ),
+        PreferenceGroupItem(
+            title = "User",
+            items = listOf(
+                EmptyPreferenceItem(
+                    title = "Sign out",
+                    summary = "Log out of the current user session",
+                    onClick = { mainViewModel.logout(app) }
+                )
+            )
+        )
     )
 }

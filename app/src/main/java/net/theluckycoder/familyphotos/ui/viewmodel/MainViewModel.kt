@@ -1,11 +1,10 @@
 package net.theluckycoder.familyphotos.ui.viewmodel
 
-import android.app.Activity
 import android.app.Application
 import android.net.Uri
-import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -27,11 +26,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
@@ -79,7 +80,7 @@ class MainViewModel @Inject constructor(
 
     private val workManager: WorkManager = WorkManager.getInstance(app)
 
-    private var userId = -1L
+    private var userName = ""
 
     // Data
     private val _isOnlineFlow = MutableStateFlow(false)
@@ -89,7 +90,7 @@ class MainViewModel @Inject constructor(
     val autoBackupFlow = userDataStore.autoBackup
 
     val personalPhotosPager = Pager(PagingConfig(pageSize = 120, enablePlaceholders = false)) {
-        photosRepository.getPersonalPhotosPaged(userId)
+        photosRepository.getPersonalPhotosPaged(userName)
     }.flow.flowOn(Dispatchers.Default)
         .cachedIn(viewModelScope)
         .mapPagingPhotos()
@@ -104,16 +105,20 @@ class MainViewModel @Inject constructor(
 
     val networkFolders = foldersRepository.networkFoldersFlow
 
+    private val _localPhotosToDelete = Channel<List<LocalPhoto>>()
+    val localPhotosToDelete = _localPhotosToDelete.consumeAsFlow()
+
     // Ui
     val isRefreshing = MutableStateFlow(false)
 
     init {
         viewModelScope.launch {
-            userDataStore.userIdFlow.collectLatest {
+
+            userDataStore.userIdFlow.collectLatest { newUserName ->
                 ensureActive()
-                val newId = it.toLong()
-                if (userId != newId) {
-                    userId = newId
+                Log.i("USername", newUserName.orEmpty())
+                if (newUserName != null && userName != newUserName) {
+                    userName = newUserName
                     refreshPhotos()
                 }
             }
@@ -175,7 +180,7 @@ class MainViewModel @Inject constructor(
             val localPhotos = async { foldersRepository.updatePhoneAlbums() }
 
             try {
-                serverRepository.downloadAllPhotos(userId)
+                serverRepository.downloadAllPhotos()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -184,6 +189,13 @@ class MainViewModel @Inject constructor(
             localPhotos.await()
 
             isRefreshing.value = false
+        }
+    }
+
+    fun refreshLocalPhotos(result: ActivityResult) {
+        result.data
+        viewModelScope.launch(Dispatchers.IO) {
+            foldersRepository.updatePhoneAlbums()
         }
     }
 
@@ -207,7 +219,8 @@ class MainViewModel @Inject constructor(
                 today.minus(DateTimeUnit.YEAR * 6),
             ).map {
                 val yearsUntil = it.yearsUntil(today)
-                val timestamp = it.atTime(12, 0).toInstant(LOCAL_TIME_ZONE).toEpochMilliseconds() / 1000
+                val timestamp =
+                    it.atTime(12, 0).toInstant(LOCAL_TIME_ZONE).toEpochMilliseconds() / 1000
 
                 yearsUntil to callback(timestamp)
             }.filterNot {
@@ -216,7 +229,7 @@ class MainViewModel @Inject constructor(
         }
 
     suspend fun getPersonalMemories() = getMemories {
-        photosRepository.getMemories(it, userId).first()
+        photosRepository.getMemories(it, userName).first()
     }
 
     suspend fun getPublicMemories() = getMemories {
@@ -245,7 +258,7 @@ class MainViewModel @Inject constructor(
 
                 val result = serverRepository.changePhotoLocation(
                     photo = photo,
-                    newUserOwnerId = userId.takeUnless { makePublic },
+                    newUserOwnerName = userName.takeUnless { makePublic },
                     newFolderName = newFolderName
                 )
                 Log.d("Moving Photos", "Moved $id result=$result")
@@ -274,14 +287,14 @@ class MainViewModel @Inject constructor(
      */
     fun uploadPhotosAsync(
         localPhotos: List<Long>,
-        public: Boolean,
+        makePublic: Boolean,
         uploadFolder: String?
     ) {
         val data = Data.Builder()
             .putAll(
                 mapOf(
                     UploadWorker.KEY_INPUT_LIST to localPhotos.toLongArray(),
-                    UploadWorker.KEY_USER_OWNER_ID to userId.takeUnless { public },
+                    UploadWorker.KEY_MAKE_PUBLIC to makePublic,
                     UploadWorker.KEY_UPLOAD_FOLDER to uploadFolder
                 )
             )
@@ -302,12 +315,6 @@ class MainViewModel @Inject constructor(
         workManager
 //            .beginUniqueWork("upload_work", ExistingWorkPolicy.APPEND, uploadRequest)
             .enqueue(uploadRequest)
-    }
-
-    fun updateCaption(photo: NetworkPhoto, newCaption: String?) {
-        viewModelScope.launch(Dispatchers.IO) {
-            serverRepository.updateCaption(photo, newCaption)
-        }
     }
 
     /**
@@ -334,7 +341,7 @@ class MainViewModel @Inject constructor(
         withContext(Dispatchers.IO) {
             photos.parallelStream().map { photo ->
                 async {
-                    if (serverRepository.deleteNetworkPhoto(photo.ownerUserId, photo.id)) {
+                    if (serverRepository.deleteNetworkPhoto(photo.id)) {
                         photosRepository.removeNetworkReference(photo)
                     }
                 }
@@ -342,14 +349,10 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun deleteLocalPhotos(activity: Activity, photos: List<LocalPhoto>) {
-        val pendingIntent = MediaStore.createTrashRequest(
-            activity.contentResolver,
-            photos.map { it.uri },
-            true
-        )
-
-        activity.startIntentSenderForResult(pendingIntent.intentSender, 12345, null, 0, 0, 0)
+    fun deleteLocalPhotos(photos: List<LocalPhoto>) {
+        viewModelScope.launch(Dispatchers.Default) {
+            _localPhotosToDelete.send(photos)
+        }
     }
 
 
@@ -370,6 +373,14 @@ class MainViewModel @Inject constructor(
 
             ProcessPhoenix.triggerRebirth(app)
         }
+    }
+
+    fun logout(app: Application) {
+        viewModelScope.launch {
+            userDataStore.clear()
+        }
+
+        ProcessPhoenix.triggerRebirth(app)
     }
 
     companion object {

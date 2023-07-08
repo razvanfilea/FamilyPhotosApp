@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.datastore.UserDataStore
 import net.theluckycoder.familyphotos.model.UserLogin
@@ -17,15 +17,17 @@ class LoginViewModel @Inject constructor(
     private val userDataStore: UserDataStore,
 ) : ViewModel() {
 
-    val isLoggedIn = userDataStore.credentials.map { it != null }
+    val isLoggedIn =
+        userDataStore.sessionCookie.combine(userDataStore.userIdFlow) { sessionCookie, userName ->
+            sessionCookie != null && userName != null
+        }
 
     fun login(userLogin: UserLogin) = viewModelScope.launch(Dispatchers.IO) {
         try {
             loginRepository.login(userLogin)?.let {
                 with(userDataStore) {
-                    setUserId(it.id)
+                    setUserName(it.userId)
                     setDisplayName(it.displayName)
-                    setCredentials(userLogin.encodeBase64())
                 }
             }
         } catch (e: Exception) {

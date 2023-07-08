@@ -4,7 +4,7 @@ plugins {
     kotlin("android")
     kotlin("kapt")
     kotlin("plugin.serialization") version libs.versions.kotlin.base.get()
-    id("com.google.devtools.ksp") version "1.8.21-1.0.11"
+    id("com.google.devtools.ksp") version "1.8.22-1.0.11"
     id("kotlin-parcelize")
 
     id("dagger.hilt.android.plugin")
@@ -18,8 +18,8 @@ android {
         applicationId = "net.theluckycoder.familyphotos"
         minSdk = 30
         targetSdk = 33
-        versionCode = 23
-        versionName = "2.3.1"
+        versionCode = 24
+        versionName = "2.4.0"
         resourceConfigurations += listOf("en", "ro")
     }
 

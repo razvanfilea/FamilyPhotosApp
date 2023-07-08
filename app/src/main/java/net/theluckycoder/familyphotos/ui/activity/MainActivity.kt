@@ -4,9 +4,12 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.CompositionLocalProvider
@@ -14,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.lifecycleScope
 import cafe.adriel.voyager.core.annotation.ExperimentalVoyagerApi
 import cafe.adriel.voyager.core.lifecycle.LocalNavigatorScreenLifecycleProvider
 import cafe.adriel.voyager.core.lifecycle.NavigatorScreenLifecycleProvider
@@ -23,6 +27,10 @@ import cafe.adriel.voyager.navigator.Navigator
 import coil.ImageLoader
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.ui.AppTheme
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
@@ -30,6 +38,7 @@ import net.theluckycoder.familyphotos.ui.LocalOkHttpClient
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.PhotosSlideTransition
 import net.theluckycoder.familyphotos.ui.screen.MainScreen
+import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import okhttp3.OkHttpClient
 import javax.inject.Inject
 
@@ -50,8 +59,13 @@ class MainActivity : ComponentActivity() {
     private val storagePermissionLauncher =
         registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
-        ) { _ ->
-        }
+        ) { }
+
+    private val mainViewModel: MainViewModel by viewModels()
+
+    private val deletePhotoLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
+        mainViewModel.refreshLocalPhotos(it)
+    }
 
     @Inject
     lateinit var imageLoader: Lazy<ImageLoader>
@@ -111,6 +125,26 @@ class MainActivity : ComponentActivity() {
             ) == PackageManager.PERMISSION_DENIED
         ) {
             storagePermissionLauncher.launch(readImagePermission)
+        }
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            mainViewModel.localPhotosToDelete.collect { photos ->
+                ensureActive()
+
+                val uriList = photos.map { it.uri }
+
+                withContext(Dispatchers.Main) {
+                    val pendingIntent = MediaStore.createTrashRequest(
+                        this@MainActivity.contentResolver,
+                        uriList,
+                        true
+                    )
+
+                    val request = IntentSenderRequest.Builder(pendingIntent.intentSender).build()
+
+                    deletePhotoLauncher.launch(request)
+                }
+            }
         }
     }
 }
