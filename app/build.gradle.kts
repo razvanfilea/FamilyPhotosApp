@@ -4,7 +4,7 @@ plugins {
     kotlin("android")
     kotlin("kapt")
     kotlin("plugin.serialization") version libs.versions.kotlin.base.get()
-    id("com.google.devtools.ksp") version "1.8.22-1.0.11"
+    id("com.google.devtools.ksp") version libs.versions.kotlin.ksp.get()
     id("kotlin-parcelize")
 
     id("dagger.hilt.android.plugin")
@@ -19,7 +19,7 @@ android {
         minSdk = 30
         targetSdk = 33
         versionCode = 24
-        versionName = "2.4.0"
+        versionName = "2.4.1"
         resourceConfigurations += listOf("en", "ro")
     }
 

@@ -11,7 +11,7 @@ import net.theluckycoder.familyphotos.model.NetworkPhoto
 
 @Database(
     entities = [LocalPhoto::class, NetworkPhoto::class],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -39,6 +39,12 @@ abstract class PhotosDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("CREATE INDEX index_network_photo_timeCreated ON network_photo(timeCreated DESC)")
+            }
+        }
+
         fun getDatabase(context: Context): PhotosDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE?.let { return it }
@@ -47,7 +53,8 @@ abstract class PhotosDatabase : RoomDatabase() {
                     context.applicationContext,
                     PhotosDatabase::class.java,
                     "photos_database"
-                ).addMigrations(MIGRATION_3_4, MIGRATION_4_5)
+                ).addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .fallbackToDestructiveMigration()
                     .build()
 
                 INSTANCE = instance

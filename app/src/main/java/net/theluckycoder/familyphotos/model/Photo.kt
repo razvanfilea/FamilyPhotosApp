@@ -6,6 +6,7 @@ import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.Ignore
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.SerialName
@@ -63,7 +64,12 @@ data class LocalPhoto(
 @Keep
 @Serializable
 @Parcelize
-@Entity(tableName = "network_photo")
+@Entity(
+    tableName = "network_photo",
+    indices = [
+        Index(value = ["timeCreated"], orders = [Index.Order.DESC])
+    ]
+)
 data class NetworkPhoto(
     @PrimaryKey
     override val id: Long,
