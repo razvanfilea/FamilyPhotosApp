@@ -142,5 +142,5 @@ dependencies {
 
     // Other
     implementation("com.jakewharton:process-phoenix:2.1.2")
-    implementation("me.saket.telephoto:zoomable-image-coil:0.4.0")
+    implementation("me.saket.telephoto:zoomable-image-coil:0.5.0")
 }
