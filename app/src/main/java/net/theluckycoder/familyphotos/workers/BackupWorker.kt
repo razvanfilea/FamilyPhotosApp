@@ -7,8 +7,8 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
-import net.theluckycoder.familyphotos.datastore.UserDataStore
 import net.theluckycoder.familyphotos.repository.FoldersRepository
 import net.theluckycoder.familyphotos.repository.ServerRepository
 import java.io.IOException
@@ -20,7 +20,6 @@ class BackupWorker @AssistedInject constructor(
     @Assisted workerParams: WorkerParameters,
     private val foldersRepository: FoldersRepository,
     private val serverRepository: ServerRepository,
-    private val userDataStore: UserDataStore,
 ) : CoroutineWorker(context, workerParams) {
 
     override suspend fun doWork(): Result {
@@ -28,7 +27,7 @@ class BackupWorker @AssistedInject constructor(
 
         val photos = foldersRepository.localPhotosFromFolder("Camera").first()
             .take(20)
-            .filter { it.networkPhotoId == 0L } // Photos not uploaded
+            .filter { !it.isSavedToCloud } // Photos not uploaded
 
         val result = try {
 
@@ -41,6 +40,8 @@ class BackupWorker @AssistedInject constructor(
             Result.retry()
         } catch (e: IOException) {
             e.printStackTrace()
+            Result.failure()
+        } catch (e: CancellationException) {
             Result.failure()
         } catch (e: Exception) {
             e.printStackTrace()

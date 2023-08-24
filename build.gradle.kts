@@ -1,34 +1,14 @@
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath(libs.agp)
-        classpath(libs.kotlinGradlePlugin)
-        classpath(libs.dagger.hilt.plugin)
-    }
+plugins {
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.android.library) apply false
+    alias(libs.plugins.kotlinAndroid) apply false
+    alias(libs.plugins.hilt) apply false
+    alias(libs.plugins.ksp) apply false
+    id("com.github.ben-manes.versions") version "0.47.0"
 }
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        maven { setUrl("https://jitpack.io") }
-    }
-}
-
-subprojects {
-    // Taken from:
-    // https://github.com/chrisbanes/tivi/blob/main/build.gradle
-    configurations.configureEach {
-        // We forcefully exclude AppCompat + MDC from any transitive dependencies.
-        // This is a Compose app, so there's no need for these.
-        exclude(group = "androidx.appcompat", module = "appcompat")
-        exclude(group = "com.google.android.material", module = "material")
-    }
-
-    /*tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).configureEach {
+/*subprojects {
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).configureEach {
         kotlinOptions {
             if (project.findProperty("composeCompilerReports") == true) {
                 freeCompilerArgs = freeCompilerArgs + listOf(
@@ -43,13 +23,8 @@ subprojects {
                 )
             }
         }
-    }*/
-}
-
-plugins {
-    id("com.github.ben-manes.versions") version "0.47.0"
-    id("com.google.devtools.ksp") version libs.versions.kotlin.ksp.get() apply false
-}
+    }
+}*/
 
 tasks.named(
     "dependencyUpdates",
@@ -62,5 +37,5 @@ tasks.named(
 }
 
 tasks.register("clean", Delete::class) {
-    delete(rootProject.buildDir)
+    delete(rootProject.layout.buildDirectory)
 }

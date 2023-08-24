@@ -1,10 +1,12 @@
 package net.theluckycoder.familyphotos.ui.screen
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -44,47 +46,49 @@ data class NetworkFolderScreen(
         val photosFlow = remember(folderName) { mainViewModel.getNetworkFolderPhotos(folderName) }
         val photosList by photosFlow.collectAsState(emptyList())
 
-        FolderPhotos(
-            folderName = folderName,
-            selectedItems = selectedItems,
-            photosList = photosList,
-            appBarActions = {
-                if (selectedItems.isEmpty()) {
-                    IconButton(onClick = {
-                        navigator.push(MovePhotosScreen(photosList.map { it.id }))
-                    }) {
-                        Icon(Icons.Default.Edit, contentDescription = null)
+        Surface(Modifier.fillMaxSize()) {
+            FolderPhotos(
+                folderName = folderName,
+                selectedItems = selectedItems,
+                photosList = photosList,
+                appBarActions = {
+                    if (selectedItems.isEmpty()) {
+                        IconButton(onClick = {
+                            navigator.push(MovePhotosScreen(photosList.map { it.id }))
+                        }) {
+                            Icon(Icons.Default.Edit, contentDescription = null)
+                        }
                     }
+                    PhotoUtilitiesActions(NetworkPhoto::class, selectedItems, mainViewModel)
                 }
-                PhotoUtilitiesActions(NetworkPhoto::class, selectedItems, mainViewModel)
-            }
-        ) { photo ->
-            SelectableItem(
-                selected = selectedItems.contains(photo.id),
-                enabled = selectedItems.isNotEmpty(),
-                onClick = { longPress ->
-                    if (selectedItems.isNotEmpty() || longPress) {
-                        if (selectedItems.contains(photo.id))
-                            selectedItems -= photo.id
-                        else
-                            selectedItems += photo.id
-                    } else {
-                        navigator.push(PhotoScreen(photo, PhotoScreen.Source.Folder))
+            ) { photo ->
+                SelectableItem(
+                    selected = selectedItems.contains(photo.id),
+                    enabled = selectedItems.isNotEmpty(),
+                    onClick = { longPress ->
+                        if (selectedItems.isNotEmpty() || longPress) {
+                            if (selectedItems.contains(photo.id))
+                                selectedItems -= photo.id
+                            else
+                                selectedItems += photo.id
+                        } else {
+                            navigator.push(PhotoScreen(photo, PhotoScreen.Source.Folder))
+                        }
                     }
-                }
-            ) {
-                SimpleSquarePhoto(photo)
+                ) {
+                    SimpleSquarePhoto(photo)
 
-                val isVideo = remember(photo) { photo.isVideo }
+                    val isVideo = remember(photo) { photo.isVideo }
 
-                if (isVideo) {
-                    Icon(
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .align(Alignment.TopEnd),
-                        painter = painterResource(R.drawable.ic_play_circle_filled),
-                        contentDescription = null
-                    )
+                    if (isVideo) {
+                        Icon(
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .align(Alignment.TopEnd),
+                            painter = painterResource(R.drawable.ic_play_circle_filled),
+                            contentDescription = null
+                        )
+                    }
                 }
             }
         }

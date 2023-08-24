@@ -56,6 +56,7 @@
     <string name="notification_backup_finished">Finished uploading photos</string>
     <string name="notification_backup_finished_desc">%d photos uploaded successfully and %d failed</string>
     <string name="notification_backup_fail">Failed to backup up files</string>
+    <string name="notification_backup_fail_cancelled">Upload was cancelled</string>
     <string name="notification_backup_fail_internet">Missing internet connection</string>
     <string name="notification_backup_fail_io">Error in the files</string>
     <string name="notification_backup_fail_unknown">Unknown reason</string>

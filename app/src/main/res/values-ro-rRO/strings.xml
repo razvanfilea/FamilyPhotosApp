@@ -43,4 +43,5 @@
     <string name="selected">Selectate</string>
     <string name="ascending">Crescător</string>
     <string name="descending">Descrescător</string>
+    <string name="notification_backup_fail">Nu s-au putut incarca fisierele</string>
 </resources>

@@ -1,19 +1,29 @@
 package net.theluckycoder.familyphotos.ui
 
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.with
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
+import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.stack.StackEvent
 import cafe.adriel.voyager.navigator.Navigator
-import cafe.adriel.voyager.transitions.ScreenTransition
-import cafe.adriel.voyager.transitions.ScreenTransitionContent
-import cafe.adriel.voyager.transitions.SlideOrientation
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -44,6 +54,33 @@ fun VerticallyAnimatedInt(
         contentAlignment = contentAlignment,
         content = content
     )
+}
+
+typealias ScreenTransitionContent = @Composable AnimatedVisibilityScope.(Screen) -> Unit
+
+enum class SlideOrientation {
+    Horizontal,
+    Vertical
+}
+
+@ExperimentalAnimationApi
+@Composable
+private fun ScreenTransition(
+    navigator: Navigator,
+    transition: AnimatedContentTransitionScope<Screen>.() -> ContentTransform,
+    modifier: Modifier = Modifier,
+    content: ScreenTransitionContent = { it.Content() }
+) {
+    AnimatedContent(
+        targetState = navigator.lastItem,
+        transitionSpec = transition,
+        modifier = modifier,
+        label = "screen_transition"
+    ) { screen ->
+        navigator.saveableState("transition", screen) {
+            content(screen)
+        }
+    }
 }
 
 @ExperimentalAnimationApi
@@ -77,6 +114,7 @@ fun PhotosSlideTransition(
                         targetOffsetX = targetOffset,
                         animationSpec = animationSpec
                     )
+
                 SlideOrientation.Vertical ->
                     slideInVertically(
                         initialOffsetY = initialOffset,

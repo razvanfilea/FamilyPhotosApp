@@ -1,5 +1,5 @@
 plugins {
-    id("com.android.application")
+    alias(libs.plugins.android.application)
 
     kotlin("android")
     kotlin("kapt")
@@ -11,7 +11,7 @@ plugins {
 }
 
 android {
-    compileSdk = 33
+    compileSdk = 34
     namespace = "net.theluckycoder.familyphotos"
 
     defaultConfig {
@@ -19,7 +19,7 @@ android {
         minSdk = 30
         targetSdk = 33
         versionCode = 24
-        versionName = "2.4.2"
+        versionName = "2.4.3"
         resourceConfigurations += listOf("en", "ro")
     }
 
@@ -52,7 +52,10 @@ android {
         }
     }
 
-    buildFeatures.compose = true
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -78,6 +81,8 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).configure
 }
 
 dependencies {
+    implementation(project(":camera"))
+
     // Kotlin
     debugImplementation(libs.kotlin.reflect)
     implementation(libs.kotlin.coroutinesAndroid)
@@ -117,14 +122,14 @@ dependencies {
     // Voyager
     implementation(libs.voyager.navigator)
     implementation(libs.voyager.tabNavigator)
-    implementation(libs.voyager.transitions)
+//    implementation(libs.voyager.transitions)
     implementation(libs.voyager.androidx)
 
     // Networking
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("de.nycode:retrofit2-kotlinx-serialization-converter:0.11.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
-    implementation("com.squareup.okhttp3:okhttp-brotli:4.11.0")
+    implementation(libs.retrofit)
+    implementation(libs.retrofitSerializer)
+    implementation(libs.okhttp.logging)
+    implementation(libs.okhttp.brotli)
 
     // WorkManager
     implementation("androidx.work:work-runtime-ktx:2.8.1")

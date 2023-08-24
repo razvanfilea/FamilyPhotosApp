@@ -98,7 +98,7 @@ data class PhotoScreen private constructor(
         photoViewModel: PhotoViewModel
     ) {
         val navigator = LocalNavigator.currentOrThrow
-        val pagerState = rememberPagerState(index)
+        val pagerState = rememberPagerState(initialPage = index) { allPhotos.size }
         val showUi = remember { mutableStateOf(true) }
 
         DisposableEffect(allPhotos.size) {
@@ -150,7 +150,6 @@ data class PhotoScreen private constructor(
         ) { paddingValues ->
 
             HorizontalPager(
-                pageCount = allPhotos.size,
                 state = pagerState,
                 key = { allPhotos.getOrNull(it)?.id ?: it },
                 beyondBoundsPageCount = 1,

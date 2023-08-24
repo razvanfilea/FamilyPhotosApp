@@ -19,6 +19,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.repository.PhotosRepository
@@ -82,6 +83,9 @@ class UploadWorker @AssistedInject constructor(
         } catch (e: ConnectException) {
             createFailNotification(FailReason.NoInternet)
             Result.retry()
+        } catch (e: CancellationException) {
+            createFailNotification(FailReason.Cancelled)
+            Result.failure()
         } catch (e: IOException) {
             e.printStackTrace()
             createFailNotification(FailReason.IoError)
@@ -141,6 +145,7 @@ class UploadWorker @AssistedInject constructor(
         val title = ctx.getString(R.string.notification_backup_fail)
 
         val messageRes = when (failReason) {
+            FailReason.Cancelled -> R.string.notification_backup_fail_cancelled
             FailReason.NoInternet -> R.string.notification_backup_fail_internet
             FailReason.IoError -> R.string.notification_backup_fail_io
             FailReason.Other -> R.string.notification_backup_fail_unknown
@@ -168,7 +173,8 @@ class UploadWorker @AssistedInject constructor(
     private fun createSuccessNotification(successfulCount: Int, failedCount: Int) {
         val ctx = applicationContext
         val title = ctx.getString(R.string.notification_backup_finished)
-        val content = ctx.getString(R.string.notification_backup_finished_desc, successfulCount, failedCount)
+        val content =
+            ctx.getString(R.string.notification_backup_finished_desc, successfulCount, failedCount)
 
         val notification = NotificationCompat.Builder(ctx, NOTIFICATION_CHANNEL)
             .setTicker(title)
@@ -188,6 +194,7 @@ class UploadWorker @AssistedInject constructor(
     }
 
     enum class FailReason {
+        Cancelled,
         NoInternet,
         IoError,
         Other
