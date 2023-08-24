@@ -37,6 +37,7 @@
     <string name="notification_backup_title">Se încarcă fișierele</string>
     <string name="notification_backup_finished">S-au încărcat pozele</string>
     <string name="notification_backup_finished_desc">%d poze au fost încărcate cu succes și %d au eșuat</string>
+    <string name="notification_backup_fail_cancelled">Încărcarea a fost anulată</string>
     <string name="notification_backup_fail_internet">Lipsă internet</string>
     <string name="action_previous">Anterior</string>
     <string name="action_info">Info</string>

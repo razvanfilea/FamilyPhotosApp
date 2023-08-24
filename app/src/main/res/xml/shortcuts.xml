@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="camera"
+        android:enabled="true"
+        android:icon="@mipmap/ic_camera_launcher"
+        android:shortcutShortLabel="@string/camera_name"
+        android:shortcutLongLabel="@string/camera_name_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="net.theluckycoder.familyphotos"
+            android:targetClass="net.theluckycoder.camera.CameraActivity" />
+    </shortcut>
+</shortcuts>

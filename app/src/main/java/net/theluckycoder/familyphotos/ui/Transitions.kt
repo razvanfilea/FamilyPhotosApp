@@ -16,6 +16,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.with
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -110,7 +111,7 @@ fun PhotosSlideTransition(
                     slideInHorizontally(
                         initialOffsetX = initialOffset,
                         animationSpec = animationSpec
-                    ) with slideOutHorizontally(
+                    ) togetherWith slideOutHorizontally(
                         targetOffsetX = targetOffset,
                         animationSpec = animationSpec
                     )
@@ -119,7 +120,7 @@ fun PhotosSlideTransition(
                     slideInVertically(
                         initialOffsetY = initialOffset,
                         animationSpec = animationSpec
-                    ) with slideOutVertically(
+                    ) togetherWith slideOutVertically(
                         targetOffsetY = targetOffset,
                         animationSpec = animationSpec
                     )

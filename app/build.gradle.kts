@@ -1,13 +1,13 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlinAndroid)
 
-    kotlin("android")
     kotlin("kapt")
     kotlin("plugin.serialization") version libs.versions.kotlin.base.get()
-    id("com.google.devtools.ksp") version libs.versions.kotlin.ksp.get()
+    alias(libs.plugins.ksp)
     id("kotlin-parcelize")
 
-    id("dagger.hilt.android.plugin")
+    alias(libs.plugins.hilt)
 }
 
 android {
@@ -104,10 +104,6 @@ dependencies {
     implementation(libs.room.paging)
     ksp(libs.room.compiler)
 
-    // Paging
-    implementation(libs.paging.runtime)
-    implementation(libs.paging.compose)
-
     // Compose
     implementation(libs.compose.compiler)
     implementation(libs.compose.ui)
@@ -124,6 +120,10 @@ dependencies {
     implementation(libs.voyager.tabNavigator)
 //    implementation(libs.voyager.transitions)
     implementation(libs.voyager.androidx)
+
+    // Paging
+    implementation(libs.paging.runtime)
+    implementation(libs.paging.compose)
 
     // Networking
     implementation(libs.retrofit)

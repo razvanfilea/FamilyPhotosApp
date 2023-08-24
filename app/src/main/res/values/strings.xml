@@ -1,6 +1,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingTranslation">
     <string name="app_name" translatable="false">Family Photos</string>
+    <string name="camera_name" translatable="false">Camera</string>
+    <string name="camera_name_long" translatable="false">Family Camera</string>
 
     <string name="message_morning">Good morning, %s!</string>
     <string name="message_normal">Hello, %s!</string>
