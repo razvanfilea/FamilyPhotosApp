@@ -27,6 +27,7 @@
         <activity
             android:name="net.theluckycoder.familyphotos.ui.activity.LoginActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize">
 
             <intent-filter>
@@ -35,17 +36,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-<!--
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <action android:name="android.intent.action.SEND_MULTIPLE" />
+            <!--
+                        <intent-filter>
+                            <action android:name="android.intent.action.SEND" />
+                            <action android:name="android.intent.action.SEND_MULTIPLE" />
 
-                <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.DEFAULT" />
 
-                <data android:mimeType="image/*" />
-                <data android:mimeType="video/*" />
-            </intent-filter>
--->
+                            <data android:mimeType="image/*" />
+                            <data android:mimeType="video/*" />
+                        </intent-filter>
+            -->
 
             <meta-data
                 android:name="android.app.shortcuts"

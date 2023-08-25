@@ -28,14 +28,14 @@ internal fun CapturePictureButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val color = if (isPressed) Color.Blue else Color.Black
-    val contentPadding = PaddingValues(if (isPressed) 8.dp else 12.dp)
+    val color = if (isPressed) Color.LightGray else Color.White
+    val contentPadding = PaddingValues(if (isPressed) 10.dp else 12.dp)
     OutlinedButton(
         modifier = modifier,
         shape = CircleShape,
-        border = BorderStroke(2.dp, Color.Black),
+        border = BorderStroke(4.dp, Color.White),
         contentPadding = contentPadding,
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Black),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
         onClick = { /* GNDN */ },
         enabled = false
     ) {

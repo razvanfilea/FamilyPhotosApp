@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.util.Log
 import androidx.camera.core.ExperimentalGetImage
@@ -20,32 +21,45 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-suspend fun Context.getCameraProvider(): ProcessCameraProvider = suspendCoroutine { continuation ->
-    ProcessCameraProvider.getInstance(this).also { future ->
-        future.addListener(
-            {
-                continuation.resume(future.get())
-            },
-            executor
-        )
+internal suspend fun Context.getCameraProvider(): ProcessCameraProvider =
+    suspendCoroutine { continuation ->
+        ProcessCameraProvider.getInstance(this).also { future ->
+            future.addListener(
+                {
+                    continuation.resume(future.get())
+                },
+                executor
+            )
+        }
     }
-}
 
-val Context.executor: Executor
+internal val Context.executor: Executor
     get() = ContextCompat.getMainExecutor(this)
 
-suspend fun ImageCapture.takePicture(executor: Executor): File {
+internal suspend fun ImageCapture.takePicture(executor: Executor): File {
     return suspendCoroutine { continuation ->
         val callback = object : ImageCapture.OnImageCapturedCallback() {
             @androidx.annotation.OptIn(ExperimentalGetImage::class)
             override fun onCaptureSuccess(image: ImageProxy) {
-                val bitmap = image.toBitmap().copy(Bitmap.Config.ARGB_8888, true)
-                val dateTime = LocalDateTime.now()
-                val formattedDate = dateTime.format(
+                val originalBitmap = image.toBitmap()
+                val rotationMatrix = Matrix().apply {
+                    val rotation = image.imageInfo.rotationDegrees
+                    postRotate(rotation.toFloat())
+                }
+                val formattedDate = LocalDateTime.now().format(
                     DateTimeFormatter.ofPattern("dd.MM.yyyy")
                 )
+                val rotatedBitmap = Bitmap.createBitmap(
+                    originalBitmap,
+                    0,
+                    0,
+                    originalBitmap.width,
+                    originalBitmap.height,
+                    rotationMatrix,
+                    false
+                )
 
-                Canvas(bitmap).apply {
+                Canvas(rotatedBitmap).apply {
                     val tPaint = Paint().apply {
                         textSize = 90f
                         color = Color.GREEN
@@ -54,8 +68,8 @@ suspend fun ImageCapture.takePicture(executor: Executor): File {
                     val textWidth = tPaint.measureText(formattedDate)
                     drawText(
                         formattedDate,
-                        bitmap.width - textWidth,
-                        bitmap.height - 20f,
+                        rotatedBitmap.width - textWidth - 2f,
+                        rotatedBitmap.height - 20f,
                         tPaint
                     )
                 }
