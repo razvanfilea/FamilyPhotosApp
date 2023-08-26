@@ -8,10 +8,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
+import coil.ImageLoader
 
 class CameraActivity : ComponentActivity() {
+
+    private val imageLoader by lazy {
+        ImageLoader.Builder(this)
+            .memoryCache(null)
+            .diskCache(null)
+            .build()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,7 +29,11 @@ class CameraActivity : ComponentActivity() {
 
         setContent {
             CameraAppTheme {
-                CameraUi()
+                CompositionLocalProvider(
+                    LocalImageLoader provides imageLoader
+                ) {
+                    CameraUi()
+                }
             }
         }
     }

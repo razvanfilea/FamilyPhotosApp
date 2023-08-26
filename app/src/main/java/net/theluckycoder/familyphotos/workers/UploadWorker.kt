@@ -88,7 +88,7 @@ class UploadWorker @AssistedInject constructor(
             Result.failure()
         } catch (e: IOException) {
             e.printStackTrace()
-            createFailNotification(FailReason.IoError)
+            createFailNotification(FailReason.IoError, e.message)
             Result.failure()
         } catch (e: Exception) {
             e.printStackTrace()

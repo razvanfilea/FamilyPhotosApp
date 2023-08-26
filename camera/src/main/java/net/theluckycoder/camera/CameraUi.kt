@@ -1,12 +1,17 @@
 package net.theluckycoder.camera
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.net.Uri
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -28,14 +34,18 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 
 private const val DEFAULT_ASPECT_RATIO = AspectRatio.RATIO_4_3
@@ -89,7 +99,10 @@ private fun BottomBar(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+
     var isSavingPicture by remember { mutableStateOf(false) }
+    var lastSavedImageUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+    val rotation = remember { Animatable(0f) }
 
     IconButton(
         onClick = {
@@ -102,9 +115,22 @@ private fun BottomBar(
                 } else {
                     throw IllegalArgumentException("Invalid facing camera")
                 }
+
+            coroutineScope.launch {
+                rotation.animateTo(
+                    targetValue = 180f,
+                    animationSpec = tween(800)
+                )
+                rotation.snapTo(0f)
+            }
         }
     ) {
-        Icon(painterResource(R.drawable.change_camera), contentDescription = null)
+
+        Icon(
+            painterResource(R.drawable.change_camera),
+            modifier = Modifier.rotate(rotation.value),
+            contentDescription = null
+        )
     }
 
     CapturePictureButton(
@@ -113,14 +139,36 @@ private fun BottomBar(
         onClick = {
             coroutineScope.launch {
                 isSavingPicture = true
-                cameraController.takePicture(context)
+                lastSavedImageUri = cameraController.takePicture(context)
                 isSavingPicture = false
             }
         }
     )
 
-    IconButton(onClick = {}) {
-
+    IconButton(
+        modifier = Modifier
+            .size(64.dp)
+            .border(1.dp, Color.White, CircleShape),
+        onClick = {
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                setDataAndType(lastSavedImageUri, "image/*")
+            }
+            context.startActivity(intent)
+        },
+    ) {
+        val uri = lastSavedImageUri
+        if (uri != null) {
+            AsyncImage(
+                model = uri,
+                contentDescription = null,
+                imageLoader = LocalImageLoader.current,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Icon(painterResource(R.drawable.gallery), contentDescription = null)
+        }
     }
 }
 

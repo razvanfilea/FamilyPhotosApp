@@ -33,7 +33,7 @@ private const val FILENAME_FORMAT = "yyyyMMdd_HHmmssSS"
 //internal val Context.executor: Executor
 //    get() = ContextCompat.getMainExecutor(this)
 
-internal suspend fun CameraController.takePicture(context: Context) {
+internal suspend fun CameraController.takePicture(context: Context): Uri {
     return suspendCoroutine { continuation ->
         val callback = object : ImageCapture.OnImageCapturedCallback() {
             @androidx.annotation.OptIn(ExperimentalGetImage::class)
@@ -59,15 +59,15 @@ internal suspend fun CameraController.takePicture(context: Context) {
 
                 Canvas(rotatedBitmap).apply {
                     val tPaint = Paint().apply {
-                        textSize = 90f
+                        textSize = 130f
                         color = Color.GREEN
                         style = Paint.Style.FILL
                     }
                     val textWidth = tPaint.measureText(formattedDate)
                     drawText(
                         formattedDate,
-                        rotatedBitmap.width - textWidth - 10f,
-                        rotatedBitmap.height - 20f,
+                        rotatedBitmap.width - textWidth - 40f,
+                        rotatedBitmap.height - 40f,
                         tPaint
                     )
                 }
@@ -75,16 +75,18 @@ internal suspend fun CameraController.takePicture(context: Context) {
                 try {
                     Log.i("onCaptureSuccess", "Saving image")
 
-                    saveBitmapToMediaStore(context, rotatedBitmap)
+                    val uri = saveBitmapToMediaStore(context, rotatedBitmap)
 
                     Log.i("onCaptureSuccess", "Image saved successfully")
+
+                    continuation.resume(uri)
                 } catch (e: Exception) {
                     Log.e("onCaptureSuccess", "failed to save image", e)
                     continuation.resumeWithException(e)
                 } finally {
                     image.close()
-                    continuation.resume(Unit)
                 }
+
             }
 
             override fun onError(ex: ImageCaptureException) {
@@ -100,7 +102,7 @@ internal suspend fun CameraController.takePicture(context: Context) {
     }
 }
 
-private fun saveBitmapToMediaStore(context: Context, bitmap: Bitmap) {
+private fun saveBitmapToMediaStore(context: Context, bitmap: Bitmap): Uri {
     val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
         .format(System.currentTimeMillis())
 
@@ -131,4 +133,6 @@ private fun saveBitmapToMediaStore(context: Context, bitmap: Bitmap) {
 
         throw it
     }
+
+    return uri!!
 }
