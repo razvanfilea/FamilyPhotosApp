@@ -11,32 +11,19 @@ import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
-import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.CameraController
 import androidx.core.content.ContextCompat
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executor
-import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
-
-internal suspend fun Context.getCameraProvider(): ProcessCameraProvider =
-    suspendCoroutine { continuation ->
-        ProcessCameraProvider.getInstance(this).also { future ->
-            future.addListener(
-                {
-                    continuation.resume(future.get())
-                },
-                executor
-            )
-        }
-    }
 
 internal val Context.executor: Executor
     get() = ContextCompat.getMainExecutor(this)
 
-internal suspend fun ImageCapture.takePicture(executor: Executor): File {
+internal suspend fun CameraController.takePicture(executor: Executor): File {
     return suspendCoroutine { continuation ->
         val callback = object : ImageCapture.OnImageCapturedCallback() {
             @androidx.annotation.OptIn(ExperimentalGetImage::class)

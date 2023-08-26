@@ -1,12 +1,15 @@
 package net.theluckycoder.camera
 
 import android.annotation.SuppressLint
+import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
-import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.view.CameraController
+import androidx.camera.view.LifecycleCameraController
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -18,57 +21,62 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
+private const val DEFAULT_ASPECT_RATIO = AspectRatio.RATIO_4_3
+
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-internal fun CameraUi(cameraSettingsState: MutableState<CameraSettings>) {
-    val resolutionSelector = remember(cameraSettingsState.value) {
-        ResolutionSelector.Builder()
-            .setAspectRatioStrategy(cameraSettingsState.value.aspectRatio)
-            .build()
+internal fun CameraUi() {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    val cameraController: CameraController = remember {
+        LifecycleCameraController(context).apply {
+            bindToLifecycle(lifecycleOwner)
+            imageCaptureMode = ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY
+            imageCaptureTargetSize = CameraController.OutputSize(DEFAULT_ASPECT_RATIO)
+            previewTargetSize = CameraController.OutputSize(DEFAULT_ASPECT_RATIO)
+            setEnabledUseCases(CameraController.IMAGE_CAPTURE)
+        }
     }
 
-    val imageCaptureUseCase = remember(resolutionSelector, cameraSettingsState.value) {
-        mutableStateOf(
-            ImageCapture.Builder()
-                .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
-                .setFlashMode(cameraSettingsState.value.flashMode)
-                .setResolutionSelector(resolutionSelector)
-                .build()
-        )
-    }
+    val aspectRatio = remember { mutableIntStateOf(DEFAULT_ASPECT_RATIO) }
 
     Scaffold(
         topBar = {
-            TopSettings(cameraSettingsState)
+            TopSettings(cameraController, aspectRatio)
         },
         bottomBar = {
-            BottomBar(cameraSettingsState, imageCaptureUseCase.value)
+            BottomBar(cameraController)
         }
     ) { _ ->
-        CameraCapture(
-            cameraSettings = cameraSettingsState.value,
-            resolutionSelector,
-            imageCaptureUseCase.value
-        )
+        key(aspectRatio.intValue) {
+            CameraPreview(
+                modifier = Modifier.fillMaxSize(),
+                cameraController = cameraController,
+            )
+        }
     }
 }
 
 @Composable
 private fun BottomBar(
-    cameraSettingsState: MutableState<CameraSettings>,
-    imageCaptureUseCase: ImageCapture
+    cameraController: CameraController,
 ) = Row(
     modifier = Modifier
         .fillMaxWidth()
@@ -83,17 +91,15 @@ private fun BottomBar(
 
     IconButton(
         onClick = {
-            val cameraSelector = cameraSettingsState.value.cameraSelector
-            val newCameraSelector = if (cameraSelector === CameraSelector.DEFAULT_FRONT_CAMERA) {
-                CameraSelector.DEFAULT_BACK_CAMERA
-            } else if (cameraSelector === CameraSelector.DEFAULT_BACK_CAMERA) {
-                CameraSelector.DEFAULT_FRONT_CAMERA
-            } else {
-                throw IllegalArgumentException("Invalid facing camera")
-            }
-
-            cameraSettingsState.value =
-                cameraSettingsState.value.copy(cameraSelector = newCameraSelector)
+            val cameraSelector = cameraController.cameraSelector
+            cameraController.cameraSelector =
+                if (cameraSelector === CameraSelector.DEFAULT_FRONT_CAMERA) {
+                    CameraSelector.DEFAULT_BACK_CAMERA
+                } else if (cameraSelector === CameraSelector.DEFAULT_BACK_CAMERA) {
+                    CameraSelector.DEFAULT_FRONT_CAMERA
+                } else {
+                    throw IllegalArgumentException("Invalid facing camera")
+                }
         }
     ) {
         Icon(painterResource(R.drawable.change_camera), contentDescription = null)
@@ -103,7 +109,7 @@ private fun BottomBar(
         modifier = Modifier.size(90.dp),
         onClick = {
             coroutineScope.launch {
-                imageCaptureUseCase.takePicture(context.executor)
+                cameraController.takePicture(context.executor)
             }
         }
     )
@@ -115,7 +121,10 @@ private fun BottomBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopSettings(cameraSettingsState: MutableState<CameraSettings>) = Row(
+private fun TopSettings(
+    cameraController: CameraController,
+    aspectRatio: MutableIntState
+) = Row(
     modifier = Modifier
         .fillMaxWidth()
         .background(Color.DarkGray.copy(alpha = 0.6f))
@@ -124,17 +133,16 @@ private fun TopSettings(cameraSettingsState: MutableState<CameraSettings>) = Row
     horizontalArrangement = Arrangement.SpaceEvenly,
     verticalAlignment = Alignment.CenterVertically,
 ) {
-    val cameraSettings = cameraSettingsState.value
-    val flashMode = cameraSettings.flashMode
+    var flashMode by remember { mutableIntStateOf(cameraController.imageCaptureFlashMode) }
 
     IconButton(
         onClick = {
-            val newFlashMode = when (flashMode) {
+            flashMode = when (flashMode) {
                 ImageCapture.FLASH_MODE_ON -> ImageCapture.FLASH_MODE_AUTO
                 ImageCapture.FLASH_MODE_AUTO -> ImageCapture.FLASH_MODE_OFF
                 else -> ImageCapture.FLASH_MODE_ON
             }
-            cameraSettingsState.value = cameraSettings.copy(flashMode = newFlashMode)
+            cameraController.imageCaptureFlashMode = flashMode
         }
     ) {
         val flashIcon = when (flashMode) {
@@ -143,5 +151,25 @@ private fun TopSettings(cameraSettingsState: MutableState<CameraSettings>) = Row
             else -> R.drawable.flash_off
         }
         Icon(painter = painterResource(flashIcon), contentDescription = null)
+    }
+
+    IconButton(
+        onClick = {
+            aspectRatio.intValue = when (aspectRatio.intValue) {
+                AspectRatio.RATIO_4_3 -> AspectRatio.RATIO_16_9
+                AspectRatio.RATIO_16_9 -> AspectRatio.RATIO_4_3
+                else -> throw IllegalArgumentException("Invalid Aspect Ratio")
+            }
+
+            val outputSize = CameraController.OutputSize(aspectRatio.intValue)
+            cameraController.imageCaptureTargetSize = outputSize
+            cameraController.previewTargetSize = outputSize
+        }
+    ) {
+        val aspectRatioIcon = when (aspectRatio.intValue) {
+            AspectRatio.RATIO_4_3 -> R.drawable.aspect_ratio_4_3
+            else -> R.drawable.aspect_ratio_16_9
+        }
+        Icon(painter = painterResource(aspectRatioIcon), contentDescription = null)
     }
 }

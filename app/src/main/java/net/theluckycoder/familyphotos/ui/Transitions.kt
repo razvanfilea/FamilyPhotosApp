@@ -17,7 +17,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.animation.with
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,7 +25,6 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.stack.StackEvent
 import cafe.adriel.voyager.navigator.Navigator
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun VerticallyAnimatedInt(
     targetState: Int,
@@ -39,12 +37,12 @@ fun VerticallyAnimatedInt(
             if (targetState > initialState) {
                 // If the target number is larger, it slides up and fades in
                 // while the initial (smaller) number slides up and fades out.
-                slideInVertically { height -> height } + fadeIn() with
+                slideInVertically { height -> height } + fadeIn() togetherWith
                         slideOutVertically { height -> -height } + fadeOut()
             } else {
                 // If the target number is smaller, it slides down and fades in
                 // while the initial number slides down and fades out.
-                slideInVertically { height -> -height } + fadeIn() with
+                slideInVertically { height -> -height } + fadeIn() togetherWith
                         slideOutVertically { height -> height } + fadeOut()
             }.using(
                 // Disable clipping since the faded slide-in/out should
@@ -53,7 +51,8 @@ fun VerticallyAnimatedInt(
             )
         },
         contentAlignment = contentAlignment,
-        content = content
+        content = content,
+        label = "int_animation"
     )
 }
 

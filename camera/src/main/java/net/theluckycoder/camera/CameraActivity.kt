@@ -8,13 +8,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
 
 class CameraActivity : ComponentActivity() {
-
-    private val cameraSettings = mutableStateOf(CameraSettings())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,7 +20,7 @@ class CameraActivity : ComponentActivity() {
 
         setContent {
             CameraAppTheme {
-                CameraUi(cameraSettings)
+                CameraUi()
             }
         }
     }
