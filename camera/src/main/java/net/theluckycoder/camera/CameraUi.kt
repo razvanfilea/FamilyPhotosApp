@@ -25,6 +25,7 @@ import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -88,6 +89,7 @@ private fun BottomBar(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    var isSavingPicture by remember { mutableStateOf(false) }
 
     IconButton(
         onClick = {
@@ -107,9 +109,12 @@ private fun BottomBar(
 
     CapturePictureButton(
         modifier = Modifier.size(90.dp),
+        enabled = !isSavingPicture,
         onClick = {
             coroutineScope.launch {
-                cameraController.takePicture(context.executor)
+                isSavingPicture = true
+                cameraController.takePicture(context)
+                isSavingPicture = false
             }
         }
     )

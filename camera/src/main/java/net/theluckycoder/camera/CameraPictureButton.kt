@@ -24,7 +24,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 internal fun CapturePictureButton(
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = { },
+    enabled: Boolean,
+    onClick: () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -47,7 +48,8 @@ internal fun CapturePictureButton(
                 containerColor = color
             ),
             interactionSource = interactionSource,
-            onClick = onClick
+            onClick = onClick,
+            enabled = enabled
         ) {
             // No content
         }
@@ -65,7 +67,9 @@ fun PreviewCapturePictureButton() {
         CapturePictureButton(
             modifier = Modifier
                 .padding(innerPadding)
-                .size(100.dp)
+                .size(100.dp),
+            enabled = true,
+            onClick = {}
         )
     }
 }

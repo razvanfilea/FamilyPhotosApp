@@ -8,7 +8,7 @@
         android:shortcutLongLabel="@string/camera_name_long">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="net.theluckycoder.familyphotos.debug"
+            android:targetPackage="net.theluckycoder.familyphotos"
             android:targetClass="net.theluckycoder.camera.CameraActivity" />
     </shortcut>
 </shortcuts>
