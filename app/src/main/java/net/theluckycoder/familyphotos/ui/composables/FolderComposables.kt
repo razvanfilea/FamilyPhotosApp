@@ -1,15 +1,31 @@
 package net.theluckycoder.familyphotos.ui.composables
 
 import android.content.res.Configuration
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -102,7 +118,7 @@ fun FolderPreviewItem(
 fun <T : Photo> FolderPhotos(
     folderName: String,
     photosList: List<T>,
-    selectedItems: SnapshotStateList<Long>,
+    selectedIds: SnapshotStateList<Long>,
     appBarActions: @Composable RowScope.() -> Unit,
     itemContent: @Composable LazyGridItemScope.(photo: T) -> Unit
 ) = Column(Modifier.fillMaxSize()) {
@@ -110,7 +126,7 @@ fun <T : Photo> FolderPhotos(
 
     TopAppBar(
         navigationIcon = {
-            if (selectedItems.isEmpty()) {
+            if (selectedIds.isEmpty()) {
                 IconButton(onClick = {
                     navigator.pop()
                 }) {
@@ -118,18 +134,18 @@ fun <T : Photo> FolderPhotos(
                 }
             } else {
                 IconButton(onClick = {
-                    selectedItems.clear()
+                    selectedIds.clear()
                 }) {
                     Icon(painterResource(R.drawable.ic_close), contentDescription = null)
                 }
             }
         },
         title = {
-            if (selectedItems.isEmpty()) {
+            if (selectedIds.isEmpty()) {
                 Text(text = folderName)
             } else {
                 Row {
-                    VerticallyAnimatedInt(targetState = selectedItems.size) { count ->
+                    VerticallyAnimatedInt(targetState = selectedIds.size) { count ->
                         Text("$count ")
                     }
 
@@ -143,9 +159,13 @@ fun <T : Photo> FolderPhotos(
     val columnCount =
         if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 4 else 9
 
+    val gridState = rememberLazyGridState()
+
     LazyVerticalGrid(
+        state = gridState,
         columns = GridCells.Fixed(columnCount),
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize(),
     ) {
         items(photosList) { photo ->
             key(photo.id) {

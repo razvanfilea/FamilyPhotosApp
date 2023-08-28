@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +30,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.R
@@ -179,44 +181,15 @@ fun PhotosList(
                 }
 
                 is Photo -> {
-                    val isVideo = remember(item) { item.isVideo }
-
-                    SelectableItem(
+                    PhotoItem(
                         modifier = Modifier
                             .aspectRatio(1f)
                             .padding(1.5.dp)
                             .animateItemPlacement(),
-                        selected = selectedPhotoIds.contains(item.id),
-                        enabled = selectedPhotoIds.isNotEmpty(),
-                        onClick = { longPress ->
-                            if (selectedPhotoIds.isNotEmpty() || longPress) {
-                                if (selectedPhotoIds.contains(item.id))
-                                    selectedPhotoIds -= item.id
-                                else
-                                    selectedPhotoIds += item.id
-                            } else {
-                                navigator.push(
-                                    PhotoScreen(item, PhotoScreen.Source.PagedList)
-                                )
-                            }
-                        }
-                    ) {
-                        CoilPhoto(
-                            photo = item,
-                            thumbnail = true,
-                            contentScale = ContentScale.Crop,
-                        )
-
-                        if (isVideo) {
-                            Icon(
-                                modifier = Modifier
-                                    .padding(8.dp)
-                                    .align(Alignment.TopEnd),
-                                painter = painterResource(R.drawable.ic_play_circle_filled),
-                                contentDescription = null
-                            )
-                        }
-                    }
+                        photo = item,
+                        selectedPhotoIds = selectedPhotoIds,
+                        navigator = navigator
+                    )
                 }
             }
 
@@ -257,6 +230,41 @@ fun PhotosList(
             } catch (e: Exception) {
                 // It's really not necessary for this to actually happen
             }
+        }
+    }
+}
+
+@Composable
+private fun PhotoItem(
+    modifier: Modifier,
+    photo: Photo,
+    selectedPhotoIds: SnapshotStateList<Long>,
+    navigator: Navigator
+) {
+    val isVideo = remember(photo) { photo.isVideo }
+
+    SelectablePhoto(
+        modifier = modifier,
+        inSelectionMode = selectedPhotoIds.isNotEmpty(),
+        selected = selectedPhotoIds.contains(photo.id),
+        onClick = { navigator.push(PhotoScreen(photo, PhotoScreen.Source.PagedList)) },
+        onSelect = { selectedPhotoIds += photo.id },
+        onDeselect = { selectedPhotoIds -= photo.id }
+    ) {
+        CoilPhoto(
+            photo = photo,
+            thumbnail = true,
+            contentScale = ContentScale.Crop,
+        )
+
+        if (isVideo) {
+            Icon(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .align(Alignment.TopEnd),
+                painter = painterResource(R.drawable.ic_play_circle_filled),
+                contentDescription = null
+            )
         }
     }
 }

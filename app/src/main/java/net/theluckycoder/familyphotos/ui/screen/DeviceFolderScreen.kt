@@ -1,7 +1,6 @@
 package net.theluckycoder.familyphotos.ui.screen
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.padding
@@ -10,6 +9,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
@@ -29,7 +29,9 @@ import net.theluckycoder.familyphotos.model.isVideo
 import net.theluckycoder.familyphotos.ui.composables.FolderPhotos
 import net.theluckycoder.familyphotos.ui.composables.PhotoUtilitiesActions
 import net.theluckycoder.familyphotos.ui.composables.SelectableItem
+import net.theluckycoder.familyphotos.ui.composables.SelectablePhoto
 import net.theluckycoder.familyphotos.ui.composables.SimpleSquarePhoto
+import net.theluckycoder.familyphotos.ui.composables.selectableClickable
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 data class DeviceFolderScreen(
@@ -39,17 +41,17 @@ data class DeviceFolderScreen(
     override val key: ScreenKey
         get() = "DeviceFolderScreen($folderName)"
 
-    @OptIn(ExperimentalAnimationApi::class)
     @Composable
     override fun Content() {
         val mainViewModel: MainViewModel = viewModel()
-        val selectedItems = remember { mutableStateListOf<Long>() }
+        val selectedIds = remember { mutableStateListOf<Long>() }
+        val inSelectionMode = selectedIds.isNotEmpty()
         val navigator = LocalNavigator.currentOrThrow
 
         Scaffold(
             floatingActionButton = {
                 AnimatedVisibility(
-                    selectedItems.isNotEmpty(),
+                    inSelectionMode,
                     enter = scaleIn(),
                     exit = scaleOut(),
                 ) {
@@ -57,8 +59,8 @@ data class DeviceFolderScreen(
                         modifier = Modifier
                             .padding(16.dp),
                         onClick = {
-                            navigator.push(UploadPhotosScreen(selectedItems.toList()))
-                            selectedItems.clear()
+                            navigator.push(UploadPhotosScreen(selectedIds.toList()))
+                            selectedIds.clear()
                         }) {
                         Icon(
                             painter = painterResource(R.drawable.ic_cloud_upload_outline),
@@ -74,29 +76,22 @@ data class DeviceFolderScreen(
 
             FolderPhotos(
                 folderName = folderName,
-                selectedItems = selectedItems,
+                selectedIds = selectedIds,
                 photosList = photosList,
                 appBarActions = {
                     PhotoUtilitiesActions(
                         LocalPhoto::class,
-                        selectedItems,
+                        selectedIds,
                         mainViewModel
                     )
                 }
             ) { photo ->
-                SelectableItem(
-                    selected = selectedItems.contains(photo.id),
-                    enabled = selectedItems.isNotEmpty(),
-                    onClick = { longPress ->
-                        if (selectedItems.isNotEmpty() || longPress) {
-                            if (selectedItems.contains(photo.id))
-                                selectedItems -= photo.id
-                            else
-                                selectedItems += photo.id
-                        } else {
-                            navigator.push(PhotoScreen(photo, PhotoScreen.Source.Folder))
-                        }
-                    }
+                SelectablePhoto(
+                    inSelectionMode = selectedIds.isNotEmpty(),
+                    selected = selectedIds.contains(photo.id),
+                    onClick = { navigator.push(PhotoScreen(photo, PhotoScreen.Source.Folder)) },
+                    onSelect = { selectedIds += photo.id },
+                    onDeselect = { selectedIds -= photo.id }
                 ) {
                     SimpleSquarePhoto(photo)
 

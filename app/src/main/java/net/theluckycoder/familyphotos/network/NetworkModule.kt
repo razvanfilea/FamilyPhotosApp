@@ -150,7 +150,7 @@ object NetworkModule {
                 runBlocking {
                     DiskCache.Builder()
                         .directory(context.cacheDir.resolve("image_cache"))
-                        .minimumMaxSizeBytes(1024L * 1024L * 1024L * 1024L) // 1GB
+                        .minimumMaxSizeBytes(1024L * 1024L * 1024L * 512L) // 512MB
                         .maximumMaxSizeBytes(settingsDataStore.cacheSizeMbFlow.first() * 1024L)
                         .build()
                 }
@@ -158,5 +158,5 @@ object NetworkModule {
             .respectCacheHeaders(false) // Cache-First
             .build()
 
-    const val BASE_URL = "https://server.aaconsl.com/"
+    const val BASE_URL = "https://faarr.go.ro/"
 }

@@ -26,7 +26,7 @@ import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.isVideo
 import net.theluckycoder.familyphotos.ui.composables.FolderPhotos
 import net.theluckycoder.familyphotos.ui.composables.PhotoUtilitiesActions
-import net.theluckycoder.familyphotos.ui.composables.SelectableItem
+import net.theluckycoder.familyphotos.ui.composables.SelectablePhoto
 import net.theluckycoder.familyphotos.ui.composables.SimpleSquarePhoto
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
@@ -42,39 +42,32 @@ data class NetworkFolderScreen(
         val mainViewModel: MainViewModel = viewModel()
         val navigator = LocalNavigator.currentOrThrow
 
-        val selectedItems = remember(folderName) { mutableStateListOf<Long>() }
+        val selectedIds = remember(folderName) { mutableStateListOf<Long>() }
         val photosFlow = remember(folderName) { mainViewModel.getNetworkFolderPhotos(folderName) }
         val photosList by photosFlow.collectAsState(emptyList())
 
         Surface(Modifier.fillMaxSize()) {
             FolderPhotos(
                 folderName = folderName,
-                selectedItems = selectedItems,
+                selectedIds = selectedIds,
                 photosList = photosList,
                 appBarActions = {
-                    if (selectedItems.isEmpty()) {
+                    if (selectedIds.isEmpty()) {
                         IconButton(onClick = {
                             navigator.push(MovePhotosScreen(photosList.map { it.id }))
                         }) {
                             Icon(Icons.Default.Edit, contentDescription = null)
                         }
                     }
-                    PhotoUtilitiesActions(NetworkPhoto::class, selectedItems, mainViewModel)
+                    PhotoUtilitiesActions(NetworkPhoto::class, selectedIds, mainViewModel)
                 }
             ) { photo ->
-                SelectableItem(
-                    selected = selectedItems.contains(photo.id),
-                    enabled = selectedItems.isNotEmpty(),
-                    onClick = { longPress ->
-                        if (selectedItems.isNotEmpty() || longPress) {
-                            if (selectedItems.contains(photo.id))
-                                selectedItems -= photo.id
-                            else
-                                selectedItems += photo.id
-                        } else {
-                            navigator.push(PhotoScreen(photo, PhotoScreen.Source.Folder))
-                        }
-                    }
+                SelectablePhoto(
+                    inSelectionMode = selectedIds.isNotEmpty(),
+                    selected = selectedIds.contains(photo.id),
+                    onClick = { navigator.push(PhotoScreen(photo, PhotoScreen.Source.Folder)) },
+                    onSelect = { selectedIds += photo.id },
+                    onDeselect = { selectedIds -= photo.id }
                 ) {
                     SimpleSquarePhoto(photo)
 

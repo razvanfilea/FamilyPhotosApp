@@ -4,24 +4,45 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.webkit.MimeTypeMap
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.ripple.rememberRipple
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.surfaceColorAtElevation
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -149,37 +170,81 @@ fun NavBackTopAppBar(
 @Composable
 fun SelectableItem(
     modifier: Modifier = Modifier,
+    inSelectionMode: Boolean,
     selected: Boolean,
-    enabled: Boolean,
-    onClick: (longPress: Boolean) -> Unit,
     content: @Composable BoxScope.() -> Unit
-) = Box {
-    val padding = animateDpAsState(if (selected) 8.dp else 0.dp).value
-    val clipSize = animateDpAsState(if (selected) 12.dp else 0.dp).value
+) {
 
-    Box(
-        modifier = modifier
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = { onClick(false) },
-                    onLongPress = { onClick(true) }
-                )
+    if (inSelectionMode) {
+        Surface(
+            modifier = modifier,
+            tonalElevation = 3.dp
+        ) {
+            val transition = updateTransition(selected, label = "selected")
+            val padding by transition.animateDp(label = "padding") { selected ->
+                if (selected) 10.dp else 0.dp
             }
-            .padding(padding)
-            .clip(RoundedCornerShape(clipSize)),
-    ) {
-        content()
-    }
+            val roundedCornerShape by transition.animateDp(label = "corner") { selected ->
+                if (selected) 16.dp else 0.dp
+            }
 
-    if (enabled) {
-        Checkbox(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(4.dp),
-            checked = selected,
-            onCheckedChange = null
-        )
+            Box(
+                modifier = Modifier
+                    .padding(padding)
+                    .clip(RoundedCornerShape(roundedCornerShape))
+            ) {
+                content()
+
+                if (selected) {
+                    val bgColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+                    Icon(
+                        painter = painterResource(R.drawable.radio_button_checked),
+                        tint = MaterialTheme.colorScheme.primary,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .clip(CircleShape)
+                            .background(bgColor)
+                    )
+                } else {
+                    Icon(
+                        painter = painterResource(R.drawable.radio_button_unchecked),
+                        tint = Color.White.copy(alpha = 0.7f),
+                        contentDescription = null,
+                        modifier = Modifier.padding(6.dp)
+                    )
+                }
+            }
+        }
+    } else {
+        Box(modifier = modifier) {
+            content()
+        }
     }
+}
+
+@Composable
+fun SelectablePhoto(
+    modifier: Modifier = Modifier,
+    inSelectionMode: Boolean,
+    selected: Boolean,
+    onClick: () -> Unit = {},
+    onSelect: () -> Unit = {},
+    onDeselect: () -> Unit = {},
+    content: @Composable BoxScope.() -> Unit
+) {
+    SelectableItem(
+        modifier = modifier.selectableClickable(
+            inSelectionMode = inSelectionMode,
+            selected = selected,
+            onClick = onClick,
+            onSelect = onSelect,
+            onDeselect = onDeselect
+        ),
+        inSelectionMode = inSelectionMode,
+        selected = selected,
+        content = content
+    )
 }
 
 private val PHOTO_DATE_FORMATTER = DateTimeFormatter.ofPattern("d MMM uuuu・HH:mm")
