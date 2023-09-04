@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlinAndroid)
 
-    kotlin("kapt")
     kotlin("plugin.serialization") version libs.versions.kotlin.base.get()
     alias(libs.plugins.ksp)
     id("kotlin-parcelize")
@@ -19,7 +18,7 @@ android {
         minSdk = 30
         targetSdk = 33
         versionCode = 25
-        versionName = "2.5.1"
+        versionName = "2.5.2"
         resourceConfigurations += listOf("en", "ro")
     }
 
@@ -132,12 +131,12 @@ dependencies {
     implementation(libs.okhttp.brotli)
 
     // WorkManager
-    implementation("androidx.work:work-runtime-ktx:2.8.1")
+    implementation(libs.androidx.work)
 
     // Hilt
     implementation(libs.dagger.android)
-    kapt(libs.dagger.compiler)
-    kapt(libs.dagger.hilt.compiler)
+    ksp(libs.dagger.compiler)
+    ksp(libs.dagger.hilt.compiler)
     implementation(libs.dagger.hilt.work)
 
     // Coil

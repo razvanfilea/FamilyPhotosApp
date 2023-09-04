@@ -33,7 +33,7 @@ import net.theluckycoder.familyphotos.ui.AppTheme
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 
-fun interface DeletePhotosDialogCaller  {
+fun interface DeletePhotosDialogCaller {
     fun show(photos: List<NetworkPhoto>)
 }
 
@@ -119,7 +119,10 @@ private fun DeleteDialogContent(
         Button(
             modifier = Modifier.weight(1f),
             onClick = onDelete,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFe53935)) // TODO
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFe53935),
+                contentColor = Color.White
+            )
         ) {
             Text(text = stringResource(R.string.action_delete))
         }

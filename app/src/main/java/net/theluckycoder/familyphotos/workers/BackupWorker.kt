@@ -26,7 +26,7 @@ class BackupWorker @AssistedInject constructor(
         foldersRepository.updatePhoneAlbums()
 
         val photos = foldersRepository.localPhotosFromFolder("Camera").first()
-            .take(20)
+            .take(50)
             .filter { !it.isSavedToCloud } // Photos not uploaded
 
         val result = try {

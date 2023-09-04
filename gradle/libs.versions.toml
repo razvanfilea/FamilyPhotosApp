@@ -1,16 +1,15 @@
 [versions]
 agp = "8.2.0-beta01"
-kotlin_base = "1.9.0"
-kotlin_ksp = "1.9.0-1.0.13"
+kotlin_base = "1.9.10"
+kotlin_ksp = "1.9.10-1.0.13"
 kotlin_coroutines = "1.7.3"
 kotlin_serialization = "1.6.0"
-kotlin_datetime = "0.4.0"
+kotlin_datetime = "0.4.1"
 kotlin_collections = "0.3.5"
 compose_base = "1.5.0"
 compose_activity = "1.7.2"
-compose_compiler = "1.5.2"
+compose_compiler = "1.5.3"
 compose_material3 = "1.1.1"
-accompanist = "0.32.0"
 voyager = "1.0.0-rc06"
 androidx_core = "1.10.1"
 androidx_room = "2.5.2"
@@ -19,8 +18,9 @@ androidx_datastore = "1.0.0"
 androidx_exif = "1.3.6"
 androidx_paging = "3.2.0"
 androidx_camerax = "1.3.0-rc01"
+androidx_work = "2.8.1"
 coil = "2.4.0"
-dagger = "2.47"
+dagger = "2.48"
 retrofit = "2.9.0"
 retrofitSerialization = "0.11.0"
 okhttp = "4.11.0"
@@ -42,6 +42,7 @@ kotlin_reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref =
 androidx_core = { group = "androidx.core", name = "core-ktx", version.ref = "androidx_core" }
 androidx_dataStore = { module = "androidx.datastore:datastore-preferences", version.ref = "androidx_datastore" }
 androidx_exif = { module = "androidx.exifinterface:exifinterface", version.ref = "androidx_exif" }
+androidx_work = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx_work" }
 
 compose_compiler = { module = "androidx.compose.compiler:compiler", version.ref = "compose_compiler" }
 compose_foundation = { module = "androidx.compose.foundation:foundation", version.ref = "compose_base" }
@@ -56,8 +57,6 @@ voyager_navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.
 voyager_tabNavigator = { module = "cafe.adriel.voyager:voyager-tab-navigator", version.ref = "voyager" }
 voyager_transitions = { module = "cafe.adriel.voyager:voyager-transitions", version.ref = "voyager" }
 voyager_androidx = { module = "cafe.adriel.voyager:voyager-androidx", version.ref = "voyager" }
-
-accompanist_systemUi = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanist" }
 
 room_runtime = { module = "androidx.room:room-ktx", version.ref = "androidx_room" }
 room_compiler = { module = "androidx.room:room-compiler", version.ref = "androidx_room" }
@@ -81,8 +80,8 @@ coil_video = { module = "io.coil-kt:coil-video", version.ref = "coil" }
 
 dagger_android = { module = "com.google.dagger:hilt-android", version.ref = "dagger" }
 dagger_compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "dagger" }
-dagger_hilt_compiler = "androidx.hilt:hilt-compiler:1.0.0"
-dagger_hilt_work = "androidx.hilt:hilt-work:1.0.0"
+dagger_hilt_compiler = "androidx.hilt:hilt-compiler:1.1.0-alpha01"
+dagger_hilt_work = "androidx.hilt:hilt-work:1.1.0-alpha01"
 
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofitSerializer = { module = "de.nycode:retrofit2-kotlinx-serialization-converter", version.ref = "retrofitSerialization" }

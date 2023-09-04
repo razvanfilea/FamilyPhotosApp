@@ -39,23 +39,29 @@ internal suspend fun CameraController.takePicture(context: Context): Uri {
             @androidx.annotation.OptIn(ExperimentalGetImage::class)
             override fun onCaptureSuccess(image: ImageProxy) {
                 val originalBitmap = image.toBitmap()
-                val rotationMatrix = Matrix().apply {
-                    val rotation = image.imageInfo.rotationDegrees
-                    postRotate(rotation.toFloat())
+                val rotationDegrees = image.imageInfo.rotationDegrees
+
+                val rotatedBitmap = if (rotationDegrees == 0) {
+                    originalBitmap.copy(originalBitmap.config, true)
+                } else {
+                    val rotationMatrix = Matrix().apply {
+                        postRotate(rotationDegrees.toFloat())
+                    }
+                    Bitmap.createBitmap(
+                        originalBitmap,
+                        0,
+                        0,
+                        originalBitmap.width,
+                        originalBitmap.height,
+                        rotationMatrix,
+                        false
+                    )
                 }
+                originalBitmap.recycle()
+
                 val formattedDate = LocalDateTime.now().format(
                     DateTimeFormatter.ofPattern(BITMAP_DATE_FORMAT)
                 )
-                val rotatedBitmap = Bitmap.createBitmap(
-                    originalBitmap,
-                    0,
-                    0,
-                    originalBitmap.width,
-                    originalBitmap.height,
-                    rotationMatrix,
-                    false
-                )
-                originalBitmap.recycle()
 
                 Canvas(rotatedBitmap).apply {
                     val tPaint = Paint().apply {

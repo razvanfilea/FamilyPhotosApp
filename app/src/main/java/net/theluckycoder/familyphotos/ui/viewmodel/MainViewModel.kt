@@ -65,7 +65,6 @@ import java.time.format.TextStyle
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-import kotlin.streams.toList
 import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
@@ -89,13 +88,13 @@ class MainViewModel @Inject constructor(
     val displayNameFlow = userDataStore.displayNameFlow
     val autoBackupFlow = userDataStore.autoBackup
 
-    val personalPhotosPager = Pager(PagingConfig(pageSize = 120, enablePlaceholders = false)) {
+    val personalPhotosPager = Pager(PagingConfig(pageSize = 150, enablePlaceholders = false)) {
         photosRepository.getPersonalPhotosPaged(userName)
     }.flow.flowOn(Dispatchers.Default)
         .cachedIn(viewModelScope)
         .mapPagingPhotos()
 
-    val publicPhotosPager = Pager(PagingConfig(pageSize = 120, enablePlaceholders = false)) {
+    val publicPhotosPager = Pager(PagingConfig(pageSize = 150, enablePlaceholders = false)) {
         photosRepository.getPublicPhotosPaged()
     }.flow.flowOn(Dispatchers.Default)
         .cachedIn(viewModelScope)
@@ -116,7 +115,6 @@ class MainViewModel @Inject constructor(
 
             userDataStore.userIdFlow.collectLatest { newUserName ->
                 ensureActive()
-                Log.i("USername", newUserName.orEmpty())
                 if (newUserName != null && userName != newUserName) {
                     userName = newUserName
                     refreshPhotos()
@@ -339,7 +337,7 @@ class MainViewModel @Inject constructor(
 
     suspend fun deleteNetworkPhotos(photos: List<NetworkPhoto>) {
         withContext(Dispatchers.IO) {
-            photos.parallelStream().map { photo ->
+            photos.map { photo ->
                 async {
                     if (serverRepository.deleteNetworkPhoto(photo.id)) {
                         photosRepository.removeNetworkReference(photo)
