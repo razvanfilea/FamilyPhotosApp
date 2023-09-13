@@ -112,7 +112,7 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.animation)
     implementation(libs.compose.activity)
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
 
     // Voyager
     implementation(libs.voyager.navigator)
@@ -146,5 +146,5 @@ dependencies {
 
     // Other
     implementation("com.jakewharton:process-phoenix:2.1.2")
-    implementation("me.saket.telephoto:zoomable-image-coil:0.5.0")
+    implementation("me.saket.telephoto:zoomable-image-coil:0.6.0")
 }
