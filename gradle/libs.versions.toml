@@ -1,29 +1,29 @@
 [versions]
-agp = "8.2.0-beta04"
-kotlin_base = "1.9.10"
-kotlin_ksp = "1.9.10-1.0.13"
+agp = "8.2.0-rc02"
+kotlin_base = "1.9.20"
+kotlin_ksp = "1.9.20-1.0.14"
 kotlin_coroutines = "1.7.3"
 kotlin_serialization = "1.6.0"
 kotlin_datetime = "0.4.1"
-kotlin_collections = "0.3.5"
-compose_base = "1.5.1"
-compose_activity = "1.7.2"
+kotlin_collections = "0.3.6"
+compose_base = "1.5.4"
+compose_activity = "1.8.0"
 compose_compiler = "1.5.3"
-compose_material3 = "1.1.1"
-voyager = "1.0.0-rc07"
+compose_material3 = "1.1.2"
+voyager = "1.0.0-rc08"
 androidx_core = "1.12.0"
-androidx_room = "2.5.2"
+androidx_room = "2.6.0"
 androidx_media = "1.1.1"
 androidx_datastore = "1.0.0"
 androidx_exif = "1.3.6"
 androidx_paging = "3.2.1"
-androidx_camerax = "1.3.0-rc01"
+androidx_camerax = "1.3.0"
 androidx_work = "2.8.1"
-coil = "2.4.0"
-dagger = "2.48"
+coil = "2.5.0"
+dagger = "2.48.1"
 retrofit = "2.9.0"
 retrofitSerialization = "0.11.0"
-okhttp = "4.11.0"
+okhttp = "4.12.0"
 
 [plugins]
 android_application = { id = "com.android.application", version.ref = "agp" }
@@ -80,8 +80,8 @@ coil_video = { module = "io.coil-kt:coil-video", version.ref = "coil" }
 
 dagger_android = { module = "com.google.dagger:hilt-android", version.ref = "dagger" }
 dagger_compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "dagger" }
-dagger_hilt_compiler = "androidx.hilt:hilt-compiler:1.1.0-alpha01"
-dagger_hilt_work = "androidx.hilt:hilt-work:1.1.0-alpha01"
+dagger_hilt_compiler = "androidx.hilt:hilt-compiler:1.1.0"
+dagger_hilt_work = "androidx.hilt:hilt-work:1.1.0"
 
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofitSerializer = { module = "de.nycode:retrofit2-kotlinx-serialization-converter", version.ref = "retrofitSerialization" }
