@@ -122,7 +122,7 @@ private fun LoginContent(viewModel: LoginViewModel = viewModel()) {
                 .padding(top = 32.dp)
                 .align(Alignment.CenterHorizontally),
             onClick = {
-                val userLogin = UserLogin(userName.lowercase(), password)
+                val userLogin = UserLogin(userName.lowercase().trim(), password.trim())
                 viewModel.login(userLogin)
             }
         ) {

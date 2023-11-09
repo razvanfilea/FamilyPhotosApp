@@ -208,14 +208,9 @@ class MainViewModel @Inject constructor(
             val instant = Clock.System.now()
             val today = instant.toLocalDateTime(LOCAL_TIME_ZONE).date
 
-            listOf(
-                today.minus(DateTimeUnit.YEAR),
-                today.minus(DateTimeUnit.YEAR * 2),
-                today.minus(DateTimeUnit.YEAR * 3),
-                today.minus(DateTimeUnit.YEAR * 4),
-                today.minus(DateTimeUnit.YEAR * 5),
-                today.minus(DateTimeUnit.YEAR * 6),
-            ).map {
+            List(7) {
+                today.minus(it + 1, DateTimeUnit.YEAR)
+            }.map {
                 val yearsUntil = it.yearsUntil(today)
                 val timestamp =
                     it.atTime(12, 0).toInstant(LOCAL_TIME_ZONE).toEpochMilliseconds() / 1000

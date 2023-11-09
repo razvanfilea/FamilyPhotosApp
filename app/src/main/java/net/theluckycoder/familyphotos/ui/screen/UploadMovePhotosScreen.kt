@@ -3,13 +3,34 @@ package net.theluckycoder.familyphotos.ui.screen
 import android.os.Parcelable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -78,12 +99,12 @@ private fun UploadDialogContent(
                 checked = choiceIndex == index,
                 onCheckedChange = { onChoiceIndexChange(index) }
             ) {
-                    Icon(
-                        modifier = Modifier.size(48.dp),
-                        painter = painterResource(choice.painterRes),
-                        tint = Color.Unspecified,
-                        contentDescription = stringResource(choice.stringRes),
-                    )
+                Icon(
+                    modifier = Modifier.size(48.dp),
+                    painter = painterResource(choice.painterRes),
+                    tint = Color.Unspecified,
+                    contentDescription = stringResource(choice.stringRes),
+                )
             }
         }
     }
@@ -150,6 +171,7 @@ private fun UploadPhotosLayout(
                 .map { it.name }
                 .filter { it.startsWith(folderName, ignoreCase = true) }
                 .toList()
+                .sortedDescending()
         }
 
         Box(Modifier.padding(contentPadding)) {

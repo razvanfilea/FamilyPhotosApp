@@ -65,15 +65,15 @@ internal suspend fun CameraController.takePicture(context: Context): Uri {
 
                 Canvas(rotatedBitmap).apply {
                     val tPaint = Paint().apply {
-                        textSize = 130f
+                        textSize = 0.05f * rotatedBitmap.width
                         color = Color.GREEN
                         style = Paint.Style.FILL
                     }
                     val textWidth = tPaint.measureText(formattedDate)
                     drawText(
                         formattedDate,
-                        rotatedBitmap.width - textWidth - 40f,
-                        rotatedBitmap.height - 40f,
+                        rotatedBitmap.width - textWidth - 0.01f * rotatedBitmap.width,
+                        rotatedBitmap.height - 0.01f * rotatedBitmap.height,
                         tPaint
                     )
                 }

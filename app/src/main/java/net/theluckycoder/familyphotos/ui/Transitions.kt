@@ -100,9 +100,11 @@ fun PhotosSlideTransition(
         modifier = modifier,
         content = content,
         transition = {
+            val decrease = { size: Int -> -size }
+            val increase = { size: Int -> size }
             val (initialOffset, targetOffset) = when (navigator.lastEvent) {
-                StackEvent.Pop, StackEvent.Replace -> ({ size: Int -> -size }) to ({ size: Int -> size })
-                else -> ({ size: Int -> size }) to ({ size: Int -> -size })
+                StackEvent.Pop, StackEvent.Replace -> decrease to increase
+                else -> increase to decrease
             }
 
             when (orientation) {

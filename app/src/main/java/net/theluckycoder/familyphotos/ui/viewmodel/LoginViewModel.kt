@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,6 +26,7 @@ class LoginViewModel @Inject constructor(
     fun login(userLogin: UserLogin) = viewModelScope.launch(Dispatchers.IO) {
         try {
             loginRepository.login(userLogin)?.let {
+                Log.v("LoginViewModel", "User logged in: $it")
                 with(userDataStore) {
                     setUserName(it.userId)
                     setDisplayName(it.displayName)

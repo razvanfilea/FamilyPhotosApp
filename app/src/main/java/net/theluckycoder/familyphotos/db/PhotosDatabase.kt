@@ -1,7 +1,10 @@
 package net.theluckycoder.familyphotos.db
 
 import android.content.Context
-import androidx.room.*
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import net.theluckycoder.familyphotos.db.dao.LocalPhotosDao
@@ -26,22 +29,22 @@ abstract class PhotosDatabase : RoomDatabase() {
         private var INSTANCE: PhotosDatabase? = null
 
         private val MIGRATION_3_4 = object : Migration(3, 4) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE network_photo ADD COLUMN fileSize INTEGER DEFAULT 0 NOT NULL")
-                database.execSQL("ALTER TABLE network_photo ADD COLUMN caption TEXT")
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE network_photo ADD COLUMN fileSize INTEGER DEFAULT 0 NOT NULL")
+                db.execSQL("ALTER TABLE network_photo ADD COLUMN caption TEXT")
             }
         }
 
         private val MIGRATION_4_5 = object : Migration(4, 5) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("DROP TABLE network_photo")
-                database.execSQL("CREATE TABLE network_photo (name TEXT NOT NULL, timeCreated INTEGER NOT NULL, id INTEGER NOT NULL PRIMARY KEY, userId TEXT NOT NULL, fileSize INTEGER NOT NULL, folder TEXT)")
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE network_photo")
+                db.execSQL("CREATE TABLE network_photo (name TEXT NOT NULL, timeCreated INTEGER NOT NULL, id INTEGER NOT NULL PRIMARY KEY, userId TEXT NOT NULL, fileSize INTEGER NOT NULL, folder TEXT)")
             }
         }
 
         private val MIGRATION_5_6 = object : Migration(5, 6) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE INDEX index_network_photo_timeCreated ON network_photo(timeCreated DESC)")
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX index_network_photo_timeCreated ON network_photo(timeCreated DESC)")
             }
         }
 
