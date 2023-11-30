@@ -39,8 +39,8 @@ class ServerRepository @Inject constructor(
 
     suspend fun downloadAllPhotos() = coroutineScope {
         val service = photosService.get()
-        val userPhotosAsync = async { service.getPhotosList() }
-        val publicPhotos = service.getPublicPhotosList()
+        val userPhotosAsync = async { service.getPhotosList(false) }
+        val publicPhotos = service.getPhotosList(true)
 
         val userPhotos = userPhotosAsync.await()
         if (userPhotos.isSuccessful && publicPhotos.isSuccessful) {
@@ -180,21 +180,12 @@ class ServerRepository @Inject constructor(
         val name = fileToUpload?.name ?: localPhoto.name
         val fileBody = MultipartBody.Part.createFormData("file", name, requestFile)
 
-        val response = if (public) {
-            photosService.get().uploadPublicPhoto(
-                timeCreated = localPhoto.timeCreated.toString(),
-                fileSize = bytes.size.toString(),
-                file = fileBody,
-                folderName = uploadFolder,
-            )
-        } else {
-            photosService.get().uploadPhoto(
-                timeCreated = localPhoto.timeCreated.toString(),
-                fileSize = bytes.size.toString(),
-                file = fileBody,
-                folderName = uploadFolder,
-            )
-        }
+        val response =  photosService.get().uploadPhoto(
+            timeCreated = localPhoto.timeCreated.toString(),
+            file = fileBody,
+            makePublic = public,
+            folderName = uploadFolder,
+        )
 
         response.body()?.let { networkPhoto ->
             networkPhotosDao.insert(networkPhoto)

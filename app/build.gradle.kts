@@ -17,8 +17,8 @@ android {
         applicationId = "net.theluckycoder.familyphotos"
         minSdk = 30
         targetSdk = 33
-        versionCode = 25
-        versionName = "2.5.3"
+        versionCode = 26
+        versionName = "2.6.0"
         resourceConfigurations += listOf("en", "ro")
     }
 

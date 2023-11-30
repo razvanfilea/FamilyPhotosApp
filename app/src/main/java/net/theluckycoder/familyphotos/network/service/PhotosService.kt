@@ -13,13 +13,14 @@ interface PhotosService {
     suspend fun ping(): Response<Void>
 
     @GET("/photos")
-    suspend fun getPhotosList(): Response<List<NetworkPhoto>>
+    suspend fun getPhotosList(@Query("public") public: Boolean): Response<List<NetworkPhoto>>
 
     @Streaming
     @GET("photos/download/{id}")
     suspend fun downloadPhoto(
         @Path("id") id: Long
     ): ResponseBody?
+
     @GET("photos/exif/{id}")
     suspend fun getPhotoExif(
         @Path("id") id: Long
@@ -29,8 +30,8 @@ interface PhotosService {
     @POST("/photos/upload")
     suspend fun uploadPhoto(
         @Query("timeCreated") timeCreated: String,
-        @Query("fileSize") fileSize: String,
         @Query("folderName") folderName: String?,
+        @Query("makePublic") makePublic: Boolean,
         @Part file: MultipartBody.Part,
     ): Response<NetworkPhoto>
 
@@ -39,22 +40,10 @@ interface PhotosService {
         @Path("photoId") photoId: Long,
     ): Response<Void>
 
-    @GET("/public_photos")
-    suspend fun getPublicPhotosList(): Response<List<NetworkPhoto>>
-
     @POST("/photos/change_location/{photoId}")
     suspend fun changePhotoLocation(
         @Path("photoId") photoId: Long,
         @Query("targetUserName") newUserName: String?,
         @Query("targetFolderName") newFolderName: String?,
-    ): Response<NetworkPhoto>
-
-    @Multipart
-    @POST("/public_photos/upload")
-    suspend fun uploadPublicPhoto(
-        @Query("timeCreated") timeCreated: String,
-        @Query("fileSize") fileSize: String,
-        @Query("folderName") folderName: String?,
-        @Part file: MultipartBody.Part,
     ): Response<NetworkPhoto>
 }
