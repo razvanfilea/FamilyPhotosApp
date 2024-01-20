@@ -56,7 +56,6 @@ compose_activity = { module = "androidx.activity:activity-compose", version.ref 
 voyager_navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyager" }
 voyager_tabNavigator = { module = "cafe.adriel.voyager:voyager-tab-navigator", version.ref = "voyager" }
 voyager_transitions = { module = "cafe.adriel.voyager:voyager-transitions", version.ref = "voyager" }
-voyager_androidx = { module = "cafe.adriel.voyager:voyager-androidx", version.ref = "voyager" }
 
 room_runtime = { module = "androidx.room:room-ktx", version.ref = "androidx_room" }
 room_compiler = { module = "androidx.room:room-compiler", version.ref = "androidx_room" }

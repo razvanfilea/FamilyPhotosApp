@@ -126,7 +126,7 @@ fun PhotosList(
                         Text("$count ")
                     }
 
-                    Text(stringResource(R.string.selected))
+                    Text(stringResource(R.string.action_selected))
                 }
             },
             actions = {
@@ -253,7 +253,7 @@ private fun PhotoItem(
     ) {
         CoilPhoto(
             photo = photo,
-            thumbnail = true,
+            preview = true,
             contentScale = ContentScale.Crop,
         )
 

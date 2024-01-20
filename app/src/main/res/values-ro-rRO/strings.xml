@@ -41,8 +41,9 @@
     <string name="notification_backup_fail_internet">Lipsă internet</string>
     <string name="action_previous">Anterior</string>
     <string name="action_info">Info</string>
-    <string name="selected">Selectate</string>
+    <string name="action_selected">Selectate</string>
     <string name="ascending">Crescător</string>
     <string name="descending">Descrescător</string>
     <string name="notification_backup_fail">Nu s-au putut incarca fisierele</string>
+    <string name="favorites">Favorite</string>
 </resources>

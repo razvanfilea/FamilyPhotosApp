@@ -232,6 +232,9 @@ class MainViewModel @Inject constructor(
     fun getNetworkFolderPhotos(folder: String) =
         foldersRepository.networkPhotosFromFolder(folder)
 
+    fun getFavoritePhotos() =
+        photosRepository.getFavoritePhotos()
+
     fun getLocalFolderPhotos(folder: String) =
         foldersRepository.localPhotosFromFolder(folder)
 
@@ -251,7 +254,7 @@ class MainViewModel @Inject constructor(
 
                 val result = serverRepository.changePhotoLocation(
                     photo = photo,
-                    newUserOwnerName = userName.takeUnless { makePublic },
+                    makePublic = makePublic,
                     newFolderName = newFolderName
                 )
                 Log.d("Moving Photos", "Moved $id result=$result")

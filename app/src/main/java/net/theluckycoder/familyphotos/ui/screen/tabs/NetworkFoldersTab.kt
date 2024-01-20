@@ -5,17 +5,21 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -76,7 +80,23 @@ object NetworkFoldersTab : BottomTab, FoldersTab<NetworkFolder>() {
             modifier = Modifier.fillMaxSize(),
         ) {
             item(span = { GridItemSpan(columnCount) }) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Absolute.SpaceBetween,
+                ) {
+                    FilledTonalButton(
+                        modifier = Modifier.padding(4.dp),
+                        onClick = {
+                            navigator.push(NetworkFolderScreen(NetworkFolderScreen.Source.Favorites))
+                        },
+                    ) {
+                        Icon(painterResource(R.drawable.ic_star_outline), contentDescription = null)
+
+                        Spacer(Modifier.width(12.dp))
+
+                        Text(stringResource(R.string.favorites))
+                    }
 
                     SortButton(sortAscending) {
                         scope.launch {
@@ -87,7 +107,7 @@ object NetworkFoldersTab : BottomTab, FoldersTab<NetworkFolder>() {
             }
 
             items(filteredFolders, key = { it.coverPhotoId }) { folder ->
-                // Make a fake Network Photo to load the thumbnail
+                // Make a fake Network Photo to load the preview
                 val photo = NetworkPhoto(
                     id = folder.coverPhotoId,
                     name = "",
@@ -102,7 +122,13 @@ object NetworkFoldersTab : BottomTab, FoldersTab<NetworkFolder>() {
                     name = folder.name,
                     photosCount = folder.count,
                     onClick = {
-                        navigator.push(NetworkFolderScreen(folder.name))
+                        navigator.push(
+                            NetworkFolderScreen(
+                                NetworkFolderScreen.Source.FolderName(
+                                    folder.name
+                                )
+                            )
+                        )
                     },
                 ) {
                     if (folder.isPublic) {

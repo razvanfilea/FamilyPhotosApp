@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -68,7 +69,7 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.Photo
-import net.theluckycoder.familyphotos.model.getThumbnailUri
+import net.theluckycoder.familyphotos.model.getPreviewUri
 import net.theluckycoder.familyphotos.model.getUri
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
@@ -86,7 +87,7 @@ fun SimpleSquarePhoto(photo: Photo) {
             .aspectRatio(1f)
             .padding(1.dp),
         photo = photo,
-        thumbnail = true,
+        preview = true,
         contentScale = ContentScale.Crop,
     )
 }
@@ -95,12 +96,12 @@ fun SimpleSquarePhoto(photo: Photo) {
 fun CoilPhoto(
     modifier: Modifier = Modifier,
     photo: Photo,
-    thumbnail: Boolean = false,
+    preview: Boolean = false,
     contentScale: ContentScale = ContentScale.Fit,
 ) {
     AsyncImage(
         modifier = modifier,
-        model = if (!thumbnail) photo.getUri() else photo.getThumbnailUri(),
+        model = if (!preview) photo.getUri() else photo.getPreviewUri(),
         contentScale = contentScale,
         contentDescription = photo.name,
         imageLoader = LocalImageLoader.current.get(),
@@ -147,6 +148,7 @@ fun NavBackTopAppBar(
     title: String? = null,
     subtitle: String? = null,
     navIconOnClick: () -> Unit,
+    actions: @Composable RowScope.() -> Unit = {}
 ) {
     TopAppBar(
         modifier = modifier,
@@ -163,7 +165,8 @@ fun NavBackTopAppBar(
                     Text(text = subtitle, style = MaterialTheme.typography.titleMedium)
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+        actions = actions
     )
 }
 

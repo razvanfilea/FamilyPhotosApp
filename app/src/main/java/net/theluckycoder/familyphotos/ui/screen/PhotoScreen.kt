@@ -1,19 +1,34 @@
 package net.theluckycoder.familyphotos.ui.screen
 
-import android.app.Activity
 import android.os.Parcelable
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,10 +51,19 @@ import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.model.*
+import net.theluckycoder.familyphotos.model.LocalPhoto
+import net.theluckycoder.familyphotos.model.NetworkPhoto
+import net.theluckycoder.familyphotos.model.Photo
+import net.theluckycoder.familyphotos.model.getPreviewUri
+import net.theluckycoder.familyphotos.model.getUri
+import net.theluckycoder.familyphotos.model.isVideo
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
-import net.theluckycoder.familyphotos.ui.composables.*
+import net.theluckycoder.familyphotos.ui.composables.IconButtonText
+import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
+import net.theluckycoder.familyphotos.ui.composables.SharePhotoIconButton
+import net.theluckycoder.familyphotos.ui.composables.VideoPlayer
+import net.theluckycoder.familyphotos.ui.composables.photoDateText
 import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
@@ -69,8 +93,8 @@ data class PhotoScreen private constructor(
                     is LocalPhoto -> photoViewModel.getLocalFolderPhotos(startPhoto.folder!!)
                     is NetworkPhoto -> photoViewModel.getNetworkFolderPhotos(startPhoto.folder!!)
                 }
-
                 Source.Memories -> photoViewModel.getPhotosInWeek(startPhoto as NetworkPhoto)
+                Source.Favorites -> photoViewModel.getFavoritePhotos()
             }
         }.collectAsState(null)
 
@@ -128,7 +152,19 @@ data class PhotoScreen private constructor(
                                 .fillMaxWidth()
                                 .align(Alignment.TopCenter),
                             title = currentPhoto.photoDateText(),
-                            navIconOnClick = { navigator.pop() }
+                            navIconOnClick = { navigator.pop() },
+                            actions = {
+                                if (currentPhoto is NetworkPhoto) {
+                                    IconButton(onClick = { photoViewModel.updateFavorite(currentPhoto, !currentPhoto.isFavorite) }) {
+                                        Icon(
+                                            painterResource(if (currentPhoto.isFavorite) R.drawable.ic_star_filled else R.drawable.ic_star_outline),
+                                            contentDescription = null
+                                        )
+                                    }
+
+                                    Spacer(Modifier.width(12.dp))
+                                }
+                            }
                         )
                     }
                 }
@@ -286,6 +322,7 @@ data class PhotoScreen private constructor(
         PagedList,
         Folder,
         Memories,
+        Favorites,
     }
 }
 
@@ -313,7 +350,7 @@ private fun ZoomableImage(
         modifier = modifier,
         model = ImageRequest.Builder(ctx)
             .data(photo.getUri())
-            .placeholderMemoryCacheKey(photo.getThumbnailUri().toString())
+            .placeholderMemoryCacheKey(photo.getPreviewUri().toString())
             .placeholder(R.drawable.ic_hourglass_bottom)
             .size(Size(width = maxWidth, height = Dimension.Undefined))
             .build(),

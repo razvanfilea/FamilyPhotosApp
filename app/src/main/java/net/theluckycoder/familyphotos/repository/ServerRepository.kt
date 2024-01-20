@@ -200,12 +200,12 @@ class ServerRepository @Inject constructor(
 
     suspend fun changePhotoLocation(
         photo: NetworkPhoto,
-        newUserOwnerName: String?,
+        makePublic: Boolean,
         newFolderName: String?,
     ): Boolean {
         val response = photosService.get().changePhotoLocation(
             photoId = photo.id,
-            newUserName = newUserOwnerName,
+            makePublic = makePublic,
             newFolderName = newFolderName
         )
 
@@ -216,5 +216,19 @@ class ServerRepository @Inject constructor(
 
         networkPhotosDao.update(changedPhoto)
         return true
+    }
+
+    suspend fun updateFavorite(photo: NetworkPhoto, add: Boolean) {
+        val response = if (add) {
+            photosService.get().addFavorite(photo.id)
+        } else {
+            photosService.get().removeFavorite(photo.id)
+        }
+
+        if (response.isSuccessful) {
+            networkPhotosDao.update(photo.copy(isFavorite = add))
+        } else {
+            Log.e("ServerRepository", "Failed to add/remove favorite: " + response.errorBody()?.string())
+        }
     }
 }

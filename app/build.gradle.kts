@@ -18,7 +18,7 @@ android {
         minSdk = 30
         targetSdk = 33
         versionCode = 26
-        versionName = "2.6.0"
+        versionName = "2.6.2"
         resourceConfigurations += listOf("en", "ro")
     }
 
@@ -118,7 +118,6 @@ dependencies {
     implementation(libs.voyager.navigator)
     implementation(libs.voyager.tabNavigator)
 //    implementation(libs.voyager.transitions)
-    implementation(libs.voyager.androidx)
 
     // Paging
     implementation(libs.paging.runtime)

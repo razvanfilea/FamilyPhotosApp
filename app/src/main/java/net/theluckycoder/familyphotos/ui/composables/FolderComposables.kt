@@ -149,7 +149,7 @@ fun <T : Photo> FolderPhotos(
                         Text("$count ")
                     }
 
-                    Text(stringResource(R.string.selected))
+                    Text(stringResource(R.string.action_selected))
                 }
             }
         },

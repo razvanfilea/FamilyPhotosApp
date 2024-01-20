@@ -79,6 +79,7 @@ data class NetworkPhoto(
     override val timeCreated: Long,
     val fileSize: Long = 0,
     override val folder: String? = null,
+    val isFavorite: Boolean = false,
 ) : Photo(), Parcelable {
 
     /*override fun hashCode(): Int = id.hashCode()
@@ -108,13 +109,13 @@ fun Photo.getUri(): Uri = when (this) {
     is LocalPhoto -> uri
 }
 
-fun Photo.getThumbnailUri(): Uri = when (this) {
-    is NetworkPhoto -> Uri.parse(getThumbnailUrl())
+fun Photo.getPreviewUri(): Uri = when (this) {
+    is NetworkPhoto -> Uri.parse(getPreviewUrl())
     is LocalPhoto -> uri
 }
 
 fun NetworkPhoto.getDownloadUrl(): String =
     "${NetworkModule.BASE_URL}photos/download/$id"
 
-fun NetworkPhoto.getThumbnailUrl(): String =
-    "${NetworkModule.BASE_URL}photos/thumbnail/$id"
+fun NetworkPhoto.getPreviewUrl(): String =
+    "${NetworkModule.BASE_URL}photos/preview/$id"

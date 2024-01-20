@@ -8,6 +8,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.Photo
@@ -30,6 +31,8 @@ class PhotoViewModel @Inject constructor(
 
     fun getPhotosInWeek(photo: NetworkPhoto) = photosRepository.getMemories(photo.timeCreated, photo.userId)
 
+    fun getFavoritePhotos() = photosRepository.getFavoritePhotos()
+
     fun getPhotoLocalUriAsync(photo: Photo): Deferred<Uri?> = viewModelScope.async(Dispatchers.IO) {
         when (photo) {
             is LocalPhoto -> photo.uri
@@ -47,4 +50,10 @@ class PhotoViewModel @Inject constructor(
 
     fun getLocalFolderPhotos(folder: String) =
         foldersRepository.localPhotosFromFolder(folder)
+
+    fun updateFavorite(photo: NetworkPhoto, add: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            serverRepository.updateFavorite(photo, add)
+        }
+    }
 }

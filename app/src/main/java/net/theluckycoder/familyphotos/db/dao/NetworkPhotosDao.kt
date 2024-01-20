@@ -54,4 +54,11 @@ abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>("network_photo
     """
     )
     abstract fun getPhotosInThisMonth(userId: String, timestamp: Long): Flow<List<NetworkPhoto>>
+
+    @Query("""
+        SELECT * FROM NETWORK_PHOTO
+        WHERE network_photo.isFavorite = true
+        ORDER BY network_photo.timeCreated DESC
+    """)
+    abstract fun getFavoritePhotos(): Flow<List<NetworkPhoto>>
 }

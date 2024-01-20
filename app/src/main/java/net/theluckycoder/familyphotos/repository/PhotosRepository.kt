@@ -42,4 +42,6 @@ class PhotosRepository @Inject constructor(
     fun getPersonalPhotosPaged(userName: String) = networkPhotosDao.getPhotosPaged(userName)
 
     fun getPublicPhotosPaged() = networkPhotosDao.getPhotosPaged(PUBLIC_USER_ID)
+
+    fun getFavoritePhotos() = networkPhotosDao.getFavoritePhotos()
 }
