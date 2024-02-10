@@ -4,7 +4,6 @@ import android.app.Application
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.result.ActivityResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -22,6 +21,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.await
 import com.jakewharton.processphoenix.ProcessPhoenix
+import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -56,6 +56,7 @@ import net.theluckycoder.familyphotos.model.ExifData
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.Photo
+import net.theluckycoder.familyphotos.network.service.UserService
 import net.theluckycoder.familyphotos.repository.FoldersRepository
 import net.theluckycoder.familyphotos.repository.PhotosRepository
 import net.theluckycoder.familyphotos.repository.ServerRepository
@@ -74,6 +75,7 @@ class MainViewModel @Inject constructor(
     private val serverRepository: ServerRepository,
     private val foldersRepository: FoldersRepository,
     private val userDataStore: UserDataStore,
+    private val userService: Lazy<UserService>,
     val settingsStore: SettingsDataStore,
 ) : ViewModel() {
 
@@ -164,6 +166,8 @@ class MainViewModel @Inject constructor(
     }
 
     fun refreshPhotos() {
+        if (isRefreshing.value) return
+
         isRefreshing.value = true
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -186,12 +190,13 @@ class MainViewModel @Inject constructor(
             ping.await()
             localPhotos.await()
 
+            photosRepository.removeMissingNetworkReferences()
+
             isRefreshing.value = false
         }
     }
 
-    fun refreshLocalPhotos(result: ActivityResult) {
-        result.data
+    fun refreshLocalPhotos() {
         viewModelScope.launch(Dispatchers.IO) {
             foldersRepository.updatePhoneAlbums()
         }
@@ -373,6 +378,10 @@ class MainViewModel @Inject constructor(
 
     fun logout(app: Application) {
         viewModelScope.launch {
+            try {
+                userService.get().logout()
+            } catch (_: Exception) {
+            }
             userDataStore.clear()
         }
 

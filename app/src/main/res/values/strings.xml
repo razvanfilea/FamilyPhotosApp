@@ -56,7 +56,9 @@
     <string name="notification_missing_permission">Missing notification permission</string>
     <string name="notification_backup_title">Backup up files</string>
     <string name="notification_backup_finished">Finished uploading photos</string>
-    <string name="notification_backup_finished_desc">%d photos uploaded successfully and %d failed</string>
+    <string name="notification_backup_finished_desc">%1$d photos uploaded successfully and %2$d failed</string>
+    <string name="notification_backup_finished_desc_only_success">%d photos uploaded</string>
+    <string name="notification_backup_finished_desc_only_failure">%d photos failed to upload</string>
     <string name="notification_backup_fail">Failed to backup up files</string>
     <string name="notification_backup_fail_cancelled">Upload was cancelled</string>
     <string name="notification_backup_fail_internet">Missing internet connection</string>

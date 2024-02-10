@@ -18,7 +18,7 @@ android {
         minSdk = 30
         targetSdk = 33
         versionCode = 26
-        versionName = "2.6.2"
+        versionName = "2.6.4"
         resourceConfigurations += listOf("en", "ro")
     }
 
@@ -141,7 +141,7 @@ dependencies {
     // Coil
     implementation(libs.coil.base)
     implementation(libs.coil.gif)
-    implementation(libs.coil.video)
+//    implementation(libs.coil.video)
 
     // Other
     implementation("com.jakewharton:process-phoenix:2.1.2")

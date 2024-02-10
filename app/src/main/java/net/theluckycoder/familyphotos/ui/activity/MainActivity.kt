@@ -1,6 +1,7 @@
 package net.theluckycoder.familyphotos.ui.activity
 
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -42,7 +43,6 @@ import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import okhttp3.OkHttpClient
 import javax.inject.Inject
 
-@OptIn(ExperimentalVoyagerApi::class)
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
@@ -63,15 +63,18 @@ class MainActivity : ComponentActivity() {
 
     private val mainViewModel: MainViewModel by viewModels()
 
-    private val deletePhotoLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
-        mainViewModel.refreshLocalPhotos(it)
-    }
+    private val deletePhotoLauncher =
+        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
+            if (it.resultCode == Activity.RESULT_OK) {
+                mainViewModel.refreshLocalPhotos()
+            }
+        }
 
     @Inject
-    lateinit var imageLoader: Lazy<ImageLoader>
+    lateinit var imageLoaderLazy: Lazy<ImageLoader>
 
     @Inject
-    lateinit var playerController: Lazy<OkHttpClient>
+    lateinit var okHttpClientLazy: Lazy<OkHttpClient>
 
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -89,8 +92,8 @@ class MainActivity : ComponentActivity() {
                 val snackbarHostState = remember { SnackbarHostState() }
 
                 CompositionLocalProvider(
-                    LocalImageLoader provides imageLoader,
-                    LocalOkHttpClient provides playerController,
+                    LocalImageLoader provides imageLoaderLazy,
+                    LocalOkHttpClient provides okHttpClientLazy,
                     LocalSnackbarHostState provides snackbarHostState,
                     LocalNavigatorScreenLifecycleProvider provides emptyLifecycleProvider
                 ) {
@@ -112,10 +115,15 @@ class MainActivity : ComponentActivity() {
         }
 
         val readImagePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-            arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO,
-                Manifest.permission.ACCESS_MEDIA_LOCATION)
+            arrayOf(
+                Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO,
+                Manifest.permission.ACCESS_MEDIA_LOCATION
+            )
         else
-            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.ACCESS_MEDIA_LOCATION)
+            arrayOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.ACCESS_MEDIA_LOCATION
+            )
 
         if (ContextCompat.checkSelfPermission(
                 this,

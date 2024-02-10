@@ -28,7 +28,11 @@ class PhotosRepository @Inject constructor(
 
     fun getPhotosInProximity(photo: Photo): Flow<List<NetworkPhoto>> {
         return when (photo) {
-            is NetworkPhoto -> networkPhotosDao.getPhotosInThisMonth(photo.userId, photo.timeCreated)
+            is NetworkPhoto -> networkPhotosDao.getPhotosInThisMonth(
+                photo.userId,
+                photo.timeCreated
+            )
+
             is LocalPhoto -> TODO()
         }
     }
@@ -36,6 +40,23 @@ class PhotosRepository @Inject constructor(
     suspend fun removeNetworkReference(photo: NetworkPhoto) {
         getLocalPhotoFromNetwork(photo.id)?.let { localPhoto ->
             localPhotosDao.update(localPhoto.copy(networkPhotoId = 0L))
+        }
+    }
+
+    suspend fun removeMissingNetworkReferences() {
+        val networkPhotos = networkPhotosDao.getAll().mapTo(HashSet()) { it.id }
+        if (networkPhotos.isEmpty()) {
+            return
+        }
+
+        val localPhotos = localPhotosDao.getAll().asSequence()
+            .filter { it.isSavedToCloud }
+            .filterNot { networkPhotos.contains(it.networkPhotoId) }
+            .map { it.copy(networkPhotoId = 0) }
+            .toList()
+
+        if (localPhotos.isNotEmpty()) {
+            localPhotosDao.insertOrReplace(localPhotos)
         }
     }
 

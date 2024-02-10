@@ -37,21 +37,11 @@ abstract class LocalPhotosDao : AbstractPhotosDao<LocalPhoto>("local_photo") {
         val newMap = list.associateBy { it.id }
 
         val toInsert = newMap.filterKeys { !currentMap.containsKey(it) }
-//        val toInsert = HashMap(newMap)
-//        currentMap.forEach { pair ->
-//            if (toInsert.containsKey(pair.key))
-//                toInsert.remove(pair.key)
-//        }
 
         val toDelete = currentMap.filterKeys { !newMap.containsKey(it) }
-//        val toDelete = HashMap(currentMap)
-//        newMap.forEach { pair ->
-//            if (toDelete.containsKey(pair.key))
-//                toDelete.remove(pair.key)
-//        }
 
         if (toInsert.isNotEmpty())
-            insertAll(toInsert.map { it.value })
+            insertOrReplace(toInsert.map { it.value })
         if (toDelete.isNotEmpty())
             delete(toDelete.map { it.value })
     }

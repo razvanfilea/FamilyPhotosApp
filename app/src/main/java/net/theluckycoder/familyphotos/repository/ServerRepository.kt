@@ -152,11 +152,9 @@ class ServerRepository @Inject constructor(
     }
 
     suspend fun getExifData(photo: NetworkPhoto): ExifData? {
-        photosService.get().getPhotoExif(photo.id).body()?.let {
-            return ExifData(it)
+        return photosService.get().getPhotoExif(photo.id).body()?.run {
+            ExifData(this)
         }
-
-        return null
     }
 
     suspend fun uploadFile(

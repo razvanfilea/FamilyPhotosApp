@@ -173,8 +173,12 @@ class UploadWorker @AssistedInject constructor(
     private fun createSuccessNotification(successfulCount: Int, failedCount: Int) {
         val ctx = applicationContext
         val title = ctx.getString(R.string.notification_backup_finished)
-        val content =
-            ctx.getString(R.string.notification_backup_finished_desc, successfulCount, failedCount)
+
+        val content = when {
+            successfulCount == 0 -> ctx.getString(R.string.notification_backup_finished_desc_only_failure, failedCount)
+            failedCount == 0 -> ctx.getString(R.string.notification_backup_finished_desc_only_success, successfulCount)
+            else -> ctx.getString(R.string.notification_backup_finished_desc, successfulCount, failedCount)
+        }
 
         val notification = NotificationCompat.Builder(ctx, NOTIFICATION_CHANNEL)
             .setTicker(title)

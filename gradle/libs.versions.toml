@@ -1,15 +1,15 @@
 [versions]
-agp = "8.2.1"
+agp = "8.2.2"
 kotlin_base = "1.9.22"
 kotlin_ksp = "1.9.22-1.0.17"
 kotlin_coroutines = "1.7.3"
 kotlin_serialization = "1.6.2"
 kotlin_datetime = "0.5.0"
 kotlin_collections = "0.3.7"
-compose_base = "1.5.4"
+compose_base = "1.6.1"
 compose_activity = "1.8.2"
-compose_compiler = "1.5.8"
-compose_material3 = "1.1.2"
+compose_compiler = "1.5.9"
+compose_material3 = "1.2.0"
 voyager = "1.0.0"
 androidx_core = "1.12.0"
 androidx_room = "2.6.1"
@@ -75,7 +75,7 @@ camerax_extensions = { module = "androidx.camera:camera-extensions", version.ref
 
 coil_base = { module = "io.coil-kt:coil-compose-base", version.ref = "coil" }
 coil_gif = { module = "io.coil-kt:coil-gif", version.ref = "coil" }
-coil_video = { module = "io.coil-kt:coil-video", version.ref = "coil" }
+#coil_video = { module = "io.coil-kt:coil-video", version.ref = "coil" }
 
 dagger_android = { module = "com.google.dagger:hilt-android", version.ref = "dagger" }
 dagger_compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "dagger" }

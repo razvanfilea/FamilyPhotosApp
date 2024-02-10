@@ -14,4 +14,7 @@ interface UserService {
         @Field("userId") userId: String,
         @Field("password") password: String,
     ): Response<User>
+
+    @POST("logout")
+    suspend fun logout()
 }

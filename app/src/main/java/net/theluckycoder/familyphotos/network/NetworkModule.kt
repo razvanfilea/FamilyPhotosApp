@@ -5,7 +5,6 @@ import android.util.Log
 import coil.ComponentRegistry
 import coil.ImageLoader
 import coil.decode.ImageDecoderDecoder
-import coil.decode.VideoFrameDecoder
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.util.DebugLogger
@@ -141,7 +140,6 @@ object NetworkModule {
             .logger(DebugLogger().takeIf { BuildConfig.DEBUG })
             .components(fun ComponentRegistry.Builder.() {
                 add(ImageDecoderDecoder.Factory())
-                add(VideoFrameDecoder.Factory())
             })
             .okHttpClient(okHttpClient)
             // Cache

@@ -1,27 +1,28 @@
 package net.theluckycoder.familyphotos.db.dao
 
-import androidx.room.*
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.RawQuery
+import androidx.room.Transaction
+import androidx.room.Update
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteQuery
 import net.theluckycoder.familyphotos.model.Photo
 
 abstract class AbstractPhotosDao<T : Photo>(private val tableName: String) {
 
-    // region Execute
-    @RawQuery
-    protected abstract fun execute(query: SupportSQLiteQuery): Int
-
     @RawQuery
     protected abstract suspend fun executeSuspend(query: SupportSQLiteQuery): Int
 
     @RawQuery
-    protected abstract fun executeList(query: SupportSQLiteQuery): List<T>
+    protected abstract suspend fun executeList(query: SupportSQLiteQuery): List<T>
 
     // endregion Execute
 
     // region Get
 
-    protected fun getAll(): List<T> = executeList(SimpleSQLiteQuery("SELECT * FROM $tableName"))
+    suspend fun getAll(): List<T> = executeList(SimpleSQLiteQuery("SELECT * FROM $tableName"))
 
     // endregion Get
 
@@ -31,12 +32,12 @@ abstract class AbstractPhotosDao<T : Photo>(private val tableName: String) {
     abstract suspend fun insert(photo: T)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    protected abstract fun insertAll(list: Collection<T>)
+    abstract suspend fun insertOrReplace(list: Collection<T>)
 
     @Transaction
     open suspend fun replaceAll(list: Collection<T>) {
         deleteAll()
-        insertAll(list)
+        insertOrReplace(list)
     }
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
@@ -52,7 +53,7 @@ abstract class AbstractPhotosDao<T : Photo>(private val tableName: String) {
     suspend fun delete(photoId: Long) =
         executeSuspend(SimpleSQLiteQuery("DELETE FROM $tableName WHERE id = $photoId"))
 
-    private fun deleteAll() = execute(SimpleSQLiteQuery("DELETE FROM $tableName"))
+    private suspend fun deleteAll() = executeSuspend(SimpleSQLiteQuery("DELETE FROM $tableName"))
 
     // endregion Delete
 }
