@@ -35,7 +35,20 @@ class ServerRepository @Inject constructor(
     private val localPhotosDao: LocalPhotosDao,
 ) {
 
-    suspend fun pingServer(): Boolean = photosService.get().ping().isSuccessful
+    enum class PingResponse {
+        SUCCESSFUL,
+        UNSUCCESSFUL,
+        NOT_LOGGED_IN
+    }
+
+    suspend fun pingServer(): PingResponse {
+        val response = photosService.get().ping()
+        return when {
+            response.code() == 401 -> PingResponse.NOT_LOGGED_IN // UNAUTHORIZED
+            response.isSuccessful -> PingResponse.SUCCESSFUL
+            else -> PingResponse.UNSUCCESSFUL
+        }
+    }
 
     suspend fun downloadAllPhotos() = coroutineScope {
         val service = photosService.get()

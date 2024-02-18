@@ -16,7 +16,7 @@ import retrofit2.http.Streaming
 
 interface PhotosService {
 
-    @GET("/")
+    @GET("/profile")
     suspend fun ping(): Response<Void>
 
     @GET("/photos")

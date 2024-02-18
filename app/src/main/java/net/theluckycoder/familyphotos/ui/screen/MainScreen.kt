@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.ui.screen
 
+import android.app.Application
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
@@ -62,8 +64,11 @@ object MainScreen : Screen {
                 }
             ) { paddingValues ->
                 val isRefreshing by mainViewModel.isRefreshing.collectAsState()
+                val app = LocalContext.current.applicationContext as Application
 
-                val state = rememberPullRefreshState(isRefreshing, mainViewModel::refreshPhotos)
+                val state = rememberPullRefreshState(isRefreshing, {
+                    mainViewModel.refreshPhotos(app)
+                })
 
                 Box(
                     modifier = Modifier

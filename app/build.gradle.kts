@@ -18,7 +18,7 @@ android {
         minSdk = 30
         targetSdk = 33
         versionCode = 26
-        versionName = "2.6.4"
+        versionName = "2.6.5"
         resourceConfigurations += listOf("en", "ro")
     }
 
@@ -141,9 +141,9 @@ dependencies {
     // Coil
     implementation(libs.coil.base)
     implementation(libs.coil.gif)
-//    implementation(libs.coil.video)
+    implementation(libs.coil.video)
 
     // Other
-    implementation("com.jakewharton:process-phoenix:2.1.2")
-    implementation("me.saket.telephoto:zoomable-image-coil:0.7.1")
+    implementation(libs.processPheonix)
+    implementation(libs.telephoto)
 }

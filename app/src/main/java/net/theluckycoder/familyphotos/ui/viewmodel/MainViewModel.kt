@@ -119,7 +119,7 @@ class MainViewModel @Inject constructor(
                 ensureActive()
                 if (newUserName != null && userName != newUserName) {
                     userName = newUserName
-                    refreshPhotos()
+                    refreshPhotos(app)
                 }
             }
         }
@@ -165,19 +165,22 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun refreshPhotos() {
+    fun refreshPhotos(app: Application) {
         if (isRefreshing.value) return
 
         isRefreshing.value = true
 
         viewModelScope.launch(Dispatchers.IO) {
-            val ping = async {
-                try {
-                    _isOnlineFlow.value = serverRepository.pingServer()
-                } catch (e: Exception) {
-                    false
-                }
+            val pingResponse = try {
+                serverRepository.pingServer()
+            } catch (e: Exception) {
+                ServerRepository.PingResponse.UNSUCCESSFUL
             }
+
+            if (pingResponse == ServerRepository.PingResponse.NOT_LOGGED_IN) {
+                logout(app)
+            }
+            _isOnlineFlow.value = pingResponse == ServerRepository.PingResponse.SUCCESSFUL
 
             val localPhotos = async { foldersRepository.updatePhoneAlbums() }
 
@@ -187,9 +190,8 @@ class MainViewModel @Inject constructor(
                 e.printStackTrace()
             }
 
-            ping.await()
-            localPhotos.await()
 
+            localPhotos.await()
             photosRepository.removeMissingNetworkReferences()
 
             isRefreshing.value = false

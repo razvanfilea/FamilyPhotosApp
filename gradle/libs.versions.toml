@@ -2,8 +2,8 @@
 agp = "8.2.2"
 kotlin_base = "1.9.22"
 kotlin_ksp = "1.9.22-1.0.17"
-kotlin_coroutines = "1.7.3"
-kotlin_serialization = "1.6.2"
+kotlin_coroutines = "1.8.0"
+kotlin_serialization = "1.6.3"
 kotlin_datetime = "0.5.0"
 kotlin_collections = "0.3.7"
 compose_base = "1.6.1"
@@ -24,6 +24,8 @@ dagger = "2.50"
 retrofit = "2.9.0"
 retrofitSerialization = "0.11.0"
 okhttp = "4.12.0"
+processPheonix = "2.1.2"
+telephoto = "0.8.0"
 
 [plugins]
 android_application = { id = "com.android.application", version.ref = "agp" }
@@ -75,7 +77,7 @@ camerax_extensions = { module = "androidx.camera:camera-extensions", version.ref
 
 coil_base = { module = "io.coil-kt:coil-compose-base", version.ref = "coil" }
 coil_gif = { module = "io.coil-kt:coil-gif", version.ref = "coil" }
-#coil_video = { module = "io.coil-kt:coil-video", version.ref = "coil" }
+coil_video = { module = "io.coil-kt:coil-video", version.ref = "coil" }
 
 dagger_android = { module = "com.google.dagger:hilt-android", version.ref = "dagger" }
 dagger_compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "dagger" }
@@ -86,3 +88,5 @@ retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit
 retrofitSerializer = { module = "de.nycode:retrofit2-kotlinx-serialization-converter", version.ref = "retrofitSerialization" }
 okhttp_logging = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
 okhttp_brotli = { module = "com.squareup.okhttp3:okhttp-brotli", version.ref = "okhttp" }
+processPheonix = { module = "com.jakewharton:process-phoenix", version.ref = "processPheonix"}
+telephoto = { module = "me.saket.telephoto:zoomable-image-coil", version.ref = "telephoto"}
