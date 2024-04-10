@@ -154,7 +154,7 @@ fun NavBackTopAppBar(
         modifier = modifier,
         navigationIcon = {
             IconButton(onClick = navIconOnClick) {
-                Icon(Icons.Default.ArrowBack, contentDescription = null)
+                Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = null)
             }
         },
         title = {

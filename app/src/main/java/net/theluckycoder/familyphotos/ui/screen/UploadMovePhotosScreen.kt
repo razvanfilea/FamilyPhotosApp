@@ -14,8 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconToggleButton
@@ -28,6 +28,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -122,7 +123,7 @@ private fun UploadDialogContent(
                         .padding(12.dp)
                 )
 
-                Divider()
+                HorizontalDivider()
             }
         }
     }
@@ -137,7 +138,7 @@ private fun UploadPhotosLayout(
 ) {
     val navigator = LocalNavigator.currentOrThrow
 
-    var choiceIndex by remember { mutableStateOf(0) }
+    var choiceIndex by remember { mutableIntStateOf(0) }
     var folderName by remember { mutableStateOf("") }
 
     Scaffold(
@@ -169,7 +170,7 @@ private fun UploadPhotosLayout(
             foldersList.asSequence()
                 .filter { it.isPublic == (choiceIndex == choices.lastIndex) }
                 .map { it.name }
-                .filter { it.startsWith(folderName, ignoreCase = true) }
+                .filter { it.contains(folderName, ignoreCase = true) }
                 .toList()
                 .sortedDescending()
         }

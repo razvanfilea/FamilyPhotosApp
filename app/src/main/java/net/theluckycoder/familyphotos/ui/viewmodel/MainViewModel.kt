@@ -190,7 +190,6 @@ class MainViewModel @Inject constructor(
                 e.printStackTrace()
             }
 
-
             localPhotos.await()
             photosRepository.removeMissingNetworkReferences()
 

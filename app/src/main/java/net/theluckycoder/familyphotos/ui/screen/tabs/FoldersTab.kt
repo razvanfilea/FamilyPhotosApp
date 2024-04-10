@@ -29,8 +29,7 @@ abstract class FoldersTab<T : PhotoFolder> : Screen {
         FolderFilterTextField(folderNameFilter, onFilterChange = { folderNameFilter = it })
 
         return remember(folders, folderNameFilter, sortAscending) {
-            val searchFilter = folderNameFilter.lowercase()
-            val filtered = folders.filter { it.name.lowercase().contains(searchFilter) }
+            val filtered = folders.filter { it.name.contains(folderNameFilter, ignoreCase = true) }
             if (sortAscending) filtered else filtered.sortedByDescending { it.name }
         }
     }
