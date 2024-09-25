@@ -1,11 +1,11 @@
 [versions]
 agp = "8.6.1"
-kotlin_base = "1.9.25"
-kotlin_ksp = "1.9.25-1.0.20"
-kotlin_coroutines = "1.8.1"
-kotlin_serialization = "1.6.3"
-kotlin_datetime = "0.6.0"
-kotlin_collections = "0.3.7"
+kotlin_base = "2.0.20"
+kotlin_ksp = "2.0.20-1.0.25"
+kotlin_coroutines = "1.9.0"
+kotlin_serialization = "1.7.3"
+kotlin_datetime = "0.6.1"
+kotlin_collections = "0.3.8"
 compose_base = "1.7.2"
 compose_activity = "1.9.2"
 compose_compiler = "1.5.15"
@@ -19,12 +19,12 @@ androidx_exif = "1.3.7"
 androidx_paging = "3.3.2"
 androidx_camerax = "1.3.4"
 androidx_work = "2.9.1"
-coil = "2.6.0"
-dagger = "2.51.1"
+coil = "2.7.0"
+dagger = "2.52"
 retrofit = "2.11.0"
 okhttp = "4.12.0"
 processPheonix = "3.0.0"
-telephoto = "0.9.0"
+telephoto = "0.13.0"
 
 [plugins]
 android_application = { id = "com.android.application", version.ref = "agp" }
@@ -32,6 +32,8 @@ android_library = { id = "com.android.library", version.ref = "agp" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin_base" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "dagger" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "kotlin_ksp" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin_base" }
+
 
 [libraries]
 kotlin_coroutinesAndroid = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlin_coroutines" }

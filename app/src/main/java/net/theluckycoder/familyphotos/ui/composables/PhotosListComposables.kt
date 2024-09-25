@@ -184,8 +184,8 @@ fun PhotosList(
                     PhotoItem(
                         modifier = Modifier
                             .aspectRatio(1f)
-                            .padding(1.5.dp)
-                            .animateItemPlacement(),
+                            .padding(0.5.dp)
+                            .animateItem(fadeInSpec = null, fadeOutSpec = null),
                         photo = item,
                         selectedPhotoIds = selectedPhotoIds,
                         navigator = navigator

@@ -80,6 +80,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        mainViewModel // Initialize ViewModel
+
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         val emptyLifecycleProvider = object : NavigatorScreenLifecycleProvider {

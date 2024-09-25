@@ -70,7 +70,7 @@ import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewModel
 
-@Suppress("DataClassPrivateConstructor")
+@ConsistentCopyVisibility
 @Parcelize
 data class PhotoScreen private constructor(
     private val startPhoto: Photo,

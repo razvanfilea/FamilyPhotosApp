@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlinAndroid)
@@ -5,6 +7,7 @@ plugins {
     kotlin("plugin.serialization") version libs.versions.kotlin.base.get()
     alias(libs.plugins.ksp)
     id("kotlin-parcelize")
+    alias(libs.plugins.compose.compiler)
 
     alias(libs.plugins.hilt)
 }
@@ -18,7 +21,7 @@ android {
         minSdk = 30
         targetSdk = 33
         versionCode = 26
-        versionName = "2.6.6"
+        versionName = "2.6.7"
         resourceConfigurations += listOf("en", "ro")
     }
 
@@ -60,10 +63,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
-    }
 }
 
 ksp {
@@ -72,10 +71,9 @@ ksp {
     arg("room.expandProjection", true.toString())
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).configureEach {
-    kotlinOptions {
-        jvmTarget = "17"
-        freeCompilerArgs = freeCompilerArgs + listOf("-Xjvm-default=all")
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
     }
 }
 

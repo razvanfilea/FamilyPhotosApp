@@ -112,7 +112,7 @@ object DeviceTab : BottomTab, FoldersTab<LocalFolder>() {
                 )
 
                 FolderPreviewItem(
-                    modifier = Modifier.animateItemPlacement(),
+                    modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
                     photo = photo,
                     name = folder.name,
                     photosCount = folder.count,

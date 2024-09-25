@@ -117,7 +117,7 @@ object NetworkFoldersTab : BottomTab, FoldersTab<NetworkFolder>() {
                 )
 
                 FolderPreviewItem(
-                    modifier = Modifier.animateItemPlacement(),
+                    modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
                     photo = photo,
                     name = folder.name,
                     photosCount = folder.count,
