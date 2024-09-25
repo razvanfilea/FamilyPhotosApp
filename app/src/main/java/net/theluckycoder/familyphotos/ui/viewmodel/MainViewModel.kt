@@ -179,6 +179,7 @@ class MainViewModel @Inject constructor(
 
             if (pingResponse == ServerRepository.PingResponse.NOT_LOGGED_IN) {
                 logout(app)
+                return@launch
             }
             _isOnlineFlow.value = pingResponse == ServerRepository.PingResponse.SUCCESSFUL
 

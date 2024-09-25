@@ -8,6 +8,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -188,12 +189,11 @@ data class PhotoScreen private constructor(
             HorizontalPager(
                 state = pagerState,
                 key = { allPhotos.getOrNull(it)?.id ?: it },
-                beyondBoundsPageCount = 1,
             ) { page ->
                 val photo = allPhotos.getOrNull(page)
 
                 if (photo != null) {
-                    PagerContent(photo, showUi)
+                    PagerContent(photo, showUi, paddingValues)
                 }
             }
 
@@ -204,6 +204,7 @@ data class PhotoScreen private constructor(
     private fun BoxScope.PagerContent(
         photo: Photo,
         showUi: MutableState<Boolean>,
+        paddingValues: PaddingValues,
     ) {
         val isVideo = remember(photo) { photo.isVideo }
 
@@ -215,7 +216,7 @@ data class PhotoScreen private constructor(
                 photo = photo
             ) { showUi.value = it }
         } else {
-            VideoPlayer(photo.getUri(), showUI = { showUi.value = it })
+            VideoPlayer(photo.getUri(), paddingValues, showUI = { showUi.value = it })
         }
     }
 

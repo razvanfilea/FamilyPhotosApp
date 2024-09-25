@@ -31,6 +31,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.ripple
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -126,7 +127,7 @@ fun IconButtonText(
                 role = Role.Button,
                 enabled = enabled,
                 interactionSource = interactionSource,
-                indication = rememberRipple(bounded = false, radius = 24.dp)
+                indication = ripple(bounded = false, radius = 24.dp)
             )
             .defaultMinSize(48.dp, 48.dp),
         verticalArrangement = Arrangement.Center,
