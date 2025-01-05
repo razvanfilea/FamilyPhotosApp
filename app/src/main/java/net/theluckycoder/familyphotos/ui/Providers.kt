@@ -2,7 +2,7 @@ package net.theluckycoder.familyphotos.ui
 
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.compositionLocalOf
-import coil.ImageLoader
+import coil3.ImageLoader
 import dagger.Lazy
 import okhttp3.OkHttpClient
 

@@ -2,13 +2,13 @@ package net.theluckycoder.familyphotos.network
 
 import android.content.Context
 import android.util.Log
-import coil.ComponentRegistry
-import coil.ImageLoader
-import coil.decode.ImageDecoderDecoder
-import coil.decode.VideoFrameDecoder
-import coil.disk.DiskCache
-import coil.memory.MemoryCache
-import coil.util.DebugLogger
+import coil3.ImageLoader
+import coil3.disk.DiskCache
+import coil3.gif.AnimatedImageDecoder
+import coil3.memory.MemoryCache
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import coil3.util.DebugLogger
+import coil3.video.VideoFrameDecoder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,6 +32,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.brotli.BrotliInterceptor
 import okhttp3.logging.HttpLoggingInterceptor
+import okio.Path.Companion.toOkioPath
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import javax.inject.Named
@@ -139,23 +140,29 @@ object NetworkModule {
     ): ImageLoader =
         ImageLoader.Builder(context)
             .logger(DebugLogger().takeIf { BuildConfig.DEBUG })
-            .components(fun ComponentRegistry.Builder.() {
-                add(ImageDecoderDecoder.Factory())
+            .components {
+                add(AnimatedImageDecoder.Factory())
                 add(VideoFrameDecoder.Factory())
-            })
-            .okHttpClient(okHttpClient)
+                add(
+                    OkHttpNetworkFetcherFactory(
+                        callFactory = {
+                            okHttpClient
+                        }
+                    )
+                )
+            }
             // Cache
-            .memoryCache { MemoryCache.Builder(context).maxSizePercent(0.35).build() }
+            .memoryCache { MemoryCache.Builder().maxSizePercent(context, 0.35).build() }
             .diskCache {
                 runBlocking {
                     DiskCache.Builder()
-                        .directory(context.cacheDir.resolve("image_cache"))
+                        .directory(context.cacheDir.resolve("image_cache").toOkioPath())
                         .minimumMaxSizeBytes(1024L * 1024L * 1024L * 512L) // 512MB
                         .maximumMaxSizeBytes(settingsDataStore.cacheSizeMbFlow.first() * 1024L)
                         .build()
                 }
             }
-            .respectCacheHeaders(false) // Cache-First
+//            .respectCacheHeaders(false) // Cache-First
             .build()
 
     const val BASE_URL = "https://faarr.go.ro/"

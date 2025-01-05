@@ -11,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
-import coil.ImageLoader
+import coil3.ImageLoader
 
 class CameraActivity : ComponentActivity() {
 

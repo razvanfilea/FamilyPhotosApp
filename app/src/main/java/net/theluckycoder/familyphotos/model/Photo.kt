@@ -67,9 +67,8 @@ data class BasicNetworkPhoto(
     val userId: String,
     val name: String,
     val createdAt: Long,
-    val fileSize: Long = 0,
-    val folder: String? = null,
-    val isFavorite: Boolean = false,
+    val fileSize: Long,
+    val folder: String?,
 )
 
 @Immutable

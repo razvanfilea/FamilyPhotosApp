@@ -44,11 +44,13 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import coil.request.ImageRequest
-import coil.size.Dimension
-import coil.size.Size
+import coil3.request.ImageRequest
+import coil3.request.maxBitmapSize
+import coil3.request.placeholder
+import coil3.size.Dimension
+import coil3.size.Size
 import kotlinx.parcelize.Parcelize
-import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage
+import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
 import net.theluckycoder.familyphotos.R
@@ -354,6 +356,7 @@ private fun ZoomableImage(
             .placeholderMemoryCacheKey(photo.getPreviewUri().toString())
             .placeholder(R.drawable.ic_hourglass_bottom)
             .size(Size(width = maxWidth, height = Dimension.Undefined))
+            .maxBitmapSize(Size.ORIGINAL)
             .build(),
         imageLoader = LocalImageLoader.current.get(),
         state = rememberZoomableImageState(zoomableState),

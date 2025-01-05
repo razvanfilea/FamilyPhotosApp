@@ -42,7 +42,7 @@ internal suspend fun CameraController.takePicture(context: Context): Uri {
                 val rotationDegrees = image.imageInfo.rotationDegrees
 
                 val rotatedBitmap = if (rotationDegrees == 0) {
-                    originalBitmap.copy(originalBitmap.config, true)
+                    originalBitmap.copy(originalBitmap.config!!, true)
                 } else {
                     val rotationMatrix = Matrix().apply {
                         postRotate(rotationDegrees.toFloat())

@@ -25,7 +25,7 @@ import cafe.adriel.voyager.core.lifecycle.NavigatorScreenLifecycleProvider
 import cafe.adriel.voyager.core.lifecycle.ScreenLifecycleOwner
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.Navigator
-import coil.ImageLoader
+import coil3.ImageLoader
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers

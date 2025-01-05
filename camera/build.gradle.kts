@@ -48,5 +48,5 @@ dependencies {
     implementation(libs.camerax.extensions)
 
     // Coil
-    implementation(libs.coil.base)
+    implementation(libs.coil.core)
 }

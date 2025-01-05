@@ -21,7 +21,7 @@ android {
         minSdk = 30
         targetSdk = 33
         versionCode = 26
-        versionName = "2.6.7"
+        versionName = "2.6.8"
         resourceConfigurations += listOf("en", "ro")
     }
 
@@ -137,7 +137,8 @@ dependencies {
     implementation(libs.dagger.hilt.work)
 
     // Coil
-    implementation(libs.coil.base)
+    implementation(libs.coil.core)
+    implementation(libs.coil.okhttp)
     implementation(libs.coil.gif)
     implementation(libs.coil.video)
 
