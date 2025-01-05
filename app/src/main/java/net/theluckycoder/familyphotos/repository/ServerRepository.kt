@@ -53,11 +53,27 @@ class ServerRepository @Inject constructor(
     suspend fun downloadAllPhotos() = coroutineScope {
         val service = photosService.get()
         val userPhotosAsync = async { service.getPhotosList(false) }
-        val publicPhotos = service.getPhotosList(true)
+        val publicPhotosAsync = async { service.getPhotosList(true) }
 
-        val userPhotos = userPhotosAsync.await()
-        if (userPhotos.isSuccessful && publicPhotos.isSuccessful) {
-            val photos = (userPhotos.body() ?: emptyList()) + (publicPhotos.body() ?: emptyList())
+        val favoritePhotosResponse = service.getFavorites()
+        val userPhotosResponse = userPhotosAsync.await()
+        val publicPhotosResponse = publicPhotosAsync.await()
+
+        if (favoritePhotosResponse.isSuccessful && userPhotosResponse.isSuccessful && publicPhotosResponse.isSuccessful) {
+            val favorites = (favoritePhotosResponse.body() ?: emptyList()).toSet()
+            val userPhotos = (userPhotosResponse.body() ?: emptyList())
+            val publicPhotos = (publicPhotosResponse.body() ?: emptyList())
+            val photos = (userPhotos + publicPhotos).map {
+                NetworkPhoto(
+                    id = it.id,
+                    userId = it.userId,
+                    name = it.name,
+                    timeCreated = it.createdAt,
+                    fileSize = it.fileSize,
+                    folder = it.folder,
+                    isFavorite = favorites.contains(it.id),
+                )
+            }
 
             if (photos.isNotEmpty()) {
                 networkPhotosDao.replaceAll(photos)
@@ -191,7 +207,7 @@ class ServerRepository @Inject constructor(
         val name = fileToUpload?.name ?: localPhoto.name
         val fileBody = MultipartBody.Part.createFormData("file", name, requestFile)
 
-        val response =  photosService.get().uploadPhoto(
+        val response = photosService.get().uploadPhoto(
             timeCreated = localPhoto.timeCreated.toString(),
             file = fileBody,
             makePublic = public,
@@ -239,7 +255,10 @@ class ServerRepository @Inject constructor(
         if (response.isSuccessful) {
             networkPhotosDao.update(photo.copy(isFavorite = add))
         } else {
-            Log.e("ServerRepository", "Failed to add/remove favorite: " + response.errorBody()?.string())
+            Log.e(
+                "ServerRepository",
+                "Failed to add/remove favorite: " + response.errorBody()?.string()
+            )
         }
     }
 }

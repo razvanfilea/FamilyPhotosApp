@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.network.service
 
+import net.theluckycoder.familyphotos.model.BasicNetworkPhoto
 import net.theluckycoder.familyphotos.model.ExifField
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import okhttp3.MultipartBody
@@ -20,7 +21,7 @@ interface PhotosService {
     suspend fun ping(): Response<Void>
 
     @GET("/photos")
-    suspend fun getPhotosList(@Query("public") public: Boolean): Response<List<NetworkPhoto>>
+    suspend fun getPhotosList(@Query("public") public: Boolean): Response<List<BasicNetworkPhoto>>
 
     @Streaming
     @GET("photos/download/{id}")
@@ -53,6 +54,9 @@ interface PhotosService {
         @Query("makePublic") makePublic: Boolean,
         @Query("targetFolderName") newFolderName: String?,
     ): Response<NetworkPhoto>
+
+    @GET("/photos/favorite")
+    suspend fun getFavorites(): Response<List<Long>>
 
     @POST("/photos/favorite/{photoId}")
     suspend fun addFavorite(@Path("photoId") photoId: Long): Response<Void>
