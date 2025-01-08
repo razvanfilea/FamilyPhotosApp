@@ -21,7 +21,7 @@ android {
         minSdk = 30
         targetSdk = 33
         versionCode = 26
-        versionName = "2.6.8"
+        versionName = "2.6.9"
         resourceConfigurations += listOf("en", "ro")
     }
 
@@ -145,5 +145,4 @@ dependencies {
     // Other
     implementation(libs.processPheonix)
     implementation(libs.telephoto)
-//    implementation("com.github.jens-muenker:fuzzywuzzy-kotlin:1.0.0")
 }

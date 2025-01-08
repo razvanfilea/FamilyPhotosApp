@@ -21,7 +21,7 @@ interface PhotosService {
     suspend fun ping(): Response<Void>
 
     @GET("/photos")
-    suspend fun getPhotosList(@Query("public") public: Boolean): Response<List<BasicNetworkPhoto>>
+    suspend fun getPhotosList(): Response<List<BasicNetworkPhoto>>
 
     @Streaming
     @GET("photos/download/{id}")

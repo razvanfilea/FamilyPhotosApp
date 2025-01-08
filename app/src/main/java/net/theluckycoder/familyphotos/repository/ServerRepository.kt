@@ -52,18 +52,14 @@ class ServerRepository @Inject constructor(
 
     suspend fun downloadAllPhotos() = coroutineScope {
         val service = photosService.get()
-        val userPhotosAsync = async { service.getPhotosList(false) }
-        val publicPhotosAsync = async { service.getPhotosList(true) }
+        val photosAsync = async { service.getPhotosList() }
 
         val favoritePhotosResponse = service.getFavorites()
-        val userPhotosResponse = userPhotosAsync.await()
-        val publicPhotosResponse = publicPhotosAsync.await()
+        val photosResponse = photosAsync.await()
 
-        if (favoritePhotosResponse.isSuccessful && userPhotosResponse.isSuccessful && publicPhotosResponse.isSuccessful) {
+        if (favoritePhotosResponse.isSuccessful && photosResponse.isSuccessful) {
             val favorites = (favoritePhotosResponse.body() ?: emptyList()).toSet()
-            val userPhotos = (userPhotosResponse.body() ?: emptyList())
-            val publicPhotos = (publicPhotosResponse.body() ?: emptyList())
-            val photos = (userPhotos + publicPhotos).map {
+            val photos = (photosResponse.body() ?: emptyList()).map {
                 NetworkPhoto(
                     id = it.id,
                     userId = it.userId,
