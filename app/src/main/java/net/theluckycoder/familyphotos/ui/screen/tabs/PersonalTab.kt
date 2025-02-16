@@ -28,7 +28,7 @@ import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 object PersonalTab : BottomTab {
 
-    var initialPhotoId: Long = 0
+    private var initialPhotoId: Long = 0
 
     override val options: TabOptions
         @Composable

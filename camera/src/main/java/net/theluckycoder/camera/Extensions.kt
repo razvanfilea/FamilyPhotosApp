@@ -30,8 +30,7 @@ import kotlin.coroutines.suspendCoroutine
 private const val BITMAP_DATE_FORMAT = "dd.MM.yyyy"
 private const val FILENAME_FORMAT = "yyyyMMdd_HHmmssSS"
 
-//internal val Context.executor: Executor
-//    get() = ContextCompat.getMainExecutor(this)
+private val TEXT_COLOR = Color.parseColor("#5cf992")
 
 internal suspend fun CameraController.takePicture(context: Context): Uri {
     return suspendCoroutine { continuation ->
@@ -66,14 +65,14 @@ internal suspend fun CameraController.takePicture(context: Context): Uri {
                 Canvas(rotatedBitmap).apply {
                     val tPaint = Paint().apply {
                         textSize = 0.05f * rotatedBitmap.width
-                        color = Color.GREEN
+                        color = TEXT_COLOR
                         style = Paint.Style.FILL
                     }
                     val textWidth = tPaint.measureText(formattedDate)
                     drawText(
                         formattedDate,
-                        rotatedBitmap.width - textWidth - 0.01f * rotatedBitmap.width,
-                        rotatedBitmap.height - 0.01f * rotatedBitmap.height,
+                        rotatedBitmap.width - textWidth - 0.02f * rotatedBitmap.width,
+                        rotatedBitmap.height - 0.02f * rotatedBitmap.height,
                         tPaint
                     )
                 }

@@ -19,10 +19,13 @@ android {
     defaultConfig {
         applicationId = "net.theluckycoder.familyphotos"
         minSdk = 30
-        targetSdk = 33
+        targetSdk = 35
         versionCode = 26
-        versionName = "2.6.9"
-        resourceConfigurations += listOf("en", "ro")
+        versionName = "2.7.0"
+    }
+
+    androidResources {
+        localeFilters += listOf("en", "ro")
     }
 
     buildTypes {

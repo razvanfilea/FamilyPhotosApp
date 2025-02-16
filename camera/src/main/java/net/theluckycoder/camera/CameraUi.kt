@@ -6,6 +6,9 @@ import android.net.Uri
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
+import androidx.camera.core.resolutionselector.AspectRatioStrategy
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.compose.animation.core.Animatable
@@ -42,9 +45,9 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 
@@ -57,11 +60,17 @@ internal fun CameraUi() {
     val lifecycleOwner = LocalLifecycleOwner.current
 
     val cameraController: CameraController = remember {
+        val resolution =
+            ResolutionSelector.Builder()
+                .setResolutionStrategy(ResolutionStrategy.HIGHEST_AVAILABLE_STRATEGY)
+                .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
+                .build()
+
         LifecycleCameraController(context).apply {
             bindToLifecycle(lifecycleOwner)
             imageCaptureMode = ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY
-            imageCaptureTargetSize = CameraController.OutputSize(DEFAULT_ASPECT_RATIO)
-            previewTargetSize = CameraController.OutputSize(DEFAULT_ASPECT_RATIO)
+            setImageCaptureResolutionSelector(resolution)
+            setImageCaptureResolutionSelector(resolution)
             setEnabledUseCases(CameraController.IMAGE_CAPTURE)
         }
     }
@@ -210,13 +219,22 @@ private fun TopSettings(
         onClick = {
             aspectRatio.intValue = when (aspectRatio.intValue) {
                 AspectRatio.RATIO_4_3 -> AspectRatio.RATIO_16_9
-                AspectRatio.RATIO_16_9 -> AspectRatio.RATIO_4_3
+                else -> AspectRatio.RATIO_4_3
+            }
+
+            val aspectRatioStrategy = when (aspectRatio.intValue) {
+                AspectRatio.RATIO_4_3 -> AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY
+                AspectRatio.RATIO_16_9 -> AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY
                 else -> throw IllegalArgumentException("Invalid Aspect Ratio")
             }
 
-            val outputSize = CameraController.OutputSize(aspectRatio.intValue)
-            cameraController.imageCaptureTargetSize = outputSize
-            cameraController.previewTargetSize = outputSize
+            val resolution =
+                ResolutionSelector.Builder()
+                    .setResolutionStrategy(ResolutionStrategy.HIGHEST_AVAILABLE_STRATEGY)
+                    .setAspectRatioStrategy(aspectRatioStrategy)
+                    .build()
+            cameraController.setImageCaptureResolutionSelector(resolution)
+            cameraController.setImageCaptureResolutionSelector(resolution)
         }
     ) {
         val aspectRatioIcon = when (aspectRatio.intValue) {
