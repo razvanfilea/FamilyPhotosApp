@@ -96,6 +96,7 @@ data class PhotoScreen private constructor(
                     is LocalPhoto -> photoViewModel.getLocalFolderPhotos(startPhoto.folder!!)
                     is NetworkPhoto -> photoViewModel.getNetworkFolderPhotos(startPhoto.folder!!)
                 }
+
                 Source.Memories -> photoViewModel.getPhotosInWeek(startPhoto as NetworkPhoto)
                 Source.Favorites -> photoViewModel.getFavoritePhotos()
             }
@@ -158,7 +159,12 @@ data class PhotoScreen private constructor(
                             navIconOnClick = { navigator.pop() },
                             actions = {
                                 if (currentPhoto is NetworkPhoto) {
-                                    IconButton(onClick = { photoViewModel.updateFavorite(currentPhoto, !currentPhoto.isFavorite) }) {
+                                    IconButton(onClick = {
+                                        photoViewModel.updateFavorite(
+                                            currentPhoto,
+                                            !currentPhoto.isFavorite
+                                        )
+                                    }) {
                                         Icon(
                                             painterResource(if (currentPhoto.isFavorite) R.drawable.ic_star_filled else R.drawable.ic_star_outline),
                                             contentDescription = null

@@ -1,26 +1,27 @@
 [versions]
-agp = "8.8.1"
+agp = "8.9.2"
 kotlin_base = "2.1.10"
 kotlin_ksp = "2.1.10-1.0.30"
-kotlin_coroutines = "1.10.1"
-kotlin_serialization = "1.8.0"
+kotlin_coroutines = "1.10.2"
+kotlin_serialization = "1.8.1"
 kotlin_datetime = "0.6.2"
 kotlin_collections = "0.3.8"
-compose_base = "1.7.8"
-compose_activity = "1.10.0"
+compose_base = "1.8.0"
+compose_activity = "1.10.1"
 compose_compiler = "1.5.15"
-compose_material3 = "1.3.1"
+compose_material3 = "1.3.2"
+compose_lifecycleViewmodel = "2.8.7"
 voyager = "1.0.1"
-androidx_core = "1.15.0"
-androidx_room = "2.6.1"
-androidx_media = "1.5.1"
-androidx_datastore = "1.1.2"
-androidx_exif = "1.3.7"
+androidx_core = "1.16.0"
+androidx_room = "2.7.1"
+androidx_media = "1.6.1"
+androidx_datastore = "1.1.4"
+androidx_exif = "1.4.1"
 androidx_paging = "3.3.6"
-androidx_camerax = "1.4.1"
-androidx_work = "2.10.0"
-coil = "3.1.0"
-dagger = "2.55"
+androidx_camerax = "1.4.2"
+androidx_work = "2.10.1"
+coil = "3.2.0-rc02"
+dagger = "2.56.2"
 retrofit = "2.11.0"
 okhttp = "4.12.0"
 processPheonix = "3.0.0"
@@ -55,6 +56,7 @@ compose_animation = { module = "androidx.compose.animation:animation", version.r
 compose_tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose_base" }
 compose_toolingPreview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose_base" }
 compose_activity = { module = "androidx.activity:activity-compose", version.ref = "compose_activity" }
+compose_lifecycleViewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "compose_lifecycleViewmodel" }
 
 voyager_navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyager" }
 voyager_tabNavigator = { module = "cafe.adriel.voyager:voyager-tab-navigator", version.ref = "voyager" }
@@ -66,6 +68,7 @@ room_paging = { module = "androidx.room:room-paging", version.ref = "androidx_ro
 
 media_exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "androidx_media" }
 media_ui = { module = "androidx.media3:media3-ui", version.ref = "androidx_media" }
+media_compose = { module = "androidx.media3:media3-ui-compose", version.ref = "androidx_media" }
 media_okhttp = { module = "androidx.media3:media3-datasource-okhttp", version.ref = "androidx_media" }
 
 paging_runtime = { module = "androidx.paging:paging-runtime-ktx", version.ref = "androidx_paging" }

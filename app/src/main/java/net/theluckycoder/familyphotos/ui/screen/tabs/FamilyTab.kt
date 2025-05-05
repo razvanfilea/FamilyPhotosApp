@@ -27,7 +27,7 @@ object FamilyTab : BottomTab {
             painterResource(R.drawable.ic_family_outlined)
         )
 
-    var initialPhotoId: Long = 0L
+    private val initialPhotoIdState = mutableStateOf<Long?>(null)
 
     override val selectedIcon: Painter
         @Composable get() = painterResource(R.drawable.ic_family_filled)
@@ -55,9 +55,8 @@ object FamilyTab : BottomTab {
                 }
             },
             photosPagingList = mainViewModel.publicPhotosPager,
-            mainViewModel = mainViewModel,
-            initialPhotoId = initialPhotoId,
-            onSaveInitialPhotoId = { it?.let { initialPhotoId = it } },
+            initialPhotoIdState = initialPhotoIdState,
+            zoomIndexState = mainViewModel.zoomIndexState,
         )
     }
 }

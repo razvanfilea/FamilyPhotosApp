@@ -97,7 +97,12 @@ data class NetworkFolderScreen(
                     onSelect = { selectedIds += photo.id },
                     onDeselect = { selectedIds -= photo.id }
                 ) {
-                    SimpleSquarePhoto(photo)
+                    SimpleSquarePhoto(
+                        photo,
+                        Modifier
+                            .padding(0.5.dp)
+                            .animateItem(fadeInSpec = null, fadeOutSpec = null)
+                    )
 
                     val isVideo = remember(photo) { photo.isVideo }
 

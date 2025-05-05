@@ -81,12 +81,12 @@ import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
 
 @Composable
-fun SimpleSquarePhoto(photo: Photo) {
+fun SimpleSquarePhoto(photo: Photo, modifier: Modifier = Modifier) {
     CoilPhoto(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-            .padding(1.dp),
+            .then(modifier),
         photo = photo,
         preview = true,
         contentScale = ContentScale.Crop,

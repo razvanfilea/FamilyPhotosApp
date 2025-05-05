@@ -35,6 +35,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import okio.Path.Companion.toOkioPath
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.time.Duration
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -102,6 +103,7 @@ object NetworkModule {
         @Named("receiveCookie") receiveCookieInterceptor: Interceptor,
     ): OkHttpClient = runBlocking {
         OkHttpClient.Builder()
+            .writeTimeout(Duration.ofMinutes(2))
             .addInterceptor(BrotliInterceptor)
             .addInterceptor(setCookieInterceptor)
             .addInterceptor(receiveCookieInterceptor)

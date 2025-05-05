@@ -4,8 +4,8 @@ import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.os.Parcel
 import android.os.Parcelable
+import android.util.Log
 import androidx.compose.animation.*
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -40,6 +40,20 @@ import net.theluckycoder.familyphotos.model.isVideo
 import net.theluckycoder.familyphotos.ui.VerticallyAnimatedInt
 import net.theluckycoder.familyphotos.ui.screen.PhotoScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
+
+private val PORTRAIT_ZOOM_LEVELS = intArrayOf(4, 5, 7, 10)
+private val LANDSCAPE_ZOOM_LEVELS = intArrayOf(8, 10, 14, 20)
+val MAX_ZOOM_LEVEL_INDEX = 4
+
+@Composable
+fun getZoomColumnCount(zoomIndex: Int): Int {
+    val levels = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT)
+        PORTRAIT_ZOOM_LEVELS
+    else
+        LANDSCAPE_ZOOM_LEVELS
+
+    return levels[zoomIndex]
+}
 
 @Composable
 fun MemoriesList(
@@ -93,16 +107,9 @@ fun PhotosList(
     headerContent: (@Composable () -> Unit)? = null,
     memoriesContent: @Composable () -> Unit,
     photosPagingList: Flow<PagingData<Any>>,
-    mainViewModel: MainViewModel,
-    initialPhotoId: Long = 0L,
-    onSaveInitialPhotoId: (Long?) -> Unit = {}
+    initialPhotoIdState: MutableState<Long?>,
+    zoomIndexState: MutableIntState,
 ) = Column(Modifier.fillMaxSize()) {
-
-    val navigator = LocalNavigator.currentOrThrow
-    val photos = photosPagingList.collectAsLazyPagingItems()
-
-    val columnCount =
-        if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 5 else 10
 
     val selectedPhotoIds = remember { mutableStateListOf<Long>() }
 
@@ -130,16 +137,21 @@ fun PhotosList(
                 }
             },
             actions = {
-                PhotoUtilitiesActions(NetworkPhoto::class, selectedPhotoIds, mainViewModel)
+                PhotoUtilitiesActions(NetworkPhoto::class, selectedPhotoIds)
             },
         )
     }
 
+    val navigator = LocalNavigator.currentOrThrow
+    val photos = photosPagingList.collectAsLazyPagingItems()
+    val columnCount = getZoomColumnCount(zoomIndexState.intValue)
     val listState = rememberLazyGridState()
 
     LazyVerticalGrid(
         state = listState,
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .detectZoomIn(MAX_ZOOM_LEVEL_INDEX, zoomIndexState),
         columns = GridCells.Fixed(columnCount)
     ) {
         if (headerContent != null) {
@@ -200,16 +212,13 @@ fun PhotosList(
 
     if (!restored) {
         LaunchedEffect(photos.itemSnapshotList.size) {
-            if (initialPhotoId != 0L) {
+            if (initialPhotoIdState.value != 0L) {
                 val index = photos.itemSnapshotList.items
-                    .indexOfFirst { (it as? Photo)?.id == initialPhotoId }
+                    .indexOfFirst { (it as? Photo)?.id == initialPhotoIdState.value }
 
                 if (index != -1 && index != 0) {
                     listState.scrollToItem(index)
-                    restored = true
                 }
-            } else {
-                restored = true
             }
         }
     }
@@ -219,16 +228,12 @@ fun PhotosList(
             try {
                 var index = listState.firstVisibleItemIndex
 
-                if (index < 10) { // No reason to save it
-                    onSaveInitialPhotoId(null)
-                } else {
-                    while ((photos.peek(index) as? Photo?) == null)
-                        ++index
+                while ((photos.peek(index) as? Photo?) == null)
+                    ++index
 
-                    onSaveInitialPhotoId((photos.peek(index) as Photo).id)
-                }
+                initialPhotoIdState.value = ((photos.peek(index) as Photo).id)
             } catch (e: Exception) {
-                // It's really not necessary for this to actually happen
+                Log.w("PhotoList", "Failed to restore state", e)
             }
         }
     }
@@ -291,13 +296,12 @@ private data class PagingPlaceholderKey(private val index: Int) : Parcelable {
     companion object {
         @Suppress("unused")
         @JvmField
-        val CREATOR: Parcelable.Creator<PagingPlaceholderKey> =
-            object : Parcelable.Creator<PagingPlaceholderKey> {
-                override fun createFromParcel(parcel: Parcel) =
-                    PagingPlaceholderKey(parcel.readInt())
+        val CREATOR = object : Parcelable.Creator<PagingPlaceholderKey> {
+            override fun createFromParcel(parcel: Parcel) =
+                PagingPlaceholderKey(parcel.readInt())
 
-                override fun newArray(size: Int) = arrayOfNulls<PagingPlaceholderKey?>(size)
-            }
+            override fun newArray(size: Int) = arrayOfNulls<PagingPlaceholderKey?>(size)
+        }
     }
 }
 

@@ -71,7 +71,14 @@ class UploadWorker @AssistedInject constructor(
                     createForegroundInfo("Uploaded $index/$total files", index, total)
                 )
 
-                if (!serverRepository.uploadFile(localPhoto, makePublic, uploadFolder, null)) {
+                val success = try {
+                    serverRepository.uploadFile(localPhoto, makePublic, uploadFolder, null)
+                } catch (e: IOException) {
+                    Log.e(TAG, "Caught exception while uploading $localPhotoId", e)
+                    false
+                }
+
+                if (success) {
                     Log.e(TAG, "Failed to upload $localPhotoId")
                     failedCount++
                 }
@@ -85,10 +92,6 @@ class UploadWorker @AssistedInject constructor(
             Result.retry()
         } catch (e: CancellationException) {
             createFailNotification(FailReason.Cancelled)
-            Result.failure()
-        } catch (e: IOException) {
-            e.printStackTrace()
-            createFailNotification(FailReason.IoError, e.message)
             Result.failure()
         } catch (e: Exception) {
             e.printStackTrace()
@@ -147,7 +150,6 @@ class UploadWorker @AssistedInject constructor(
         val messageRes = when (failReason) {
             FailReason.Cancelled -> R.string.notification_backup_fail_cancelled
             FailReason.NoInternet -> R.string.notification_backup_fail_internet
-            FailReason.IoError -> R.string.notification_backup_fail_io
             FailReason.Other -> R.string.notification_backup_fail_unknown
         }
 
@@ -175,9 +177,21 @@ class UploadWorker @AssistedInject constructor(
         val title = ctx.getString(R.string.notification_backup_finished)
 
         val content = when {
-            successfulCount == 0 -> ctx.getString(R.string.notification_backup_finished_desc_only_failure, failedCount)
-            failedCount == 0 -> ctx.getString(R.string.notification_backup_finished_desc_only_success, successfulCount)
-            else -> ctx.getString(R.string.notification_backup_finished_desc, successfulCount, failedCount)
+            successfulCount == 0 -> ctx.getString(
+                R.string.notification_backup_finished_desc_only_failure,
+                failedCount
+            )
+
+            failedCount == 0 -> ctx.getString(
+                R.string.notification_backup_finished_desc_only_success,
+                successfulCount
+            )
+
+            else -> ctx.getString(
+                R.string.notification_backup_finished_desc,
+                successfulCount,
+                failedCount
+            )
         }
 
         val notification = NotificationCompat.Builder(ctx, NOTIFICATION_CHANNEL)
@@ -200,7 +214,6 @@ class UploadWorker @AssistedInject constructor(
     enum class FailReason {
         Cancelled,
         NoInternet,
-        IoError,
         Other
     }
 

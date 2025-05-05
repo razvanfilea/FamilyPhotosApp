@@ -16,6 +16,7 @@ import net.theluckycoder.familyphotos.db.dao.NetworkPhotosDao
 import net.theluckycoder.familyphotos.model.ExifData
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
+import net.theluckycoder.familyphotos.model.isVideo
 import net.theluckycoder.familyphotos.network.service.PhotosService
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -114,7 +115,9 @@ class ServerRepository @Inject constructor(
 
         runCatching {
             with(context.contentResolver) {
-                insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)?.also {
+                val contentUri =
+                    if (networkPhoto.isVideo) MediaStore.Video.Media.EXTERNAL_CONTENT_URI else MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                insert(contentUri, values)?.also {
                     uri = it // Keep uri reference so it can be removed on failure
 
                     openOutputStream(it)?.use { output ->
@@ -159,8 +162,15 @@ class ServerRepository @Inject constructor(
 
             if (!cursor.moveToFirst()) return null
 
+            val contentUri =
+                if (networkPhoto.isVideo) {
+                    MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
+                } else {
+                    MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
+                }
+
             cursor.parseUriToLocalImage(
-                MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL),
+                contentUri,
                 idColumn,
                 bucketColumn,
                 displayNameColumn,

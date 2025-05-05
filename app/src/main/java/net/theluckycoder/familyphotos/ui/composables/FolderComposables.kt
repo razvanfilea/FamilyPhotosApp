@@ -38,11 +38,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.ui.VerticallyAnimatedInt
+import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @Composable
 fun FolderFilterTextField(folderNameFilter: String, onFilterChange: (String) -> Unit) {
@@ -123,6 +125,7 @@ fun <T : Photo> FolderPhotos(
     itemContent: @Composable LazyGridItemScope.(photo: T) -> Unit
 ) = Column(Modifier.fillMaxSize()) {
     val navigator = LocalNavigator.currentOrThrow
+    val mainViewModel: MainViewModel = viewModel()
 
     TopAppBar(
         navigationIcon = {
@@ -156,16 +159,15 @@ fun <T : Photo> FolderPhotos(
         actions = appBarActions,
     )
 
-    val columnCount =
-        if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 4 else 9
-
+    val columnCount = getZoomColumnCount(mainViewModel.zoomIndexState.intValue)
     val gridState = rememberLazyGridState()
 
     LazyVerticalGrid(
         state = gridState,
         columns = GridCells.Fixed(columnCount),
         modifier = Modifier
-            .fillMaxSize(),
+            .fillMaxSize()
+            .detectZoomIn(MAX_ZOOM_LEVEL_INDEX, mainViewModel.zoomIndexState),
     ) {
         items(photosList) { photo ->
             key(photo.id) {

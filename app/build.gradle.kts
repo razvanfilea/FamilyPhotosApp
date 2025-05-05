@@ -21,7 +21,7 @@ android {
         minSdk = 30
         targetSdk = 35
         versionCode = 26
-        versionName = "2.7.0"
+        versionName = "2.7.1"
     }
 
     androidResources {
@@ -98,6 +98,7 @@ dependencies {
     implementation(libs.media.ui)
     implementation(libs.media.exoplayer)
     implementation(libs.media.okhttp)
+    implementation(libs.media.compose)
 
     // Room
     implementation(libs.room.runtime)
@@ -113,7 +114,7 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.animation)
     implementation(libs.compose.activity)
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation(libs.compose.lifecycleViewmodel)
 
     // Voyager
     implementation(libs.voyager.navigator)

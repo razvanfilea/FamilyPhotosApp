@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -111,6 +112,7 @@ class MainViewModel @Inject constructor(
 
     // Ui
     val isRefreshing = MutableStateFlow(false)
+    val zoomIndexState = mutableIntStateOf(1)
 
     init {
         viewModelScope.launch {

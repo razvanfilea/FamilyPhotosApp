@@ -28,7 +28,7 @@ import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 object PersonalTab : BottomTab {
 
-    private var initialPhotoId: Long = 0
+    private val initialPhotoIdState = mutableStateOf<Long?>(null)
 
     override val options: TabOptions
         @Composable
@@ -63,9 +63,8 @@ object PersonalTab : BottomTab {
                 }
             },
             photosPagingList = mainViewModel.personalPhotosPager,
-            mainViewModel = mainViewModel,
-            initialPhotoId = initialPhotoId,
-            onSaveInitialPhotoId = { it?.let { initialPhotoId = it } }
+            initialPhotoIdState = initialPhotoIdState,
+            zoomIndexState = mainViewModel.zoomIndexState,
         )
     }
 
