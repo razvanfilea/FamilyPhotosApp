@@ -40,6 +40,6 @@ class PhotosApp : Application(), Configuration.Provider {
             .build()
 
     companion object {
-        val LOCAL_TIME_ZONE = TimeZone.of("Europe/Bucharest")
+        val LOCAL_TIME_ZONE = TimeZone.currentSystemDefault()
     }
 }

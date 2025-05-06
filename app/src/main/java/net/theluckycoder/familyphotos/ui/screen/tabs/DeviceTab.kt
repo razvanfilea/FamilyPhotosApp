@@ -37,7 +37,7 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.LocalFolder
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.ui.composables.FolderPreviewItem
-import net.theluckycoder.familyphotos.ui.screen.DeviceFolderScreen
+import net.theluckycoder.familyphotos.ui.screen.FolderScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 object DeviceTab : BottomTab, FoldersTab<LocalFolder>() {
@@ -117,7 +117,7 @@ object DeviceTab : BottomTab, FoldersTab<LocalFolder>() {
                     name = folder.name,
                     photosCount = folder.count,
                     onClick = {
-                        navigator.push(DeviceFolderScreen(folder.name))
+                        navigator.push(FolderScreen(FolderScreen.Source.NetworkFolder(folder.name)))
                     },
                 )
             }

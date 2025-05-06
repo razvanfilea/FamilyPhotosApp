@@ -25,8 +25,7 @@ class BackupWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         foldersRepository.updatePhoneAlbums()
 
-        val photos = foldersRepository.localPhotosFromFolder("Camera").first()
-            .take(50)
+        val photos = foldersRepository.localPhotosFromFolder("Camera", 50)
             .filter { !it.isSavedToCloud } // Photos not uploaded
 
         val result = try {

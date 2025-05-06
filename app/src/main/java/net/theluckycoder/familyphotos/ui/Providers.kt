@@ -1,5 +1,8 @@
 package net.theluckycoder.familyphotos.ui
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.compositionLocalOf
 import coil3.ImageLoader
@@ -14,3 +17,9 @@ val LocalSnackbarHostState =
 val LocalOkHttpClient = compositionLocalOf<Lazy<OkHttpClient>> {
     error("No OkHttpClient found!")
 }
+
+val LocalAnimatedVisibilityScope = compositionLocalOf<AnimatedVisibilityScope?> { null }
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope> { error("No LocalSharedTransitionScope found!") }
+

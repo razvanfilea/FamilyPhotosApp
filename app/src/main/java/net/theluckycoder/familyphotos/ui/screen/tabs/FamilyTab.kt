@@ -2,6 +2,7 @@ package net.theluckycoder.familyphotos.ui.screen.tabs
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
@@ -10,11 +11,12 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.compose.collectAsLazyPagingItems
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.composables.MemoriesList
-import net.theluckycoder.familyphotos.ui.composables.PhotosList
+import net.theluckycoder.familyphotos.ui.composables.PhotoListWithViewer
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 object FamilyTab : BottomTab {
@@ -27,10 +29,10 @@ object FamilyTab : BottomTab {
             painterResource(R.drawable.ic_family_outlined)
         )
 
-    private val initialPhotoIdState = mutableStateOf<Long?>(null)
-
     override val selectedIcon: Painter
         @Composable get() = painterResource(R.drawable.ic_family_filled)
+
+    private val gridState = LazyGridState()
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -43,10 +45,11 @@ object FamilyTab : BottomTab {
             memoriesList.addAll(mainViewModel.getPublicMemories())
         }
 
-        PhotosList(
-            headerContent = {
-                Spacer(Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets))
-            },
+        val photos = mainViewModel.publicPhotosPager.collectAsLazyPagingItems()
+        PhotoListWithViewer(
+            gridState,
+            photos,
+            headerContent = { Spacer(Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets)) },
             memoriesContent = {
                 if (memoriesList.isNotEmpty()) {
                     MemoriesList(
@@ -54,9 +57,7 @@ object FamilyTab : BottomTab {
                     )
                 }
             },
-            photosPagingList = mainViewModel.publicPhotosPager,
-            initialPhotoIdState = initialPhotoIdState,
-            zoomIndexState = mainViewModel.zoomIndexState,
+            mainViewModel = mainViewModel,
         )
     }
 }

@@ -20,15 +20,12 @@ abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>("network_photo
     )
     abstract fun getPhotosPaged(userName: String): PagingSource<Int, NetworkPhoto>
 
-    @Query(
-        """SELECT * FROM network_photo
-            WHERE network_photo.userId = :userId
-            ORDER BY network_photo.timeCreated DESC"""
-    )
-    abstract fun getPhotos(userId: Long): List<NetworkPhoto>
-
-    @Query("SELECT * FROM network_photo WHERE network_photo.folder = :folder ORDER BY network_photo.timeCreated ASC")
-    abstract fun getFolderPhotos(folder: String): Flow<List<NetworkPhoto>>
+    @Query("""
+       SELECT * FROM network_photo
+        WHERE network_photo.folder = :folder
+        ORDER BY network_photo.timeCreated DESC
+    """)
+    abstract fun getFolderPhotos(folder: String): PagingSource<Int, NetworkPhoto>
 
     @Query(
         """SELECT folder, id, userId, COUNT(id) FROM network_photo 
@@ -47,18 +44,11 @@ abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>("network_photo
     abstract fun getPhotosInThisWeek(userId: String, timestamp: Long): Flow<List<NetworkPhoto>>
 
     @Query(
-        """SELECT * FROM network_photo
-        WHERE network_photo.userId = :userId
-        AND ROUND(network_photo.timeCreated / 3600 / 24 / 7 / 30) = ROUND(:timestamp / 3600 / 24 / 7 / 30)
+        """
+        SELECT * FROM network_photo
+        WHERE network_photo.isFavorite = true
         ORDER BY network_photo.timeCreated DESC
     """
     )
-    abstract fun getPhotosInThisMonth(userId: String, timestamp: Long): Flow<List<NetworkPhoto>>
-
-    @Query("""
-        SELECT * FROM NETWORK_PHOTO
-        WHERE network_photo.isFavorite = true
-        ORDER BY network_photo.timeCreated DESC
-    """)
-    abstract fun getFavoritePhotos(): Flow<List<NetworkPhoto>>
+    abstract fun getFavoritePhotosPaged(): PagingSource<Int, NetworkPhoto>
 }

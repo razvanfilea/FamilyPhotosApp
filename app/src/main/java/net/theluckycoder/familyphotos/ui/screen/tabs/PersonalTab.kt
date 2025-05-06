@@ -1,8 +1,26 @@
 package net.theluckycoder.familyphotos.ui.screen.tabs
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
@@ -13,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.compose.collectAsLazyPagingItems
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.TabOptions
@@ -22,13 +41,11 @@ import net.theluckycoder.familyphotos.PhotosApp
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.composables.MemoriesList
-import net.theluckycoder.familyphotos.ui.composables.PhotosList
+import net.theluckycoder.familyphotos.ui.composables.PhotoListWithViewer
 import net.theluckycoder.familyphotos.ui.screen.SettingsScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 object PersonalTab : BottomTab {
-
-    private val initialPhotoIdState = mutableStateOf<Long?>(null)
 
     override val options: TabOptions
         @Composable
@@ -41,20 +58,28 @@ object PersonalTab : BottomTab {
     override val selectedIcon: Painter
         @Composable get() = painterResource(R.drawable.ic_person_filled)
 
+    private val gridState = LazyGridState()
+
+    @OptIn(ExperimentalSharedTransitionApi::class)
     @Composable
     override fun Content() {
         val mainViewModel: MainViewModel = viewModel()
 
-        val isOnline by mainViewModel.isOnlineFlow.collectAsState()
-        val displayName by mainViewModel.displayNameFlow.collectAsState(null)
         val memoriesList = remember { mutableStateListOf<Pair<Int, List<NetworkPhoto>>>() }
 
         LaunchedEffect(Unit) {
             memoriesList.addAll(mainViewModel.getPersonalMemories())
         }
 
-        PhotosList(
-            headerContent = { Header(isOnline, displayName) },
+        val photos = mainViewModel.personalPhotosPager.collectAsLazyPagingItems()
+        PhotoListWithViewer(
+            gridState = gridState,
+            photos = photos,
+            headerContent = {
+                val isOnline by mainViewModel.isOnlineFlow.collectAsState()
+                val displayName by mainViewModel.displayNameFlow.collectAsState(null)
+                Header(isOnline, displayName)
+            },
             memoriesContent = {
                 if (memoriesList.isNotEmpty()) {
                     MemoriesList(
@@ -62,9 +87,7 @@ object PersonalTab : BottomTab {
                     )
                 }
             },
-            photosPagingList = mainViewModel.personalPhotosPager,
-            initialPhotoIdState = initialPhotoIdState,
-            zoomIndexState = mainViewModel.zoomIndexState,
+            mainViewModel = mainViewModel,
         )
     }
 
@@ -84,7 +107,8 @@ object PersonalTab : BottomTab {
 
             if (!displayName.isNullOrEmpty()) {
                 val str = remember {
-                    val localDateTime = Clock.System.now().toLocalDateTime(PhotosApp.LOCAL_TIME_ZONE)
+                    val localDateTime =
+                        Clock.System.now().toLocalDateTime(PhotosApp.LOCAL_TIME_ZONE)
                     val hour = localDateTime.hour
                     when {
                         hour in 6..10 -> R.string.message_morning
@@ -137,3 +161,5 @@ object PersonalTab : BottomTab {
         )
     }
 }
+
+

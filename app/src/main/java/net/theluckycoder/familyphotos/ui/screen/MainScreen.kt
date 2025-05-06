@@ -50,13 +50,15 @@ object MainScreen : Screen {
                 modifier = Modifier.fillMaxSize(),
                 snackbarHost = { SnackbarHost(snackbarHostState) },
                 bottomBar = {
-                    NavigationBar(
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        TabNavigationItem(PersonalTab)
-                        TabNavigationItem(FamilyTab)
-                        TabNavigationItem(NetworkFoldersTab)
-                        TabNavigationItem(DeviceTab)
+                    if (mainViewModel.showBars.value) {
+                        NavigationBar(
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            TabNavigationItem(PersonalTab)
+                            TabNavigationItem(FamilyTab)
+                            TabNavigationItem(NetworkFoldersTab)
+                            TabNavigationItem(DeviceTab)
+                        }
                     }
                 }
             ) { paddingValues ->

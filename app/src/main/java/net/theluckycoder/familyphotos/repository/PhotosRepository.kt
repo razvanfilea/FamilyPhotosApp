@@ -26,17 +26,6 @@ class PhotosRepository @Inject constructor(
     fun getMemories(timestamp: Long, userName: String? = null) =
         networkPhotosDao.getPhotosInThisWeek(userName ?: PUBLIC_USER_ID, timestamp)
 
-    fun getPhotosInProximity(photo: Photo): Flow<List<NetworkPhoto>> {
-        return when (photo) {
-            is NetworkPhoto -> networkPhotosDao.getPhotosInThisMonth(
-                photo.userId,
-                photo.timeCreated
-            )
-
-            is LocalPhoto -> TODO()
-        }
-    }
-
     suspend fun removeNetworkReference(photo: NetworkPhoto) {
         getLocalPhotoFromNetwork(photo.id)?.let { localPhoto ->
             localPhotosDao.update(localPhoto.copy(networkPhotoId = 0L))
@@ -64,5 +53,5 @@ class PhotosRepository @Inject constructor(
 
     fun getPublicPhotosPaged() = networkPhotosDao.getPhotosPaged(PUBLIC_USER_ID)
 
-    fun getFavoritePhotos() = networkPhotosDao.getFavoritePhotos()
+    fun getFavoritePhotosPaged() = networkPhotosDao.getFavoritePhotosPaged()
 }

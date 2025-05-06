@@ -71,11 +71,11 @@ fun Modifier.detectZoomIn(maxZoomIndex: Int, zoomIndexState: MutableIntState): M
             pass = PointerEventPass.Initial,
             onGesture = { centroid: Offset, newZoom: Float ->
                 val newScale = (zoomFloat * newZoom)
-                zoomFloat = if (newScale > 1.3f) {
+                zoomFloat = if (newScale > 1.5f) {
                     zoomIndexState.intValue =
                         zoomIndexState.intValue.dec().coerceIn(0, maxZoomIndex)
                     1f
-                } else if (newScale < 0.7f) {
+                } else if (newScale < 0.5f) {
                     zoomIndexState.intValue =
                         zoomIndexState.intValue.inc().coerceIn(0, maxZoomIndex)
                     1f

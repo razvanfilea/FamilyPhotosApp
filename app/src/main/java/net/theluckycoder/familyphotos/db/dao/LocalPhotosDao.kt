@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.db.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Query
@@ -22,8 +23,11 @@ abstract class LocalPhotosDao : AbstractPhotosDao<LocalPhoto>("local_photo") {
     )
     abstract fun getFolders(): Flow<List<LocalFolder>>
 
+    @Query("SELECT * FROM local_photo WHERE local_photo.folder = :folder ORDER BY local_photo.timeCreated DESC LIMIT :count")
+    abstract fun getFolderPhotos(folder: String, count: Int): List<LocalPhoto>
+
     @Query("SELECT * FROM local_photo WHERE local_photo.folder = :folder ORDER BY local_photo.timeCreated DESC")
-    abstract fun getFolderPhotos(folder: String): Flow<List<LocalPhoto>>
+    abstract fun getFolderPhotosPaged(folder: String): PagingSource<Int, LocalPhoto>
 
     @Query("SELECT * FROM local_photo WHERE local_photo.networkPhotoId = :networkPhotoId")
     abstract suspend fun findByNetworkId(networkPhotoId: Long): LocalPhoto?

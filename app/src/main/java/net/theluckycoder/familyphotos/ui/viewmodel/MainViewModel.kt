@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -91,17 +92,17 @@ class MainViewModel @Inject constructor(
     val displayNameFlow = userDataStore.displayNameFlow
     val autoBackupFlow = userDataStore.autoBackup
 
-    val personalPhotosPager = Pager(PagingConfig(pageSize = 150, enablePlaceholders = false)) {
+    val personalPhotosPager = Pager(PAGING_CONFIG) {
         photosRepository.getPersonalPhotosPaged(userName)
     }.flow.flowOn(Dispatchers.Default)
         .cachedIn(viewModelScope)
-        .mapPagingPhotos()
+//        .mapPagingPhotos()
 
-    val publicPhotosPager = Pager(PagingConfig(pageSize = 150, enablePlaceholders = false)) {
+    val publicPhotosPager = Pager(PAGING_CONFIG) {
         photosRepository.getPublicPhotosPaged()
     }.flow.flowOn(Dispatchers.Default)
         .cachedIn(viewModelScope)
-        .mapPagingPhotos()
+//        .mapPagingPhotos()
 
     val localFolders = foldersRepository.localFoldersFlow
 
@@ -113,6 +114,7 @@ class MainViewModel @Inject constructor(
     // Ui
     val isRefreshing = MutableStateFlow(false)
     val zoomIndexState = mutableIntStateOf(1)
+    val showBars = mutableStateOf(true)
 
     init {
         viewModelScope.launch {
@@ -238,14 +240,17 @@ class MainViewModel @Inject constructor(
         photosRepository.getMemories(it).first()
     }
 
-    fun getNetworkFolderPhotos(folder: String) =
-        foldersRepository.networkPhotosFromFolder(folder)
+    fun getNetworkFolderPhotosPaged(folder: String) = Pager(PAGING_CONFIG) {
+        foldersRepository.networkPhotosFromFolderPaged(folder)
+    }.flow.cachedIn(viewModelScope)
 
-    fun getFavoritePhotos() =
-        photosRepository.getFavoritePhotos()
+    fun getFavoritePhotosPaged() = Pager(PAGING_CONFIG) {
+        photosRepository.getFavoritePhotosPaged()
+    }.flow.cachedIn(viewModelScope)
 
-    fun getLocalFolderPhotos(folder: String) =
-        foldersRepository.localPhotosFromFolder(folder)
+    fun getLocalFolderPhotosPaged(folder: String) = Pager(PAGING_CONFIG) {
+        foldersRepository.localPhotosFromFolderPaged(folder)
+    }.flow.cachedIn(viewModelScope)
 
     /**
      * Change the folder and the user where these [NetworkPhoto]s belong
@@ -395,6 +400,8 @@ class MainViewModel @Inject constructor(
     companion object {
         private const val UNIQUE_PERIODIC_UPLOAD = "periodic_upload"
 
+        private val PAGING_CONFIG = PagingConfig(pageSize = 50, enablePlaceholders = false)
+
         private val currentDate = Clock.System.now().toLocalDateTime(LOCAL_TIME_ZONE)
 
         private fun Flow<PagingData<NetworkPhoto>>.mapPagingPhotos() = map { pagingData ->
@@ -417,6 +424,21 @@ class MainViewModel @Inject constructor(
                         buildDateString(afterDate)
                     } else null
                 }
+        }
+
+        fun computeSeparatorText(before: Photo?, after: Photo): String? {
+            val beforeDate = before?.let {
+                val instant = Instant.fromEpochSeconds(it.timeCreated)
+                instant.toLocalDateTime(LOCAL_TIME_ZONE)
+            }
+            val afterDate =
+                Instant.fromEpochSeconds(after.timeCreated)
+                    .toLocalDateTime(LOCAL_TIME_ZONE)
+
+            return if (beforeDate == null || beforeDate.monthNumber != afterDate.monthNumber || beforeDate.year != afterDate.year
+            ) {
+                buildDateString(afterDate)
+            } else null
         }
 
         private fun buildDateString(afterDate: LocalDateTime) = buildString {

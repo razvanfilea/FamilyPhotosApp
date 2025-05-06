@@ -12,7 +12,6 @@ import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.Photo
-import net.theluckycoder.familyphotos.repository.FoldersRepository
 import net.theluckycoder.familyphotos.repository.PhotosRepository
 import net.theluckycoder.familyphotos.repository.ServerRepository
 import javax.inject.Inject
@@ -21,17 +20,10 @@ import javax.inject.Inject
 class PhotoViewModel @Inject constructor(
     private val photosRepository: PhotosRepository,
     private val serverRepository: ServerRepository,
-    private val foldersRepository: FoldersRepository,
 ) : ViewModel() {
 
     fun getNetworkPhotoFlow(photoId: Long): Flow<NetworkPhoto?> =
         photosRepository.getNetworkPhoto(photoId)
-
-    fun getPhotosInMonth(photo: Photo) = photosRepository.getPhotosInProximity(photo)
-
-    fun getPhotosInWeek(photo: NetworkPhoto) = photosRepository.getMemories(photo.timeCreated, photo.userId)
-
-    fun getFavoritePhotos() = photosRepository.getFavoritePhotos()
 
     fun getPhotoLocalUriAsync(photo: Photo): Deferred<Uri?> = viewModelScope.async(Dispatchers.IO) {
         when (photo) {
@@ -44,12 +36,6 @@ class PhotoViewModel @Inject constructor(
             }
         }
     }
-
-    fun getNetworkFolderPhotos(folder: String) =
-        foldersRepository.networkPhotosFromFolder(folder)
-
-    fun getLocalFolderPhotos(folder: String) =
-        foldersRepository.localPhotosFromFolder(folder)
 
     fun updateFavorite(photo: NetworkPhoto, add: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {

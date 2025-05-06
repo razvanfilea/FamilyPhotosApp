@@ -13,6 +13,8 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
@@ -36,6 +38,7 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.ui.AppTheme
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.LocalOkHttpClient
+import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.PhotosSlideTransition
 import net.theluckycoder.familyphotos.ui.screen.MainScreen
@@ -76,7 +79,7 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var okHttpClientLazy: Lazy<OkHttpClient>
 
-    @OptIn(ExperimentalAnimationApi::class)
+    @OptIn(ExperimentalAnimationApi::class, ExperimentalSharedTransitionApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -93,14 +96,17 @@ class MainActivity : ComponentActivity() {
             AppTheme {
                 val snackbarHostState = remember { SnackbarHostState() }
 
-                CompositionLocalProvider(
-                    LocalImageLoader provides imageLoaderLazy,
-                    LocalOkHttpClient provides okHttpClientLazy,
-                    LocalSnackbarHostState provides snackbarHostState,
-                    LocalNavigatorScreenLifecycleProvider provides emptyLifecycleProvider
-                ) {
-                    Navigator(MainScreen) {
-                        PhotosSlideTransition(navigator = it)
+                SharedTransitionLayout {
+                    CompositionLocalProvider(
+                        LocalImageLoader provides imageLoaderLazy,
+                        LocalOkHttpClient provides okHttpClientLazy,
+                        LocalSnackbarHostState provides snackbarHostState,
+                        LocalNavigatorScreenLifecycleProvider provides emptyLifecycleProvider,
+                        LocalSharedTransitionScope provides this@SharedTransitionLayout,
+                    ) {
+                        Navigator(MainScreen) {
+                            PhotosSlideTransition(navigator = it)
+                        }
                     }
                 }
             }

@@ -28,10 +28,13 @@ class FoldersRepository @Inject constructor(
 
     val networkFoldersFlow = networkPhotosDao.getFolders()
 
-    fun localPhotosFromFolder(folder: String) =
-        localPhotosDao.getFolderPhotos(folder)
+    fun localPhotosFromFolder(folder: String, count: Int) =
+        localPhotosDao.getFolderPhotos(folder, count)
 
-    fun networkPhotosFromFolder(folder: String) =
+    fun localPhotosFromFolderPaged(folder: String) =
+        localPhotosDao.getFolderPhotosPaged(folder)
+
+    fun networkPhotosFromFolderPaged(folder: String) =
         networkPhotosDao.getFolderPhotos(folder)
 
     suspend fun updatePhoneAlbums() {

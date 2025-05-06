@@ -2,12 +2,12 @@ package net.theluckycoder.familyphotos.ui.screen
 
 import android.os.Parcelable
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,13 +24,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -40,11 +38,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.compose.LazyPagingItems
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.request.ImageRequest
+import coil3.request.crossfade
 import coil3.request.maxBitmapSize
 import coil3.request.placeholder
 import coil3.size.Dimension
@@ -60,7 +60,9 @@ import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.model.getPreviewUri
 import net.theluckycoder.familyphotos.model.getUri
 import net.theluckycoder.familyphotos.model.isVideo
+import net.theluckycoder.familyphotos.ui.LocalAnimatedVisibilityScope
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
+import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.composables.IconButtonText
 import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
@@ -72,24 +74,19 @@ import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewModel
 
-@ConsistentCopyVisibility
 @Parcelize
-data class PhotoScreen private constructor(
-    private val startPhoto: Photo,
-    private val source: Source,
+data class PhotoScreen(
     private var index: Int,
 ) : Screen, Parcelable {
 
-    constructor(startPhoto: Photo, source: Source) : this(startPhoto, source, -1)
-
     override val key: ScreenKey
-        get() = "PhotoDetailScreen ${startPhoto.id} $source"
+        get() = "PhotoDetailScreen"
 
     @Composable
     override fun Content() = Box(Modifier.fillMaxSize()) {
         val photoViewModel: PhotoViewModel = viewModel()
 
-        val allPhotosState = remember {
+        /*val allPhotosState = remember {
             when (source) {
                 Source.PagedList -> photoViewModel.getPhotosInMonth(startPhoto)
                 Source.Folder -> when (startPhoto) {
@@ -116,29 +113,19 @@ data class PhotoScreen private constructor(
 
         if (allPhotos != null && index != -1) {
             PhotosPager(allPhotos, photoViewModel)
-        }
+        }*/
     }
 
     @Composable
-    @OptIn(ExperimentalFoundationApi::class)
-    private fun BoxScope.PhotosPager(
-        allPhotos: List<Photo>,
-        photoViewModel: PhotoViewModel
+    @OptIn(ExperimentalFoundationApi::class, ExperimentalSharedTransitionApi::class)
+    fun <T : Photo> PhotosPager(
+        allPhotos: LazyPagingItems<T>,
+        photoViewModel: PhotoViewModel,
+        close: () -> Unit
     ) {
-        val navigator = LocalNavigator.currentOrThrow
-        val pagerState = rememberPagerState(initialPage = index) { allPhotos.size }
+        val pagerState = rememberPagerState(initialPage = index) { allPhotos.itemCount }
         val showUi = remember { mutableStateOf(true) }
-
-        DisposableEffect(allPhotos.size) {
-            if (allPhotos.isEmpty())
-                navigator.pop()
-
-            onDispose {
-                index = pagerState.currentPage
-            }
-        }
-
-        val currentPhoto = allPhotos.getOrNull(pagerState.currentPage)
+        val currentPhoto = allPhotos[pagerState.currentPage]
 
         Scaffold(
             containerColor = Color.Black,
@@ -146,36 +133,7 @@ data class PhotoScreen private constructor(
             snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
             topBar = {
                 if (currentPhoto != null) {
-                    AnimatedVisibility(
-                        visible = showUi.value,
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
-                        NavBackTopAppBar(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .align(Alignment.TopCenter),
-                            title = currentPhoto.photoDateText(),
-                            navIconOnClick = { navigator.pop() },
-                            actions = {
-                                if (currentPhoto is NetworkPhoto) {
-                                    IconButton(onClick = {
-                                        photoViewModel.updateFavorite(
-                                            currentPhoto,
-                                            !currentPhoto.isFavorite
-                                        )
-                                    }) {
-                                        Icon(
-                                            painterResource(if (currentPhoto.isFavorite) R.drawable.ic_star_filled else R.drawable.ic_star_outline),
-                                            contentDescription = null
-                                        )
-                                    }
-
-                                    Spacer(Modifier.width(12.dp))
-                                }
-                            }
-                        )
-                    }
+                    TopBar(currentPhoto, showUi.value, close, photoViewModel)
                 }
             },
             bottomBar = {
@@ -196,20 +154,19 @@ data class PhotoScreen private constructor(
 
             HorizontalPager(
                 state = pagerState,
-                key = { allPhotos.getOrNull(it)?.id ?: it },
+                key = { (allPhotos.peek(it) as Photo).id },
             ) { page ->
-                val photo = allPhotos.getOrNull(page)
+                val photo = allPhotos[page] as Photo
 
-                if (photo != null) {
-                    PagerContent(photo, showUi, paddingValues)
-                }
+                PagerContent(photo, showUi, paddingValues)
             }
 
         }
     }
 
+    @OptIn(ExperimentalSharedTransitionApi::class)
     @Composable
-    private fun BoxScope.PagerContent(
+    private fun PagerContent(
         photo: Photo,
         showUi: MutableState<Boolean>,
         paddingValues: PaddingValues,
@@ -218,14 +175,54 @@ data class PhotoScreen private constructor(
 
         if (!isVideo) {
             ZoomableImage(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .align(Alignment.Center),
+                modifier = with(LocalSharedTransitionScope.current) {
+                    Modifier
+                        .sharedBounds(
+                            rememberSharedContentState(key = photo.id),
+                            animatedVisibilityScope = LocalAnimatedVisibilityScope.current!!
+                        )
+                        .fillMaxSize()
+                },
                 photo = photo
             ) { showUi.value = it }
         } else {
             VideoPlayer(photo.getUri(), paddingValues, showUI = { showUi.value = it })
         }
+    }
+
+    @Composable
+    private fun TopBar(
+        photo: Photo,
+        showUi: Boolean,
+        onClose: () -> Unit,
+        photoViewModel: PhotoViewModel,
+    ) = AnimatedVisibility(
+        visible = showUi,
+        enter = fadeIn(),
+        exit = fadeOut()
+    ) {
+        NavBackTopAppBar(
+            modifier = Modifier.fillMaxWidth(),
+            title = photo.photoDateText(),
+            navIconOnClick = onClose,
+            actions = {
+                if (photo is NetworkPhoto) {
+                    IconButton(onClick = {
+                        photoViewModel.updateFavorite(
+                            photo,
+                            !photo.isFavorite
+                        )
+                    }) {
+                        val icon =
+                            if (photo.isFavorite) R.drawable.ic_star_filled else R.drawable.ic_star_outline
+
+                        Icon(painterResource(icon), null)
+                    }
+
+                    Spacer(Modifier.width(12.dp))
+                }
+            }
+        )
     }
 
     @Composable
@@ -325,14 +322,6 @@ data class PhotoScreen private constructor(
             }
         }
     }
-
-    @Parcelize
-    enum class Source : Parcelable {
-        PagedList,
-        Folder,
-        Memories,
-        Favorites,
-    }
 }
 
 
@@ -349,21 +338,28 @@ private fun ZoomableImage(
 
     val zoomableState = rememberZoomableState()
 
-    LaunchedEffect(zoomableState.zoomFraction) {
+    LaunchedEffect(zoomableState.zoomFraction?.toInt()) {
         zoomableState.zoomFraction?.let { zoom ->
             showUI(zoom == 0.0f)
         }
     }
 
-    ZoomableAsyncImage(
-        modifier = modifier,
-        model = ImageRequest.Builder(ctx)
+    val model = remember(photo.id) {
+        val cacheKey = photo.getPreviewUri().toString()
+        ImageRequest.Builder(ctx)
             .data(photo.getUri())
-            .placeholderMemoryCacheKey(photo.getPreviewUri().toString())
+            .crossfade(true)
+            .placeholderMemoryCacheKey(cacheKey)
             .placeholder(R.drawable.ic_hourglass_bottom)
+            .memoryCacheKey(cacheKey)
             .size(Size(width = maxWidth, height = Dimension.Undefined))
             .maxBitmapSize(Size.ORIGINAL)
-            .build(),
+            .build()
+    }
+
+    ZoomableAsyncImage(
+        modifier = modifier,
+        model = model,
         imageLoader = LocalImageLoader.current.get(),
         state = rememberZoomableImageState(zoomableState),
         contentDescription = photo.name,

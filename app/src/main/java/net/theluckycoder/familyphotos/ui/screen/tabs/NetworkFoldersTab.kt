@@ -43,7 +43,7 @@ import net.theluckycoder.familyphotos.model.NetworkFolder
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.isPublic
 import net.theluckycoder.familyphotos.ui.composables.FolderPreviewItem
-import net.theluckycoder.familyphotos.ui.screen.NetworkFolderScreen
+import net.theluckycoder.familyphotos.ui.screen.FolderScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 object NetworkFoldersTab : BottomTab, FoldersTab<NetworkFolder>() {
@@ -88,7 +88,7 @@ object NetworkFoldersTab : BottomTab, FoldersTab<NetworkFolder>() {
                     FilledTonalButton(
                         modifier = Modifier.padding(4.dp),
                         onClick = {
-                            navigator.push(NetworkFolderScreen(NetworkFolderScreen.Source.Favorites))
+                            navigator.push(FolderScreen(FolderScreen.Source.Favorites))
                         },
                     ) {
                         Icon(painterResource(R.drawable.ic_star_outline), contentDescription = null)
@@ -123,8 +123,8 @@ object NetworkFoldersTab : BottomTab, FoldersTab<NetworkFolder>() {
                     photosCount = folder.count,
                     onClick = {
                         navigator.push(
-                            NetworkFolderScreen(
-                                NetworkFolderScreen.Source.FolderName(
+                            FolderScreen(
+                                FolderScreen.Source.NetworkFolder(
                                     folder.name
                                 )
                             )
