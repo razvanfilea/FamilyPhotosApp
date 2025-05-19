@@ -400,31 +400,9 @@ class MainViewModel @Inject constructor(
     companion object {
         private const val UNIQUE_PERIODIC_UPLOAD = "periodic_upload"
 
-        private val PAGING_CONFIG = PagingConfig(pageSize = 50, enablePlaceholders = false)
+        private val PAGING_CONFIG = PagingConfig(pageSize = 70, enablePlaceholders = true)
 
         private val currentDate = Clock.System.now().toLocalDateTime(LOCAL_TIME_ZONE)
-
-        private fun Flow<PagingData<NetworkPhoto>>.mapPagingPhotos() = map { pagingData ->
-            pagingData
-                .insertSeparators { before, after ->
-                    after ?: return@insertSeparators null
-
-                    val beforeDate = before?.let {
-                        val instant = Instant.fromEpochSeconds(it.timeCreated)
-                        instant.toLocalDateTime(LOCAL_TIME_ZONE)
-                    }
-
-                    val afterDate =
-                        Instant.fromEpochSeconds(after.timeCreated).toLocalDateTime(LOCAL_TIME_ZONE)
-
-                    if (beforeDate == null
-                        || beforeDate.monthNumber != afterDate.monthNumber
-                        || beforeDate.year != afterDate.year
-                    ) {
-                        buildDateString(afterDate)
-                    } else null
-                }
-        }
 
         fun computeSeparatorText(before: Photo?, after: Photo): String? {
             val beforeDate = before?.let {

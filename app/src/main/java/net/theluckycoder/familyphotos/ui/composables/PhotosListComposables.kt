@@ -65,8 +65,8 @@ import net.theluckycoder.familyphotos.ui.screen.PhotoScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import kotlin.time.ExperimentalTime
 
-private val PORTRAIT_ZOOM_LEVELS = intArrayOf(4, 5, 7, 10)
-private val LANDSCAPE_ZOOM_LEVELS = intArrayOf(8, 10, 14, 20)
+private val PORTRAIT_ZOOM_LEVELS = intArrayOf(4, 5, 7)
+private val LANDSCAPE_ZOOM_LEVELS = intArrayOf(8, 10, 14)
 private val MAX_ZOOM_LEVEL_INDEX = PORTRAIT_ZOOM_LEVELS.size - 1
 
 @Composable
@@ -138,9 +138,11 @@ fun <T : Photo> PhotoListWithViewer(
     val openedPhotoIndex = remember { mutableStateOf<Int?>(null) }
     val photoIndex = openedPhotoIndex.value
 
-    LaunchedEffect(openedPhotoIndex.value) {
-        mainViewModel.showBars.value = openedPhotoIndex.value == null
+    LaunchedEffect(photoIndex) {
+        mainViewModel.showBars.value = photoIndex == null
     }
+
+    // TODO: Fix crash when deleting all the photos and one is selected
 
     AnimatedContent(photoIndex == null, modifier) { targetState ->
         CompositionLocalProvider(LocalAnimatedVisibilityScope provides this@AnimatedContent) {
@@ -221,6 +223,8 @@ private fun <T : Photo> PhotosList(
 
     val columnCount = getZoomColumnCount(zoomIndexState.intValue)
 
+    val headers = remember { HashMap<Long, String?>() }
+
     LazyVerticalGrid(
         state = listState,
         modifier = Modifier
@@ -252,10 +256,12 @@ private fun <T : Photo> PhotosList(
                 continue
             }
 
-            val headerDate = MainViewModel.computeSeparatorText(
-                photos.itemSnapshotList.getOrNull(index - 1),
-                photo
-            )
+            val headerDate = headers.getOrPut(photo.id) {
+                MainViewModel.computeSeparatorText(
+                    photos.itemSnapshotList.getOrNull(index - 1),
+                    photo
+                )
+            }
 
             if (headerDate != null) {
                 item(
@@ -267,7 +273,7 @@ private fun <T : Photo> PhotosList(
                             .fillMaxWidth()
                             .background(MaterialTheme.colorScheme.background)
                             .padding(
-                                top = 42.dp,
+                                top = 36.dp,
                                 bottom = 16.dp,
                                 start = 16.dp,
                                 end = 16.dp

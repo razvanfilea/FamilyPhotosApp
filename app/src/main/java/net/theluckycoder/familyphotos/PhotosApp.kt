@@ -21,8 +21,8 @@ class PhotosApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         /*if (BuildConfig.DEBUG) {
-            StrictMode.setThreadPolicy(
-                ThreadPolicy.Builder()
+            android.os.StrictMode.setThreadPolicy(
+                android.os.StrictMode.ThreadPolicy.Builder()
                     .detectDiskReads()
                     .detectDiskWrites()
                     .detectNetwork() // or .detectAll() for all detectable problems

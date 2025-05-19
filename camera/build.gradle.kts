@@ -12,6 +12,12 @@ android {
         minSdk = 30
     }
 
+    buildTypes {
+        create("staging") {
+            isMinifyEnabled = true
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

@@ -5,7 +5,6 @@ kotlin_ksp = "2.1.10-1.0.30"
 kotlin_coroutines = "1.10.2"
 kotlin_serialization = "1.8.1"
 kotlin_datetime = "0.6.2"
-kotlin_collections = "0.3.8"
 compose_base = "1.8.1"
 compose_activity = "1.10.1"
 compose_compiler = "1.5.15"
@@ -14,15 +13,15 @@ compose_lifecycleViewmodel = "2.9.0"
 voyager = "1.0.1"
 androidx_core = "1.16.0"
 androidx_room = "2.7.1"
-androidx_media = "1.6.1"
-androidx_datastore = "1.1.6"
+androidx_media = "1.7.1"
+androidx_datastore = "1.1.4"
 androidx_exif = "1.4.1"
 androidx_paging = "3.3.6"
 androidx_camerax = "1.4.2"
 androidx_work = "2.10.1"
-coil = "3.2.0-rc02"
+coil = "3.2.0"
 dagger = "2.56.2"
-retrofit = "2.11.0"
+retrofit = "3.0.0"
 okhttp = "4.12.0"
 processPheonix = "3.0.0"
 telephoto = "0.15.1"
@@ -40,7 +39,6 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "
 kotlin_coroutinesAndroid = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlin_coroutines" }
 kotlin_serializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlin_serialization" }
 kotlin_dateTime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlin_datetime" }
-kotlin_collections = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlin_collections" }
 kotlin_reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin_base" }
 
 androidx_core = { group = "androidx.core", name = "core-ktx", version.ref = "androidx_core" }

@@ -21,7 +21,7 @@ android {
         minSdk = 30
         targetSdk = 35
         versionCode = 26
-        versionName = "2.7.1"
+        versionName = "2.8.1"
     }
 
     androidResources {
@@ -88,7 +88,6 @@ dependencies {
     implementation(libs.kotlin.coroutinesAndroid)
     implementation(libs.kotlin.serializationJson)
     implementation(libs.kotlin.dateTime)
-    implementation(libs.kotlin.collections)
 
     // AndroidX
     implementation(libs.androidx.dataStore)

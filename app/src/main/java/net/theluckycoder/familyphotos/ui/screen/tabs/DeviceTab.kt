@@ -117,7 +117,7 @@ object DeviceTab : BottomTab, FoldersTab<LocalFolder>() {
                     name = folder.name,
                     photosCount = folder.count,
                     onClick = {
-                        navigator.push(FolderScreen(FolderScreen.Source.NetworkFolder(folder.name)))
+                        navigator.push(FolderScreen(FolderScreen.Source.LocalFolder(folder.name)))
                     },
                 )
             }
