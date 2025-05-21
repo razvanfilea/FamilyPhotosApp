@@ -34,7 +34,8 @@ import net.theluckycoder.familyphotos.ui.LocalOkHttpClient
 fun VideoPlayer(
     sourceUri: Uri,
     paddingValues: PaddingValues,
-    showUI: (Boolean) -> Unit
+    showUI: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = rememberUpdatedState(LocalLifecycleOwner.current)
@@ -62,7 +63,7 @@ fun VideoPlayer(
     }
 
     AndroidView(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(paddingValues),
         factory = {

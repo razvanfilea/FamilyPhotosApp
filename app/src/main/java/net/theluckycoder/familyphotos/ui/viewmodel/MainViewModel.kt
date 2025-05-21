@@ -400,7 +400,7 @@ class MainViewModel @Inject constructor(
     companion object {
         private const val UNIQUE_PERIODIC_UPLOAD = "periodic_upload"
 
-        private val PAGING_CONFIG = PagingConfig(pageSize = 70, enablePlaceholders = true)
+        private val PAGING_CONFIG = PagingConfig(pageSize = 70, enablePlaceholders = false)
 
         private val currentDate = Clock.System.now().toLocalDateTime(LOCAL_TIME_ZONE)
 

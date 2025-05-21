@@ -22,8 +22,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyGridItemScope
-import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
@@ -55,13 +53,14 @@ import androidx.paging.compose.LazyPagingItems
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.model.isVideo
 import net.theluckycoder.familyphotos.ui.LocalAnimatedVisibilityScope
 import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
 import net.theluckycoder.familyphotos.ui.VerticallyAnimatedInt
-import net.theluckycoder.familyphotos.ui.screen.PhotoScreen
+import net.theluckycoder.familyphotos.ui.screen.PhotosViewerScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import kotlin.time.ExperimentalTime
 
@@ -100,7 +99,7 @@ fun MemoriesList(
                     .padding(4.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .clickable {
-//                        navigator.push(PhotoScreen(photos.first(), PhotoScreen.Source.Memories))
+                        navigator.push(PhotosViewerScreen(photos))
                     }
             ) {
 
@@ -142,8 +141,6 @@ fun <T : Photo> PhotoListWithViewer(
         mainViewModel.showBars.value = photoIndex == null
     }
 
-    // TODO: Fix crash when deleting all the photos and one is selected
-
     AnimatedContent(photoIndex == null, modifier) { targetState ->
         CompositionLocalProvider(LocalAnimatedVisibilityScope provides this@AnimatedContent) {
             if (targetState) {
@@ -159,14 +156,14 @@ fun <T : Photo> PhotoListWithViewer(
                 val onClose = { openedPhotoIndex.value = null }
                 BackHandler(onBack = onClose)
 
-                val photoScreen = remember { PhotoScreen(photoIndex!!) }
-                with(photoScreen) {
-                    PhotosPager(
-                        photos,
-                        photoViewModel = viewModel(),
-                        onClose,
-                    )
-                }
+                val index = remember { photoIndex!! }
+
+                PhotosViewer(
+                    photos,
+                    index,
+                    photoViewModel = viewModel(),
+                    onClose,
+                )
             }
         }
     }
@@ -192,6 +189,10 @@ private fun <T : Photo> PhotosList(
 
     val selectedPhotoIds = remember { mutableStateListOf<Long>() }
 
+    BackHandler(enabled = selectedPhotoIds.isNotEmpty()) {
+        selectedPhotoIds.clear()
+    }
+
     AnimatedVisibility(
         visible = selectedPhotoIds.isNotEmpty(),
         enter = expandVertically(),
@@ -216,7 +217,9 @@ private fun <T : Photo> PhotosList(
                 }
             },
             actions = {
-                PhotoUtilitiesActions(NetworkPhoto::class, selectedPhotoIds)
+                val isLocalPhoto =
+                    remember { photos.itemSnapshotList.items.firstOrNull() is LocalPhoto }
+                PhotoUtilitiesActions(isLocalPhoto, selectedPhotoIds)
             },
         )
     }
@@ -337,9 +340,21 @@ private fun PhotoItem(
         if (isVideo) {
             Icon(
                 modifier = Modifier
-                    .padding(8.dp)
+                    .padding(4.dp)
+                    .size(20.dp)
                     .align(Alignment.TopEnd),
                 painter = painterResource(R.drawable.ic_play_circle_filled),
+                contentDescription = null
+            )
+        }
+
+        if (photo is LocalPhoto && photo.isSavedToCloud) {
+            Icon(
+                modifier = Modifier
+                    .padding(4.dp)
+                    .size(20.dp)
+                    .align(Alignment.BottomEnd),
+                painter = painterResource(R.drawable.ic_cloud_done_outline),
                 contentDescription = null
             )
         }

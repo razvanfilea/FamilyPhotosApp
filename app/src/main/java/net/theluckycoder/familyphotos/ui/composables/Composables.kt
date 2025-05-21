@@ -76,6 +76,7 @@ import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
+import net.theluckycoder.familyphotos.ui.screen.UploadPhotosScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
@@ -345,8 +346,8 @@ fun SharePhotoIconButton(
 }
 
 @Composable
-fun <T : Photo> PhotoUtilitiesActions(
-    klass: KClass<T>,
+fun PhotoUtilitiesActions(
+    isLocalPhoto: Boolean,
     selectedItems: SnapshotStateList<Long>,
     mainViewModel: MainViewModel = viewModel()
 ) {
@@ -355,8 +356,6 @@ fun <T : Photo> PhotoUtilitiesActions(
     val deletePhotosDialog = rememberDeletePhotosDialog(onPhotosDeleted = { selectedItems.clear() })
 
     if (selectedItems.isNotEmpty()) {
-        val isLocalPhoto = klass == LocalPhoto::class
-
         suspend fun getPhotos(): List<Photo> {
             val items = selectedItems.toList()
             return if (isLocalPhoto)
@@ -368,14 +367,11 @@ fun <T : Photo> PhotoUtilitiesActions(
         IconButton(onClick = {
             scope.launch {
                 @Suppress("UNCHECKED_CAST")
-                when (klass) {
-                    NetworkPhoto::class -> deletePhotosDialog.show(getPhotos() as List<NetworkPhoto>)
-                    LocalPhoto::class -> {
-                        mainViewModel.deleteLocalPhotos(
-                            getPhotos() as List<LocalPhoto>
-                        )
-                        selectedItems.clear()
-                    }
+                if (isLocalPhoto) {
+                    mainViewModel.deleteLocalPhotos(getPhotos() as List<LocalPhoto>)
+                    selectedItems.clear()
+                } else {
+                    deletePhotosDialog.show(getPhotos() as List<NetworkPhoto>)
                 }
             }
         }) {
@@ -392,7 +388,17 @@ fun <T : Photo> PhotoUtilitiesActions(
             mainViewModel::getPhotoLocalUriAsync
         )
 
-        if (!isLocalPhoto) {
+        if (isLocalPhoto) {
+            IconButton(
+                onClick = { navigator.push(UploadPhotosScreen(selectedItems.toList())) }
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_cloud_upload_outline),
+                    contentDescription = null,
+                    tint = Color.White,
+                )
+            }
+        } else {
             IconButton(
                 onClick = { navigator.push(MovePhotosScreen(selectedItems.toList())) }
             ) {

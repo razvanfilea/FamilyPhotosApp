@@ -20,7 +20,7 @@ android {
         applicationId = "net.theluckycoder.familyphotos"
         minSdk = 30
         targetSdk = 35
-        versionCode = 26
+        versionCode = 28
         versionName = "2.8.1"
     }
 
