@@ -21,7 +21,7 @@ android {
         minSdk = 30
         targetSdk = 35
         versionCode = 28
-        versionName = "2.8.1"
+        versionName = "2.8.2"
     }
 
     androidResources {
@@ -94,7 +94,7 @@ dependencies {
     implementation(libs.androidx.exif)
 
     // Media 3
-    implementation(libs.media.ui)
+//    implementation(libs.media.ui)
     implementation(libs.media.exoplayer)
     implementation(libs.media.okhttp)
     implementation(libs.media.compose)

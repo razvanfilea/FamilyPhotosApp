@@ -104,6 +104,11 @@ class MainViewModel @Inject constructor(
         .cachedIn(viewModelScope)
 //        .mapPagingPhotos()
 
+    val favoritePhotosFlow = Pager(PAGING_CONFIG) {
+        photosRepository.getFavoritePhotosPaged()
+    }.flow.cachedIn(viewModelScope)
+
+
     val localFolders = foldersRepository.localFoldersFlow
 
     val networkFolders = foldersRepository.networkFoldersFlow
@@ -242,15 +247,11 @@ class MainViewModel @Inject constructor(
 
     fun getNetworkFolderPhotosPaged(folder: String) = Pager(PAGING_CONFIG) {
         foldersRepository.networkPhotosFromFolderPaged(folder)
-    }.flow.cachedIn(viewModelScope)
-
-    fun getFavoritePhotosPaged() = Pager(PAGING_CONFIG) {
-        photosRepository.getFavoritePhotosPaged()
-    }.flow.cachedIn(viewModelScope)
+    }.flow
 
     fun getLocalFolderPhotosPaged(folder: String) = Pager(PAGING_CONFIG) {
         foldersRepository.localPhotosFromFolderPaged(folder)
-    }.flow.cachedIn(viewModelScope)
+    }.flow
 
     /**
      * Change the folder and the user where these [NetworkPhoto]s belong

@@ -182,10 +182,9 @@ private fun PagerContent(
         ) { showUi.value = it }
     } else {
         VideoPlayer(
-            photo.getUri(),
-            paddingValues,
-            showUI = { showUi.value = it },
-            modifier = sharedBoundsModifier
+            sourceUri = photo.getUri(),
+            showControls = showUi,
+            modifier = sharedBoundsModifier.padding(paddingValues)
         )
     }
 }

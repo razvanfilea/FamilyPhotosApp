@@ -13,7 +13,7 @@ compose_lifecycleViewmodel = "2.9.0"
 voyager = "1.0.1"
 androidx_core = "1.16.0"
 androidx_room = "2.7.1"
-androidx_media = "1.7.1"
+androidx_media = "1.8.0-alpha01"
 androidx_datastore = "1.1.7"
 androidx_exif = "1.4.1"
 androidx_paging = "3.3.6"
@@ -58,14 +58,12 @@ compose_lifecycleViewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-
 
 voyager_navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyager" }
 voyager_tabNavigator = { module = "cafe.adriel.voyager:voyager-tab-navigator", version.ref = "voyager" }
-voyager_transitions = { module = "cafe.adriel.voyager:voyager-transitions", version.ref = "voyager" }
 
 room_runtime = { module = "androidx.room:room-ktx", version.ref = "androidx_room" }
 room_compiler = { module = "androidx.room:room-compiler", version.ref = "androidx_room" }
 room_paging = { module = "androidx.room:room-paging", version.ref = "androidx_room" }
 
 media_exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "androidx_media" }
-media_ui = { module = "androidx.media3:media3-ui", version.ref = "androidx_media" }
 media_compose = { module = "androidx.media3:media3-ui-compose", version.ref = "androidx_media" }
 media_okhttp = { module = "androidx.media3:media3-datasource-okhttp", version.ref = "androidx_media" }
 

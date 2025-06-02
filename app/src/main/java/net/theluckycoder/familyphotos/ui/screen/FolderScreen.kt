@@ -56,7 +56,7 @@ data class FolderScreen(
 
         val photosPager = remember {
             when (source) {
-                Source.Favorites -> mainViewModel.getFavoritePhotosPaged()
+                Source.Favorites -> mainViewModel.favoritePhotosFlow
                 is Source.NetworkFolder -> mainViewModel.getNetworkFolderPhotosPaged(source.name)
                 is Source.LocalFolder -> mainViewModel.getLocalFolderPhotosPaged(source.name)
             }
