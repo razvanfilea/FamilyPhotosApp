@@ -39,23 +39,13 @@ object FamilyTab : BottomTab {
     override fun Content() {
         val mainViewModel: MainViewModel = viewModel()
 
-        val memoriesList = remember { mutableStateListOf<Pair<Int, List<NetworkPhoto>>>() }
-
-        LaunchedEffect(Unit) {
-            memoriesList.addAll(mainViewModel.getPublicMemories())
-        }
-
         val photos = mainViewModel.publicPhotosPager.collectAsLazyPagingItems()
         PhotoListWithViewer(
             gridState,
             photos,
             headerContent = { Spacer(Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets)) },
             memoriesContent = {
-                if (memoriesList.isNotEmpty()) {
-                    MemoriesList(
-                        memoriesList = memoriesList
-                    )
-                }
+                MemoriesList(source = mainViewModel::getPublicMemories)
             },
             mainViewModel = mainViewModel,
         )

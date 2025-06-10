@@ -20,7 +20,10 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
@@ -34,13 +37,14 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.model.LocalFolder
 import net.theluckycoder.familyphotos.model.LocalPhoto
+import net.theluckycoder.familyphotos.ui.composables.FolderFilterTextField
 import net.theluckycoder.familyphotos.ui.composables.FolderPreviewItem
+import net.theluckycoder.familyphotos.ui.composables.SortButton
 import net.theluckycoder.familyphotos.ui.screen.FolderScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
-object DeviceTab : BottomTab, FoldersTab<LocalFolder>() {
+object DeviceTab : BottomTab {
 
     override val options: TabOptions
         @Composable
@@ -65,10 +69,17 @@ object DeviceTab : BottomTab, FoldersTab<LocalFolder>() {
         val folders by mainViewModel.localFolders.collectAsState(emptyList())
         val sortAscending by mainViewModel.settingsStore
             .showFoldersAscending.collectAsState(true)
-        val filteredFolders = rememberFiltering(folders, sortAscending)
 
         val columnCount =
             if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 2 else 5
+
+        var folderNameFilter by remember { mutableStateOf("") }
+        FolderFilterTextField(folderNameFilter, onFilterChange = { folderNameFilter = it })
+
+        val filteredFolders = remember(folders, folderNameFilter, sortAscending) {
+            val filtered = folders.filter { it.name.contains(folderNameFilter, ignoreCase = true) }
+            if (sortAscending) filtered else filtered.reversed()
+        }
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(columnCount),
@@ -94,11 +105,14 @@ object DeviceTab : BottomTab, FoldersTab<LocalFolder>() {
                         )
                     }
 
-                    SortButton(sortAscending) {
-                        scope.launch {
-                            mainViewModel.settingsStore.setShowFoldersAscending(!sortAscending)
+                    SortButton(
+                        sortAscending = sortAscending,
+                        onClick = {
+                            scope.launch {
+                                mainViewModel.settingsStore.setShowFoldersAscending(!sortAscending)
+                            }
                         }
-                    }
+                    )
                 }
             }
 
@@ -117,7 +131,7 @@ object DeviceTab : BottomTab, FoldersTab<LocalFolder>() {
                     name = folder.name,
                     photosCount = folder.count,
                     onClick = {
-                        navigator.push(FolderScreen(FolderScreen.Source.LocalFolder(folder.name)))
+                        navigator.push(FolderScreen(FolderScreen.Source.LocalFolderSource(folder.name)))
                     },
                 )
             }

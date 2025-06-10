@@ -15,7 +15,9 @@ import net.theluckycoder.familyphotos.db.dao.LocalPhotosDao
 import net.theluckycoder.familyphotos.db.dao.NetworkPhotosDao
 import net.theluckycoder.familyphotos.model.ExifData
 import net.theluckycoder.familyphotos.model.LocalPhoto
+import net.theluckycoder.familyphotos.model.NetworkFolder
 import net.theluckycoder.familyphotos.model.NetworkPhoto
+import net.theluckycoder.familyphotos.model.isPublic
 import net.theluckycoder.familyphotos.model.isVideo
 import net.theluckycoder.familyphotos.network.service.PhotosService
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -266,5 +268,26 @@ class ServerRepository @Inject constructor(
                 "Failed to add/remove favorite: " + response.errorBody()?.string()
             )
         }
+    }
+
+    suspend fun renameNetworkFolder(
+        folder: NetworkFolder,
+        makePublic: Boolean,
+        newName: String?
+    ): Boolean {
+        val response = photosService.get().renameFolder(
+            isPublic = folder.isPublic,
+            folderName = folder.name,
+            targetMakePublic = makePublic,
+            targetFolderName = newName
+        )
+
+        val changedPhotos = response.body()
+        Log.d("Moving Photos", response.errorBody()?.string().orEmpty())
+        if (!response.isSuccessful || changedPhotos == null)
+            return false
+
+        networkPhotosDao.insertOrReplace(changedPhotos)
+        return true
     }
 }

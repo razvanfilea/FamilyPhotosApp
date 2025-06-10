@@ -1,4 +1,4 @@
-package net.theluckycoder.familyphotos.ui.composables
+package net.theluckycoder.familyphotos.ui.composables.player
 
 import android.net.Uri
 import androidx.annotation.OptIn
@@ -6,7 +6,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement

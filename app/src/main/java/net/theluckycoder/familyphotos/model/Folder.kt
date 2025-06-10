@@ -1,8 +1,10 @@
 package net.theluckycoder.familyphotos.model
 
 import android.net.Uri
+import android.os.Parcelable
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
+import kotlinx.parcelize.Parcelize
 
 abstract class PhotoFolder {
     abstract val name: String
@@ -11,6 +13,7 @@ abstract class PhotoFolder {
 }
 
 @Immutable
+@Parcelize
 data class NetworkFolder(
     @ColumnInfo(name = "folder")
     override val name: String,
@@ -20,7 +23,7 @@ data class NetworkFolder(
     val userId: String,
     @ColumnInfo(name = "COUNT(id)")
     override val count: Int,
-) : PhotoFolder() {
+) : PhotoFolder(), Parcelable {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

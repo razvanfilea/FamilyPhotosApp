@@ -1,4 +1,4 @@
-package net.theluckycoder.familyphotos.ui.composables
+package net.theluckycoder.familyphotos.ui.composables.player
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect

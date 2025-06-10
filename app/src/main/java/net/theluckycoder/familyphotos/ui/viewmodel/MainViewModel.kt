@@ -56,6 +56,7 @@ import net.theluckycoder.familyphotos.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.datastore.UserDataStore
 import net.theluckycoder.familyphotos.model.ExifData
 import net.theluckycoder.familyphotos.model.LocalPhoto
+import net.theluckycoder.familyphotos.model.NetworkFolder
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.network.service.UserService
@@ -326,6 +327,16 @@ class MainViewModel @Inject constructor(
         workManager
 //            .beginUniqueWork("upload_work", ExistingWorkPolicy.APPEND, uploadRequest)
             .enqueue(uploadRequest)
+    }
+
+    fun renameNetworkFolder(
+        folder: NetworkFolder,
+        makePublic: Boolean,
+        newName: String?
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            serverRepository.renameNetworkFolder(folder, makePublic, newName)
+        }
     }
 
     /**

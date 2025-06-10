@@ -20,8 +20,9 @@ android {
         applicationId = "net.theluckycoder.familyphotos"
         minSdk = 30
         targetSdk = 35
+
         versionCode = 28
-        versionName = "2.8.2"
+        versionName = "2.8.3"
     }
 
     androidResources {
@@ -94,7 +95,6 @@ dependencies {
     implementation(libs.androidx.exif)
 
     // Media 3
-//    implementation(libs.media.ui)
     implementation(libs.media.exoplayer)
     implementation(libs.media.okhttp)
     implementation(libs.media.compose)
@@ -118,7 +118,6 @@ dependencies {
     // Voyager
     implementation(libs.voyager.navigator)
     implementation(libs.voyager.tabNavigator)
-//    implementation(libs.voyager.transitions)
 
     // Paging
     implementation(libs.paging.runtime)

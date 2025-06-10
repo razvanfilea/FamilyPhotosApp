@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import net.theluckycoder.familyphotos.model.FolderType
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,14 +24,30 @@ class SettingsDataStore @Inject constructor(@ApplicationContext context: Context
         settingsDataStore.data.map { it[CACHE_SIZE] ?: DEFAULT_CACHE_SIZE }.distinctUntilChanged()
 
     val showFoldersAscending: Flow<Boolean> =
-        settingsDataStore.data.map { it[SHOW_FOLDERS_ASCENDING] ?: true }.distinctUntilChanged()
+        settingsDataStore.data.map { it[SHOW_FOLDERS_ASCENDING] != false }.distinctUntilChanged()
 
-    /*suspend fun setCacheSizeMb(value: Int) = settingsDataStore.edit { preferences ->
-        preferences[CACHE_SIZE] = value
-    }*/
+    val folderType: Flow<FolderType> =
+        settingsDataStore.data.map {
+            when (it[FOLDERS_FILTER_TYPE]) {
+                FolderType.Personal.index -> FolderType.Personal
+                FolderType.Public.index -> FolderType.Public
+                else -> FolderType.All
+            }
+        }.distinctUntilChanged()
+
+    val zoomLevel: Flow<Int?> =
+        settingsDataStore.data.map { it[PHOTOS_ZOOM_LEVEL] }.distinctUntilChanged()
 
     suspend fun setShowFoldersAscending(value: Boolean) = settingsDataStore.edit { preferences ->
         preferences[SHOW_FOLDERS_ASCENDING] = value
+    }
+
+    suspend fun setFolderFilterType(value: FolderType) = settingsDataStore.edit { preferences ->
+        preferences[FOLDERS_FILTER_TYPE] = value.index
+    }
+
+    suspend fun setPhotosZoomLevel(value: Int) = settingsDataStore.edit { preferences ->
+        preferences[PHOTOS_ZOOM_LEVEL] = value
     }
 
     companion object {
@@ -38,6 +55,8 @@ class SettingsDataStore @Inject constructor(@ApplicationContext context: Context
 
         val CACHE_SIZE = intPreferencesKey("cache_size")
         val SHOW_FOLDERS_ASCENDING = booleanPreferencesKey("show_folders_ascending")
+        val FOLDERS_FILTER_TYPE = intPreferencesKey("folders_filter_type")
+        val PHOTOS_ZOOM_LEVEL = intPreferencesKey("photos_zoom_level")
 
         const val DEFAULT_CACHE_SIZE = 1024
     }

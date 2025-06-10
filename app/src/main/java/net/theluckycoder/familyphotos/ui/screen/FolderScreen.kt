@@ -27,6 +27,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.parcelize.Parcelize
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.model.NetworkFolder
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.ui.composables.PhotoListWithViewer
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
@@ -43,9 +44,9 @@ data class FolderScreen(
 
     @Parcelize
     sealed class Source : Parcelable {
-        data object Favorites : Source()
-        data class NetworkFolder(val name: String) : Source()
-        data class LocalFolder(val name: String) : Source()
+        data object FavoritesSource : Source()
+        data class NetworkFolderSource(val folder: NetworkFolder) : Source()
+        data class LocalFolderSource(val name: String) : Source()
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -56,9 +57,9 @@ data class FolderScreen(
 
         val photosPager = remember {
             when (source) {
-                Source.Favorites -> mainViewModel.favoritePhotosFlow
-                is Source.NetworkFolder -> mainViewModel.getNetworkFolderPhotosPaged(source.name)
-                is Source.LocalFolder -> mainViewModel.getLocalFolderPhotosPaged(source.name)
+                Source.FavoritesSource -> mainViewModel.favoritePhotosFlow
+                is Source.NetworkFolderSource -> mainViewModel.getNetworkFolderPhotosPaged(source.folder.name)
+                is Source.LocalFolderSource -> mainViewModel.getLocalFolderPhotosPaged(source.name)
             }
         } as Flow<PagingData<Photo>>
 
@@ -85,16 +86,16 @@ data class FolderScreen(
                         title = {
                             Text(
                                 when (source) {
-                                    Source.Favorites -> stringResource(R.string.favorites)
-                                    is Source.NetworkFolder -> source.name
-                                    is Source.LocalFolder -> source.name
+                                    Source.FavoritesSource -> stringResource(R.string.favorites)
+                                    is Source.NetworkFolderSource -> source.folder.name
+                                    is Source.LocalFolderSource -> source.name
                                 },
                             )
                         },
                         actions = {
-                            if (source is Source.NetworkFolder) {
+                            if (source is Source.NetworkFolderSource) {
                                 IconButton(onClick = {
-//                                navigator.push(MovePhotosScreen(photosList.map { it.id })) TODO
+                                    navigator.push(RenameFolderScreen(source.folder))
                                 }) {
                                     Icon(Icons.Default.Edit, contentDescription = null)
                                 }

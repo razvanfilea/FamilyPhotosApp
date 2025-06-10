@@ -1,12 +1,9 @@
 package net.theluckycoder.familyphotos.repository
 
-import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.db.dao.LocalPhotosDao
 import net.theluckycoder.familyphotos.db.dao.NetworkPhotosDao
-import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.PUBLIC_USER_ID
-import net.theluckycoder.familyphotos.model.Photo
 import javax.inject.Inject
 import javax.inject.Singleton
 

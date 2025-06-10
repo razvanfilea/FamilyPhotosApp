@@ -22,6 +22,7 @@
     <string name="action_upload_photos">Upload Photos</string>
     <string name="action_move">Move</string>
     <string name="action_move_photos">Move Photos</string>
+    <string name="action_rename_folder">Rename Folder</string>
     <string name="action_more">More</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_next">Next</string>
@@ -72,5 +73,8 @@
     <string name="pref_clear_cache">Clear all cache</string>
 
     <string name="folder_name">Folder Name</string>
+    <string name="folder_type_all">All</string>
+    <string name="folder_type_personal">Personal</string>
+    <string name="folder_type_public">Public</string>
     <string name="favorites">Favorites</string>
 </resources>

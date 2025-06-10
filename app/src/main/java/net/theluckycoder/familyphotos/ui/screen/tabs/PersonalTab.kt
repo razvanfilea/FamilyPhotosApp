@@ -65,12 +65,6 @@ object PersonalTab : BottomTab {
     override fun Content() {
         val mainViewModel: MainViewModel = viewModel()
 
-        val memoriesList = remember { mutableStateListOf<Pair<Int, List<NetworkPhoto>>>() }
-
-        LaunchedEffect(Unit) {
-            memoriesList.addAll(mainViewModel.getPersonalMemories())
-        }
-
         val photos = mainViewModel.personalPhotosPager.collectAsLazyPagingItems()
         PhotoListWithViewer(
             gridState = gridState,
@@ -81,11 +75,7 @@ object PersonalTab : BottomTab {
                 Header(isOnline, displayName)
             },
             memoriesContent = {
-                if (memoriesList.isNotEmpty()) {
-                    MemoriesList(
-                        memoriesList = memoriesList
-                    )
-                }
+                MemoriesList(source = mainViewModel::getPersonalMemories)
             },
             mainViewModel = mainViewModel,
         )

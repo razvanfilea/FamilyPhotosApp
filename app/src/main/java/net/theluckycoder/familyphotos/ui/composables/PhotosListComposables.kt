@@ -36,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -80,8 +81,18 @@ private fun getZoomColumnCount(zoomIndex: Int): Int {
 
 @Composable
 fun MemoriesList(
-    memoriesList: List<Pair<Int, List<NetworkPhoto>>>
+    source: suspend () -> List<Pair<Int, List<NetworkPhoto>>>
 ) {
+    val memoriesList = remember { mutableStateListOf<Pair<Int, List<NetworkPhoto>>>() }
+
+    LaunchedEffect(Unit) {
+        memoriesList.addAll(source())
+    }
+
+    if (memoriesList.isEmpty()) {
+        return
+    }
+
     val navigator = LocalNavigator.currentOrThrow
 
     LazyRow(Modifier.fillMaxWidth()) {
@@ -142,6 +153,8 @@ fun <T : Photo> PhotoListWithViewer(
     }
 
     AnimatedContent(photoIndex == null, modifier) { targetState ->
+        val zoomIndex = mainViewModel.settingsStore.zoomLevel.collectAsState(null)
+
         CompositionLocalProvider(LocalAnimatedVisibilityScope provides this@AnimatedContent) {
             if (targetState) {
                 PhotosList(
@@ -241,11 +254,7 @@ private fun <T : Photo> PhotosList(
             contentType = CONTENT_TYPE_HEADER
         ) {
             Column {
-                AnimatedVisibility(
-                    visible = selectedPhotoIds.isEmpty(),
-                    enter = expandVertically(),
-                    exit = shrinkVertically(),
-                ) {
+                if (selectedPhotoIds.isEmpty()) {
                     headerContent()
                 }
                 memoriesContent()

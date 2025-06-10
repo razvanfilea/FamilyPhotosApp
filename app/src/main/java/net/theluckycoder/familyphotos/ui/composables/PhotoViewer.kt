@@ -36,7 +36,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.paging.ItemSnapshotList
 import androidx.paging.compose.LazyPagingItems
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -60,6 +59,7 @@ import net.theluckycoder.familyphotos.ui.LocalAnimatedVisibilityScope
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
+import net.theluckycoder.familyphotos.ui.composables.player.VideoPlayer
 import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen

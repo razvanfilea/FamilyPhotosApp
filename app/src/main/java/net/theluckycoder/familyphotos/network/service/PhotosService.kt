@@ -51,9 +51,17 @@ interface PhotosService {
     @POST("/photos/change_location/{photoId}")
     suspend fun changePhotoLocation(
         @Path("photoId") photoId: Long,
-        @Query("makePublic") makePublic: Boolean,
-        @Query("targetFolderName") newFolderName: String?,
+        @Query("make_public") makePublic: Boolean,
+        @Query("target_folder_name") newFolderName: String?,
     ): Response<NetworkPhoto>
+
+    @POST("/photos/rename_folder")
+    suspend fun renameFolder(
+        @Query("source_is_public") isPublic: Boolean,
+        @Query("source_folder_name") folderName: String,
+        @Query("target_make_public") targetMakePublic: Boolean,
+        @Query("target_folder_name") targetFolderName: String?,
+    ): Response<List<NetworkPhoto>>
 
     @GET("/photos/favorite")
     suspend fun getFavorites(): Response<List<Long>>

@@ -8,6 +8,7 @@
     <string name="action_upload">Încarcă</string>
     <string name="action_upload_photos">Încarcă pozele</string>
     <string name="action_move_photos">Schimba locația</string>
+    <string name="action_rename_folder">Redenumește folderul</string>
     <string name="action_more">Mai mult</string>
     <string name="action_cancel">Anulează</string>
     <string name="failed_download_image">Nu s-a putut descărca imaginea</string>
@@ -47,5 +48,8 @@
     <string name="ascending">Crescător</string>
     <string name="descending">Descrescător</string>
     <string name="notification_backup_fail">Nu s-au putut incarca fisierele</string>
+    <string name="folder_type_public">Publice</string>
     <string name="favorites">Favorite</string>
+    <string name="folder_type_all">Toate</string>
+    <string name="folder_type_personal">Personale</string>
 </resources>

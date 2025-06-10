@@ -12,6 +12,8 @@ import net.theluckycoder.familyphotos.model.Photo
 
 abstract class AbstractPhotosDao<T : Photo>(private val tableName: String) {
 
+    // region Execute
+
     @RawQuery
     protected abstract suspend fun executeSuspend(query: SupportSQLiteQuery): Int
 
