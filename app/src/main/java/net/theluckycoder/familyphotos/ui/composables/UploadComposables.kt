@@ -42,8 +42,8 @@ import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @Immutable
 enum class UploadChoice(internal val stringRes: Int) {
-    Personal(R.string.section_personal),
-    Public(R.string.section_family)
+    Personal(R.string.photo_type_personal),
+    Public(R.string.photo_type_family)
 }
 
 @Composable
@@ -144,7 +144,7 @@ fun UploadPhotosLayout(
 
         val filteredFoldersList = remember(foldersList, choice, folderName) {
             foldersList.asSequence()
-                .filter { it.isPublic == (choice == UploadChoice.Public) }
+                .filter { it.isPublic() == (choice == UploadChoice.Public) }
                 .map { it.name }
                 .filter { it.contains(folderName, ignoreCase = true) }
                 .toList()

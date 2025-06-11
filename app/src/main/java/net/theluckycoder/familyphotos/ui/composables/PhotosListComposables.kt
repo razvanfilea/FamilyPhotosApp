@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.ui.composables
 
+import androidx.compose.runtime.getValue
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -9,8 +10,10 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -24,7 +27,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -47,7 +49,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.LazyPagingItems
@@ -81,57 +85,44 @@ private fun getZoomColumnCount(zoomIndex: Int): Int {
 
 @Composable
 fun MemoriesList(
-    source: suspend () -> List<Pair<Int, List<NetworkPhoto>>>
+    memories: Map<Int, List<NetworkPhoto>>
 ) {
-    val memoriesList = remember { mutableStateListOf<Pair<Int, List<NetworkPhoto>>>() }
-
-    LaunchedEffect(Unit) {
-        memoriesList.addAll(source())
-    }
-
-    if (memoriesList.isEmpty()) {
+    if (memories.isEmpty()) {
         return
     }
 
     val navigator = LocalNavigator.currentOrThrow
 
-    LazyRow(Modifier.fillMaxWidth()) {
-        item {
-            Spacer(Modifier.size(8.dp))
-        }
+    LazyRow(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 16.dp)) {
+        memories.forEach { (yearsAgo, photos) ->
+            item(key = yearsAgo) {
+                Box(
+                    Modifier
+                        .width(140.dp)
+                        .aspectRatio(0.75f)
+                        .padding(4.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .clickable {
+                            navigator.push(PhotosViewerScreen(photos))
+                        }
+                ) {
 
-        items(memoriesList) { (yearsAgo, photos) ->
-            if (photos.isEmpty()) return@items
+                    CoilPhoto(
+                        modifier = Modifier.fillMaxSize(),
+                        photo = photos.first(),
+                        preview = true,
+                        contentScale = ContentScale.Crop,
+                    )
 
-            Box(
-                Modifier
-                    .width(162.dp)
-                    .aspectRatio(0.75f)
-                    .padding(4.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .clickable {
-                        navigator.push(PhotosViewerScreen(photos))
-                    }
-            ) {
-
-                CoilPhoto(
-                    modifier = Modifier.fillMaxSize(),
-                    photo = photos.first(),
-                    preview = true,
-                    contentScale = ContentScale.Crop,
-                )
-
-                Text(
-                    "$yearsAgo years ago",
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(8.dp),
-                )
+                    Text(
+                        pluralStringResource(R.plurals.years_ago, yearsAgo, yearsAgo),
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(8.dp),
+                    )
+                }
             }
-        }
-
-        item {
-            Spacer(Modifier.size(8.dp))
         }
     }
 }
@@ -239,8 +230,6 @@ private fun <T : Photo> PhotosList(
 
     val columnCount = getZoomColumnCount(zoomIndexState.intValue)
 
-    val headers = remember { HashMap<Long, String?>() }
-
     LazyVerticalGrid(
         state = listState,
         modifier = Modifier
@@ -268,12 +257,10 @@ private fun <T : Photo> PhotosList(
                 continue
             }
 
-            val headerDate = headers.getOrPut(photo.id) {
-                MainViewModel.computeSeparatorText(
-                    photos.itemSnapshotList.getOrNull(index - 1),
-                    photo
-                )
-            }
+            val headerDate = MainViewModel.computeSeparatorText(
+                photos.itemSnapshotList.getOrNull(index - 1),
+                photo
+            )
 
             if (headerDate != null) {
                 item(

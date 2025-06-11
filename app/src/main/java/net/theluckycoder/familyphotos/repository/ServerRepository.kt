@@ -276,7 +276,7 @@ class ServerRepository @Inject constructor(
         newName: String?
     ): Boolean {
         val response = photosService.get().renameFolder(
-            isPublic = folder.isPublic,
+            isPublic = folder.isPublic(),
             folderName = folder.name,
             targetMakePublic = makePublic,
             targetFolderName = newName

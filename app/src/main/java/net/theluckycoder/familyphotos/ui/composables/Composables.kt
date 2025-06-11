@@ -20,13 +20,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -67,6 +67,7 @@ import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import net.theluckycoder.familyphotos.PhotosApp
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.model.PhotoType
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.Photo
@@ -79,7 +80,6 @@ import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
 import net.theluckycoder.familyphotos.ui.screen.UploadPhotosScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import java.time.format.DateTimeFormatter
-import kotlin.reflect.KClass
 
 @Composable
 fun SimpleSquarePhoto(photo: Photo, modifier: Modifier = Modifier) {
@@ -407,6 +407,43 @@ fun PhotoUtilitiesActions(
                     contentDescription = null,
                     tint = Color.White,
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun FolderTypeSegmentedButtons(
+    selectedPhotoType: PhotoType,
+    modifier: Modifier = Modifier,
+    mainViewModel: MainViewModel = viewModel()
+) {
+    val scope = rememberCoroutineScope()
+
+    SingleChoiceSegmentedButtonRow(
+        modifier
+    ) {
+        PhotoType.entries.forEach { type ->
+            SegmentedButton(
+                shape = SegmentedButtonDefaults.itemShape(
+                    index = type.index,
+                    count = PhotoType.entries.size
+                ),
+                onClick = {
+                    scope.launch {
+                        mainViewModel.settingsStore.setFolderFilterType(
+                            type
+                        )
+                    }
+                },
+                selected = selectedPhotoType == type
+            ) {
+                val res = when (type) {
+                    PhotoType.All -> R.string.photo_type_all
+                    PhotoType.Personal -> R.string.photo_type_personal
+                    PhotoType.Family -> R.string.photo_type_family
+                }
+                Text(stringResource(res))
             }
         }
     }

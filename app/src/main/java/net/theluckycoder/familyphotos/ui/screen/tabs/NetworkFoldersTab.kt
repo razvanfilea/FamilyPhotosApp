@@ -19,9 +19,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -45,11 +42,12 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.model.FolderType
+import net.theluckycoder.familyphotos.model.PhotoType
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.isPublic
 import net.theluckycoder.familyphotos.ui.composables.FolderFilterTextField
 import net.theluckycoder.familyphotos.ui.composables.FolderPreviewItem
+import net.theluckycoder.familyphotos.ui.composables.FolderTypeSegmentedButtons
 import net.theluckycoder.familyphotos.ui.composables.SortButton
 import net.theluckycoder.familyphotos.ui.screen.FolderScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
@@ -59,7 +57,7 @@ object NetworkFoldersTab : BottomTab {
     override val options: TabOptions
         @Composable
         get() = TabOptions(
-            2.toUShort(),
+            1.toUShort(),
             stringResource(R.string.section_folders),
             painterResource(R.drawable.tab_network_folder_outlined)
         )
@@ -78,20 +76,20 @@ object NetworkFoldersTab : BottomTab {
 
         val folders by mainViewModel.networkFolders.collectAsState(emptyList())
         val sortAscending by mainViewModel.settingsStore.showFoldersAscending.collectAsState(true)
-        val selectedFolderType by mainViewModel.settingsStore.folderType.collectAsState(
-            FolderType.All
+        val selectedPhotoType by mainViewModel.settingsStore.photoType.collectAsState(
+            PhotoType.All
         )
         var folderNameFilter by remember { mutableStateOf("") }
         FolderFilterTextField(folderNameFilter, onFilterChange = { folderNameFilter = it })
 
         val filteredFolders =
-            remember(folders, folderNameFilter, sortAscending, selectedFolderType) {
+            remember(folders, folderNameFilter, sortAscending, selectedPhotoType) {
                 val filtered = folders.asSequence()
                     .filter {
-                        when (selectedFolderType) {
-                            FolderType.All -> true
-                            FolderType.Personal -> !it.isPublic
-                            FolderType.Public -> it.isPublic
+                        when (selectedPhotoType) {
+                            PhotoType.All -> true
+                            PhotoType.Personal -> !it.isPublic()
+                            PhotoType.Family -> it.isPublic()
                         }
                     }
                     .filter { it.name.contains(folderNameFilter, ignoreCase = true) }
@@ -112,35 +110,13 @@ object NetworkFoldersTab : BottomTab {
                         .fillMaxWidth()
                         .padding(horizontal = 4.dp),
                 ) {
-                    SingleChoiceSegmentedButtonRow(
-                        Modifier
+                    FolderTypeSegmentedButtons(
+                        selectedPhotoType = selectedPhotoType,
+                        modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 8.dp)
-                    ) {
-                        FolderType.entries.forEach { type ->
-                            SegmentedButton(
-                                shape = SegmentedButtonDefaults.itemShape(
-                                    index = type.index,
-                                    count = FolderType.entries.size
-                                ),
-                                onClick = {
-                                    scope.launch {
-                                        mainViewModel.settingsStore.setFolderFilterType(
-                                            type
-                                        )
-                                    }
-                                },
-                                selected = selectedFolderType == type
-                            ) {
-                                val res = when (type) {
-                                    FolderType.All -> R.string.folder_type_all
-                                    FolderType.Personal -> R.string.folder_type_personal
-                                    FolderType.Public -> R.string.folder_type_public
-                                }
-                                Text(stringResource(res))
-                            }
-                        }
-                    }
+                            .padding(horizontal = 8.dp),
+                        mainViewModel = mainViewModel
+                    )
 
                     Row(
                         Modifier
@@ -201,7 +177,7 @@ object NetworkFoldersTab : BottomTab {
                         )
                     },
                 ) {
-                    if (folder.isPublic) {
+                    if (folder.isPublic()) {
                         Icon(
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)

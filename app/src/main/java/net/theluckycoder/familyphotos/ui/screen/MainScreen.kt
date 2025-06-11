@@ -30,9 +30,8 @@ import cafe.adriel.voyager.navigator.tab.TabNavigator
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.screen.tabs.BottomTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.DeviceTab
-import net.theluckycoder.familyphotos.ui.screen.tabs.FamilyTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.NetworkFoldersTab
-import net.theluckycoder.familyphotos.ui.screen.tabs.PersonalTab
+import net.theluckycoder.familyphotos.ui.screen.tabs.TimelineTab
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 object MainScreen : Screen {
@@ -43,7 +42,7 @@ object MainScreen : Screen {
         val mainViewModel: MainViewModel = viewModel()
         val navigator = LocalNavigator.currentOrThrow
 
-        TabNavigator(PersonalTab) {
+        TabNavigator(TimelineTab) {
             val snackbarHostState = LocalSnackbarHostState.current
 
             Scaffold(
@@ -54,8 +53,7 @@ object MainScreen : Screen {
                         NavigationBar(
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            TabNavigationItem(PersonalTab)
-                            TabNavigationItem(FamilyTab)
+                            TabNavigationItem(TimelineTab)
                             TabNavigationItem(NetworkFoldersTab)
                             TabNavigationItem(DeviceTab)
                         }

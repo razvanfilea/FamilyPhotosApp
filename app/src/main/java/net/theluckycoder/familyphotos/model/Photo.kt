@@ -108,5 +108,7 @@ fun Photo.getPreviewUri(): Uri = when (this) {
 fun NetworkPhoto.getDownloadUrl(): String =
     "${NetworkModule.BASE_URL}photos/download/$id"
 
+fun NetworkPhoto.isPublic() = this.userId == PUBLIC_USER_ID
+
 fun NetworkPhoto.getPreviewUrl(): String =
     "${NetworkModule.BASE_URL}photos/preview/$id"

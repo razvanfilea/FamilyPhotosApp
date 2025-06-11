@@ -9,7 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import net.theluckycoder.familyphotos.model.FolderType
+import net.theluckycoder.familyphotos.model.PhotoType
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,12 +26,12 @@ class SettingsDataStore @Inject constructor(@ApplicationContext context: Context
     val showFoldersAscending: Flow<Boolean> =
         settingsDataStore.data.map { it[SHOW_FOLDERS_ASCENDING] != false }.distinctUntilChanged()
 
-    val folderType: Flow<FolderType> =
+    val photoType: Flow<PhotoType> =
         settingsDataStore.data.map {
             when (it[FOLDERS_FILTER_TYPE]) {
-                FolderType.Personal.index -> FolderType.Personal
-                FolderType.Public.index -> FolderType.Public
-                else -> FolderType.All
+                PhotoType.Personal.index -> PhotoType.Personal
+                PhotoType.Family.index -> PhotoType.Family
+                else -> PhotoType.All
             }
         }.distinctUntilChanged()
 
@@ -42,7 +42,7 @@ class SettingsDataStore @Inject constructor(@ApplicationContext context: Context
         preferences[SHOW_FOLDERS_ASCENDING] = value
     }
 
-    suspend fun setFolderFilterType(value: FolderType) = settingsDataStore.edit { preferences ->
+    suspend fun setFolderFilterType(value: PhotoType) = settingsDataStore.edit { preferences ->
         preferences[FOLDERS_FILTER_TYPE] = value.index
     }
 

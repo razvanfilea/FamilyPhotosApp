@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="section_personal">Personal</string>
-    <string name="section_family">Familie</string>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingQuantity">
+    <string name="section_photos">Poze</string>
     <string name="section_folders">Dosare</string>
     <string name="section_device">Telefon</string>
     <string name="action_delete">Șterge</string>
@@ -21,9 +20,6 @@
     <string name="action_next">Următorul</string>
     <string name="confirm_delete">Șterge fișierele?</string>
     <string name="confirm_delete_detail">Sunteți sigur că vrei să ștergi fișierele?</string>
-    <string name="message_morning">Bună dimineața %s!</string>
-    <string name="message_normal">Bună, %s!</string>
-    <string name="message_night">Noapte bună %s</string>
     <string name="settings">Setări</string>
     <string name="status_saved">Salvată</string>
     <string name="send_to">Trimite la:</string>
@@ -48,8 +44,21 @@
     <string name="ascending">Crescător</string>
     <string name="descending">Descrescător</string>
     <string name="notification_backup_fail">Nu s-au putut incarca fisierele</string>
-    <string name="folder_type_public">Publice</string>
+    <string name="photo_type_family">Familie</string>
     <string name="favorites">Favorite</string>
-    <string name="folder_type_all">Toate</string>
-    <string name="folder_type_personal">Personale</string>
+    <string name="photo_type_all">Toate</string>
+    <string name="photo_type_personal">Personale</string>
+    <plurals name="years_ago">
+        <item quantity="one">acum %1$d an</item>
+        <item quantity="other">acum %1$d ani</item>
+    </plurals>
+    <plurals name="images_deleted_success">
+        <item quantity="one">%d imagine a fost ștearsă</item>
+        <item quantity="other">%d imagini au fost șterse</item>
+    </plurals>
+
+    <plurals name="images_deleted_failure">
+        <item quantity="one">Nu s-a putut șterge %d imagine</item>
+        <item quantity="other">Nu s-au putut șterge %d imagini</item>
+    </plurals>
 </resources>

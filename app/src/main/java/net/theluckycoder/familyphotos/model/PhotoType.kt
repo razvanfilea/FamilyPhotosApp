@@ -1,7 +1,7 @@
 package net.theluckycoder.familyphotos.model
 
-enum class FolderType(val index: Int) {
+enum class PhotoType(val index: Int) {
     All(0),
     Personal(1),
-    Public(2)
+    Family(2)
 }

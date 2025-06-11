@@ -6,6 +6,7 @@ import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.model.NetworkFolder
 import net.theluckycoder.familyphotos.model.NetworkPhoto
+import net.theluckycoder.familyphotos.model.NetworkPhotoWithYearOffset
 
 @Dao
 abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>("network_photo") {
@@ -15,10 +16,9 @@ abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>("network_photo
 
     @Query(
         """SELECT * FROM network_photo
-            WHERE network_photo.userId = :userName
             ORDER BY network_photo.timeCreated DESC"""
     )
-    abstract fun getPhotosPaged(userName: String): PagingSource<Int, NetworkPhoto>
+    abstract fun getPhotosPaged(): PagingSource<Int, NetworkPhoto>
 
     @Query("""
        SELECT * FROM network_photo
@@ -42,6 +42,23 @@ abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>("network_photo
     """
     )
     abstract fun getPhotosInThisWeek(userId: String, timestamp: Long): Flow<List<NetworkPhoto>>
+
+    @Query(
+        """SELECT *, 
+              CAST((strftime('%s','now') - network_photo.timeCreated) / (3600 * 24 * 365) AS INTEGER) AS yearOffset 
+       FROM network_photo
+       WHERE (
+          :userName IS NULL
+          OR (network_photo.userId = :userName)
+      )
+         AND yearOffset BETWEEN :minYearsAgo AND :maxYearsAgo
+       ORDER BY yearOffset ASC, network_photo.timeCreated DESC"""
+    )
+    abstract fun getPhotosGroupedByYearsAgo(
+        userName: String?,
+        minYearsAgo: Int = 1,
+        maxYearsAgo: Int = 10
+    ): Flow<List<NetworkPhotoWithYearOffset>>
 
     @Query(
         """

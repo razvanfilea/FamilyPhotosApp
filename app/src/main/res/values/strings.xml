@@ -1,16 +1,10 @@
-<resources xmlns:tools="http://schemas.android.com/tools"
-    tools:ignore="MissingTranslation">
+<resources>
     <string name="app_name" translatable="false">Family Photos</string>
     <string name="camera_name" translatable="false">Camera</string>
     <string name="camera_name_long" translatable="false">Family Camera</string>
 
-    <string name="message_morning">Good morning, %s!</string>
-    <string name="message_normal">Hello, %s!</string>
-    <string name="message_night">Good night %s</string>
-
     <string name="settings">Settings</string>
-    <string name="section_personal">Personal</string>
-    <string name="section_family">Family</string>
+    <string name="section_photos">Photos</string>
     <string name="section_folders">Folders</string>
     <string name="section_device">Device</string>
 
@@ -32,8 +26,8 @@
     <string name="confirm_delete_detail">Are you sure you want to delete these files?</string>
 
     <plurals name="images_deleted_success">
-        <item quantity="one">%d image deleted successfully</item>
-        <item quantity="other">%d images deleted successfully</item>
+        <item quantity="one">%d image deleted</item>
+        <item quantity="other">%d images deleted</item>
     </plurals>
 
     <plurals name="images_deleted_failure">
@@ -52,6 +46,10 @@
     <string name="action_selected">Selected</string>
     <string name="ascending">Ascending</string>
     <string name="descending">Descending</string>
+    <plurals name="years_ago">
+        <item quantity="one">%1$d year ago</item>
+        <item quantity="other">%1$d years ago</item>
+    </plurals>
 
     <!-- Notifications -->
     <string name="notification_missing_permission">Missing notification permission</string>
@@ -73,8 +71,8 @@
     <string name="pref_clear_cache">Clear all cache</string>
 
     <string name="folder_name">Folder Name</string>
-    <string name="folder_type_all">All</string>
-    <string name="folder_type_personal">Personal</string>
-    <string name="folder_type_public">Public</string>
+    <string name="photo_type_all">All</string>
+    <string name="photo_type_personal">Personal</string>
+    <string name="photo_type_family">Family</string>
     <string name="favorites">Favorites</string>
 </resources>

@@ -44,8 +44,7 @@ data class NetworkFolder(
     }
 }
 
-val NetworkFolder.isPublic
-    get() = this.userId == PUBLIC_USER_ID
+fun NetworkFolder.isPublic() = this.userId == PUBLIC_USER_ID
 
 @Immutable
 data class LocalFolder(
