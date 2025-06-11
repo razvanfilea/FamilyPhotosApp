@@ -1,6 +1,5 @@
 package net.theluckycoder.familyphotos.ui.composables
 
-import androidx.compose.runtime.getValue
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -10,12 +9,10 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,12 +34,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,6 +54,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.LazyPagingItems
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
@@ -136,6 +134,8 @@ fun <T : Photo> PhotoListWithViewer(
     memoriesContent: @Composable () -> Unit = {},
     mainViewModel: MainViewModel = viewModel(),
 ) {
+    val scope = rememberCoroutineScope()
+
     val openedPhotoIndex = remember { mutableStateOf<Int?>(null) }
     val photoIndex = openedPhotoIndex.value
 
@@ -149,11 +149,16 @@ fun <T : Photo> PhotoListWithViewer(
         CompositionLocalProvider(LocalAnimatedVisibilityScope provides this@AnimatedContent) {
             if (targetState) {
                 PhotosList(
-                    listState = gridState,
+                    gridState = gridState,
                     photos = photos,
                     headerContent = headerContent,
                     memoriesContent = memoriesContent,
-                    zoomIndexState = mainViewModel.zoomIndexState,
+                    zoomIndex = zoomIndex.value ?: 1,
+                    onZoomChange = {
+                        scope.launch {
+                            mainViewModel.settingsStore.setPhotosZoomLevel(it)
+                        }
+                    },
                     openPhoto = { openedPhotoIndex.value = it },
                 )
             } else {
@@ -183,15 +188,16 @@ private const val CONTENT_TYPE_HEADER = 3
 )
 @Composable
 private fun <T : Photo> PhotosList(
-    listState: LazyGridState,
+    gridState: LazyGridState,
     headerContent: @Composable () -> Unit,
     memoriesContent: @Composable () -> Unit = {},
     photos: LazyPagingItems<T>,
-    zoomIndexState: MutableIntState,
+    zoomIndex: Int,
+    onZoomChange: (Int) -> Unit,
     openPhoto: (index: Int) -> Unit,
 ) = Column(Modifier.fillMaxSize()) {
 
-    val selectedPhotoIds = remember { mutableStateListOf<Long>() }
+    val selectedPhotoIds = remember { mutableStateSetOf<Long>() }
 
     BackHandler(enabled = selectedPhotoIds.isNotEmpty()) {
         selectedPhotoIds.clear()
@@ -228,13 +234,18 @@ private fun <T : Photo> PhotosList(
         )
     }
 
-    val columnCount = getZoomColumnCount(zoomIndexState.intValue)
+    val columnCount = getZoomColumnCount(zoomIndex)
 
     LazyVerticalGrid(
-        state = listState,
+        state = gridState,
         modifier = Modifier
             .fillMaxSize()
-            .detectZoomIn(MAX_ZOOM_LEVEL_INDEX, zoomIndexState),
+            .detectZoomIn(zoomIndex, onZoomChange, MAX_ZOOM_LEVEL_INDEX)
+            .photoGridDrag(
+                lazyGridState = gridState,
+                selectedIds = selectedPhotoIds,
+                items = photos.itemSnapshotList,
+            ),
         columns = GridCells.Fixed(columnCount)
     ) {
         item(
@@ -253,7 +264,7 @@ private fun <T : Photo> PhotosList(
         for (index in 0..<photos.itemCount) {
             val photo = photos.peek(index)
             if (photo == null) {
-                item {}
+                //item {}
                 continue
             }
 
@@ -314,7 +325,7 @@ private fun <T : Photo> PhotosList(
 private fun PhotoItem(
     modifier: Modifier,
     photo: Photo,
-    selectedPhotoIds: SnapshotStateList<Long>,
+    selectedPhotoIds: SnapshotStateSet<Long>,
     openPhoto: (id: Long) -> Unit
 ) {
     val isVideo = remember(photo) { photo.isVideo }

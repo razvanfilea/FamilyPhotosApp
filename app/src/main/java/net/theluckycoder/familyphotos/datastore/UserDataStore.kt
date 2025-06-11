@@ -39,7 +39,7 @@ class UserDataStore @Inject constructor(@ApplicationContext context: Context) {
     }
 
     val autoBackup: Flow<Boolean> =
-        userDataStore.data.map { it[AUTO_BACKUP] ?: false }.distinctUntilChanged()
+        userDataStore.data.map { it[AUTO_BACKUP] == true }.distinctUntilChanged()
 
     suspend fun setAutoBackup(value: Boolean) = userDataStore.edit { preferences ->
         preferences[AUTO_BACKUP] = value

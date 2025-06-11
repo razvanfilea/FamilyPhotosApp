@@ -25,9 +25,4 @@ class CoroutineScopeModule {
     fun provideMainCoroutineScope(): MainCoroutineScope = object : MainCoroutineScope {
         override val coroutineContext = SupervisorJob() + Dispatchers.Main
     }
-
-    @Provides
-    fun provideMainImmediateCoroutineScope(): MainImmediateCoroutineScope = object : MainImmediateCoroutineScope {
-        override val coroutineContext = SupervisorJob() + Dispatchers.Main.immediate
-    }
 }

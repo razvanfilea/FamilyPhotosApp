@@ -39,7 +39,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,10 +67,10 @@ import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import net.theluckycoder.familyphotos.PhotosApp
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.model.PhotoType
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.Photo
+import net.theluckycoder.familyphotos.model.PhotoType
 import net.theluckycoder.familyphotos.model.getPreviewUri
 import net.theluckycoder.familyphotos.model.getUri
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
@@ -183,7 +183,7 @@ fun SelectableItem(
     if (inSelectionMode) {
         Surface(
             modifier = modifier,
-            tonalElevation = 3.dp
+            tonalElevation = 15.dp
         ) {
             val transition = updateTransition(selected, label = "selected")
             val padding by transition.animateDp(label = "padding") { selected ->
@@ -348,7 +348,7 @@ fun SharePhotoIconButton(
 @Composable
 fun PhotoUtilitiesActions(
     isLocalPhoto: Boolean,
-    selectedItems: SnapshotStateList<Long>,
+    selectedItems: SnapshotStateSet<Long>,
     mainViewModel: MainViewModel = viewModel()
 ) {
     val navigator = LocalNavigator.currentOrThrow
@@ -424,6 +424,7 @@ fun FolderTypeSegmentedButtons(
         modifier
     ) {
         PhotoType.entries.forEach { type ->
+            val selected = selectedPhotoType == type
             SegmentedButton(
                 shape = SegmentedButtonDefaults.itemShape(
                     index = type.index,
@@ -436,7 +437,23 @@ fun FolderTypeSegmentedButtons(
                         )
                     }
                 },
-                selected = selectedPhotoType == type
+                selected = selected,
+                icon = {
+                    val res = if (selected) {
+                        when (type) {
+                            PhotoType.All -> R.drawable.ic_photo_filled
+                            PhotoType.Personal -> R.drawable.ic_person_filled
+                            PhotoType.Family -> R.drawable.ic_family_filled
+                        }
+                    } else {
+                        when (type) {
+                            PhotoType.All -> R.drawable.ic_photo_outline
+                            PhotoType.Personal -> R.drawable.ic_person_outline
+                            PhotoType.Family -> R.drawable.ic_family_outline
+                        }
+                    }
+                    Icon(painterResource(res), contentDescription = null)
+                }
             ) {
                 val res = when (type) {
                     PhotoType.All -> R.string.photo_type_all

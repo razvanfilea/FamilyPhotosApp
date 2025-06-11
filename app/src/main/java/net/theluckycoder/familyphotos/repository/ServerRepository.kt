@@ -77,11 +77,11 @@ class ServerRepository @Inject constructor(
             if (photos.isNotEmpty()) {
                 networkPhotosDao.replaceAll(photos)
                 Log.i("ServerRepository", "Downloaded all server photos")
-                return@coroutineScope true
+                return@coroutineScope photosResponse
             }
         }
 
-        false
+        photosResponse
     }
 
     suspend fun deleteNetworkPhoto(photoId: Long): Boolean {

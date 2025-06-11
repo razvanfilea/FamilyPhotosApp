@@ -1,7 +1,6 @@
 package net.theluckycoder.familyphotos.ui.composables
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
@@ -18,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -28,6 +26,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.theluckycoder.familyphotos.R
@@ -87,13 +86,13 @@ fun FolderPreviewItem(
     onClick: () -> Unit,
     content: @Composable (BoxScope.() -> Unit)? = null
 ) = Column(
-    modifier = modifier.padding(8.dp)
+    modifier = modifier.padding(horizontal = 12.dp, vertical = 4.dp)
 ) {
     Box(
         Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(22.dp))
             .clickable(onClick = onClick)
     ) {
         CoilPhoto(
@@ -107,14 +106,16 @@ fun FolderPreviewItem(
     }
 
     Text(
-        modifier = Modifier.padding(top = 4.dp),
+        modifier = Modifier.padding(start = 8.dp, top = 4.dp),
+        softWrap = false,
+        overflow = TextOverflow.Ellipsis,
         text = name,
-        fontWeight = FontWeight.Bold
+        fontWeight = FontWeight.SemiBold
     )
 
     Text(
-        modifier = Modifier.padding(bottom = 8.dp),
-        text = "$photosCount photos",
+        modifier = Modifier.padding(start = 8.dp, bottom = 8.dp),
+        text = "$photosCount items",
         fontSize = 14.sp,
         fontWeight = FontWeight.Light
     )

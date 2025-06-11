@@ -35,15 +35,6 @@ abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>("network_photo
     abstract fun getFolders(): Flow<List<NetworkFolder>>
 
     @Query(
-        """SELECT * FROM network_photo
-        WHERE network_photo.userId = :userId
-        AND ROUND(network_photo.timeCreated / 3600 / 24 / 7) = ROUND(:timestamp / 3600 / 24 / 7)
-        ORDER BY network_photo.timeCreated DESC
-    """
-    )
-    abstract fun getPhotosInThisWeek(userId: String, timestamp: Long): Flow<List<NetworkPhoto>>
-
-    @Query(
         """SELECT *, 
               CAST((strftime('%s','now') - network_photo.timeCreated) / (3600 * 24 * 365) AS INTEGER) AS yearOffset 
        FROM network_photo

@@ -81,11 +81,6 @@ class MainViewModel @Inject constructor(
 
     private val workManager: WorkManager = WorkManager.getInstance(app)
 
-    // Data
-    private val _isOnlineFlow = MutableStateFlow(false)
-    val isOnlineFlow = _isOnlineFlow.asStateFlow()
-
-    val displayNameFlow = userDataStore.displayNameFlow
     val autoBackupFlow = userDataStore.autoBackup
 
     val timelinePager = Pager(PAGING_CONFIG) {
@@ -117,16 +112,14 @@ class MainViewModel @Inject constructor(
     }.flow.cachedIn(viewModelScope)
 
     val localFolders = foldersRepository.localFoldersFlow
-
     val networkFolders = foldersRepository.networkFoldersFlow
 
     private val _localPhotosToDelete = Channel<List<LocalPhoto>>()
     val localPhotosToDelete = _localPhotosToDelete.consumeAsFlow()
 
-    // Ui
     val isRefreshing = MutableStateFlow(false)
-    val zoomIndexState = mutableIntStateOf(1)
     val showBars = mutableStateOf(true)
+    val isOnlineFlow = MutableStateFlow(true)
 
     init {
         viewModelScope.launch {
@@ -187,7 +180,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val pingResponse = try {
                 serverRepository.pingServer()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 ServerRepository.PingResponse.UNSUCCESSFUL
             }
 
@@ -195,7 +188,7 @@ class MainViewModel @Inject constructor(
                 logout(app)
                 return@launch
             }
-            _isOnlineFlow.value = pingResponse == ServerRepository.PingResponse.SUCCESSFUL
+            isOnlineFlow.value = pingResponse == ServerRepository.PingResponse.SUCCESSFUL
 
             val localPhotos = async { foldersRepository.updatePhoneAlbums() }
 
@@ -382,9 +375,9 @@ class MainViewModel @Inject constructor(
             } catch (_: Exception) {
             }
             userDataStore.clear()
-        }
 
-        ProcessPhoenix.triggerRebirth(app)
+            ProcessPhoenix.triggerRebirth(app)
+        }
     }
 
     companion object {

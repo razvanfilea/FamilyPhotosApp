@@ -8,7 +8,6 @@ import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.first
 import net.theluckycoder.familyphotos.repository.FoldersRepository
 import net.theluckycoder.familyphotos.repository.ServerRepository
 import java.io.IOException

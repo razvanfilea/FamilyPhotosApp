@@ -1,69 +1,180 @@
 package net.theluckycoder.familyphotos.ui.composables
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.onLongClick
-import androidx.compose.ui.semantics.semantics
-
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.calculateCentroidSize
 import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateSet
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
+import androidx.compose.ui.unit.toIntRect
+import androidx.paging.ItemSnapshotList
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import net.theluckycoder.familyphotos.model.Photo
 import kotlin.math.abs
 
-@Composable
-@OptIn(ExperimentalFoundationApi::class)
 fun Modifier.selectableClickable(
     inSelectionMode: Boolean,
     selected: Boolean,
     onClick: () -> Unit,
     onSelect: () -> Unit,
     onDeselect: () -> Unit
-) = this
-    .semantics {
-        if (!inSelectionMode) {
-            onLongClick("Select") {
+) = if (inSelectionMode) {
+    this.toggleable(
+        value = selected,
+        interactionSource = null,
+        indication = null, // do not show a ripple
+        role = Role.Checkbox,
+        onValueChange = {
+            if (it) {
                 onSelect()
-                true
+            } else {
+                onDeselect()
+            }
+        }
+    )
+} else {
+    this.clickable(onClick = onClick, role = Role.Checkbox)
+}
+
+@Composable
+fun <T : Photo> Modifier.photoGridDrag(
+    lazyGridState: LazyGridState,
+    selectedIds: SnapshotStateSet<Long>,
+    items: ItemSnapshotList<T>,
+) : Modifier {
+    val autoScrollSpeed = remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(autoScrollSpeed.floatValue) {
+        if (autoScrollSpeed.floatValue != 0f) {
+            while (isActive) {
+                lazyGridState.scrollBy(autoScrollSpeed.floatValue)
+                delay(10)
             }
         }
     }
-    .then(
-        if (inSelectionMode) {
-            Modifier.toggleable(
-                value = selected,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null, // do not show a ripple
-                onValueChange = {
-                    if (it) {
-                        onSelect()
-                    } else {
-                        onDeselect()
+    val scrollGestureActive = remember { mutableStateOf(false) }
+
+    return photoGridDrag(
+        lazyGridState = lazyGridState,
+        haptics = LocalHapticFeedback.current,
+        selectedIds = selectedIds,
+        autoScrollSpeed = autoScrollSpeed,
+        autoScrollThreshold = with(LocalDensity.current) { 40.dp.toPx() },
+        scrollGestureActive = scrollGestureActive,
+        items = items
+    )
+}
+
+private fun <T : Photo> Modifier.photoGridDrag(
+    lazyGridState: LazyGridState,
+    haptics: HapticFeedback,
+    selectedIds: SnapshotStateSet<Long>,
+    autoScrollSpeed: MutableState<Float>,
+    autoScrollThreshold: Float,
+    scrollGestureActive: MutableState<Boolean>,
+    items: ItemSnapshotList<T>,
+) = pointerInput(Unit) {
+
+    fun LazyGridState.hitKeyAt(contentOffset: Offset): Long? {
+        return layoutInfo.visibleItemsInfo
+            .find { info ->
+                info.size.toIntRect()
+                    .contains((contentOffset.round() - info.offset))
+            }
+            ?.key as? Long
+    }
+
+    var initialMediaIndex: Int? = null
+    var currentMediaIndex: Int? = null
+
+    detectDragGesturesAfterLongPress(
+        onDragStart = { raw ->
+            scrollGestureActive.value = true
+            lazyGridState.hitKeyAt(raw)?.let { key ->
+                val idx = items.indexOfFirst { it?.id == key }
+                if (key !in selectedIds) {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    initialMediaIndex = idx
+                    currentMediaIndex = idx
+                    selectedIds.add(key)
+                }
+            }
+        },
+        onDragCancel = {
+            scrollGestureActive.value = false
+            initialMediaIndex = null
+            autoScrollSpeed.value = 0f
+        },
+        onDragEnd = {
+            scrollGestureActive.value = false
+            initialMediaIndex = null
+            autoScrollSpeed.value = 0f
+        },
+        onDrag = { change, _ ->
+            val raw = change.position
+            if (initialMediaIndex != null) {
+                // auto-scroll logic unchanged…
+                val distB = lazyGridState.layoutInfo.viewportSize.height - raw.y
+                val distT = raw.y
+                autoScrollSpeed.value = when {
+                    distB < autoScrollThreshold -> autoScrollThreshold - distB
+                    distT < autoScrollThreshold -> -(autoScrollThreshold - distT)
+                    else -> 0f
+                }
+
+                lazyGridState.hitKeyAt(raw)?.let { key ->
+                    val newIdx = items.indexOfFirst { it?.id == key }
+                    if (newIdx >= 0 && newIdx != currentMediaIndex) {
+                        val start = initialMediaIndex ?: return@let
+                        val oldEnd = currentMediaIndex ?: return@let
+                        val oldRange = if (oldEnd >= start) start..oldEnd else oldEnd..start
+                        val newRange = if (newIdx >= start) start..newIdx else newIdx..start
+
+                        val oldIds = oldRange.mapNotNull { items.getOrNull(it)?.id }
+                        val newIds = newRange.mapNotNull { items.getOrNull(it)?.id }
+
+                        selectedIds.removeAll(oldIds)
+                        selectedIds.addAll(newIds)
+                        currentMediaIndex = newIdx
                     }
                 }
-            )
-        } else {
-            Modifier.combinedClickable(onClick = { onClick() }, onLongClick = onSelect)
-        }
+            }
+        },
     )
+}
 
 @Composable
-fun Modifier.detectZoomIn(maxZoomIndex: Int, zoomIndexState: MutableIntState): Modifier {
+fun Modifier.detectZoomIn(
+    zoomIndex: Int,
+    onZoomChange: (Int) -> Unit,
+    maxZoomIndex: Int
+): Modifier {
     var zoomFloat by remember { mutableFloatStateOf(1f) }
 
     return this.pointerInput(Unit) {
@@ -72,12 +183,10 @@ fun Modifier.detectZoomIn(maxZoomIndex: Int, zoomIndexState: MutableIntState): M
             onGesture = { centroid: Offset, newZoom: Float ->
                 val newScale = (zoomFloat * newZoom)
                 zoomFloat = if (newScale > 1.5f) {
-                    zoomIndexState.intValue =
-                        zoomIndexState.intValue.dec().coerceIn(0, maxZoomIndex)
+                    onZoomChange(zoomIndex.dec().coerceIn(0, maxZoomIndex))
                     1f
                 } else if (newScale < 0.5f) {
-                    zoomIndexState.intValue =
-                        zoomIndexState.intValue.inc().coerceIn(0, maxZoomIndex)
+                    onZoomChange(zoomIndex.inc().coerceIn(0, maxZoomIndex))
                     1f
                 } else {
                     newScale

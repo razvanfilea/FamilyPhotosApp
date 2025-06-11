@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
 
     private val deletePhotoLauncher =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
-            if (it.resultCode == Activity.RESULT_OK) {
+            if (it.resultCode == RESULT_OK) {
                 mainViewModel.refreshLocalPhotos()
             }
         }

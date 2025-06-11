@@ -181,8 +181,8 @@ object NetworkFoldersTab : BottomTab {
                         Icon(
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)
-                                .size(36.dp)
-                                .padding(4.dp),
+                                .size(42.dp)
+                                .padding(8.dp),
                             painter = painterResource(R.drawable.ic_family_filled),
                             tint = Color.White,
                             contentDescription = null
