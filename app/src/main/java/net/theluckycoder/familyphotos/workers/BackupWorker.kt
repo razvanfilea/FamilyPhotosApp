@@ -8,6 +8,8 @@ import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.first
+import net.theluckycoder.familyphotos.db.dao.LocalFolderBackupDao
 import net.theluckycoder.familyphotos.repository.FoldersRepository
 import net.theluckycoder.familyphotos.repository.ServerRepository
 import java.io.IOException
@@ -19,18 +21,24 @@ class BackupWorker @AssistedInject constructor(
     @Assisted workerParams: WorkerParameters,
     private val foldersRepository: FoldersRepository,
     private val serverRepository: ServerRepository,
+    private val localFolderBackupDao: LocalFolderBackupDao,
 ) : CoroutineWorker(context, workerParams) {
 
     override suspend fun doWork(): Result {
         foldersRepository.updatePhoneAlbums()
 
-        val photos = foldersRepository.localPhotosFromFolder("Camera", 50)
-            .filter { !it.isSavedToCloud } // Photos not uploaded
+        val folderNames = localFolderBackupDao.getAll().first()
 
         val result = try {
 
-            photos.forEach { localPhoto ->
-                serverRepository.uploadFile(localPhoto, false, null)
+            for (folderName in folderNames) {
+                Log.i("BackupWorker", "Backing Up folder: $folderName)")
+                val photos = foldersRepository.localPhotosFromFolder(folderName, 100)
+                    .filter { !it.isSavedToCloud } // Photos not uploaded
+
+                photos.forEach { localPhoto ->
+                    serverRepository.uploadFile(localPhoto, false, null)
+                }
             }
 
             Result.success()

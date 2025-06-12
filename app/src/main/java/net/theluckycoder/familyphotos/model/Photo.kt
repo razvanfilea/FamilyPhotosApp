@@ -14,6 +14,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.theluckycoder.familyphotos.network.NetworkModule
 import androidx.core.net.toUri
+import net.theluckycoder.familyphotos.db.UriAsStringSerializer
 
 @Serializable
 sealed class Photo : Parcelable {
@@ -92,23 +93,18 @@ val Photo.isVideo
         is NetworkPhoto -> MimeTypeMap.getSingleton().getMimeTypeFromExtension(
             name.substringAfterLast('.')
         )
+
         is LocalPhoto -> mimeType
     }?.startsWith("video/") == true
 
 fun Photo.getUri(): Uri = when (this) {
-    is NetworkPhoto -> getDownloadUrl().toUri()
+    is NetworkPhoto -> "${NetworkModule.BASE_URL}photos/download/$id".toUri()
     is LocalPhoto -> uri
 }
 
 fun Photo.getPreviewUri(): Uri = when (this) {
-    is NetworkPhoto -> getPreviewUrl().toUri()
+    is NetworkPhoto -> "${NetworkModule.BASE_URL}photos/preview/$id".toUri()
     is LocalPhoto -> uri
 }
 
-fun NetworkPhoto.getDownloadUrl(): String =
-    "${NetworkModule.BASE_URL}photos/download/$id"
-
 fun NetworkPhoto.isPublic() = this.userId == PUBLIC_USER_ID
-
-fun NetworkPhoto.getPreviewUrl(): String =
-    "${NetworkModule.BASE_URL}photos/preview/$id"

@@ -99,6 +99,7 @@ fun FolderPreviewItem(
             modifier = Modifier.fillMaxSize(),
             photo = photo,
             contentScale = ContentScale.Crop,
+            preview = true,
         )
 
         if (content != null)

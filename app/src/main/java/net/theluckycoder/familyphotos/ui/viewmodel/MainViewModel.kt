@@ -4,7 +4,6 @@ import android.app.Application
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -32,12 +31,13 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -48,13 +48,15 @@ import kotlinx.datetime.toLocalDateTime
 import net.theluckycoder.familyphotos.PhotosApp.Companion.LOCAL_TIME_ZONE
 import net.theluckycoder.familyphotos.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.datastore.UserDataStore
+import net.theluckycoder.familyphotos.db.dao.LocalFolderBackupDao
 import net.theluckycoder.familyphotos.model.ExifData
-import net.theluckycoder.familyphotos.model.PhotoType
+import net.theluckycoder.familyphotos.model.LocalFolderToBackup
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkFolder
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.PUBLIC_USER_ID
 import net.theluckycoder.familyphotos.model.Photo
+import net.theluckycoder.familyphotos.model.PhotoType
 import net.theluckycoder.familyphotos.model.isPublic
 import net.theluckycoder.familyphotos.network.service.UserService
 import net.theluckycoder.familyphotos.repository.FoldersRepository
@@ -74,14 +76,13 @@ class MainViewModel @Inject constructor(
     private val photosRepository: PhotosRepository,
     private val serverRepository: ServerRepository,
     private val foldersRepository: FoldersRepository,
+    private val foldersToBackupDao: LocalFolderBackupDao,
     private val userDataStore: UserDataStore,
     private val userService: Lazy<UserService>,
     val settingsStore: SettingsDataStore,
 ) : ViewModel() {
 
     private val workManager: WorkManager = WorkManager.getInstance(app)
-
-    val autoBackupFlow = userDataStore.autoBackup
 
     val timelinePager = Pager(PAGING_CONFIG) {
         photosRepository.getAllPhotosPaged()
@@ -132,42 +133,27 @@ class MainViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            autoBackupFlow.collectLatest { autoUpload ->
-                ensureActive()
+            val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.UNMETERED)
+                .setRequiresBatteryNotLow(true)
+                .build()
 
-                if (autoUpload) {
-                    val constraints = Constraints.Builder()
-                        .setRequiresCharging(true)
-                        .setRequiredNetworkType(NetworkType.UNMETERED)
-                        .build()
+            val periodicUpload =
+                PeriodicWorkRequestBuilder<BackupWorker>(1, TimeUnit.DAYS)
+                    .setConstraints(constraints)
+                    .build()
 
-                    val periodicUpload =
-                        PeriodicWorkRequestBuilder<BackupWorker>(1, TimeUnit.DAYS)
-                            .setConstraints(constraints)
-                            .build()
-
-                    try {
-                        WorkManager.getInstance(app)
-                            .enqueueUniquePeriodicWork(
-                                UNIQUE_PERIODIC_UPLOAD,
-                                ExistingPeriodicWorkPolicy.KEEP,
-                                periodicUpload
-                            )
-                            .await()
-                        Log.i(BackupWorker::class.simpleName, "Backup has been enabled")
-                    } catch (e: Throwable) {
-                        Log.e(BackupWorker::class.simpleName, "Backup failed to be enabled", e)
-                    }
-                } else {
-                    try {
-                        WorkManager.getInstance(app)
-                            .cancelUniqueWork(UNIQUE_PERIODIC_UPLOAD)
-                            .await()
-                        Log.i(BackupWorker::class.simpleName, "Backup has been disabled")
-                    } catch (e: Throwable) {
-                        Log.e(BackupWorker::class.simpleName, "Backup failed to be disabled", e)
-                    }
-                }
+            try {
+                WorkManager.getInstance(app)
+                    .enqueueUniquePeriodicWork(
+                        UNIQUE_PERIODIC_UPLOAD,
+                        ExistingPeriodicWorkPolicy.UPDATE,
+                        periodicUpload
+                    )
+                    .await()
+                Log.i(BackupWorker::class.simpleName, "Backup has been enabled")
+            } catch (e: Throwable) {
+                Log.e(BackupWorker::class.simpleName, "Backup failed to be enabled", e)
             }
         }
     }
@@ -211,12 +197,6 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun setAutoBackup(value: Boolean) {
-        viewModelScope.launch(Dispatchers.IO) {
-            userDataStore.setAutoBackup(value)
-        }
-    }
-
     fun getNetworkFolderPhotosPaged(folder: String) = Pager(PAGING_CONFIG) {
         foldersRepository.networkPhotosFromFolderPaged(folder)
     }.flow
@@ -224,6 +204,19 @@ class MainViewModel @Inject constructor(
     fun getLocalFolderPhotosPaged(folder: String) = Pager(PAGING_CONFIG) {
         foldersRepository.localPhotosFromFolderPaged(folder)
     }.flow
+
+    fun isLocalFolderBackupUp(folder: String): Flow<Boolean> =
+        foldersToBackupDao.getAll().map { it.firstOrNull { it == folder } != null }
+
+    fun backupLocalFolder(folder: String, add: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (add) {
+                foldersToBackupDao.upsert(LocalFolderToBackup(folder))
+            } else {
+                foldersToBackupDao.delete(LocalFolderToBackup(folder))
+            }
+        }
+    }
 
     /**
      * Change the folder and the user where these [NetworkPhoto]s belong
@@ -260,10 +253,6 @@ class MainViewModel @Inject constructor(
 
     fun getNetworkPhotoFlow(photoId: Long): Flow<NetworkPhoto?> =
         photosRepository.getNetworkPhoto(photoId)
-
-    suspend fun getExifData(photo: NetworkPhoto): ExifData? = withContext(Dispatchers.IO) {
-        serverRepository.getExifData(photo)
-    }
 
     /**
      * Receives a list of [LocalPhoto] ids that will be uploaded

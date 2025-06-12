@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -131,7 +132,7 @@ fun <T : Photo> PhotoListWithViewer(
     photos: LazyPagingItems<T>,
     modifier: Modifier = Modifier,
     headerContent: @Composable () -> Unit = {},
-    memoriesContent: @Composable () -> Unit = {},
+    memoriesContent: @Composable ColumnScope.() -> Unit = {},
     mainViewModel: MainViewModel = viewModel(),
 ) {
     val scope = rememberCoroutineScope()
@@ -190,7 +191,7 @@ private const val CONTENT_TYPE_HEADER = 3
 private fun <T : Photo> PhotosList(
     gridState: LazyGridState,
     headerContent: @Composable () -> Unit,
-    memoriesContent: @Composable () -> Unit = {},
+    memoriesContent: @Composable ColumnScope.() -> Unit = {},
     photos: LazyPagingItems<T>,
     zoomIndex: Int,
     onZoomChange: (Int) -> Unit,
@@ -282,14 +283,10 @@ private fun <T : Photo> PhotosList(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(MaterialTheme.colorScheme.background)
-                            .padding(
-                                top = 36.dp,
-                                bottom = 16.dp,
-                                start = 16.dp,
-                                end = 16.dp
-                            ),
+                            .padding(16.dp),
                         text = headerDate,
-                        style = MaterialTheme.typography.headlineLarge
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }

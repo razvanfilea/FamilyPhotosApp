@@ -10,16 +10,23 @@ import net.theluckycoder.familyphotos.model.LocalFolder
 import net.theluckycoder.familyphotos.model.LocalPhoto
 
 @Dao
-abstract class LocalPhotosDao : AbstractPhotosDao<LocalPhoto>("local_photo") {
+abstract class LocalPhotosDao : AbstractPhotosDao<LocalPhoto>() {
+
+    @Query("""
+        UPDATE local_photo SET networkPhotoId = 0
+        WHERE networkPhotoId <> 0 AND
+        networkPhotoId NOT IN (SELECT id FROM network_photo)"""
+    )
+    abstract suspend fun removeMissingNetworkReferences()
 
     @Query("SELECT * FROM local_photo WHERE id = :photoId")
     abstract fun findById(photoId: Long): Flow<LocalPhoto?>
 
     @Query(
         """
-        SELECT folder, id, uri, COUNT(id) FROM (
-            SELECT * FROM local_photo ORDER BY local_photo.timeCreated DESC
-        ) WHERE folder <> '' GROUP BY folder ORDER BY folder ASC"""
+        SELECT folder, id, uri, COUNT(id) FROM local_photo
+        WHERE folder <> '' GROUP BY folder HAVING timeCreated = MAX(timeCreated)
+        ORDER BY folder ASC"""
     )
     abstract fun getFolders(): Flow<List<LocalFolder>>
 
@@ -35,18 +42,6 @@ abstract class LocalPhotosDao : AbstractPhotosDao<LocalPhoto>("local_photo") {
     @Delete
     protected abstract fun delete(photos: Collection<LocalPhoto>)
 
-    @Transaction
-    open suspend fun replaceAllChanged(list: List<LocalPhoto>) {
-        val currentMap = getAll().associateBy { it.id }
-        val newMap = list.associateBy { it.id }
-
-        val toInsert = newMap.filterKeys { !currentMap.containsKey(it) }
-
-        val toDelete = currentMap.filterKeys { !newMap.containsKey(it) }
-
-        if (toInsert.isNotEmpty())
-            insertOrReplace(toInsert.map { it.value })
-        if (toDelete.isNotEmpty())
-            delete(toDelete.map { it.value })
-    }
+    @Query("DELETE FROM local_photo WHERE id NOT IN (SELECT id FROM temp_photo_ids)")
+    abstract override suspend fun deleteNotInTempTable()
 }

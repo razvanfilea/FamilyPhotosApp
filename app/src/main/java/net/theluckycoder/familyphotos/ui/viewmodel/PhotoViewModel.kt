@@ -9,6 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import net.theluckycoder.familyphotos.model.ExifData
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.Photo
@@ -41,5 +43,9 @@ class PhotoViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             serverRepository.updateFavorite(photo, add)
         }
+    }
+
+    suspend fun getExifData(photo: NetworkPhoto): ExifData? = withContext(Dispatchers.IO) {
+        serverRepository.getExifData(photo)
     }
 }

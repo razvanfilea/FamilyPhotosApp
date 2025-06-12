@@ -35,6 +35,10 @@
         <item quantity="other">Failed to delete %d images</item>
     </plurals>
 
+    <plurals name="items_selected">
+        <item quantity="other">%d selected</item>
+    </plurals>
+
     <string name="status_move_success">Images moved successfully</string>
     <string name="status_move_failure">Failed to move images</string>
     <string name="status_upload_success">Image uploaded successfully</string>

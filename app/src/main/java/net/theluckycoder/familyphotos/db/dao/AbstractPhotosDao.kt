@@ -1,61 +1,50 @@
 package net.theluckycoder.familyphotos.db.dao
 
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
+import androidx.room.Query
 import androidx.room.RawQuery
+import androidx.room.SkipQueryVerification
 import androidx.room.Transaction
 import androidx.room.Update
+import androidx.room.Upsert
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteQuery
 import net.theluckycoder.familyphotos.model.Photo
+import net.theluckycoder.familyphotos.model.TempPhotoId
 
-abstract class AbstractPhotosDao<T : Photo>(private val tableName: String) {
-
-    // region Execute
-
-    @RawQuery
-    protected abstract suspend fun executeSuspend(query: SupportSQLiteQuery): Int
-
-    @RawQuery
-    protected abstract suspend fun executeList(query: SupportSQLiteQuery): List<T>
-
-    // endregion Execute
-
-    // region Get
-
-    suspend fun getAll(): List<T> = executeList(SimpleSQLiteQuery("SELECT * FROM $tableName"))
-
-    // endregion Get
+abstract class AbstractPhotosDao<T : Photo> {
 
     // region Modify
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
-    abstract suspend fun insert(photo: T)
+    @Upsert
+    abstract suspend fun upsert(photo: T)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract suspend fun insertOrReplace(list: Collection<T>)
+    @Upsert
+    abstract suspend fun upsert(list: Collection<T>)
 
     @Transaction
     open suspend fun replaceAll(list: Collection<T>) {
-        deleteAll()
-        insertOrReplace(list)
-    }
+        clearTempTable()
+        upsert(list)
 
-    @Update(onConflict = OnConflictStrategy.REPLACE)
-    abstract suspend fun update(photo: T)
+        val ids = list.map { TempPhotoId(it.id) }
+        insertTempIds(ids)
+
+        deleteNotInTempTable()
+    }
 
     // endregion Modify
 
-    // region Delete
+    // region Temp table
 
-    @Delete
-    abstract suspend fun delete(photo: T)
+    @Query("DELETE FROM temp_photo_ids")
+    protected abstract suspend fun clearTempTable()
 
-    suspend fun delete(photoId: Long) =
-        executeSuspend(SimpleSQLiteQuery("DELETE FROM $tableName WHERE id = $photoId"))
+    @Insert(entity = TempPhotoId::class)
+    protected abstract suspend fun insertTempIds(ids: List<TempPhotoId>)
 
-    private suspend fun deleteAll() = executeSuspend(SimpleSQLiteQuery("DELETE FROM $tableName"))
+    protected abstract suspend fun deleteNotInTempTable()
 
-    // endregion Delete
+    // endregion
 }

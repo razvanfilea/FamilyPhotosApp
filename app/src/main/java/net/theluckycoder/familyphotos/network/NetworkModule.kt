@@ -141,7 +141,6 @@ object NetworkModule {
         settingsDataStore: SettingsDataStore
     ): ImageLoader =
         ImageLoader.Builder(context)
-            .logger(DebugLogger().takeIf { BuildConfig.DEBUG })
             .components {
                 add(AnimatedImageDecoder.Factory())
                 add(VideoFrameDecoder.Factory())

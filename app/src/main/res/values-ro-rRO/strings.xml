@@ -61,4 +61,9 @@
         <item quantity="one">Nu s-a putut șterge %d imagine</item>
         <item quantity="other">Nu s-au putut șterge %d imagini</item>
     </plurals>
+
+    <plurals name="items_selected">
+        <item quantity="one">%d selectat</item>
+        <item quantity="other">%d selectate</item>
+    </plurals>
 </resources>

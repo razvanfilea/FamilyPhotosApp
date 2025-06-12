@@ -183,7 +183,7 @@ class ServerRepository @Inject constructor(
         }
 
         if (localPhoto != null)
-            localPhotosDao.insert(localPhoto)
+            localPhotosDao.upsert(localPhoto)
 
         return localPhoto
     }
@@ -223,8 +223,8 @@ class ServerRepository @Inject constructor(
         )
 
         response.body()?.let { networkPhoto ->
-            networkPhotosDao.insert(networkPhoto)
-            localPhotosDao.update(localPhoto.copy(networkPhotoId = networkPhoto.id))
+            networkPhotosDao.upsert(networkPhoto)
+            localPhotosDao.upsert(localPhoto.copy(networkPhotoId = networkPhoto.id))
             return true
         }
 
@@ -249,7 +249,7 @@ class ServerRepository @Inject constructor(
         if (!response.isSuccessful || changedPhoto == null)
             return false
 
-        networkPhotosDao.update(changedPhoto)
+        networkPhotosDao.upsert(changedPhoto)
         return true
     }
 
@@ -261,7 +261,7 @@ class ServerRepository @Inject constructor(
         }
 
         if (response.isSuccessful) {
-            networkPhotosDao.update(photo.copy(isFavorite = add))
+            networkPhotosDao.upsert(photo.copy(isFavorite = add))
         } else {
             Log.e(
                 "ServerRepository",
@@ -287,7 +287,7 @@ class ServerRepository @Inject constructor(
         if (!response.isSuccessful || changedPhotos == null)
             return false
 
-        networkPhotosDao.insertOrReplace(changedPhotos)
+        networkPhotosDao.upsert(changedPhotos)
         return true
     }
 }

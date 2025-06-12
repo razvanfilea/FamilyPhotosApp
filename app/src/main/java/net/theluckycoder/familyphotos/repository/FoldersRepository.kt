@@ -4,6 +4,7 @@ import android.content.ContentUris
 import android.content.Context
 import android.database.Cursor
 import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
 import androidx.core.database.getLongOrNull
@@ -46,7 +47,7 @@ class FoldersRepository @Inject constructor(
         }
 
         if (!photos.isNullOrEmpty())
-            localPhotosDao.replaceAllChanged(photos)
+            localPhotosDao.replaceAll(photos)
     }
 
     private fun queryLocalPhotos(): List<LocalPhoto> {
@@ -117,7 +118,7 @@ fun Cursor.parseUriToLocalImage(
     dateTakenColumn: Int,
 ): LocalPhoto {
     val id = getLong(idColumn)
-    val bucketName = getString(bucketNameColumn)
+    val bucketName = getStringOrNull(bucketNameColumn) ?: Build.MODEL
     val displayName = getString(displayNameColumn)
     val mimeType = getStringOrNull(mimeTypeColumn)
     val dateAdded = getLongOrNull(dateTakenColumn)?.let { Instant.fromEpochMilliseconds(it) }

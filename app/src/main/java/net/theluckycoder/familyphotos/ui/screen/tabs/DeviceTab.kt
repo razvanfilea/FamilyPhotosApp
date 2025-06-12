@@ -86,34 +86,14 @@ object DeviceTab : BottomTab {
             modifier = Modifier.fillMaxSize(),
         ) {
             item(span = { GridItemSpan(columnCount) }) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        val autoUpload by mainViewModel.autoBackupFlow.collectAsState(false)
-
-                        Text(
-                            "Backup Camera Photos",
-                            Modifier
-                                .weight(1f)
-                                .padding(horizontal = 16.dp)
-                        )
-                        Switch(
-                            autoUpload,
-                            onCheckedChange = { mainViewModel.setAutoBackup(it) }
-                        )
-                    }
-
-                    SortButton(
-                        sortAscending = sortAscending,
-                        onClick = {
-                            scope.launch {
-                                mainViewModel.settingsStore.setShowFoldersAscending(!sortAscending)
-                            }
+                SortButton(
+                    sortAscending = sortAscending,
+                    onClick = {
+                        scope.launch {
+                            mainViewModel.settingsStore.setShowFoldersAscending(!sortAscending)
                         }
-                    )
-                }
+                    }
+                )
             }
 
             items(filteredFolders, key = { it.coverPhotoId }) { folder ->

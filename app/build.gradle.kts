@@ -22,7 +22,7 @@ android {
         targetSdk = 35
 
         versionCode = 28
-        versionName = "2.8.3"
+        versionName = "2.9.0"
     }
 
     androidResources {
@@ -33,17 +33,6 @@ android {
         debug {
             versionNameSuffix = "-debug"
             applicationIdSuffix = ".debug"
-        }
-        create("staging") {
-            versionNameSuffix = "-staging"
-            applicationIdSuffix = ".debug"
-
-            isDebuggable = true
-            buildConfigField("Boolean", "DEBUG", "false")
-            isMinifyEnabled = true
-            proguardFiles("proguard-rules.pro")
-
-            signingConfig = signingConfigs.getByName("debug")
         }
         release {
             isMinifyEnabled = true

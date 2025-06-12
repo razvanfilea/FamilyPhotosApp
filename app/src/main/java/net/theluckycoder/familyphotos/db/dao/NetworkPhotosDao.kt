@@ -9,7 +9,7 @@ import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhotoWithYearOffset
 
 @Dao
-abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>("network_photo") {
+abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>() {
 
     @Query("SELECT * FROM network_photo WHERE id = :photoId")
     abstract fun findById(photoId: Long): Flow<NetworkPhoto?>
@@ -20,17 +20,20 @@ abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>("network_photo
     )
     abstract fun getPhotosPaged(): PagingSource<Int, NetworkPhoto>
 
-    @Query("""
+    @Query(
+        """
        SELECT * FROM network_photo
         WHERE network_photo.folder = :folder
         ORDER BY network_photo.timeCreated DESC
-    """)
+    """
+    )
     abstract fun getFolderPhotos(folder: String): PagingSource<Int, NetworkPhoto>
 
     @Query(
-        """SELECT folder, id, userId, COUNT(id) FROM network_photo 
-        WHERE folder <> '' GROUP BY folder
-        ORDER BY network_photo.folder ASC"""
+        """
+        SELECT folder, id, userId, COUNT(id) FROM network_photo
+        WHERE folder <> '' GROUP BY folder HAVING timeCreated = MAX(timeCreated)
+        ORDER BY folder ASC"""
     )
     abstract fun getFolders(): Flow<List<NetworkFolder>>
 
@@ -59,4 +62,10 @@ abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>("network_photo
     """
     )
     abstract fun getFavoritePhotosPaged(): PagingSource<Int, NetworkPhoto>
+
+    @Query("DELETE FROM network_photo WHERE id = :photoId")
+    abstract fun delete(photoId: Long)
+
+    @Query("DELETE FROM network_photo WHERE id NOT IN (SELECT id FROM temp_photo_ids)")
+    abstract override suspend fun deleteNotInTempTable()
 }
