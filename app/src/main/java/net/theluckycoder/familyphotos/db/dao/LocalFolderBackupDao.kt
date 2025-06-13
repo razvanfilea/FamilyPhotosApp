@@ -2,8 +2,9 @@ package net.theluckycoder.familyphotos.db.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.model.LocalFolderToBackup
 
@@ -13,8 +14,8 @@ interface LocalFolderBackupDao {
     @Query("SELECT name from backup_local_folders")
     fun getAll(): Flow<List<String>>
 
-    @Upsert
-    fun upsert(folder: LocalFolderToBackup)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insert(folder: LocalFolderToBackup)
 
     @Delete
     fun delete(folder: LocalFolderToBackup)

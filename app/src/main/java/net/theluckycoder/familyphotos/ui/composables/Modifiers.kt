@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.ui.composables
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -12,6 +13,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -68,7 +70,7 @@ fun <T : Photo> Modifier.photoGridDrag(
     lazyGridState: LazyGridState,
     selectedIds: SnapshotStateSet<Long>,
     items: ItemSnapshotList<T>,
-) : Modifier {
+): Modifier {
     val autoScrollSpeed = remember { mutableFloatStateOf(0f) }
     LaunchedEffect(autoScrollSpeed.floatValue) {
         if (autoScrollSpeed.floatValue != 0f) {
@@ -169,30 +171,35 @@ private fun <T : Photo> Modifier.photoGridDrag(
     )
 }
 
+private const val UPPER_THRESHOLD = 1.8f
+private const val LOWER_THRESHOLD = 0.6f
+
 @Composable
 fun Modifier.detectZoomIn(
-    zoomIndex: Int,
-    onZoomChange: (Int) -> Unit,
+    zoomIndexState: MutableIntState,
     maxZoomIndex: Int
 ): Modifier {
-    var zoomFloat by remember { mutableFloatStateOf(1f) }
+    var accumulatedZoom by remember { mutableFloatStateOf(1f) }
 
     return this.pointerInput(Unit) {
         detectPinchGestures(
             pass = PointerEventPass.Initial,
-            onGesture = { centroid: Offset, newZoom: Float ->
-                val newScale = (zoomFloat * newZoom)
-                zoomFloat = if (newScale > 1.5f) {
-                    onZoomChange(zoomIndex.dec().coerceIn(0, maxZoomIndex))
-                    1f
-                } else if (newScale < 0.5f) {
-                    onZoomChange(zoomIndex.inc().coerceIn(0, maxZoomIndex))
-                    1f
-                } else {
-                    newScale
+            onGesture = { _, newZoom ->
+                accumulatedZoom *= newZoom
+
+                val zoomIndex = zoomIndexState.intValue
+
+                while (accumulatedZoom > UPPER_THRESHOLD) {
+                    zoomIndexState.intValue = zoomIndex.dec().coerceIn(0, maxZoomIndex)
+                    accumulatedZoom /= UPPER_THRESHOLD // retain leftover zoom beyond the threshold
+                }
+
+                while (accumulatedZoom < LOWER_THRESHOLD) {
+                    zoomIndexState.intValue = zoomIndex.inc().coerceIn(0, maxZoomIndex)
+                    accumulatedZoom /= LOWER_THRESHOLD
                 }
             },
-            onGestureEnd = { zoomFloat = 1f }
+            onGestureEnd = { accumulatedZoom = 1f }
         )
     }
 }

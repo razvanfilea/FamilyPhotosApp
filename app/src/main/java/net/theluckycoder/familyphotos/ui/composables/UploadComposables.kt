@@ -33,11 +33,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.model.isPublic
+import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @Immutable
@@ -112,7 +111,7 @@ fun UploadPhotosLayout(
     photosToShowcase: List<Photo>,
     doneAction: (choice: UploadChoice, folderName: String) -> Unit,
 ) {
-    val navigator = LocalNavigator.currentOrThrow
+    val backStack = LocalNavBackStack.current
 
     var choice by remember { mutableStateOf(UploadChoice.Personal) }
     var folderName by remember { mutableStateOf("") }
@@ -121,7 +120,7 @@ fun UploadPhotosLayout(
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    IconButton(onClick = { navigator.pop() }) {
+                    IconButton(onClick = { backStack.removeLastOrNull() }) {
                         Icon(painterResource(R.drawable.ic_close), contentDescription = null)
                     }
                 },
@@ -140,7 +139,8 @@ fun UploadPhotosLayout(
             )
         },
     ) { contentPadding ->
-        val foldersList by mainViewModel.networkFolders.collectAsState(emptyList())
+        val foldersListState = mainViewModel.networkFolders.collectAsState()
+        val foldersList = foldersListState.value ?: emptyList()
 
         val filteredFoldersList = remember(foldersList, choice, folderName) {
             foldersList.asSequence()

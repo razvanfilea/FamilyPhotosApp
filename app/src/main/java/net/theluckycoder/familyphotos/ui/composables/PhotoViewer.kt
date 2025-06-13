@@ -36,9 +36,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.paging.compose.LazyPagingItems
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import coil3.request.maxBitmapSize
@@ -55,15 +54,15 @@ import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.model.getPreviewUri
 import net.theluckycoder.familyphotos.model.getUri
 import net.theluckycoder.familyphotos.model.isVideo
-import net.theluckycoder.familyphotos.ui.LocalAnimatedVisibilityScope
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
+import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
+import net.theluckycoder.familyphotos.ui.MovePhotosNav
+import net.theluckycoder.familyphotos.ui.UploadPhotosNav
 import net.theluckycoder.familyphotos.ui.composables.player.VideoPlayer
 import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
-import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
-import net.theluckycoder.familyphotos.ui.screen.UploadPhotosScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewModel
 
@@ -87,7 +86,7 @@ fun <T : Photo> PhotosViewer(
 @Composable
 fun <T : Photo> PhotosViewer(
     photos: List<T>,
-    photoViewModel: PhotoViewModel,
+    photoViewModel: PhotoViewModel = viewModel(),
     close: () -> Unit
 ) {
     PhotosPager(
@@ -165,15 +164,12 @@ private fun PagerContent(
 ) {
     val isVideo = remember(photo) { photo.isVideo }
 
-    val sharedBoundsModifier = LocalAnimatedVisibilityScope.current?.let { visibilityScope ->
-        with(LocalSharedTransitionScope.current) {
-            Modifier.Companion
-                .sharedBounds(
-                    rememberSharedContentState(key = photo.id),
-                    animatedVisibilityScope = visibilityScope
-                )
-        }
-    } ?: Modifier
+    val sharedBoundsModifier = with(LocalSharedTransitionScope.current) {
+        Modifier.sharedBounds(
+            rememberSharedContentState(key = photo.id),
+            animatedVisibilityScope = LocalNavAnimatedContentScope.current
+        )
+    }
 
     if (!isVideo) {
         ZoomableImage(
@@ -230,7 +226,7 @@ private fun BottomBar(
     photoViewModel: PhotoViewModel = viewModel()
 ) {
     val deletePhotosDialog = rememberDeletePhotosDialog()
-    val navigator = LocalNavigator.currentOrThrow
+    val backStack = LocalNavBackStack.current
     val mainViewModel: MainViewModel = viewModel()
 
     Row(
@@ -266,7 +262,7 @@ private fun BottomBar(
         if (photo is LocalPhoto) {
             if (!photo.isSavedToCloud) {
                 IconButtonText(
-                    onClick = { navigator.push(UploadPhotosScreen(listOf(photo.id))) },
+                    onClick = { backStack.add(UploadPhotosNav(listOf(photo.id))) },
                     text = stringResource(id = R.string.action_upload),
                 ) {
                     Icon(
@@ -298,7 +294,7 @@ private fun BottomBar(
             }
         } else if (photo is NetworkPhoto) { // Network only
             IconButtonText(
-                onClick = { navigator.push(MovePhotosScreen(listOf(photo.id))) },
+                onClick = { backStack.add(MovePhotosNav(listOf(photo.id))) },
                 text = stringResource(id = R.string.action_move),
             ) {
                 Icon(

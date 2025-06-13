@@ -2,14 +2,17 @@ package net.theluckycoder.familyphotos.db.dao
 
 import androidx.paging.PagingSource
 import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.model.NetworkFolder
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhotoWithYearOffset
 
 @Dao
-abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>() {
+abstract class NetworkPhotosDao {
 
     @Query("SELECT * FROM network_photo WHERE id = :photoId")
     abstract fun findById(photoId: Long): Flow<NetworkPhoto?>
@@ -21,21 +24,23 @@ abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>() {
     abstract fun getPhotosPaged(): PagingSource<Int, NetworkPhoto>
 
     @Query(
-        """
-       SELECT * FROM network_photo
+        """SELECT * FROM network_photo
         WHERE network_photo.folder = :folder
-        ORDER BY network_photo.timeCreated DESC
-    """
+        ORDER BY network_photo.timeCreated DESC"""
     )
     abstract fun getFolderPhotos(folder: String): PagingSource<Int, NetworkPhoto>
 
     @Query(
         """
-        SELECT folder, id, userId, COUNT(id) FROM network_photo
-        WHERE folder <> '' GROUP BY folder HAVING timeCreated = MAX(timeCreated)
-        ORDER BY folder ASC"""
+        SELECT folder, id, userId, COUNT(id) as photoCount FROM network_photo
+        WHERE folder <> ''
+        GROUP BY folder HAVING timeCreated = MAX(timeCreated)
+        ORDER BY
+            CASE WHEN :ascending <> 0 THEN folder END ASC,
+            CASE WHEN :ascending = 0 THEN folder END DESC
+        """
     )
-    abstract fun getFolders(): Flow<List<NetworkFolder>>
+    abstract fun getFolders(ascending: Boolean): Flow<List<NetworkFolder>>
 
     @Query(
         """SELECT *, 
@@ -63,9 +68,21 @@ abstract class NetworkPhotosDao : AbstractPhotosDao<NetworkPhoto>() {
     )
     abstract fun getFavoritePhotosPaged(): PagingSource<Int, NetworkPhoto>
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract suspend fun insert(photo: NetworkPhoto)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract suspend fun insert(list: Collection<NetworkPhoto>)
+
     @Query("DELETE FROM network_photo WHERE id = :photoId")
     abstract fun delete(photoId: Long)
 
-    @Query("DELETE FROM network_photo WHERE id NOT IN (SELECT id FROM temp_photo_ids)")
-    abstract override suspend fun deleteNotInTempTable()
+    @Transaction
+    open suspend fun replaceAll(list: Collection<NetworkPhoto>) {
+        deleteAll()
+        insert(list)
+    }
+
+    @Query("DELETE FROM network_photo")
+    protected abstract suspend fun deleteAll()
 }

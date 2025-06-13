@@ -13,11 +13,10 @@ import net.theluckycoder.familyphotos.db.dao.NetworkPhotosDao
 import net.theluckycoder.familyphotos.model.LocalFolderToBackup
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
-import net.theluckycoder.familyphotos.model.TempPhotoId
 
 @Database(
-    entities = [LocalPhoto::class, NetworkPhoto::class, LocalFolderToBackup::class, TempPhotoId::class],
-    version = 9,
+    entities = [LocalPhoto::class, NetworkPhoto::class, LocalFolderToBackup::class],
+    version = 8,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -65,12 +64,6 @@ abstract class PhotosDatabase : RoomDatabase() {
             }
         }
 
-        private val MIGRATION_8_9 = object : Migration(8, 9) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE temp_photo_ids(id INTEGER NOT NULL PRIMARY KEY)")
-            }
-        }
-
         fun getDatabase(context: Context): PhotosDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE?.let { return it }
@@ -85,7 +78,6 @@ abstract class PhotosDatabase : RoomDatabase() {
                     MIGRATION_5_6,
                     MIGRATION_6_7,
                     MIGRATION_7_8,
-                    MIGRATION_8_9
                 )
                     .build()
 

@@ -5,6 +5,7 @@ import android.os.Parcelable
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 
 abstract class PhotoFolder {
     abstract val name: String
@@ -13,7 +14,7 @@ abstract class PhotoFolder {
 }
 
 @Immutable
-@Parcelize
+@Serializable
 data class NetworkFolder(
     @ColumnInfo(name = "folder")
     override val name: String,
@@ -21,9 +22,9 @@ data class NetworkFolder(
     override val coverPhotoId: Long,
     @ColumnInfo(name = "userId")
     val userId: String,
-    @ColumnInfo(name = "COUNT(id)")
+    @ColumnInfo(name = "photoCount")
     override val count: Int,
-) : PhotoFolder(), Parcelable {
+) : PhotoFolder() {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

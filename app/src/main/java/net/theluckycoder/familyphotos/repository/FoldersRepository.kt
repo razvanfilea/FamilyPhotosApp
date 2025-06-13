@@ -10,10 +10,13 @@ import android.util.Log
 import androidx.core.database.getLongOrNull
 import androidx.core.database.getStringOrNull
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Instant
 import net.theluckycoder.familyphotos.db.dao.LocalPhotosDao
 import net.theluckycoder.familyphotos.db.dao.NetworkPhotosDao
+import net.theluckycoder.familyphotos.model.LocalFolder
 import net.theluckycoder.familyphotos.model.LocalPhoto
+import net.theluckycoder.familyphotos.model.NetworkFolder
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,9 +28,11 @@ class FoldersRepository @Inject constructor(
     private val networkPhotosDao: NetworkPhotosDao,
 ) {
 
-    val localFoldersFlow = localPhotosDao.getFolders()
+    fun localFoldersFlow(ascending: Boolean): Flow<List<LocalFolder>> =
+        localPhotosDao.getFolders(ascending)
 
-    val networkFoldersFlow = networkPhotosDao.getFolders()
+    fun networkFoldersFlow(ascending: Boolean): Flow<List<NetworkFolder>> =
+        networkPhotosDao.getFolders(ascending)
 
     fun localPhotosFromFolder(folder: String, count: Int) =
         localPhotosDao.getFolderPhotos(folder, count)

@@ -8,24 +8,18 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +29,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
@@ -43,28 +38,21 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.paging.compose.LazyPagingItems
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.LocalPhoto
-import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.model.isVideo
-import net.theluckycoder.familyphotos.ui.LocalAnimatedVisibilityScope
 import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
-import net.theluckycoder.familyphotos.ui.VerticallyAnimatedInt
-import net.theluckycoder.familyphotos.ui.screen.PhotosViewerScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import kotlin.time.ExperimentalTime
 
@@ -79,51 +67,7 @@ private fun getZoomColumnCount(zoomIndex: Int): Int {
     else
         LANDSCAPE_ZOOM_LEVELS
 
-    return levels[zoomIndex]
-}
-
-@Composable
-fun MemoriesList(
-    memories: Map<Int, List<NetworkPhoto>>
-) {
-    if (memories.isEmpty()) {
-        return
-    }
-
-    val navigator = LocalNavigator.currentOrThrow
-
-    LazyRow(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 16.dp)) {
-        memories.forEach { (yearsAgo, photos) ->
-            item(key = yearsAgo) {
-                Box(
-                    Modifier
-                        .width(140.dp)
-                        .aspectRatio(0.75f)
-                        .padding(4.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .clickable {
-                            navigator.push(PhotosViewerScreen(photos))
-                        }
-                ) {
-
-                    CoilPhoto(
-                        modifier = Modifier.fillMaxSize(),
-                        photo = photos.first(),
-                        preview = true,
-                        contentScale = ContentScale.Crop,
-                    )
-
-                    Text(
-                        pluralStringResource(R.plurals.years_ago, yearsAgo, yearsAgo),
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(8.dp),
-                    )
-                }
-            }
-        }
-    }
+    return levels[zoomIndex.coerceIn(0, MAX_ZOOM_LEVEL_INDEX)]
 }
 
 @Composable
@@ -135,8 +79,6 @@ fun <T : Photo> PhotoListWithViewer(
     memoriesContent: @Composable ColumnScope.() -> Unit = {},
     mainViewModel: MainViewModel = viewModel(),
 ) {
-    val scope = rememberCoroutineScope()
-
     val openedPhotoIndex = remember { mutableStateOf<Int?>(null) }
     val photoIndex = openedPhotoIndex.value
 
@@ -145,21 +87,15 @@ fun <T : Photo> PhotoListWithViewer(
     }
 
     AnimatedContent(photoIndex == null, modifier) { targetState ->
-        val zoomIndex = mainViewModel.settingsStore.zoomLevel.collectAsState(null)
 
-        CompositionLocalProvider(LocalAnimatedVisibilityScope provides this@AnimatedContent) {
+        CompositionLocalProvider(LocalNavAnimatedContentScope provides this@AnimatedContent) {
             if (targetState) {
                 PhotosList(
                     gridState = gridState,
                     photos = photos,
                     headerContent = headerContent,
                     memoriesContent = memoriesContent,
-                    zoomIndex = zoomIndex.value ?: 1,
-                    onZoomChange = {
-                        scope.launch {
-                            mainViewModel.settingsStore.setPhotosZoomLevel(it)
-                        }
-                    },
+                    zoomIndexState = mainViewModel.zoomIndexState,
                     openPhoto = { openedPhotoIndex.value = it },
                 )
             } else {
@@ -177,6 +113,11 @@ fun <T : Photo> PhotoListWithViewer(
             }
         }
     }
+
+    val zoomIndex = mainViewModel.zoomIndexState.intValue
+    LaunchedEffect(zoomIndex) {
+        mainViewModel.settingsStore.setPhotosZoomLevel(zoomIndex)
+    }
 }
 
 private const val CONTENT_TYPE_PHOTO = 1
@@ -193,8 +134,7 @@ private fun <T : Photo> PhotosList(
     headerContent: @Composable () -> Unit,
     memoriesContent: @Composable ColumnScope.() -> Unit = {},
     photos: LazyPagingItems<T>,
-    zoomIndex: Int,
-    onZoomChange: (Int) -> Unit,
+    zoomIndexState: MutableIntState,
     openPhoto: (index: Int) -> Unit,
 ) = Column(Modifier.fillMaxSize()) {
 
@@ -235,13 +175,13 @@ private fun <T : Photo> PhotosList(
         )
     }
 
-    val columnCount = getZoomColumnCount(zoomIndex)
+    val columnCount = getZoomColumnCount(zoomIndexState.intValue)
 
     LazyVerticalGrid(
         state = gridState,
         modifier = Modifier
             .fillMaxSize()
-            .detectZoomIn(zoomIndex, onZoomChange, MAX_ZOOM_LEVEL_INDEX)
+            .detectZoomIn(zoomIndexState, MAX_ZOOM_LEVEL_INDEX)
             .photoGridDrag(
                 lazyGridState = gridState,
                 selectedIds = selectedPhotoIds,
@@ -300,7 +240,7 @@ private fun <T : Photo> PhotosList(
                     Modifier
                         .sharedBounds(
                             rememberSharedContentState(key = photo.id),
-                            animatedVisibilityScope = LocalAnimatedVisibilityScope.current!!
+                            animatedVisibilityScope = LocalNavAnimatedContentScope.current
                         )
                         .animateItem(fadeInSpec = null, fadeOutSpec = null)
                         .aspectRatio(1f)

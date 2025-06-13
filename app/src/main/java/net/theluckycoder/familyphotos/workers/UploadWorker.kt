@@ -62,7 +62,7 @@ class UploadWorker @AssistedInject constructor(
 
             ids.forEachIndexed { index, localPhotoId ->
                 val localPhoto = photosRepository.getLocalPhoto(localPhotoId).first()
-                if (localPhoto == null || localPhoto.networkPhotoId != 0L) {
+                if (localPhoto == null || localPhoto.isSavedToCloud) {
                     total--
                     return@forEachIndexed
                 }

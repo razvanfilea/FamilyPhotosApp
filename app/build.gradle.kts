@@ -13,7 +13,7 @@ plugins {
 }
 
 android {
-    compileSdk = 35
+    compileSdk = 36
     namespace = "net.theluckycoder.familyphotos"
 
     defaultConfig {
@@ -21,7 +21,7 @@ android {
         minSdk = 30
         targetSdk = 35
 
-        versionCode = 28
+        versionCode = 29
         versionName = "2.9.0"
     }
 
@@ -104,9 +104,10 @@ dependencies {
     implementation(libs.compose.activity)
     implementation(libs.compose.lifecycleViewmodel)
 
-    // Voyager
-    implementation(libs.voyager.navigator)
-    implementation(libs.voyager.tabNavigator)
+    // Navigation
+    implementation(libs.androidx.navigation3.ui)
+    implementation(libs.androidx.navigation3.runtime)
+//    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 
     // Paging
     implementation(libs.paging.runtime)

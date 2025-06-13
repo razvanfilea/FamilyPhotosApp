@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -41,7 +42,7 @@ fun SeekBarIntPreference(
     value: Int?,
     onValueChanged: (Int) -> Unit,
 ) {
-    val currentValue = remember(value) { mutableStateOf(value ?: item.defaultValue) }
+    val currentValue = remember(value) { mutableIntStateOf(value ?: item.defaultValue) }
     Preference(
         item = item,
         summary = {

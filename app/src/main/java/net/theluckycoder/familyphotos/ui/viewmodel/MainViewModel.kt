@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -31,13 +32,15 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -49,7 +52,6 @@ import net.theluckycoder.familyphotos.PhotosApp.Companion.LOCAL_TIME_ZONE
 import net.theluckycoder.familyphotos.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.datastore.UserDataStore
 import net.theluckycoder.familyphotos.db.dao.LocalFolderBackupDao
-import net.theluckycoder.familyphotos.model.ExifData
 import net.theluckycoder.familyphotos.model.LocalFolderToBackup
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkFolder
@@ -70,9 +72,10 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    app: Application,
+    private val app: Application,
     private val photosRepository: PhotosRepository,
     private val serverRepository: ServerRepository,
     private val foldersRepository: FoldersRepository,
@@ -88,9 +91,9 @@ class MainViewModel @Inject constructor(
         photosRepository.getAllPhotosPaged()
     }.flow
         .cachedIn(viewModelScope)
-        .combine(settingsStore.photoType) { photos, folderType ->
+        .combine(settingsStore.photoType) { photos, photoType ->
             photos.filter {
-                when (folderType) {
+                when (photoType) {
                     PhotoType.All -> true
                     PhotoType.Personal -> !it.isPublic()
                     PhotoType.Family -> it.isPublic()
@@ -98,36 +101,55 @@ class MainViewModel @Inject constructor(
             }
         }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val memories =
-        settingsStore.photoType.combine(userDataStore.userIdFlow) { photoType, userName ->
+    val memories = settingsStore.photoType
+        .combine(userDataStore.userIdFlow) { photoType, userName ->
             when (photoType) {
                 PhotoType.All -> null
                 PhotoType.Personal -> userName
                 PhotoType.Family -> PUBLIC_USER_ID
             }
-        }.flatMapLatest { userName -> photosRepository.getMemories(userName) }
+        }
+        .flatMapLatest { userName -> photosRepository.getMemories(userName) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyMap())
 
     val favoritePhotosFlow = Pager(PAGING_CONFIG) {
         photosRepository.getFavoritePhotosPaged()
     }.flow.cachedIn(viewModelScope)
 
-    val localFolders = foldersRepository.localFoldersFlow
-    val networkFolders = foldersRepository.networkFoldersFlow
+    val localFolders = settingsStore.showFoldersAscending
+        .flatMapLatest { foldersRepository.localFoldersFlow(it) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+    val networkFolders = settingsStore.showFoldersAscending
+        .flatMapLatest { foldersRepository.networkFoldersFlow(it) }
+        .combine(settingsStore.photoType) { photos, photoType ->
+            photos.filter {
+                when (photoType) {
+                    PhotoType.All -> true
+                    PhotoType.Personal -> !it.isPublic()
+                    PhotoType.Family -> it.isPublic()
+                }
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     private val _localPhotosToDelete = Channel<List<LocalPhoto>>()
     val localPhotosToDelete = _localPhotosToDelete.consumeAsFlow()
 
-    val isRefreshing = MutableStateFlow(false)
     val showBars = mutableStateOf(true)
+    val zoomIndexState = mutableIntStateOf(1)
+    val isRefreshing = MutableStateFlow(false)
     val isOnlineFlow = MutableStateFlow(true)
 
     init {
         viewModelScope.launch {
+            settingsStore.zoomLevel.first()?.let {
+                zoomIndexState.intValue = it
+            }
+
             userDataStore.userIdFlow.collectLatest { newUserName ->
                 ensureActive()
                 if (newUserName != null) {
-                    refreshPhotos(app)
+                    refreshPhotos()
                 }
             }
         }
@@ -158,7 +180,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun refreshPhotos(app: Application) {
+    fun refreshPhotos() {
         if (isRefreshing.value) return
 
         isRefreshing.value = true
@@ -185,7 +207,6 @@ class MainViewModel @Inject constructor(
             }
 
             localPhotos.await()
-            photosRepository.removeMissingNetworkReferences()
 
             isRefreshing.value = false
         }
@@ -211,7 +232,7 @@ class MainViewModel @Inject constructor(
     fun backupLocalFolder(folder: String, add: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             if (add) {
-                foldersToBackupDao.upsert(LocalFolderToBackup(folder))
+                foldersToBackupDao.insert(LocalFolderToBackup(folder))
             } else {
                 foldersToBackupDao.delete(LocalFolderToBackup(folder))
             }
@@ -281,7 +302,7 @@ class MainViewModel @Inject constructor(
             .setInputData(data)
             .setConstraints(constraints)
             .addTag(UploadWorker.TAG)
-            .setBackoffCriteria(BackoffPolicy.LINEAR, 3, TimeUnit.SECONDS)
+            .setBackoffCriteria(BackoffPolicy.LINEAR, 15, TimeUnit.SECONDS)
             .build()
 
         workManager
@@ -292,10 +313,14 @@ class MainViewModel @Inject constructor(
     fun renameNetworkFolder(
         folder: NetworkFolder,
         makePublic: Boolean,
-        newName: String?
+        newName: String
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            serverRepository.renameNetworkFolder(folder, makePublic, newName)
+            serverRepository.renameNetworkFolder(
+                folder,
+                makePublic,
+                newName.trim().takeIf { it.isNotEmpty() }
+            )
         }
     }
 

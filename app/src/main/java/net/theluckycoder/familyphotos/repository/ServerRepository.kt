@@ -28,6 +28,9 @@ import java.io.File
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 @Singleton // Needed for WorkManager
 class ServerRepository @Inject constructor(
@@ -53,6 +56,7 @@ class ServerRepository @Inject constructor(
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     suspend fun downloadAllPhotos() = coroutineScope {
         val service = photosService.get()
         val photosAsync = async { service.getPhotosList() }
@@ -183,7 +187,7 @@ class ServerRepository @Inject constructor(
         }
 
         if (localPhoto != null)
-            localPhotosDao.upsert(localPhoto)
+            localPhotosDao.insertOrReplace(localPhoto)
 
         return localPhoto
     }
@@ -223,8 +227,8 @@ class ServerRepository @Inject constructor(
         )
 
         response.body()?.let { networkPhoto ->
-            networkPhotosDao.upsert(networkPhoto)
-            localPhotosDao.upsert(localPhoto.copy(networkPhotoId = networkPhoto.id))
+            networkPhotosDao.insert(networkPhoto)
+            localPhotosDao.insertOrReplace(localPhoto.copy(networkPhotoId = networkPhoto.id))
             return true
         }
 
@@ -249,7 +253,7 @@ class ServerRepository @Inject constructor(
         if (!response.isSuccessful || changedPhoto == null)
             return false
 
-        networkPhotosDao.upsert(changedPhoto)
+        networkPhotosDao.insert(changedPhoto)
         return true
     }
 
@@ -261,7 +265,7 @@ class ServerRepository @Inject constructor(
         }
 
         if (response.isSuccessful) {
-            networkPhotosDao.upsert(photo.copy(isFavorite = add))
+            networkPhotosDao.insert(photo.copy(isFavorite = add))
         } else {
             Log.e(
                 "ServerRepository",
@@ -287,7 +291,7 @@ class ServerRepository @Inject constructor(
         if (!response.isSuccessful || changedPhotos == null)
             return false
 
-        networkPhotosDao.upsert(changedPhotos)
+        networkPhotosDao.insert(changedPhotos)
         return true
     }
 }

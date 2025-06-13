@@ -4,8 +4,16 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.webkit.MimeTypeMap
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -53,8 +61,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -74,10 +80,11 @@ import net.theluckycoder.familyphotos.model.PhotoType
 import net.theluckycoder.familyphotos.model.getPreviewUri
 import net.theluckycoder.familyphotos.model.getUri
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
+import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
+import net.theluckycoder.familyphotos.ui.MovePhotosNav
+import net.theluckycoder.familyphotos.ui.UploadPhotosNav
 import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
-import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
-import net.theluckycoder.familyphotos.ui.screen.UploadPhotosScreen
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import java.time.format.DateTimeFormatter
 
@@ -351,7 +358,7 @@ fun PhotoUtilitiesActions(
     selectedItems: SnapshotStateSet<Long>,
     mainViewModel: MainViewModel = viewModel()
 ) {
-    val navigator = LocalNavigator.currentOrThrow
+    val backStack = LocalNavBackStack.current
     val scope = rememberCoroutineScope()
     val deletePhotosDialog = rememberDeletePhotosDialog(onPhotosDeleted = { selectedItems.clear() })
 
@@ -390,7 +397,7 @@ fun PhotoUtilitiesActions(
 
         if (isLocalPhoto) {
             IconButton(
-                onClick = { navigator.push(UploadPhotosScreen(selectedItems.toList())) }
+                onClick = { backStack.add(UploadPhotosNav(selectedItems.toList())) }
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_cloud_upload_outline),
@@ -400,7 +407,7 @@ fun PhotoUtilitiesActions(
             }
         } else {
             IconButton(
-                onClick = { navigator.push(MovePhotosScreen(selectedItems.toList())) }
+                onClick = { backStack.add(MovePhotosNav(selectedItems.toList())) }
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_move_folder),
@@ -464,4 +471,35 @@ fun FolderTypeSegmentedButtons(
             }
         }
     }
+}
+
+@Composable
+fun VerticallyAnimatedInt(
+    targetState: Int,
+    contentAlignment: Alignment = Alignment.TopStart,
+    content: @Composable AnimatedVisibilityScope.(targetState: Int) -> Unit
+) {
+    AnimatedContent(
+        targetState = targetState,
+        transitionSpec = {
+            if (targetState > initialState) {
+                // If the target number is larger, it slides up and fades in
+                // while the initial (smaller) number slides up and fades out.
+                slideInVertically { height -> height } + fadeIn() togetherWith
+                        slideOutVertically { height -> -height } + fadeOut()
+            } else {
+                // If the target number is smaller, it slides down and fades in
+                // while the initial number slides down and fades out.
+                slideInVertically { height -> -height } + fadeIn() togetherWith
+                        slideOutVertically { height -> height } + fadeOut()
+            }.using(
+                // Disable clipping since the faded slide-in/out should
+                // be displayed out of bounds.
+                SizeTransform(clip = false)
+            )
+        },
+        contentAlignment = contentAlignment,
+        content = content,
+        label = "int_animation"
+    )
 }

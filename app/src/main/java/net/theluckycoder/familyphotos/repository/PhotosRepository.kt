@@ -29,12 +29,8 @@ class PhotosRepository @Inject constructor(
 
     suspend fun removeNetworkReference(photo: NetworkPhoto) {
         getLocalPhotoFromNetwork(photo.id)?.let { localPhoto ->
-            localPhotosDao.upsert(localPhoto.copy(networkPhotoId = 0L))
+            localPhotosDao.insertOrReplace(localPhoto.copy(networkPhotoId = 0L))
         }
-    }
-
-    suspend fun removeMissingNetworkReferences() {
-        localPhotosDao.removeMissingNetworkReferences()
     }
 
     fun getAllPhotosPaged() = networkPhotosDao.getPhotosPaged()
