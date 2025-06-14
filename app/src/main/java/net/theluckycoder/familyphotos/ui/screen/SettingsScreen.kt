@@ -1,12 +1,15 @@
 package net.theluckycoder.familyphotos.ui.screen
 
-import android.app.Application
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -41,20 +44,18 @@ fun SettingsScreen() = Scaffold(
     }
 ) { padding ->
     val mainViewModel: MainViewModel = viewModel()
-    val app = LocalContext.current.applicationContext as Application
 
     Box(modifier = Modifier.padding(padding)) {
         PreferenceScreen(
             dataStore = mainViewModel.settingsStore.dataStore(),
-            items = getPreferenceItems(mainViewModel, app),
+            items = getPreferenceItems(mainViewModel),
         )
     }
 }
 
 @Composable
 private fun getPreferenceItems(
-    mainViewModel: MainViewModel,
-    app: Application
+    mainViewModel: MainViewModel
 ) = listOf(
     PreferenceGroupItem(
         title = stringResource(id = R.string.pref_category_cache),
@@ -71,7 +72,7 @@ private fun getPreferenceItems(
                 title = stringResource(id = R.string.pref_clear_cache),
                 summary = stringResource(id = R.string.pref_restart_needed),
                 icon = painterResource(id = R.drawable.ic_clear),
-                onClick = { mainViewModel.clearAppCache(app) }
+                onClick = { mainViewModel.clearAppCache() }
             ),
         ),
     ),
@@ -81,7 +82,7 @@ private fun getPreferenceItems(
             EmptyPreferenceItem(
                 title = "Sign out",
                 summary = "Log out of the current user session",
-                onClick = { mainViewModel.logout(app) }
+                onClick = { mainViewModel.logout() }
             )
         )
     )

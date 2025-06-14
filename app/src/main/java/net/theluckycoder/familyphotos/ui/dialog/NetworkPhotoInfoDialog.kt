@@ -35,7 +35,6 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.ExifData
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.composables.photoDateText
-import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewModel
 import java.text.DecimalFormat
 

@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -30,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -57,7 +59,14 @@ private fun UploadDialogContent(
     LazyRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(0.5.dp)) {
         items(photosToShowcase) { photo ->
             Box(Modifier.size(72.dp)) {
-                SimpleSquarePhoto(photo)
+                CoilPhoto(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f),
+                    photo = photo,
+                    preview = true,
+                    contentScale = ContentScale.Crop,
+                )
             }
         }
     }

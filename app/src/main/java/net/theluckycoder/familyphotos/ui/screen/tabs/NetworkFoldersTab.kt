@@ -1,7 +1,6 @@
 package net.theluckycoder.familyphotos.ui.screen.tabs
 
 import android.content.res.Configuration
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -50,9 +49,8 @@ import net.theluckycoder.familyphotos.ui.composables.FolderTypeSegmentedButtons
 import net.theluckycoder.familyphotos.ui.composables.SortButton
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.utils.normalize
-import net.theluckycoder.familyphotos.utils.normalizeLowerCase
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NetworkFoldersTab() = Column(
     modifier = Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets)
@@ -64,15 +62,19 @@ fun NetworkFoldersTab() = Column(
     val gridState = rememberLazyGridState()
     val folders by mainViewModel.networkFolders.collectAsState()
     val sortAscending by mainViewModel.settingsStore.showFoldersAscending.collectAsState(true)
-    val selectedPhotoType by mainViewModel.settingsStore.photoType.collectAsState(
-        PhotoType.All
-    )
+    val selectedPhotoType by mainViewModel.selectedPhotoType.collectAsState()
     var folderNameFilter by remember { mutableStateOf("") }
     FolderFilterTextField(folderNameFilter, onFilterChange = { folderNameFilter = it })
 
-    val filteredFolders = remember(folders, folderNameFilter) {
+    val filteredFolders = remember(folders, folderNameFilter, selectedPhotoType) {
         val filterName = folderNameFilter.normalize()
-        folders.filter { it.name.normalize().contains(filterName, ignoreCase = true) }
+        folders.filter {
+            when (selectedPhotoType) {
+                PhotoType.All -> true
+                PhotoType.Personal -> !it.isPublic()
+                PhotoType.Family -> it.isPublic()
+            } && it.name.normalize().contains(filterName, ignoreCase = true)
+        }
     }
 
     val columnCount =

@@ -1,6 +1,5 @@
 package net.theluckycoder.familyphotos.ui.screen.tabs
 
-import android.R.attr.columnCount
 import android.content.res.Configuration
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column

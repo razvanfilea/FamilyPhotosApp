@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -21,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -36,7 +36,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.paging.compose.LazyPagingItems
 import coil3.request.ImageRequest
 import coil3.request.crossfade
@@ -56,7 +55,6 @@ import net.theluckycoder.familyphotos.model.getUri
 import net.theluckycoder.familyphotos.model.isVideo
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
-import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.MovePhotosNav
 import net.theluckycoder.familyphotos.ui.UploadPhotosNav
@@ -69,68 +67,90 @@ import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewModel
 
 @Composable
 fun <T : Photo> PhotosViewer(
-    photos: LazyPagingItems<T>,
-    initialPage: Int,
-    photoViewModel: PhotoViewModel,
-    close: () -> Unit
+    lazyPagingItems: LazyPagingItems<out T>,
+    initialPhotoIndex: Int,
+    photoViewModel: PhotoViewModel = viewModel()
 ) {
-    PhotosPager(
-        photosPeek = photos.itemSnapshotList,
-        getPhoto = { index -> photos[index] },
-        initialPage = initialPage,
-        photoViewModel = photoViewModel,
-        close = close
+    val pagerState = rememberPagerState(
+        initialPage = initialPhotoIndex,
+        pageCount = { lazyPagingItems.itemCount }
     )
+
+    // Scroll to the initial index when the PhotoViewerScreen is first composed
+    // or when the initialPhotoIndex changes (though typically it's a one-time setup).
+    // This is often handled by initialPage in rememberPagerState, but if your
+    // data loads asynchronously, you might need a LaunchedEffect.
+    LaunchedEffect(initialPhotoIndex, lazyPagingItems.itemCount) {
+        if (lazyPagingItems.itemCount > 0 && initialPhotoIndex < lazyPagingItems.itemCount) {
+            // Check if already at the correct page to avoid unnecessary scrolls
+            if (pagerState.currentPage != initialPhotoIndex) {
+                pagerState.scrollToPage(initialPhotoIndex)
+            }
+        }
+    }
+
+    val showUi = remember { mutableStateOf(true) }
+    val currentPhoto = lazyPagingItems.itemSnapshotList.getOrNull(pagerState.currentPage)
+
+    PhotoViewerScaffold(currentPhoto, showUi.value, photoViewModel) { paddingValues ->
+        HorizontalPager(
+            state = pagerState,
+            key = { index -> (lazyPagingItems.itemSnapshotList.getOrNull(index))?.id ?: index },
+        ) { page ->
+            val photo = lazyPagingItems[page]
+            if (photo == null) {
+                Text("Loading photo...")
+                return@HorizontalPager
+            }
+
+            PagerContent(photo, showUi, paddingValues)
+        }
+    }
 }
 
 @Composable
 fun <T : Photo> PhotosViewer(
-    photos: List<T>,
-    photoViewModel: PhotoViewModel = viewModel(),
-    close: () -> Unit
+    items: List<T>,
+    photoViewModel: PhotoViewModel = viewModel()
 ) {
-    PhotosPager(
-        photosPeek = photos,
-        getPhoto = { index -> photos[index] },
-        initialPage = 0,
-        photoViewModel = photoViewModel,
-        close = close
-    )
+    val pagerState = rememberPagerState(pageCount = { items.size })
+
+    val showUi = remember { mutableStateOf(true) }
+    val currentPhoto = items[pagerState.currentPage]
+
+    PhotoViewerScaffold(currentPhoto, showUi.value, photoViewModel) { paddingValues ->
+        HorizontalPager(
+            state = pagerState,
+            key = { index -> items[index].id },
+        ) { page ->
+            val photo = items[page]
+            PagerContent(photo, showUi, paddingValues)
+        }
+    }
 }
 
 @Composable
-@OptIn(ExperimentalFoundationApi::class, ExperimentalSharedTransitionApi::class)
-private fun <T : Photo> PhotosPager(
-    photosPeek: List<T?>,
-    getPhoto: (index: Int) -> T?,
-    initialPage: Int,
+private fun PhotoViewerScaffold(
+    currentPhoto: Photo?,
+    showUi: Boolean,
     photoViewModel: PhotoViewModel,
-    close: () -> Unit
+    content: @Composable (PaddingValues) -> Unit
 ) {
-    val pagerState = rememberPagerState(initialPage = initialPage) { photosPeek.size }
-    val showUi = remember { mutableStateOf(true) }
-    val currentPhoto = try {
-        photosPeek[pagerState.currentPage]
-    } catch (e: IndexOutOfBoundsException) {
-        LaunchedEffect(Unit) {
-            close()
-        }
-        return
-    }
+    val backStack = LocalNavBackStack.current
 
     Scaffold(
-        containerColor = Color.Companion.Black,
-        contentColor = Color.Companion.White,
+        containerColor = Color.Black,
+        contentColor = Color.White,
         snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
         topBar = {
             if (currentPhoto != null) {
-                TopBar(currentPhoto, showUi.value, close, photoViewModel)
+                TopBar(currentPhoto, showUi, { backStack.removeLastOrNull() }, photoViewModel)
             }
         },
         bottomBar = {
             if (currentPhoto != null) {
                 AnimatedVisibility(
-                    visible = showUi.value,
+                    visible = showUi,
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
@@ -142,18 +162,10 @@ private fun <T : Photo> PhotosPager(
             }
         }
     ) { paddingValues ->
-
-        HorizontalPager(
-            state = pagerState,
-            key = { index -> (photosPeek[index] as Photo).id },
-        ) { page ->
-            val photo = getPhoto(page)!!
-
-            PagerContent(photo, showUi, paddingValues)
-        }
-
+        content(paddingValues)
     }
 }
+
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -163,13 +175,7 @@ private fun PagerContent(
     paddingValues: PaddingValues,
 ) {
     val isVideo = remember(photo) { photo.isVideo }
-
-    val sharedBoundsModifier = with(LocalSharedTransitionScope.current) {
-        Modifier.sharedBounds(
-            rememberSharedContentState(key = photo.id),
-            animatedVisibilityScope = LocalNavAnimatedContentScope.current
-        )
-    }
+    val sharedBoundsModifier = Modifier.photoSharedBounds(photo.id)
 
     if (!isVideo) {
         ZoomableImage(

@@ -1,6 +1,6 @@
 package net.theluckycoder.familyphotos.ui.composables
 
-import android.util.Log
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -35,11 +35,24 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toIntRect
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.paging.ItemSnapshotList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import net.theluckycoder.familyphotos.model.Photo
+import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
 import kotlin.math.abs
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun Modifier.photoSharedBounds(photoId: Long): Modifier {
+    with(LocalSharedTransitionScope.current) {
+        return sharedBounds(
+            rememberSharedContentState(key = photoId),
+            animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+        )
+    }
+}
 
 fun Modifier.selectableClickable(
     inSelectionMode: Boolean,

@@ -1,8 +1,6 @@
 package net.theluckycoder.familyphotos.ui.screen.tabs
 
-import android.app.Application
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -32,32 +29,28 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.collectAsLazyPagingItems
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.PhotoType
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
-import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
-import net.theluckycoder.familyphotos.ui.PhotoViewerNav
+import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
+import net.theluckycoder.familyphotos.ui.PhotoViewerListNav
 import net.theluckycoder.familyphotos.ui.composables.CoilPhoto
 import net.theluckycoder.familyphotos.ui.composables.FolderTypeSegmentedButtons
-import net.theluckycoder.familyphotos.ui.composables.PhotoListWithViewer
+import net.theluckycoder.familyphotos.ui.composables.PhotosList
+import net.theluckycoder.familyphotos.ui.composables.photoSharedBounds
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -65,12 +58,15 @@ import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 fun TimelineTab(photos: LazyPagingItems<NetworkPhoto>) {
     val mainViewModel: MainViewModel = viewModel()
     val memories = mainViewModel.memories.collectAsState(emptyMap())
-    val selectedPhotoType by mainViewModel.settingsStore.photoType.collectAsState(
-        PhotoType.All
-    )
-    PhotoListWithViewer(
+    val selectedPhotoType by mainViewModel.selectedPhotoType.collectAsState()
+    val backStack = LocalNavBackStack.current
+
+    PhotosList(
         gridState = rememberLazyGridState(),
         photos = photos,
+        openPhoto = {
+            backStack.add(PhotoViewerFlowNav(it, PhotoViewerFlowNav.Source.Timeline))
+        },
         headerContent = {
             Header(selectedPhotoType, mainViewModel)
         },
@@ -101,21 +97,22 @@ private fun MemoriesList(
                 ) {}
             }
         }
+
         memories.forEach { (yearsAgo, photos) ->
             item(key = yearsAgo) {
                 val photo = photos.first()
 
                 Box(
                     Modifier
+                        .photoSharedBounds(photo.id)
                         .width(140.dp)
                         .aspectRatio(0.75f)
                         .padding(4.dp)
                         .clip(RoundedCornerShape(20.dp))
                         .clickable {
-                            backStack.add(PhotoViewerNav(photos))
+                            backStack.add(PhotoViewerListNav(photos))
                         }
                 ) {
-
                     CoilPhoto(
                         modifier = Modifier.fillMaxSize(),
                         photo = photo,
@@ -143,8 +140,8 @@ private fun Header(
     mainViewModel: MainViewModel
 ) {
     Column {
-        val isOnline by mainViewModel.isOnlineFlow.collectAsState()
-        val isRefreshing by mainViewModel.isOnlineFlow.collectAsState()
+        val isOnline by mainViewModel.isOnline.collectAsState()
+        val isRefreshing by mainViewModel.isOnline.collectAsState()
 
         Row(
             modifier = Modifier

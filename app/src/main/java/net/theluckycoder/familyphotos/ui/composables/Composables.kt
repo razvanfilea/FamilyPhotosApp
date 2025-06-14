@@ -22,9 +22,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -69,9 +67,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
-import net.theluckycoder.familyphotos.PhotosApp
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhoto
@@ -87,19 +85,6 @@ import net.theluckycoder.familyphotos.ui.UploadPhotosNav
 import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import java.time.format.DateTimeFormatter
-
-@Composable
-fun SimpleSquarePhoto(photo: Photo, modifier: Modifier = Modifier) {
-    CoilPhoto(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(1f)
-            .then(modifier),
-        photo = photo,
-        preview = true,
-        contentScale = ContentScale.Crop,
-    )
-}
 
 @Composable
 fun CoilPhoto(
@@ -264,7 +249,7 @@ private val PHOTO_DATE_FORMATTER = DateTimeFormatter.ofPattern("d MMM uuuu・HH:
 @Composable
 fun Photo.photoDateText(): String = remember(this) {
     val instant = Instant.fromEpochSeconds(this.timeCreated)
-    val date = instant.toLocalDateTime(PhotosApp.LOCAL_TIME_ZONE)
+    val date = instant.toLocalDateTime(TimeZone.currentSystemDefault())
     PHOTO_DATE_FORMATTER.format(date.toJavaLocalDateTime())
 }
 

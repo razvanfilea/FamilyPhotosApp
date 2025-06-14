@@ -2,7 +2,6 @@ package net.theluckycoder.familyphotos.ui.composables
 
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.expandVertically
@@ -20,6 +19,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,14 +27,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableIntState
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,15 +40,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.paging.compose.LazyPagingItems
-import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.LocalPhoto
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.model.isVideo
 import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
+import net.theluckycoder.familyphotos.utils.computeSeparatorText
 import kotlin.time.ExperimentalTime
 
 private val PORTRAIT_ZOOM_LEVELS = intArrayOf(4, 5, 7)
@@ -70,56 +64,6 @@ private fun getZoomColumnCount(zoomIndex: Int): Int {
     return levels[zoomIndex.coerceIn(0, MAX_ZOOM_LEVEL_INDEX)]
 }
 
-@Composable
-fun <T : Photo> PhotoListWithViewer(
-    gridState: LazyGridState,
-    photos: LazyPagingItems<T>,
-    modifier: Modifier = Modifier,
-    headerContent: @Composable () -> Unit = {},
-    memoriesContent: @Composable ColumnScope.() -> Unit = {},
-    mainViewModel: MainViewModel = viewModel(),
-) {
-    val openedPhotoIndex = remember { mutableStateOf<Int?>(null) }
-    val photoIndex = openedPhotoIndex.value
-
-    LaunchedEffect(photoIndex) {
-        mainViewModel.showBars.value = photoIndex == null
-    }
-
-    AnimatedContent(photoIndex == null, modifier) { targetState ->
-
-        CompositionLocalProvider(LocalNavAnimatedContentScope provides this@AnimatedContent) {
-            if (targetState) {
-                PhotosList(
-                    gridState = gridState,
-                    photos = photos,
-                    headerContent = headerContent,
-                    memoriesContent = memoriesContent,
-                    zoomIndexState = mainViewModel.zoomIndexState,
-                    openPhoto = { openedPhotoIndex.value = it },
-                )
-            } else {
-                val onClose = { openedPhotoIndex.value = null }
-                BackHandler(onBack = onClose)
-
-                val index = remember { photoIndex!! }
-
-                PhotosViewer(
-                    photos,
-                    index,
-                    photoViewModel = viewModel(),
-                    onClose,
-                )
-            }
-        }
-    }
-
-    val zoomIndex = mainViewModel.zoomIndexState.intValue
-    LaunchedEffect(zoomIndex) {
-        mainViewModel.settingsStore.setPhotosZoomLevel(zoomIndex)
-    }
-}
-
 private const val CONTENT_TYPE_PHOTO = 1
 private const val CONTENT_TYPE_TITLE = 2
 private const val CONTENT_TYPE_HEADER = 3
@@ -129,14 +73,19 @@ private const val CONTENT_TYPE_HEADER = 3
     ExperimentalTime::class
 )
 @Composable
-private fun <T : Photo> PhotosList(
-    gridState: LazyGridState,
-    headerContent: @Composable () -> Unit,
-    memoriesContent: @Composable ColumnScope.() -> Unit = {},
+fun <T : Photo> PhotosList(
     photos: LazyPagingItems<T>,
-    zoomIndexState: MutableIntState,
+    modifier: Modifier = Modifier,
+    gridState: LazyGridState = rememberLazyGridState(),
+    headerContent: @Composable () -> Unit = {},
+    memoriesContent: @Composable ColumnScope.() -> Unit = {},
     openPhoto: (index: Int) -> Unit,
+    mainViewModel: MainViewModel = viewModel()
 ) = Column(Modifier.fillMaxSize()) {
+    val zoomIndexState = mainViewModel.zoomIndexState
+    LaunchedEffect(zoomIndexState.intValue) {
+        mainViewModel.settingsStore.setPhotosZoomLevel(zoomIndexState.intValue)
+    }
 
     val selectedPhotoIds = remember { mutableStateSetOf<Long>() }
 
@@ -186,7 +135,8 @@ private fun <T : Photo> PhotosList(
                 lazyGridState = gridState,
                 selectedIds = selectedPhotoIds,
                 items = photos.itemSnapshotList,
-            ),
+            )
+            .then(modifier),
         columns = GridCells.Fixed(columnCount)
     ) {
         item(
@@ -205,11 +155,10 @@ private fun <T : Photo> PhotosList(
         for (index in 0..<photos.itemCount) {
             val photo = photos.peek(index)
             if (photo == null) {
-                //item {}
                 continue
             }
 
-            val headerDate = MainViewModel.computeSeparatorText(
+            val headerDate = computeSeparatorText(
                 photos.itemSnapshotList.getOrNull(index - 1),
                 photo
             )
@@ -238,10 +187,7 @@ private fun <T : Photo> PhotosList(
                 val photo = photos[index]!!
                 val modifier = with(LocalSharedTransitionScope.current) {
                     Modifier
-                        .sharedBounds(
-                            rememberSharedContentState(key = photo.id),
-                            animatedVisibilityScope = LocalNavAnimatedContentScope.current
-                        )
+                        .photoSharedBounds(photo.id)
                         .animateItem(fadeInSpec = null, fadeOutSpec = null)
                         .aspectRatio(1f)
                         .padding(0.5.dp)

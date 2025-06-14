@@ -12,23 +12,23 @@ import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.model.NetworkPhotoWithYearOffset
 
 @Dao
-abstract class NetworkPhotosDao {
+interface NetworkPhotosDao {
 
     @Query("SELECT * FROM network_photo WHERE id = :photoId")
-    abstract fun findById(photoId: Long): Flow<NetworkPhoto?>
+    fun findById(photoId: Long): Flow<NetworkPhoto?>
 
     @Query(
         """SELECT * FROM network_photo
             ORDER BY network_photo.timeCreated DESC"""
     )
-    abstract fun getPhotosPaged(): PagingSource<Int, NetworkPhoto>
+    fun getPhotosPaged(): PagingSource<Int, NetworkPhoto>
 
     @Query(
         """SELECT * FROM network_photo
         WHERE network_photo.folder = :folder
         ORDER BY network_photo.timeCreated DESC"""
     )
-    abstract fun getFolderPhotos(folder: String): PagingSource<Int, NetworkPhoto>
+    fun getFolderPhotos(folder: String): PagingSource<Int, NetworkPhoto>
 
     @Query(
         """
@@ -40,7 +40,7 @@ abstract class NetworkPhotosDao {
             CASE WHEN :ascending = 0 THEN folder END DESC
         """
     )
-    abstract fun getFolders(ascending: Boolean): Flow<List<NetworkFolder>>
+    fun getFolders(ascending: Boolean): Flow<List<NetworkFolder>>
 
     @Query(
         """SELECT *, 
@@ -53,7 +53,7 @@ abstract class NetworkPhotosDao {
          AND yearOffset BETWEEN :minYearsAgo AND :maxYearsAgo
        ORDER BY yearOffset ASC, network_photo.timeCreated DESC"""
     )
-    abstract fun getPhotosGroupedByYearsAgo(
+    fun getPhotosGroupedByYearsAgo(
         userName: String?,
         minYearsAgo: Int = 1,
         maxYearsAgo: Int = 10
@@ -66,23 +66,23 @@ abstract class NetworkPhotosDao {
         ORDER BY network_photo.timeCreated DESC
     """
     )
-    abstract fun getFavoritePhotosPaged(): PagingSource<Int, NetworkPhoto>
+    fun getFavoritePhotosPaged(): PagingSource<Int, NetworkPhoto>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract suspend fun insert(photo: NetworkPhoto)
+    suspend fun insert(photo: NetworkPhoto)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract suspend fun insert(list: Collection<NetworkPhoto>)
+    suspend fun insert(list: Collection<NetworkPhoto>)
 
     @Query("DELETE FROM network_photo WHERE id = :photoId")
-    abstract fun delete(photoId: Long)
+    fun delete(photoId: Long)
 
     @Transaction
-    open suspend fun replaceAll(list: Collection<NetworkPhoto>) {
+    suspend fun replaceAll(list: Collection<NetworkPhoto>) {
         deleteAll()
         insert(list)
     }
 
     @Query("DELETE FROM network_photo")
-    protected abstract suspend fun deleteAll()
+    suspend fun deleteAll()
 }

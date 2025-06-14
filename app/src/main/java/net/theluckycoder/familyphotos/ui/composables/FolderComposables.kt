@@ -90,6 +90,7 @@ fun FolderPreviewItem(
 ) {
     Box(
         Modifier
+            .photoSharedBounds(photo.id)
             .fillMaxWidth()
             .aspectRatio(1f)
             .clip(RoundedCornerShape(22.dp))

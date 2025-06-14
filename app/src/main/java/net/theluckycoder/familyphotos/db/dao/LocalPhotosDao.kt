@@ -12,11 +12,10 @@ import net.theluckycoder.familyphotos.model.LocalNetworkReference
 import net.theluckycoder.familyphotos.model.LocalPhoto
 
 @Dao
-abstract class LocalPhotosDao {
-
+interface LocalPhotosDao {
 
     @Query("SELECT * FROM local_photo WHERE id = :photoId")
-    abstract fun findById(photoId: Long): Flow<LocalPhoto?>
+    fun findById(photoId: Long): Flow<LocalPhoto?>
 
     @Query(
         """
@@ -26,27 +25,27 @@ abstract class LocalPhotosDao {
             CASE WHEN :ascending <> 0 THEN folder END ASC,
             CASE WHEN :ascending = 0 THEN folder END DESC"""
     )
-    abstract fun getFolders(ascending: Boolean): Flow<List<LocalFolder>>
+    fun getFolders(ascending: Boolean): Flow<List<LocalFolder>>
 
     @Query("SELECT * FROM local_photo WHERE local_photo.folder = :folder ORDER BY local_photo.timeCreated DESC LIMIT :count")
-    abstract fun getFolderPhotos(folder: String, count: Int): List<LocalPhoto>
+    fun getFolderPhotos(folder: String, count: Int): List<LocalPhoto>
 
     @Query("SELECT * FROM local_photo WHERE local_photo.folder = :folder ORDER BY local_photo.timeCreated DESC")
-    abstract fun getFolderPhotosPaged(folder: String): PagingSource<Int, LocalPhoto>
+    fun getFolderPhotosPaged(folder: String): PagingSource<Int, LocalPhoto>
 
     @Query("SELECT * FROM local_photo WHERE local_photo.networkPhotoId = :networkPhotoId")
-    abstract suspend fun findByNetworkId(networkPhotoId: Long): LocalPhoto?
+    suspend fun findByNetworkId(networkPhotoId: Long): LocalPhoto?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract suspend fun insertOrReplace(photo: LocalPhoto)
+    suspend fun insertOrReplace(photo: LocalPhoto)
 
     @Insert
-    abstract suspend fun insert(list: Collection<LocalPhoto>)
+    suspend fun insert(list: Collection<LocalPhoto>)
 
     // region replaceAll
 
     @Transaction
-    open suspend fun replaceAll(list: Collection<LocalPhoto>) {
+    suspend fun replaceAll(list: Collection<LocalPhoto>) {
         val networkReferences =
             getValidNetworkReferences().associateBy({ it.id }, { it.networkPhotoId })
 
@@ -66,10 +65,10 @@ abstract class LocalPhotosDao {
             SELECT 1 FROM network_photo np WHERE np.id = networkPhotoId
         )"""
     )
-    abstract suspend fun getValidNetworkReferences(): List<LocalNetworkReference>
+    suspend fun getValidNetworkReferences(): List<LocalNetworkReference>
 
     @Query("DELETE FROM local_photo")
-    protected abstract fun deleteAll()
+    fun deleteAll()
 
     // endregion replaceAll
 }

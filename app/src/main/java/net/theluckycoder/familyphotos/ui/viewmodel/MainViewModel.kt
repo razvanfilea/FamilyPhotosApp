@@ -5,22 +5,20 @@ import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.Data
-import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.Operation
 import androidx.work.WorkManager
-import androidx.work.await
 import com.jakewharton.processphoenix.ProcessPhoenix
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,9 +31,11 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
@@ -44,11 +44,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.toLocalDateTime
-import net.theluckycoder.familyphotos.PhotosApp.Companion.LOCAL_TIME_ZONE
 import net.theluckycoder.familyphotos.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.datastore.UserDataStore
 import net.theluckycoder.familyphotos.db.dao.LocalFolderBackupDao
@@ -64,10 +59,8 @@ import net.theluckycoder.familyphotos.network.service.UserService
 import net.theluckycoder.familyphotos.repository.FoldersRepository
 import net.theluckycoder.familyphotos.repository.PhotosRepository
 import net.theluckycoder.familyphotos.repository.ServerRepository
-import net.theluckycoder.familyphotos.workers.BackupWorker
+import net.theluckycoder.familyphotos.use_case.RefreshPhotosUseCase
 import net.theluckycoder.familyphotos.workers.UploadWorker
-import java.time.format.TextStyle
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
@@ -82,16 +75,23 @@ class MainViewModel @Inject constructor(
     private val foldersToBackupDao: LocalFolderBackupDao,
     private val userDataStore: UserDataStore,
     private val userService: Lazy<UserService>,
+    private val refreshPhotosUseCase: RefreshPhotosUseCase,
     val settingsStore: SettingsDataStore,
 ) : ViewModel() {
 
     private val workManager: WorkManager = WorkManager.getInstance(app)
 
+    val selectedPhotoType =
+        settingsStore.photoType.stateIn(viewModelScope, SharingStarted.Eagerly, PhotoType.All)
+
     val timelinePager = Pager(PAGING_CONFIG) {
         photosRepository.getAllPhotosPaged()
     }.flow
         .cachedIn(viewModelScope)
-        .combine(settingsStore.photoType) { photos, photoType ->
+        .combine(selectedPhotoType) { photos, photoType ->
+            if (photoType == PhotoType.All) {
+                return@combine photos
+            }
             photos.filter {
                 when (photoType) {
                     PhotoType.All -> true
@@ -101,7 +101,7 @@ class MainViewModel @Inject constructor(
             }
         }
 
-    val memories = settingsStore.photoType
+    val memories = selectedPhotoType
         .combine(userDataStore.userIdFlow) { photoType, userName ->
             when (photoType) {
                 PhotoType.All -> null
@@ -121,24 +121,14 @@ class MainViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
     val networkFolders = settingsStore.showFoldersAscending
         .flatMapLatest { foldersRepository.networkFoldersFlow(it) }
-        .combine(settingsStore.photoType) { photos, photoType ->
-            photos.filter {
-                when (photoType) {
-                    PhotoType.All -> true
-                    PhotoType.Personal -> !it.isPublic()
-                    PhotoType.Family -> it.isPublic()
-                }
-            }
-        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     private val _localPhotosToDelete = Channel<List<LocalPhoto>>()
     val localPhotosToDelete = _localPhotosToDelete.consumeAsFlow()
 
-    val showBars = mutableStateOf(true)
     val zoomIndexState = mutableIntStateOf(1)
     val isRefreshing = MutableStateFlow(false)
-    val isOnlineFlow = MutableStateFlow(true)
+    val isOnline = refreshPhotosUseCase.isOnlineState.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -153,31 +143,6 @@ class MainViewModel @Inject constructor(
                 }
             }
         }
-
-        viewModelScope.launch {
-            val constraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.UNMETERED)
-                .setRequiresBatteryNotLow(true)
-                .build()
-
-            val periodicUpload =
-                PeriodicWorkRequestBuilder<BackupWorker>(1, TimeUnit.DAYS)
-                    .setConstraints(constraints)
-                    .build()
-
-            try {
-                WorkManager.getInstance(app)
-                    .enqueueUniquePeriodicWork(
-                        UNIQUE_PERIODIC_UPLOAD,
-                        ExistingPeriodicWorkPolicy.UPDATE,
-                        periodicUpload
-                    )
-                    .await()
-                Log.i(BackupWorker::class.simpleName, "Backup has been enabled")
-            } catch (e: Throwable) {
-                Log.e(BackupWorker::class.simpleName, "Backup failed to be enabled", e)
-            }
-        }
     }
 
     fun refreshPhotos() {
@@ -186,27 +151,15 @@ class MainViewModel @Inject constructor(
         isRefreshing.value = true
 
         viewModelScope.launch(Dispatchers.IO) {
-            val pingResponse = try {
-                serverRepository.pingServer()
-            } catch (_: Exception) {
-                ServerRepository.PingResponse.UNSUCCESSFUL
+            val result = refreshPhotosUseCase()
+
+            when (result) {
+                is RefreshPhotosUseCase.Result.Error -> Log.e("MainViewModel", "Failed to refresh data")
+                RefreshPhotosUseCase.Result.NotLoggedIn -> {
+                    logout()
+                }
+                RefreshPhotosUseCase.Result.Success -> {}
             }
-
-            if (pingResponse == ServerRepository.PingResponse.NOT_LOGGED_IN) {
-                logout(app)
-                return@launch
-            }
-            isOnlineFlow.value = pingResponse == ServerRepository.PingResponse.SUCCESSFUL
-
-            val localPhotos = async { foldersRepository.updatePhoneAlbums() }
-
-            try {
-                serverRepository.downloadAllPhotos()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-
-            localPhotos.await()
 
             isRefreshing.value = false
         }
@@ -218,13 +171,39 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun getNetworkFolderPhotosPaged(folder: String) = Pager(PAGING_CONFIG) {
-        foldersRepository.networkPhotosFromFolderPaged(folder)
-    }.flow
+    private val _selectedNetworkFolder = MutableStateFlow<String?>(null)
+    val currentNetworkFolderPhotosPager: Flow<PagingData<NetworkPhoto>> = _selectedNetworkFolder
+        .flatMapLatest { folderName ->
+            if (folderName != null) {
+                Pager(PAGING_CONFIG) {
+                    foldersRepository.networkPhotosFromFolderPaged(folderName)
+                }.flow.cachedIn(viewModelScope)
+            } else {
+                emptyFlow()
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.Lazily, PagingData.empty())
 
-    fun getLocalFolderPhotosPaged(folder: String) = Pager(PAGING_CONFIG) {
-        foldersRepository.localPhotosFromFolderPaged(folder)
-    }.flow
+    fun loadNetworkFolderPhotos(folderName: String?) {
+        _selectedNetworkFolder.value = folderName
+    }
+
+    private val _selectedLocalFolder = MutableStateFlow<String?>(null)
+    val currentLocalFolderPhotosPager: Flow<PagingData<LocalPhoto>> = _selectedLocalFolder
+        .flatMapLatest { folderName ->
+            if (folderName != null) {
+                Pager(PAGING_CONFIG) {
+                    foldersRepository.localPhotosFromFolderPaged(folderName)
+                }.flow.cachedIn(viewModelScope)
+            } else {
+                emptyFlow()
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.Lazily, PagingData.empty())
+
+    fun loadLocalFolderPhotos(folderName: String?) {
+        _selectedLocalFolder.value = folderName
+    }
 
     fun isLocalFolderBackupUp(folder: String): Flow<Boolean> =
         foldersToBackupDao.getAll().map { it.firstOrNull { it == folder } != null }
@@ -282,7 +261,7 @@ class MainViewModel @Inject constructor(
         localPhotos: List<Long>,
         makePublic: Boolean,
         uploadFolder: String?
-    ) {
+    ): Operation {
         val data = Data.Builder()
             .putAll(
                 mapOf(
@@ -305,7 +284,7 @@ class MainViewModel @Inject constructor(
             .setBackoffCriteria(BackoffPolicy.LINEAR, 15, TimeUnit.SECONDS)
             .build()
 
-        workManager
+        return workManager
 //            .beginUniqueWork("upload_work", ExistingWorkPolicy.APPEND, uploadRequest)
             .enqueue(uploadRequest)
     }
@@ -363,7 +342,7 @@ class MainViewModel @Inject constructor(
     }
 
 
-    fun clearAppCache(app: Application) {
+    fun clearAppCache() {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 withTimeout(10.seconds) {
@@ -382,7 +361,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun logout(app: Application) {
+    fun logout() {
         viewModelScope.launch {
             try {
                 userService.get().logout()
@@ -395,38 +374,6 @@ class MainViewModel @Inject constructor(
     }
 
     companion object {
-        private const val UNIQUE_PERIODIC_UPLOAD = "periodic_upload"
-
         private val PAGING_CONFIG = PagingConfig(pageSize = 70, enablePlaceholders = false)
-
-        private val currentDate = Clock.System.now().toLocalDateTime(LOCAL_TIME_ZONE)
-
-        fun computeSeparatorText(before: Photo?, after: Photo): String? {
-            val beforeDate = before?.let {
-                val instant = Instant.fromEpochSeconds(it.timeCreated)
-                instant.toLocalDateTime(LOCAL_TIME_ZONE)
-            }
-            val afterDate =
-                Instant.fromEpochSeconds(after.timeCreated)
-                    .toLocalDateTime(LOCAL_TIME_ZONE)
-
-            return if (beforeDate == null || beforeDate.monthNumber != afterDate.monthNumber || beforeDate.year != afterDate.year
-            ) {
-                buildDateString(afterDate)
-            } else null
-        }
-
-        private fun buildDateString(afterDate: LocalDateTime) = buildString {
-            append(
-                afterDate.month.getDisplayName(
-                    TextStyle.FULL,
-                    Locale.forLanguageTag("ro-RO")
-                )
-            )
-
-            val year = afterDate.year
-            if (year != currentDate.year)
-                append(' ').append(year)
-        }.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
     }
 }

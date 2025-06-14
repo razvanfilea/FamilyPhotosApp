@@ -7,7 +7,6 @@ import coil3.disk.DiskCache
 import coil3.gif.AnimatedImageDecoder
 import coil3.memory.MemoryCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
-import coil3.util.DebugLogger
 import coil3.video.VideoFrameDecoder
 import dagger.Module
 import dagger.Provides
@@ -20,7 +19,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
-import net.theluckycoder.familyphotos.BuildConfig
 import net.theluckycoder.familyphotos.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.datastore.UserDataStore
 import net.theluckycoder.familyphotos.network.service.PhotosService

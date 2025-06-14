@@ -19,47 +19,44 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.paging.PagingData
-import androidx.paging.compose.collectAsLazyPagingItems
-import kotlinx.coroutines.flow.Flow
+import androidx.paging.compose.LazyPagingItems
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.model.Photo
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
+import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
 import net.theluckycoder.familyphotos.ui.RenameFolderNav
-import net.theluckycoder.familyphotos.ui.composables.PhotoListWithViewer
+import net.theluckycoder.familyphotos.ui.composables.PhotosList
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FolderScreen(source: FolderNav.Source) {
+fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out Photo>) {
     val mainViewModel: MainViewModel = viewModel()
     val gridState = rememberLazyGridState()
     val backStack = LocalNavBackStack.current
 
-    val photosPager = remember(source) {
-        when (source) {
-            FolderNav.Source.Favorites -> mainViewModel.favoritePhotosFlow
-            is FolderNav.Source.Network -> mainViewModel.getNetworkFolderPhotosPaged(source.folder.name)
-            is FolderNav.Source.Local -> mainViewModel.getLocalFolderPhotosPaged(source.name)
-        }
-    } as Flow<PagingData<Photo>>
-
     Scaffold { paddingValues ->
-        val photos = photosPager.collectAsLazyPagingItems()
-        PhotoListWithViewer(
+        PhotosList(
             gridState = gridState,
-            photos = photos,
+            photos = lazyPagingItems,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(bottom = paddingValues.calculateBottomPadding()),
+            openPhoto = {
+                val viewerSource = when (source) {
+                    FolderNav.Source.Favorites -> PhotoViewerFlowNav.Source.Favorites
+                    is FolderNav.Source.Local -> PhotoViewerFlowNav.Source.Local
+                    is FolderNav.Source.Network -> PhotoViewerFlowNav.Source.Network
+                }
+                backStack.add(PhotoViewerFlowNav(it, viewerSource))
+            },
             headerContent = {
                 TopAppBar(
                     navigationIcon = {
@@ -75,7 +72,7 @@ fun FolderScreen(source: FolderNav.Source) {
                     title = {
                         Text(
                             when (source) {
-                                FolderNav.  Source.Favorites -> stringResource(R.string.favorites)
+                                FolderNav.Source.Favorites -> stringResource(R.string.favorites)
                                 is FolderNav.Source.Network -> source.folder.name
                                 is FolderNav.Source.Local -> source.name
                             },

@@ -4,7 +4,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.net.Uri
@@ -15,6 +14,7 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.view.CameraController
+import androidx.core.graphics.toColorInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import java.io.IOException
@@ -30,7 +30,7 @@ import kotlin.coroutines.suspendCoroutine
 private const val BITMAP_DATE_FORMAT = "dd.MM.yyyy"
 private const val FILENAME_FORMAT = "yyyyMMdd_HHmmssSS"
 
-private val TEXT_COLOR = Color.parseColor("#5cf992")
+private val TEXT_COLOR = "#5cf992".toColorInt()
 
 internal suspend fun CameraController.takePicture(context: Context): Uri {
     return suspendCoroutine { continuation ->

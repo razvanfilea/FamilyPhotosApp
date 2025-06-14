@@ -25,7 +25,6 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.repository.PhotosRepository
 import net.theluckycoder.familyphotos.repository.ServerRepository
 import java.io.File
-import java.io.IOException
 import java.net.ConnectException
 import kotlin.random.Random
 
@@ -87,10 +86,10 @@ class UploadWorker @AssistedInject constructor(
             createSuccessNotification(total - failedCount, failedCount)
 
             Result.success()
-        } catch (e: ConnectException) {
+        } catch (_: ConnectException) {
             createFailNotification(FailReason.NoInternet)
             Result.retry()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             createFailNotification(FailReason.Cancelled)
             Result.failure()
         } catch (e: Exception) {

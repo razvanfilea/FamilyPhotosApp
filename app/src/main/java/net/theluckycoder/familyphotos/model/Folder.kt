@@ -1,10 +1,8 @@
 package net.theluckycoder.familyphotos.model
 
 import android.net.Uri
-import android.os.Parcelable
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
-import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 
 abstract class PhotoFolder {

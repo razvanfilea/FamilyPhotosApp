@@ -1,13 +1,22 @@
 package net.theluckycoder.familyphotos
 
 import android.app.Application
+import android.util.Log
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.await
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
-import kotlinx.datetime.TimeZone
-import net.theluckycoder.familyphotos.datastore.UserDataStore
+import kotlinx.coroutines.launch
+import net.theluckycoder.familyphotos.utils.DefaultCoroutineScope
+import net.theluckycoder.familyphotos.workers.BackupWorker
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -17,7 +26,7 @@ class PhotosApp : Application(), Configuration.Provider {
     lateinit var workerFactory: HiltWorkerFactory
 
     @Inject
-    lateinit var userDataStore: UserDataStore
+    lateinit var coroutineScope: DefaultCoroutineScope
 
     override fun onCreate() {
         /*if (BuildConfig.DEBUG) {
@@ -31,6 +40,8 @@ class PhotosApp : Application(), Configuration.Provider {
             )
         }*/
         super.onCreate()
+
+        createUploadWorker()
     }
 
     override val workManagerConfiguration: Configuration
@@ -39,7 +50,32 @@ class PhotosApp : Application(), Configuration.Provider {
             .setExecutor(Dispatchers.Default.asExecutor())
             .build()
 
+    private fun createUploadWorker() = coroutineScope.launch {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.UNMETERED)
+            .setRequiresBatteryNotLow(true)
+            .build()
+
+        val periodicUpload =
+            PeriodicWorkRequestBuilder<BackupWorker>(1, TimeUnit.DAYS)
+                .setConstraints(constraints)
+                .build()
+
+        try {
+            WorkManager.getInstance(this@PhotosApp)
+                .enqueueUniquePeriodicWork(
+                    UNIQUE_PERIODIC_UPLOAD,
+                    ExistingPeriodicWorkPolicy.UPDATE,
+                    periodicUpload
+                )
+                .await()
+            Log.i(BackupWorker::class.simpleName, "Backup has been enabled")
+        } catch (e: Throwable) {
+            Log.e(BackupWorker::class.simpleName, "Backup failed to be enabled", e)
+        }
+    }
+
     companion object {
-        val LOCAL_TIME_ZONE = TimeZone.currentSystemDefault()
+        private const val UNIQUE_PERIODIC_UPLOAD = "periodic_upload"
     }
 }

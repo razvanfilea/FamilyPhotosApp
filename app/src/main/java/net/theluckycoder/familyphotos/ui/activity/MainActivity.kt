@@ -11,9 +11,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,8 +42,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.ImageLoader
 import dagger.Lazy
@@ -48,6 +55,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import net.theluckycoder.familyphotos.model.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.AppTheme
 import net.theluckycoder.familyphotos.ui.DeviceNav
 import net.theluckycoder.familyphotos.ui.FolderNav
@@ -58,13 +66,14 @@ import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.MovePhotosNav
 import net.theluckycoder.familyphotos.ui.NetworkFolderNav
-import net.theluckycoder.familyphotos.ui.PhotoViewerNav
+import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
+import net.theluckycoder.familyphotos.ui.PhotoViewerListNav
 import net.theluckycoder.familyphotos.ui.RenameFolderNav
-import net.theluckycoder.familyphotos.ui.TabBackStack
 import net.theluckycoder.familyphotos.ui.TimelineNav
 import net.theluckycoder.familyphotos.ui.TopLevelRouteNav
 import net.theluckycoder.familyphotos.ui.UploadPhotosNav
 import net.theluckycoder.familyphotos.ui.composables.PhotosViewer
+import net.theluckycoder.familyphotos.ui.replaceAll
 import net.theluckycoder.familyphotos.ui.screen.FolderScreen
 import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
 import net.theluckycoder.familyphotos.ui.screen.RenameFolderScreen
@@ -99,7 +108,7 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var okHttpClientLazy: Lazy<OkHttpClient>
 
-    @OptIn(ExperimentalAnimationApi::class, ExperimentalSharedTransitionApi::class)
+    @OptIn(ExperimentalSharedTransitionApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         window.isNavigationBarContrastEnforced = false
@@ -108,9 +117,7 @@ class MainActivity : ComponentActivity() {
         mainViewModel // Initialize ViewModel
 
         setContent {
-            // TODO Use a saveable when the API becomes available
-            val tabBackStack = remember { TabBackStack(TimelineNav) }
-
+            val backStack = rememberNavBackStack(TimelineNav)
             val snackbarHostState = remember { SnackbarHostState() }
 
             AppTheme {
@@ -120,9 +127,9 @@ class MainActivity : ComponentActivity() {
                         LocalOkHttpClient provides okHttpClientLazy,
                         LocalSnackbarHostState provides snackbarHostState,
                         LocalSharedTransitionScope provides this@SharedTransitionLayout,
-                        LocalNavBackStack provides tabBackStack.backStack
+                        LocalNavBackStack provides backStack,
                     ) {
-                        Content(tabBackStack, mainViewModel)
+                        Content(backStack, mainViewModel)
                     }
                 }
             }
@@ -171,98 +178,118 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
-private fun Content(tabBackStack: TabBackStack, mainViewModel: MainViewModel) {
+private fun Content(backStack: NavBackStack, mainViewModel: MainViewModel) {
+    val transitionSpec =
+        (fadeIn(animationSpec = tween(220, delayMillis = 90)) +
+                scaleIn(initialScale = 0.92f, animationSpec = tween(220, delayMillis = 90)))
+            .togetherWith(fadeOut(animationSpec = tween(90)))
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
-        bottomBar = {
-            if (mainViewModel.showBars.value) {
-                NavigationBar(
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    TabNavigationItem(tabBackStack, TimelineNav)
-                    TabNavigationItem(tabBackStack, NetworkFolderNav)
-                    TabNavigationItem(tabBackStack, DeviceNav)
+    val timelinePagingItems = mainViewModel.timelinePager.collectAsLazyPagingItems()
+    val networkFolderPagingItems =
+        mainViewModel.currentNetworkFolderPhotosPager.collectAsLazyPagingItems()
+    val localFolderPagingItems =
+        mainViewModel.currentLocalFolderPhotosPager.collectAsLazyPagingItems()
+    val favoritesFolderPagingItems = mainViewModel.favoritePhotosFlow.collectAsLazyPagingItems()
+
+    NavDisplay(
+        backStack = backStack,
+        transitionSpec = { transitionSpec },
+        popTransitionSpec = { transitionSpec },
+        predictivePopTransitionSpec = { transitionSpec },
+        entryProvider = { key ->
+            when (key) {
+                is TopLevelRouteNav -> NavEntry(key) {
+                    TopLevelScreen(
+                        key,
+                        timelinePagingItems,
+                        mainViewModel,
+                        Modifier.fillMaxSize()
+                    )
+                }
+
+                is PhotoViewerFlowNav -> NavEntry(key) {
+                    val lazyPagingItems = when (key.source) {
+                        PhotoViewerFlowNav.Source.Timeline -> timelinePagingItems
+                        PhotoViewerFlowNav.Source.Network -> networkFolderPagingItems
+                        PhotoViewerFlowNav.Source.Local -> localFolderPagingItems
+                        PhotoViewerFlowNav.Source.Favorites -> favoritesFolderPagingItems
+                    }
+
+                    PhotosViewer(
+                        lazyPagingItems = lazyPagingItems,
+                        initialPhotoIndex = key.initialPhotoIndex
+                    )
+                }
+
+                is FolderNav -> NavEntry(key) {
+                    val source = key.source
+                    DisposableEffect(source) {
+                        when (source) {
+                            is FolderNav.Source.Network -> mainViewModel.loadNetworkFolderPhotos(
+                                source.folder.name
+                            )
+
+                            is FolderNav.Source.Local -> mainViewModel.loadLocalFolderPhotos(source.name)
+                            else -> Unit
+                        }
+
+                        onDispose {
+                            when (source) {
+                                is FolderNav.Source.Network -> mainViewModel.loadNetworkFolderPhotos(
+                                    null
+                                )
+
+                                is FolderNav.Source.Local -> mainViewModel.loadLocalFolderPhotos(
+                                    null
+                                )
+
+                                else -> Unit
+                            }
+                        }
+                    }
+
+                    val lazyPagingItems = when (source) {
+                        FolderNav.Source.Favorites -> favoritesFolderPagingItems
+                        is FolderNav.Source.Network -> networkFolderPagingItems
+                        is FolderNav.Source.Local -> localFolderPagingItems
+                    }
+
+                    FolderScreen(key.source, lazyPagingItems)
+                }
+
+                is PhotoViewerListNav -> NavEntry(key) {
+                    PhotosViewer(key.photos)
+                }
+
+                is MovePhotosNav -> NavEntry(key) {
+                    MovePhotosScreen(key.photoIds)
+                }
+
+                is UploadPhotosNav -> NavEntry(key) {
+                    UploadPhotosScreen(key.photoIds)
+                }
+
+                is RenameFolderNav -> NavEntry(key) {
+                    RenameFolderScreen(key.folder)
+                }
+
+                else -> {
+                    error("Unknown route: $key")
                 }
             }
         }
-    ) { paddingValues ->
-        NavDisplay(
-            backStack = tabBackStack.backStack,
-            entryProvider = { key ->
-                when (key) {
-                    is TopLevelRouteNav -> {
-                        NavEntry(key) {
-                            val isRefreshing by mainViewModel.isRefreshing.collectAsState()
-
-                            PullToRefreshBox(
-                                isRefreshing = isRefreshing,
-                                onRefresh = {
-                                    mainViewModel.refreshPhotos()
-                                },
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(bottom = paddingValues.calculateBottomPadding()),
-                            ) {
-                                when (key) {
-                                    TimelineNav -> {
-                                        val timelinePhotos = mainViewModel.timelinePager.collectAsLazyPagingItems()
-                                        TimelineTab(timelinePhotos)}
-                                    NetworkFolderNav -> NetworkFoldersTab()
-                                    DeviceNav -> DeviceTab()
-                                }
-                            }
-                        }
-                    }
-
-                    is FolderNav -> NavEntry(key) {
-                        FolderScreen(key.source)
-                    }
-
-                    is PhotoViewerNav -> NavEntry(key) {
-                        DisposableEffect(Unit) {
-                            mainViewModel.showBars.value = false
-                            onDispose {
-                                mainViewModel.showBars.value = true
-                            }
-                        }
-                        PhotosViewer(
-                            photos = key.photos,
-                            close = { tabBackStack.removeLast() }
-                        )
-                    }
-
-                    is MovePhotosNav -> NavEntry(key) {
-                        MovePhotosScreen(key.photoIds)
-                    }
-
-                    is UploadPhotosNav -> NavEntry(key) {
-                        UploadPhotosScreen(key.photoIds)
-                    }
-
-                    is RenameFolderNav -> NavEntry(key) {
-                        RenameFolderScreen(key.folder)
-                    }
-
-                    else -> {
-                        error("Unknown route: $key")
-                    }
-                }
-            }
-        )
-    }
+    )
 }
 
 @Composable
-private fun RowScope.TabNavigationItem(backStack: TabBackStack, route: TopLevelRouteNav) {
-    val selected = backStack.topLevelKey == route
+private fun RowScope.TabNavigationItem(route: TopLevelRouteNav) {
+    val backStack = LocalNavBackStack.current
+    val selected = backStack.lastOrNull() == route
 
     NavigationBarItem(
         selected = selected,
-        onClick = { backStack.addTopLevel(route) },
+        onClick = { backStack.replaceAll(route) },
         label = { Text(stringResource(route.name)) },
         icon = {
             Icon(
@@ -271,4 +298,43 @@ private fun RowScope.TabNavigationItem(backStack: TabBackStack, route: TopLevelR
             )
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TopLevelScreen(
+    key: TopLevelRouteNav,
+    timelinePagingItems: LazyPagingItems<NetworkPhoto>,
+    mainViewModel: MainViewModel,
+    modifier: Modifier = Modifier
+) {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
+        bottomBar = {
+            NavigationBar(
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                TabNavigationItem(TimelineNav)
+                TabNavigationItem(NetworkFolderNav)
+                TabNavigationItem(DeviceNav)
+            }
+        }
+    ) { paddingValues ->
+        val isRefreshing by mainViewModel.isRefreshing.collectAsState()
+
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                mainViewModel.refreshPhotos()
+            },
+            modifier = modifier.padding(bottom = paddingValues.calculateBottomPadding()),
+        ) {
+            when (key) {
+                TimelineNav -> TimelineTab(timelinePagingItems)
+                NetworkFolderNav -> NetworkFoldersTab()
+                DeviceNav -> DeviceTab()
+            }
+        }
+    }
 }

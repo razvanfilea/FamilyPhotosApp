@@ -28,9 +28,6 @@ import java.io.File
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
-import kotlin.time.measureTimedValue
 
 @Singleton // Needed for WorkManager
 class ServerRepository @Inject constructor(
@@ -56,7 +53,6 @@ class ServerRepository @Inject constructor(
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     suspend fun downloadAllPhotos() = coroutineScope {
         val service = photosService.get()
         val photosAsync = async { service.getPhotosList() }
