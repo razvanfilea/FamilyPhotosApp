@@ -4,19 +4,20 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.navigation3.runtime.NavBackStack
 import coil3.ImageLoader
 import dagger.Lazy
 import okhttp3.OkHttpClient
 
-val LocalImageLoader = compositionLocalOf<Lazy<ImageLoader>> { error("No ImageLoader found!") }
+val LocalImageLoader = staticCompositionLocalOf<Lazy<ImageLoader>> { error("No ImageLoader found!") }
 
 val LocalNavBackStack = compositionLocalOf<NavBackStack> { error("No NavBackStack found!") }
 
 val LocalSnackbarHostState =
-    compositionLocalOf<SnackbarHostState> { error("No SnackbarHostState found!") }
+    staticCompositionLocalOf<SnackbarHostState> { error("No SnackbarHostState found!") }
 
-val LocalOkHttpClient = compositionLocalOf<Lazy<OkHttpClient>> {
+val LocalOkHttpClient = staticCompositionLocalOf<Lazy<OkHttpClient>> {
     error("No OkHttpClient found!")
 }
 

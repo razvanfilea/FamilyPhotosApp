@@ -1,9 +1,6 @@
 package net.theluckycoder.familyphotos.ui.viewmodel
 
-import android.app.Application
-import android.net.Uri
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,8 +16,6 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.Operation
 import androidx.work.WorkManager
-import com.jakewharton.processphoenix.ProcessPhoenix
-import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -43,43 +38,38 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
-import net.theluckycoder.familyphotos.datastore.SettingsDataStore
-import net.theluckycoder.familyphotos.datastore.UserDataStore
-import net.theluckycoder.familyphotos.db.dao.LocalFolderBackupDao
-import net.theluckycoder.familyphotos.model.LocalFolderToBackup
-import net.theluckycoder.familyphotos.model.LocalPhoto
-import net.theluckycoder.familyphotos.model.NetworkFolder
-import net.theluckycoder.familyphotos.model.NetworkPhoto
-import net.theluckycoder.familyphotos.model.PUBLIC_USER_ID
-import net.theluckycoder.familyphotos.model.Photo
-import net.theluckycoder.familyphotos.model.PhotoType
-import net.theluckycoder.familyphotos.model.isPublic
-import net.theluckycoder.familyphotos.network.service.UserService
-import net.theluckycoder.familyphotos.repository.FoldersRepository
-import net.theluckycoder.familyphotos.repository.PhotosRepository
-import net.theluckycoder.familyphotos.repository.ServerRepository
-import net.theluckycoder.familyphotos.use_case.RefreshPhotosUseCase
+import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
+import net.theluckycoder.familyphotos.data.local.datastore.UserDataStore
+import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
+import net.theluckycoder.familyphotos.data.model.LocalFolderToBackup
+import net.theluckycoder.familyphotos.data.model.LocalPhoto
+import net.theluckycoder.familyphotos.data.model.NetworkFolder
+import net.theluckycoder.familyphotos.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.PUBLIC_USER_ID
+import net.theluckycoder.familyphotos.data.model.PhotoType
+import net.theluckycoder.familyphotos.data.model.isPublic
+import net.theluckycoder.familyphotos.data.repository.FoldersRepository
+import net.theluckycoder.familyphotos.data.repository.LoginRepository
+import net.theluckycoder.familyphotos.data.repository.PhotosRepository
+import net.theluckycoder.familyphotos.data.repository.ServerRepository
+import net.theluckycoder.familyphotos.domain.RefreshPhotosUseCase
 import net.theluckycoder.familyphotos.workers.UploadWorker
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val app: Application,
     private val photosRepository: PhotosRepository,
     private val serverRepository: ServerRepository,
     private val foldersRepository: FoldersRepository,
     private val foldersToBackupDao: LocalFolderBackupDao,
     private val userDataStore: UserDataStore,
-    private val userService: Lazy<UserService>,
     private val refreshPhotosUseCase: RefreshPhotosUseCase,
+    val loginRepository: LoginRepository,
+    private val workManager: WorkManager,
     val settingsStore: SettingsDataStore,
 ) : ViewModel() {
-
-    private val workManager: WorkManager = WorkManager.getInstance(app)
 
     val selectedPhotoType =
         settingsStore.photoType.stateIn(viewModelScope, SharingStarted.Eagerly, PhotoType.All)
@@ -154,10 +144,15 @@ class MainViewModel @Inject constructor(
             val result = refreshPhotosUseCase()
 
             when (result) {
-                is RefreshPhotosUseCase.Result.Error -> Log.e("MainViewModel", "Failed to refresh data")
+                is RefreshPhotosUseCase.Result.Error -> Log.e(
+                    "MainViewModel",
+                    "Failed to refresh data"
+                )
+
                 RefreshPhotosUseCase.Result.NotLoggedIn -> {
-                    logout()
+                    loginRepository.logout()
                 }
+
                 RefreshPhotosUseCase.Result.Success -> {}
             }
 
@@ -230,7 +225,8 @@ class MainViewModel @Inject constructor(
     ): Deferred<Boolean> = viewModelScope.async(Dispatchers.IO) {
         networkPhotos.map { id ->
             try {
-                val photo = photosRepository.getNetworkPhoto(id).firstOrNull() ?: return@map false
+                val photo =
+                    photosRepository.getNetworkPhotoFlow(id).firstOrNull() ?: return@map false
 
                 val result = serverRepository.changePhotoLocation(
                     photo = photo,
@@ -246,13 +242,11 @@ class MainViewModel @Inject constructor(
         }.all { it }
     }
 
-    // region Individual Photos Actions
-
     fun getLocalPhotoFlow(photoId: Long): Flow<LocalPhoto?> =
-        photosRepository.getLocalPhoto(photoId)
+        photosRepository.getLocalPhotoFlow(photoId)
 
     fun getNetworkPhotoFlow(photoId: Long): Flow<NetworkPhoto?> =
-        photosRepository.getNetworkPhoto(photoId)
+        photosRepository.getNetworkPhotoFlow(photoId)
 
     /**
      * Receives a list of [LocalPhoto] ids that will be uploaded
@@ -303,73 +297,37 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    /**
-     * This functions returns an Uri for a certain image,
-     * if it is a [LocalPhoto] it simply returns its location,
-     * if it is a [NetworkPhoto] it downloads and stores the image locally and then returns its Uri
-     * or returns null if the operations fails
-     */
-    fun getPhotoLocalUriAsync(photo: Photo): Deferred<Uri?> = viewModelScope.async(Dispatchers.IO) {
-        when (photo) {
-            is LocalPhoto -> photo.uri
-            is NetworkPhoto -> {
+    fun getNetworkPhotosUriAsync(photoIds: LongArray) = viewModelScope.async(Dispatchers.IO) {
+        photoIds
+            .map { photoId ->
+                val photo = photosRepository.getNetworkPhoto(photoId) ?: return@map null
                 val localPhoto = photosRepository.getLocalPhotoFromNetwork(photo.id)
                     ?: serverRepository.saveNetworkPhotoToStorage(photo)
 
                 localPhoto?.uri
             }
-        }
+            .filterNotNull()
     }
 
-    // endregion
+    fun getLocalPhotosUriAsync(photoIds: LongArray) = viewModelScope.async(Dispatchers.IO) {
+        photoIds.map { photosRepository.getLocalPhoto(it)?.uri }.filterNotNull()
+    }
 
-    suspend fun deleteNetworkPhotos(photos: List<NetworkPhoto>) {
-        withContext(Dispatchers.IO) {
-            photos.map { photo ->
-                async {
-                    if (serverRepository.deleteNetworkPhoto(photo.id)) {
-                        photosRepository.removeNetworkReference(photo)
-                    }
+    suspend fun deleteNetworkPhotos(photoIds: LongArray) = withContext(Dispatchers.IO) {
+        photoIds.map { photoId ->
+            async {
+                val networkPhoto = photosRepository.getNetworkPhoto(photoId)
+                if (networkPhoto != null && serverRepository.deleteNetworkPhoto(photoId)) {
+                    photosRepository.removeNetworkReference(networkPhoto)
                 }
-            }.toList().map { it.await() }
+            }
         }
-    }
+    }.toList().map { it.await() }
 
-    fun deleteLocalPhotos(photos: List<LocalPhoto>) {
+    fun deleteLocalPhotos(photoIds: LongArray) {
         viewModelScope.launch(Dispatchers.Default) {
+            val photos = photoIds.map { photosRepository.getLocalPhoto(it) }.filterNotNull()
             _localPhotosToDelete.send(photos)
-        }
-    }
-
-
-    fun clearAppCache() {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                withTimeout(10.seconds) {
-                    while (!app.cacheDir.deleteRecursively())
-                        ensureActive()
-
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(app, "Cache cleaned successfully", Toast.LENGTH_SHORT)
-                            .show()
-                        Log.d("Cache", "Cache cleaned successfully")
-                    }
-                }
-            }
-
-            ProcessPhoenix.triggerRebirth(app)
-        }
-    }
-
-    fun logout() {
-        viewModelScope.launch {
-            try {
-                userService.get().logout()
-            } catch (_: Exception) {
-            }
-            userDataStore.clear()
-
-            ProcessPhoenix.triggerRebirth(app)
         }
     }
 

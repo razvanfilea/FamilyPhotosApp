@@ -5,7 +5,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import net.theluckycoder.familyphotos.model.Photo
+import net.theluckycoder.familyphotos.data.model.Photo
 import java.text.Normalizer
 import java.time.format.TextStyle
 import java.util.Locale

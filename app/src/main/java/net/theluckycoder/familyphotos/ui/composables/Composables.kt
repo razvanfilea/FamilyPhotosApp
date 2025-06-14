@@ -2,8 +2,6 @@ package net.theluckycoder.familyphotos.ui.composables
 
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
-import android.webkit.MimeTypeMap
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SizeTransform
@@ -60,10 +58,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
@@ -71,12 +67,10 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.model.LocalPhoto
-import net.theluckycoder.familyphotos.model.NetworkPhoto
-import net.theluckycoder.familyphotos.model.Photo
-import net.theluckycoder.familyphotos.model.PhotoType
-import net.theluckycoder.familyphotos.model.getPreviewUri
-import net.theluckycoder.familyphotos.model.getUri
+import net.theluckycoder.familyphotos.data.model.Photo
+import net.theluckycoder.familyphotos.data.model.PhotoType
+import net.theluckycoder.familyphotos.data.model.getPreviewUri
+import net.theluckycoder.familyphotos.data.model.getUri
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
@@ -256,8 +250,7 @@ fun Photo.photoDateText(): String = remember(this) {
 @Composable
 fun SharePhotoIconButton(
     subtitle: Boolean,
-    getPhotos: suspend () -> List<Photo>,
-    getPhotoUri: (Photo) -> Deferred<Uri?>,
+    getPhotosUris: suspend () -> List<Uri>,
 ) {
     val context = LocalContext.current
     val snackbarHostState = LocalSnackbarHostState.current
@@ -272,25 +265,11 @@ fun SharePhotoIconButton(
         isLoading = true
 
         scope.launch(Dispatchers.Default) {
-            val photos = getPhotos()
-            val uriList = photos.map(getPhotoUri).awaitAll().filterNotNull()
+            val uriList = getPhotosUris()
 
             withContext(Dispatchers.Main) {
                 if (uriList.isEmpty()) {
                     snackbarHostState.showSnackbar(failedToDownloadImage)
-                } else if (uriList.size == 1) {
-                    val uri = uriList.first()
-                    val photo = photos.first()
-                    Log.d("URI Image", uri.toString())
-                    val shareIntent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_STREAM, uri)
-                        type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(
-                            photo.name.substringAfterLast('.')
-                        )
-                    }
-
-                    context.startActivity(Intent.createChooser(shareIntent, sendTo))
                 } else {
                     val shareIntent = Intent().apply {
                         action = Intent.ACTION_SEND_MULTIPLE
@@ -299,6 +278,7 @@ fun SharePhotoIconButton(
                         putParcelableArrayListExtra(Intent.EXTRA_STREAM, arrayList)
                         type = "*/*"
                     }
+                    ensureActive()
 
                     context.startActivity(Intent.createChooser(shareIntent, sendTo))
                 }
@@ -348,22 +328,14 @@ fun PhotoUtilitiesActions(
     val deletePhotosDialog = rememberDeletePhotosDialog(onPhotosDeleted = { selectedItems.clear() })
 
     if (selectedItems.isNotEmpty()) {
-        suspend fun getPhotos(): List<Photo> {
-            val items = selectedItems.toList()
-            return if (isLocalPhoto)
-                items.mapNotNull { mainViewModel.getLocalPhotoFlow(it).first() }
-            else
-                items.mapNotNull { mainViewModel.getNetworkPhotoFlow(it).first() }
-        }
-
         IconButton(onClick = {
             scope.launch {
                 @Suppress("UNCHECKED_CAST")
                 if (isLocalPhoto) {
-                    mainViewModel.deleteLocalPhotos(getPhotos() as List<LocalPhoto>)
+                    mainViewModel.deleteLocalPhotos(selectedItems.toLongArray())
                     selectedItems.clear()
                 } else {
-                    deletePhotosDialog.show(getPhotos() as List<NetworkPhoto>)
+                    deletePhotosDialog.show(selectedItems.toLongArray())
                 }
             }
         }) {
@@ -376,8 +348,14 @@ fun PhotoUtilitiesActions(
 
         SharePhotoIconButton(
             false,
-            getPhotos = { getPhotos() },
-            mainViewModel::getPhotoLocalUriAsync
+            getPhotosUris = {
+                val photoIds = selectedItems.toLongArray()
+                if (isLocalPhoto) {
+                    mainViewModel.getLocalPhotosUriAsync(photoIds).await()
+                } else {
+                    mainViewModel.getNetworkPhotosUriAsync(photoIds).await()
+                }
+            }
         )
 
         if (isLocalPhoto) {

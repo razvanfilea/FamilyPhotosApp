@@ -9,9 +9,9 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
-import net.theluckycoder.familyphotos.db.dao.LocalFolderBackupDao
-import net.theluckycoder.familyphotos.repository.FoldersRepository
-import net.theluckycoder.familyphotos.repository.ServerRepository
+import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
+import net.theluckycoder.familyphotos.data.repository.FoldersRepository
+import net.theluckycoder.familyphotos.data.repository.ServerRepository
 import java.io.IOException
 import java.net.ConnectException
 

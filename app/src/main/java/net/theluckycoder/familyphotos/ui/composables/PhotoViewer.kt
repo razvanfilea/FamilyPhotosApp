@@ -29,9 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -40,19 +38,18 @@ import androidx.paging.compose.LazyPagingItems
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import coil3.request.maxBitmapSize
-import coil3.request.placeholder
-import coil3.size.Dimension
 import coil3.size.Size
+import me.saket.telephoto.zoomable.DoubleClickToZoomListener
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.model.LocalPhoto
-import net.theluckycoder.familyphotos.model.NetworkPhoto
-import net.theluckycoder.familyphotos.model.Photo
-import net.theluckycoder.familyphotos.model.getPreviewUri
-import net.theluckycoder.familyphotos.model.getUri
-import net.theluckycoder.familyphotos.model.isVideo
+import net.theluckycoder.familyphotos.data.model.LocalPhoto
+import net.theluckycoder.familyphotos.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.Photo
+import net.theluckycoder.familyphotos.data.model.getPreviewUri
+import net.theluckycoder.familyphotos.data.model.getUri
+import net.theluckycoder.familyphotos.data.model.isVideo
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
@@ -62,14 +59,14 @@ import net.theluckycoder.familyphotos.ui.composables.player.VideoPlayer
 import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
-import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewerViewModel
 
 
 @Composable
 fun <T : Photo> PhotosViewer(
     lazyPagingItems: LazyPagingItems<out T>,
     initialPhotoIndex: Int,
-    photoViewModel: PhotoViewModel = viewModel()
+    photoViewerViewModel: PhotoViewerViewModel = viewModel()
 ) {
     val pagerState = rememberPagerState(
         initialPage = initialPhotoIndex,
@@ -92,7 +89,7 @@ fun <T : Photo> PhotosViewer(
     val showUi = remember { mutableStateOf(true) }
     val currentPhoto = lazyPagingItems.itemSnapshotList.getOrNull(pagerState.currentPage)
 
-    PhotoViewerScaffold(currentPhoto, showUi.value, photoViewModel) { paddingValues ->
+    PhotoViewerScaffold(currentPhoto, showUi.value, photoViewerViewModel) { paddingValues ->
         HorizontalPager(
             state = pagerState,
             key = { index -> (lazyPagingItems.itemSnapshotList.getOrNull(index))?.id ?: index },
@@ -111,14 +108,14 @@ fun <T : Photo> PhotosViewer(
 @Composable
 fun <T : Photo> PhotosViewer(
     items: List<T>,
-    photoViewModel: PhotoViewModel = viewModel()
+    photoViewerViewModel: PhotoViewerViewModel = viewModel()
 ) {
     val pagerState = rememberPagerState(pageCount = { items.size })
 
     val showUi = remember { mutableStateOf(true) }
     val currentPhoto = items[pagerState.currentPage]
 
-    PhotoViewerScaffold(currentPhoto, showUi.value, photoViewModel) { paddingValues ->
+    PhotoViewerScaffold(currentPhoto, showUi.value, photoViewerViewModel) { paddingValues ->
         HorizontalPager(
             state = pagerState,
             key = { index -> items[index].id },
@@ -133,7 +130,7 @@ fun <T : Photo> PhotosViewer(
 private fun PhotoViewerScaffold(
     currentPhoto: Photo?,
     showUi: Boolean,
-    photoViewModel: PhotoViewModel,
+    photoViewerViewModel: PhotoViewerViewModel,
     content: @Composable (PaddingValues) -> Unit
 ) {
     val backStack = LocalNavBackStack.current
@@ -144,7 +141,7 @@ private fun PhotoViewerScaffold(
         snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
         topBar = {
             if (currentPhoto != null) {
-                TopBar(currentPhoto, showUi, { backStack.removeLastOrNull() }, photoViewModel)
+                TopBar(currentPhoto, showUi, { backStack.removeLastOrNull() }, photoViewerViewModel)
             }
         },
         bottomBar = {
@@ -156,7 +153,7 @@ private fun PhotoViewerScaffold(
                 ) {
                     BottomBar(
                         photo = currentPhoto,
-                        photoViewModel = photoViewModel,
+                        photoViewerViewModel = photoViewerViewModel,
                     )
                 }
             }
@@ -196,7 +193,7 @@ private fun TopBar(
     photo: Photo,
     showUi: Boolean,
     onClose: () -> Unit,
-    photoViewModel: PhotoViewModel,
+    photoViewerViewModel: PhotoViewerViewModel,
 ) = AnimatedVisibility(
     visible = showUi,
     enter = fadeIn(),
@@ -209,7 +206,7 @@ private fun TopBar(
         actions = {
             if (photo is NetworkPhoto) {
                 IconButton(onClick = {
-                    photoViewModel.updateFavorite(
+                    photoViewerViewModel.updateFavorite(
                         photo,
                         !photo.isFavorite
                     )
@@ -229,7 +226,7 @@ private fun TopBar(
 @Composable
 private fun BottomBar(
     photo: Photo,
-    photoViewModel: PhotoViewModel = viewModel()
+    photoViewerViewModel: PhotoViewerViewModel = viewModel()
 ) {
     val deletePhotosDialog = rememberDeletePhotosDialog()
     val backStack = LocalNavBackStack.current
@@ -246,8 +243,8 @@ private fun BottomBar(
         IconButtonText(
             onClick = {
                 when (photo) {
-                    is NetworkPhoto -> deletePhotosDialog.show(listOf(photo))
-                    is LocalPhoto -> mainViewModel.deleteLocalPhotos(listOf(photo))
+                    is NetworkPhoto -> deletePhotosDialog.show(longArrayOf(photo.id))
+                    is LocalPhoto -> mainViewModel.deleteLocalPhotos(longArrayOf(photo.id))
                 }
             },
             text = stringResource(id = R.string.action_delete),
@@ -260,8 +257,14 @@ private fun BottomBar(
 
         SharePhotoIconButton(
             true,
-            getPhotos = { listOf(photo) },
-            photoViewModel::getPhotoLocalUriAsync
+            getPhotosUris = {
+                val photoIds = longArrayOf(photo.id)
+                if (photo is LocalPhoto) {
+                    mainViewModel.getLocalPhotosUriAsync(photoIds).await()
+                } else {
+                    mainViewModel.getNetworkPhotosUriAsync(photoIds).await()
+                }
+            }
         )
 
         // Local only
@@ -278,8 +281,9 @@ private fun BottomBar(
                 }
             } else {
                 // Find the network equivalent of this photo
-                val networkPhotoState = photoViewModel.getNetworkPhotoFlow(photo.networkPhotoId)
-                    .collectAsState(null)
+                val networkPhotoState =
+                    photoViewerViewModel.getNetworkPhotoFlow(photo.networkPhotoId)
+                        .collectAsState(null)
 
                 val networkPhotoInfoDialog =
                     rememberNetworkPhotoInfoDialog(networkPhotoState.value)
@@ -330,8 +334,8 @@ private fun ZoomableImage(
     photo: Photo,
     showUI: (Boolean) -> Unit,
 ) {
-    val configuration = LocalConfiguration.current
-    val maxWidth = with(LocalDensity.current) { (configuration.screenWidthDp.dp * 2).roundToPx() }
+//    val configuration = LocalConfiguration.current
+//    val maxWidth = with(LocalDensity.current) { (configuration.screenWidthDp.dp * 2).roundToPx() }
 
     val ctx = LocalContext.current
 
@@ -348,8 +352,8 @@ private fun ZoomableImage(
             .data(photo.getUri())
             .crossfade(true)
             .placeholderMemoryCacheKey(cacheKey)
-            .placeholder(R.drawable.ic_hourglass_bottom)
-            .size(Size(width = maxWidth, height = Dimension.Undefined))
+//            .placeholder(R.drawable.ic_hourglass_bottom)
+//            .size(Size(width = maxWidth, height = Dimension.Undefined))
             .maxBitmapSize(Size.Companion.ORIGINAL)
             .build()
     }
@@ -360,5 +364,6 @@ private fun ZoomableImage(
         imageLoader = LocalImageLoader.current.get(),
         state = rememberZoomableImageState(zoomableState),
         contentDescription = photo.name,
+        onDoubleClick = DoubleClickToZoomListener.cycle(0.8f)
     )
 }

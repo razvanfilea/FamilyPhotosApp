@@ -14,7 +14,7 @@ import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.launch
-import net.theluckycoder.familyphotos.utils.DefaultCoroutineScope
+import net.theluckycoder.familyphotos.di.DefaultCoroutineScope
 import net.theluckycoder.familyphotos.workers.BackupWorker
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject

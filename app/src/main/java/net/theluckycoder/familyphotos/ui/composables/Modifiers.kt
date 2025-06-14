@@ -39,7 +39,7 @@ import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.paging.ItemSnapshotList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import net.theluckycoder.familyphotos.model.Photo
+import net.theluckycoder.familyphotos.data.model.Photo
 import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
 import kotlin.math.abs
 

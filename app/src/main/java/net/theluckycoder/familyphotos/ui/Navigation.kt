@@ -6,8 +6,8 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.model.NetworkFolder
-import net.theluckycoder.familyphotos.model.Photo
+import net.theluckycoder.familyphotos.data.model.NetworkFolder
+import net.theluckycoder.familyphotos.data.model.Photo
 
 fun NavBackStack.replaceAll(route: TopLevelRouteNav) {
     clear()

@@ -22,8 +22,8 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.repository.PhotosRepository
-import net.theluckycoder.familyphotos.repository.ServerRepository
+import net.theluckycoder.familyphotos.data.repository.PhotosRepository
+import net.theluckycoder.familyphotos.data.repository.ServerRepository
 import java.io.File
 import java.net.ConnectException
 import kotlin.random.Random
@@ -60,7 +60,7 @@ class UploadWorker @AssistedInject constructor(
             var failedCount = 0
 
             ids.forEachIndexed { index, localPhotoId ->
-                val localPhoto = photosRepository.getLocalPhoto(localPhotoId).first()
+                val localPhoto = photosRepository.getLocalPhotoFlow(localPhotoId).first()
                 if (localPhoto == null || localPhoto.isSavedToCloud) {
                     total--
                     return@forEachIndexed

@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.model.NetworkFolder
+import net.theluckycoder.familyphotos.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.composables.UploadChoice
 import net.theluckycoder.familyphotos.ui.composables.UploadPhotosLayout

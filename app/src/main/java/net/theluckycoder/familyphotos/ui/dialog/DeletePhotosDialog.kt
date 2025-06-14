@@ -28,13 +28,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.model.NetworkPhoto
-import net.theluckycoder.familyphotos.ui.AppTheme
+import net.theluckycoder.familyphotos.ui.theme.AppTheme
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 
 fun interface DeletePhotosDialogCaller {
-    fun show(photos: List<NetworkPhoto>)
+    fun show(photoIds: LongArray)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,7 +42,7 @@ fun rememberDeletePhotosDialog(
     onPhotosDeleted: (() -> Unit)? = null
 ): DeletePhotosDialogCaller {
     var visible by remember { mutableStateOf(false) }
-    var receivedData by remember { mutableStateOf(emptyList<NetworkPhoto>()) }
+    var receivedData by remember { mutableStateOf(longArrayOf()) }
 
     val mainViewModel: MainViewModel = viewModel()
     val scope = rememberCoroutineScope()
@@ -52,7 +51,7 @@ fun rememberDeletePhotosDialog(
         ModalBottomSheet(
             onDismissRequest = {
                 visible = false
-                receivedData = emptyList()
+                receivedData = longArrayOf()
             }
         ) {
             DeleteDialogContent(

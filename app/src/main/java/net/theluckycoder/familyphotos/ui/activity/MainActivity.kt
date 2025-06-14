@@ -55,8 +55,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import net.theluckycoder.familyphotos.model.NetworkPhoto
-import net.theluckycoder.familyphotos.ui.AppTheme
+import net.theluckycoder.familyphotos.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.DeviceNav
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
@@ -75,12 +74,14 @@ import net.theluckycoder.familyphotos.ui.UploadPhotosNav
 import net.theluckycoder.familyphotos.ui.composables.PhotosViewer
 import net.theluckycoder.familyphotos.ui.replaceAll
 import net.theluckycoder.familyphotos.ui.screen.FolderScreen
+import net.theluckycoder.familyphotos.ui.screen.LoginScreen
 import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
 import net.theluckycoder.familyphotos.ui.screen.RenameFolderScreen
 import net.theluckycoder.familyphotos.ui.screen.UploadPhotosScreen
 import net.theluckycoder.familyphotos.ui.screen.tabs.DeviceTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.NetworkFoldersTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.TimelineTab
+import net.theluckycoder.familyphotos.ui.theme.AppTheme
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import okhttp3.OkHttpClient
 import javax.inject.Inject
@@ -121,6 +122,16 @@ class MainActivity : ComponentActivity() {
             val snackbarHostState = remember { SnackbarHostState() }
 
             AppTheme {
+                val isLoggedIn = mainViewModel.loginRepository.isLoggedIn.collectAsState(true)
+                if (!isLoggedIn.value) {
+                    LoginScreen(loginAction = {
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            mainViewModel.loginRepository.login(it)
+                        }
+                    })
+                    return@AppTheme
+                }
+
                 SharedTransitionLayout {
                     CompositionLocalProvider(
                         LocalImageLoader provides imageLoaderLazy,
@@ -178,13 +189,13 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+private val transitionSpec =
+    (fadeIn(animationSpec = tween(220, delayMillis = 90)) +
+            scaleIn(initialScale = 0.92f, animationSpec = tween(220, delayMillis = 90)))
+        .togetherWith(fadeOut(animationSpec = tween(90)))
+
 @Composable
 private fun Content(backStack: NavBackStack, mainViewModel: MainViewModel) {
-    val transitionSpec =
-        (fadeIn(animationSpec = tween(220, delayMillis = 90)) +
-                scaleIn(initialScale = 0.92f, animationSpec = tween(220, delayMillis = 90)))
-            .togetherWith(fadeOut(animationSpec = tween(90)))
-
     val timelinePagingItems = mainViewModel.timelinePager.collectAsLazyPagingItems()
     val networkFolderPagingItems =
         mainViewModel.currentNetworkFolderPhotosPager.collectAsLazyPagingItems()

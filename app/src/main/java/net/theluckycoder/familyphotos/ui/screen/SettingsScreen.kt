@@ -14,7 +14,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.datastore.SettingsDataStore
+import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.preferences.EmptyPreferenceItem
 import net.theluckycoder.familyphotos.ui.preferences.PreferenceGroupItem
@@ -68,12 +68,6 @@ private fun getPreferenceItems(
                 defaultValue = SettingsDataStore.DEFAULT_CACHE_SIZE,
                 valueRange = 1024..4096
             ),
-            EmptyPreferenceItem(
-                title = stringResource(id = R.string.pref_clear_cache),
-                summary = stringResource(id = R.string.pref_restart_needed),
-                icon = painterResource(id = R.drawable.ic_clear),
-                onClick = { mainViewModel.clearAppCache() }
-            ),
         ),
     ),
     PreferenceGroupItem(
@@ -82,7 +76,7 @@ private fun getPreferenceItems(
             EmptyPreferenceItem(
                 title = "Sign out",
                 summary = "Log out of the current user session",
-                onClick = { mainViewModel.logout() }
+                onClick = { /*mainViewModel.logout() TODO*/ }
             )
         )
     )

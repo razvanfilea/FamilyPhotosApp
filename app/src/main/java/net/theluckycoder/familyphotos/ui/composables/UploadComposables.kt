@@ -36,8 +36,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.model.Photo
-import net.theluckycoder.familyphotos.model.isPublic
+import net.theluckycoder.familyphotos.data.model.Photo
+import net.theluckycoder.familyphotos.data.model.isPublic
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 

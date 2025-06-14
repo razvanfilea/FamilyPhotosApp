@@ -32,10 +32,10 @@ import androidx.exifinterface.media.ExifInterface.TAG_MODEL
 import androidx.exifinterface.media.ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.model.ExifData
-import net.theluckycoder.familyphotos.model.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.ExifData
+import net.theluckycoder.familyphotos.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.composables.photoDateText
-import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewerViewModel
 import java.text.DecimalFormat
 
 fun interface NetworkPhotoInfoDialogCaller {
@@ -78,7 +78,7 @@ fun NetworkPhotoInfoDialogContent(photo: NetworkPhoto) = Column(
         .safeDrawingPadding()
         .padding(16.dp)
 ) {
-    val viewModel: PhotoViewModel = viewModel()
+    val viewModel: PhotoViewerViewModel = viewModel()
     var exif by remember { mutableStateOf(ExifData()) }
 
     LaunchedEffect(Unit) {
