@@ -17,19 +17,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.composables.FolderFilterTextField
 import net.theluckycoder.familyphotos.ui.composables.FolderPreviewItem
 import net.theluckycoder.familyphotos.ui.composables.SortButton
-import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 import net.theluckycoder.familyphotos.utils.normalize
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -37,13 +35,12 @@ import net.theluckycoder.familyphotos.utils.normalize
 fun DeviceTab() = Column(
     modifier = Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets)
 ) {
-    val mainViewModel: MainViewModel = viewModel()
+    val foldersViewModel: FoldersViewModel = viewModel()
     val backStack = LocalNavBackStack.current
-    val scope = rememberCoroutineScope()
 
     val gridState = rememberLazyGridState()
-    val folders by mainViewModel.localFolders.collectAsState()
-    val sortAscending by mainViewModel.settingsStore.showFoldersAscending.collectAsState(true)
+    val folders by foldersViewModel.localFolders.collectAsState()
+    val sortAscending by foldersViewModel.showFoldersAscending.collectAsState()
 
     var folderNameFilter by remember { mutableStateOf("") }
     FolderFilterTextField(folderNameFilter, onFilterChange = { folderNameFilter = it })
@@ -65,9 +62,7 @@ fun DeviceTab() = Column(
             SortButton(
                 sortAscending = sortAscending,
                 onClick = {
-                    scope.launch {
-                        mainViewModel.settingsStore.setShowFoldersAscending(!sortAscending)
-                    }
+                    foldersViewModel.setShowFoldersAscending(!sortAscending)
                 }
             )
         }

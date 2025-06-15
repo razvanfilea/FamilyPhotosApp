@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
 import androidx.work.BackoffPolicy
@@ -30,25 +29,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.data.local.datastore.UserDataStore
-import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
-import net.theluckycoder.familyphotos.data.model.LocalFolderToBackup
 import net.theluckycoder.familyphotos.data.model.LocalPhoto
-import net.theluckycoder.familyphotos.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.PUBLIC_USER_ID
 import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.isPublic
-import net.theluckycoder.familyphotos.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.data.repository.LoginRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.data.repository.ServerRepository
@@ -62,8 +56,6 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val photosRepository: PhotosRepository,
     private val serverRepository: ServerRepository,
-    private val foldersRepository: FoldersRepository,
-    private val foldersToBackupDao: LocalFolderBackupDao,
     private val userDataStore: UserDataStore,
     private val refreshPhotosUseCase: RefreshPhotosUseCase,
     val loginRepository: LoginRepository,
@@ -100,18 +92,8 @@ class MainViewModel @Inject constructor(
             }
         }
         .flatMapLatest { userName -> photosRepository.getMemories(userName) }
+        .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyMap())
-
-    val favoritePhotosFlow = Pager(PAGING_CONFIG) {
-        photosRepository.getFavoritePhotosPaged()
-    }.flow.cachedIn(viewModelScope)
-
-    val localFolders = settingsStore.showFoldersAscending
-        .flatMapLatest { foldersRepository.localFoldersFlow(it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
-    val networkFolders = settingsStore.showFoldersAscending
-        .flatMapLatest { foldersRepository.networkFoldersFlow(it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     private val _localPhotosToDelete = Channel<List<LocalPhoto>>()
     val localPhotosToDelete = _localPhotosToDelete.consumeAsFlow()
@@ -157,59 +139,6 @@ class MainViewModel @Inject constructor(
             }
 
             isRefreshing.value = false
-        }
-    }
-
-    fun refreshLocalPhotos() {
-        viewModelScope.launch(Dispatchers.IO) {
-            foldersRepository.updatePhoneAlbums()
-        }
-    }
-
-    private val _selectedNetworkFolder = MutableStateFlow<String?>(null)
-    val currentNetworkFolderPhotosPager: Flow<PagingData<NetworkPhoto>> = _selectedNetworkFolder
-        .flatMapLatest { folderName ->
-            if (folderName != null) {
-                Pager(PAGING_CONFIG) {
-                    foldersRepository.networkPhotosFromFolderPaged(folderName)
-                }.flow.cachedIn(viewModelScope)
-            } else {
-                emptyFlow()
-            }
-        }
-        .stateIn(viewModelScope, SharingStarted.Lazily, PagingData.empty())
-
-    fun loadNetworkFolderPhotos(folderName: String?) {
-        _selectedNetworkFolder.value = folderName
-    }
-
-    private val _selectedLocalFolder = MutableStateFlow<String?>(null)
-    val currentLocalFolderPhotosPager: Flow<PagingData<LocalPhoto>> = _selectedLocalFolder
-        .flatMapLatest { folderName ->
-            if (folderName != null) {
-                Pager(PAGING_CONFIG) {
-                    foldersRepository.localPhotosFromFolderPaged(folderName)
-                }.flow.cachedIn(viewModelScope)
-            } else {
-                emptyFlow()
-            }
-        }
-        .stateIn(viewModelScope, SharingStarted.Lazily, PagingData.empty())
-
-    fun loadLocalFolderPhotos(folderName: String?) {
-        _selectedLocalFolder.value = folderName
-    }
-
-    fun isLocalFolderBackupUp(folder: String): Flow<Boolean> =
-        foldersToBackupDao.getAll().map { it.firstOrNull { it == folder } != null }
-
-    fun backupLocalFolder(folder: String, add: Boolean) {
-        viewModelScope.launch(Dispatchers.IO) {
-            if (add) {
-                foldersToBackupDao.insert(LocalFolderToBackup(folder))
-            } else {
-                foldersToBackupDao.delete(LocalFolderToBackup(folder))
-            }
         }
     }
 
@@ -283,20 +212,6 @@ class MainViewModel @Inject constructor(
             .enqueue(uploadRequest)
     }
 
-    fun renameNetworkFolder(
-        folder: NetworkFolder,
-        makePublic: Boolean,
-        newName: String
-    ) {
-        viewModelScope.launch(Dispatchers.IO) {
-            serverRepository.renameNetworkFolder(
-                folder,
-                makePublic,
-                newName.trim().takeIf { it.isNotEmpty() }
-            )
-        }
-    }
-
     fun getNetworkPhotosUriAsync(photoIds: LongArray) = viewModelScope.async(Dispatchers.IO) {
         photoIds
             .map { photoId ->
@@ -332,6 +247,6 @@ class MainViewModel @Inject constructor(
     }
 
     companion object {
-        private val PAGING_CONFIG = PagingConfig(pageSize = 70, enablePlaceholders = false)
+        val PAGING_CONFIG = PagingConfig(pageSize = 70, enablePlaceholders = false)
     }
 }

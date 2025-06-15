@@ -244,7 +244,7 @@ private fun PhotoItem(
                     .padding(4.dp)
                     .size(20.dp)
                     .align(Alignment.BottomEnd),
-                painter = painterResource(R.drawable.ic_cloud_done_outline),
+                painter = painterResource(R.drawable.ic_cloud_done_filled),
                 contentDescription = null
             )
         }

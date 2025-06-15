@@ -28,7 +28,7 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name="net.theluckycoder.familyphotos.ui.activity.MainActivity"
+            android:name="net.theluckycoder.familyphotos.ui.MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:exported="true"
             android:launchMode="singleTop"

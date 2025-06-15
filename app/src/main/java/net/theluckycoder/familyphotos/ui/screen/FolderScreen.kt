@@ -33,12 +33,12 @@ import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
 import net.theluckycoder.familyphotos.ui.RenameFolderNav
 import net.theluckycoder.familyphotos.ui.composables.PhotosList
-import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out Photo>) {
-    val mainViewModel: MainViewModel = viewModel()
+    val foldersViewModel: FoldersViewModel = viewModel()
     val gridState = rememberLazyGridState()
     val backStack = LocalNavBackStack.current
 
@@ -91,7 +91,7 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out 
             },
             memoriesContent = {
                 if (source is FolderNav.Source.Local) {
-                    val backupEnabled by mainViewModel.isLocalFolderBackupUp(source.name)
+                    val backupEnabled by foldersViewModel.isLocalFolderBackupUp(source.name)
                         .collectAsState(false)
 
                     Row(
@@ -99,7 +99,7 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out 
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable(onClick = {
-                                mainViewModel.backupLocalFolder(
+                                foldersViewModel.backupLocalFolder(
                                     source.name,
                                     !backupEnabled
                                 )
@@ -122,7 +122,6 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out 
                     HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 }
             },
-            mainViewModel = mainViewModel,
         )
     }
 }

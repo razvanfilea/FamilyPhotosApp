@@ -48,7 +48,7 @@ import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
 import net.theluckycoder.familyphotos.ui.PhotoViewerListNav
 import net.theluckycoder.familyphotos.ui.composables.CoilPhoto
-import net.theluckycoder.familyphotos.ui.composables.FolderTypeSegmentedButtons
+import net.theluckycoder.familyphotos.ui.composables.PhotoTypeSegmentedButtons
 import net.theluckycoder.familyphotos.ui.composables.PhotosList
 import net.theluckycoder.familyphotos.ui.composables.photoSharedBounds
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
@@ -150,7 +150,7 @@ private fun Header(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            FolderTypeSegmentedButtons(
+            PhotoTypeSegmentedButtons(
                 selectedPhotoType = selectedPhotoType,
                 modifier = Modifier
                     .weight(1f)

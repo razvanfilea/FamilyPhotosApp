@@ -1,4 +1,4 @@
-package net.theluckycoder.familyphotos.ui.activity
+package net.theluckycoder.familyphotos.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -56,23 +56,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.data.model.NetworkPhoto
-import net.theluckycoder.familyphotos.ui.DeviceNav
-import net.theluckycoder.familyphotos.ui.FolderNav
-import net.theluckycoder.familyphotos.ui.LocalImageLoader
-import net.theluckycoder.familyphotos.ui.LocalNavBackStack
-import net.theluckycoder.familyphotos.ui.LocalOkHttpClient
-import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
-import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
-import net.theluckycoder.familyphotos.ui.MovePhotosNav
-import net.theluckycoder.familyphotos.ui.NetworkFolderNav
-import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
-import net.theluckycoder.familyphotos.ui.PhotoViewerListNav
-import net.theluckycoder.familyphotos.ui.RenameFolderNav
-import net.theluckycoder.familyphotos.ui.TimelineNav
-import net.theluckycoder.familyphotos.ui.TopLevelRouteNav
-import net.theluckycoder.familyphotos.ui.UploadPhotosNav
 import net.theluckycoder.familyphotos.ui.composables.PhotosViewer
-import net.theluckycoder.familyphotos.ui.replaceAll
 import net.theluckycoder.familyphotos.ui.screen.FolderScreen
 import net.theluckycoder.familyphotos.ui.screen.LoginScreen
 import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
@@ -82,6 +66,7 @@ import net.theluckycoder.familyphotos.ui.screen.tabs.DeviceTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.NetworkFoldersTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.TimelineTab
 import net.theluckycoder.familyphotos.ui.theme.AppTheme
+import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import okhttp3.OkHttpClient
 import javax.inject.Inject
@@ -95,11 +80,12 @@ class MainActivity : ComponentActivity() {
         ) { }
 
     private val mainViewModel: MainViewModel by viewModels()
+    private val foldersViewModel: FoldersViewModel by viewModels()
 
     private val deletePhotoLauncher =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
             if (it.resultCode == RESULT_OK) {
-                mainViewModel.refreshLocalPhotos()
+                foldersViewModel.refreshLocalPhotos()
             }
         }
 
@@ -114,8 +100,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         window.isNavigationBarContrastEnforced = false
         super.onCreate(savedInstanceState)
-
-        mainViewModel // Initialize ViewModel
 
         setContent {
             val backStack = rememberNavBackStack(TimelineNav)
@@ -140,7 +124,7 @@ class MainActivity : ComponentActivity() {
                         LocalSharedTransitionScope provides this@SharedTransitionLayout,
                         LocalNavBackStack provides backStack,
                     ) {
-                        Content(backStack, mainViewModel)
+                        Content(backStack, mainViewModel, foldersViewModel)
                     }
                 }
             }
@@ -195,13 +179,16 @@ private val transitionSpec =
         .togetherWith(fadeOut(animationSpec = tween(90)))
 
 @Composable
-private fun Content(backStack: NavBackStack, mainViewModel: MainViewModel) {
+private fun Content(
+    backStack: NavBackStack,
+    mainViewModel: MainViewModel,
+    foldersViewModel: FoldersViewModel
+) {
     val timelinePagingItems = mainViewModel.timelinePager.collectAsLazyPagingItems()
     val networkFolderPagingItems =
-        mainViewModel.currentNetworkFolderPhotosPager.collectAsLazyPagingItems()
-    val localFolderPagingItems =
-        mainViewModel.currentLocalFolderPhotosPager.collectAsLazyPagingItems()
-    val favoritesFolderPagingItems = mainViewModel.favoritePhotosFlow.collectAsLazyPagingItems()
+        foldersViewModel.networkFolderPhotosPager.collectAsLazyPagingItems()
+    val localFolderPagingItems = foldersViewModel.localFolderPhotosPager.collectAsLazyPagingItems()
+    val favoritesFolderPagingItems = foldersViewModel.favoritePhotosPager.collectAsLazyPagingItems()
 
     NavDisplay(
         backStack = backStack,
@@ -237,21 +224,24 @@ private fun Content(backStack: NavBackStack, mainViewModel: MainViewModel) {
                     val source = key.source
                     DisposableEffect(source) {
                         when (source) {
-                            is FolderNav.Source.Network -> mainViewModel.loadNetworkFolderPhotos(
+                            is FolderNav.Source.Network -> foldersViewModel.loadNetworkFolderPhotos(
                                 source.folder.name
                             )
 
-                            is FolderNav.Source.Local -> mainViewModel.loadLocalFolderPhotos(source.name)
+                            is FolderNav.Source.Local -> foldersViewModel.loadLocalFolderPhotos(
+                                source.name
+                            )
+
                             else -> Unit
                         }
 
                         onDispose {
                             when (source) {
-                                is FolderNav.Source.Network -> mainViewModel.loadNetworkFolderPhotos(
+                                is FolderNav.Source.Network -> foldersViewModel.loadNetworkFolderPhotos(
                                     null
                                 )
 
-                                is FolderNav.Source.Local -> mainViewModel.loadLocalFolderPhotos(
+                                is FolderNav.Source.Local -> foldersViewModel.loadLocalFolderPhotos(
                                     null
                                 )
 

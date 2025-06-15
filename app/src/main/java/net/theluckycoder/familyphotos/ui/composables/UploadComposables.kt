@@ -24,7 +24,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,10 +35,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.data.model.Photo
 import net.theluckycoder.familyphotos.data.model.isPublic
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
-import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
+import net.theluckycoder.familyphotos.utils.normalize
 
 @Immutable
 enum class UploadChoice(internal val stringRes: Int) {
@@ -115,7 +115,7 @@ private fun UploadDialogContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UploadPhotosLayout(
-    mainViewModel: MainViewModel,
+    networkFolders: List<NetworkFolder>,
     title: String,
     photosToShowcase: List<Photo>,
     doneAction: (choice: UploadChoice, folderName: String) -> Unit,
@@ -148,16 +148,13 @@ fun UploadPhotosLayout(
             )
         },
     ) { contentPadding ->
-        val foldersListState = mainViewModel.networkFolders.collectAsState()
-        val foldersList = foldersListState.value ?: emptyList()
-
-        val filteredFoldersList = remember(foldersList, choice, folderName) {
-            foldersList.asSequence()
+        val filteredFoldersList = remember(networkFolders, choice, folderName) {
+            val normalizedName = folderName.normalize()
+            networkFolders.asSequence()
                 .filter { it.isPublic() == (choice == UploadChoice.Public) }
                 .map { it.name }
-                .filter { it.contains(folderName, ignoreCase = true) }
+                .filter { it.normalize().contains(normalizedName, ignoreCase = true) }
                 .toList()
-                .sortedDescending()
         }
 
         Box(Modifier.padding(contentPadding)) {

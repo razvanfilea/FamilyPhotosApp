@@ -26,7 +26,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,7 +35,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.PhotoType
@@ -45,8 +43,9 @@ import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.composables.FolderFilterTextField
 import net.theluckycoder.familyphotos.ui.composables.FolderPreviewItem
-import net.theluckycoder.familyphotos.ui.composables.FolderTypeSegmentedButtons
+import net.theluckycoder.familyphotos.ui.composables.PhotoTypeSegmentedButtons
 import net.theluckycoder.familyphotos.ui.composables.SortButton
+import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.utils.normalize
 
@@ -56,12 +55,12 @@ fun NetworkFoldersTab() = Column(
     modifier = Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets)
 ) {
     val mainViewModel: MainViewModel = viewModel()
+    val foldersViewModel: FoldersViewModel = viewModel()
     val backStack = LocalNavBackStack.current
-    val scope = rememberCoroutineScope()
 
     val gridState = rememberLazyGridState()
-    val folders by mainViewModel.networkFolders.collectAsState()
-    val sortAscending by mainViewModel.settingsStore.showFoldersAscending.collectAsState(true)
+    val folders by foldersViewModel.networkFolders.collectAsState()
+    val sortAscending by foldersViewModel.showFoldersAscending.collectAsState()
     val selectedPhotoType by mainViewModel.selectedPhotoType.collectAsState()
     var folderNameFilter by remember { mutableStateOf("") }
     FolderFilterTextField(folderNameFilter, onFilterChange = { folderNameFilter = it })
@@ -91,7 +90,7 @@ fun NetworkFoldersTab() = Column(
                     .fillMaxWidth()
                     .padding(horizontal = 4.dp),
             ) {
-                FolderTypeSegmentedButtons(
+                PhotoTypeSegmentedButtons(
                     selectedPhotoType = selectedPhotoType,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -108,9 +107,7 @@ fun NetworkFoldersTab() = Column(
                     SortButton(
                         sortAscending = sortAscending,
                         onClick = {
-                            scope.launch {
-                                mainViewModel.settingsStore.setShowFoldersAscending(!sortAscending)
-                            }
+                            foldersViewModel.setShowFoldersAscending(!sortAscending)
                         },
                         modifier = Modifier.weight(1f)
                     )
