@@ -290,4 +290,15 @@ class ServerRepository @Inject constructor(
         networkPhotosDao.insert(changedPhotos)
         return true
     }
+
+    suspend fun getDuplicates(): List<List<NetworkPhoto>>? {
+        val response = photosService.get().getDuplicates()
+        response.body()?.let { list ->
+            return list.map { ids ->
+                ids.mapNotNull { id -> networkPhotosDao.findById(id) }
+            }
+        }
+
+        return null
+    }
 }

@@ -25,6 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -40,6 +42,7 @@ import coil3.request.crossfade
 import coil3.request.maxBitmapSize
 import coil3.size.Size
 import me.saket.telephoto.zoomable.DoubleClickToZoomListener
+import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
@@ -60,6 +63,7 @@ import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewerViewModel
+import kotlin.collections.mutableListOf
 
 
 @Composable
@@ -72,19 +76,6 @@ fun <T : Photo> PhotosViewer(
         initialPage = initialPhotoIndex,
         pageCount = { lazyPagingItems.itemCount }
     )
-
-    // Scroll to the initial index when the PhotoViewerScreen is first composed
-    // or when the initialPhotoIndex changes (though typically it's a one-time setup).
-    // This is often handled by initialPage in rememberPagerState, but if your
-    // data loads asynchronously, you might need a LaunchedEffect.
-    LaunchedEffect(initialPhotoIndex, lazyPagingItems.itemCount) {
-        if (lazyPagingItems.itemCount > 0 && initialPhotoIndex < lazyPagingItems.itemCount) {
-            // Check if already at the correct page to avoid unnecessary scrolls
-            if (pagerState.currentPage != initialPhotoIndex) {
-                pagerState.scrollToPage(initialPhotoIndex)
-            }
-        }
-    }
 
     val showUi = remember { mutableStateOf(true) }
     val currentPhoto = lazyPagingItems.itemSnapshotList.getOrNull(pagerState.currentPage)
@@ -110,6 +101,12 @@ fun <T : Photo> PhotosViewer(
     items: List<T>,
     photoViewerViewModel: PhotoViewerViewModel = viewModel()
 ) {
+    val photosList = remember { mutableStateListOf<T>() }
+    LaunchedEffect(items) {
+        photosList.clear()
+        photosList.addAll(items)
+    }
+
     val pagerState = rememberPagerState(pageCount = { items.size })
 
     val showUi = remember { mutableStateOf(true) }
@@ -121,7 +118,21 @@ fun <T : Photo> PhotosViewer(
             key = { index -> items[index].id },
         ) { page ->
             val photo = items[page]
-            PagerContent(photo, showUi, paddingValues)
+
+            val photoFlow = remember(photo) {
+                if (photo is NetworkPhoto)
+                    photoViewerViewModel.getNetworkPhotoFlow(photo.id)
+                else
+                    photoViewerViewModel.getLocalPhotoFlow(photo.id)
+            }
+            val updatedPhoto by photoFlow.collectAsState(photo)
+            LaunchedEffect(updatedPhoto == null) {
+                if (updatedPhoto == null) {
+                    photosList.remove(photo)
+                }
+            }
+
+            PagerContent(updatedPhoto ?: photo, showUi, paddingValues)
         }
     }
 }
@@ -243,7 +254,11 @@ private fun BottomBar(
         IconButtonText(
             onClick = {
                 when (photo) {
-                    is NetworkPhoto -> deletePhotosDialog.show(longArrayOf(photo.id))
+                    is NetworkPhoto -> deletePhotosDialog.show(
+                        photoIds = longArrayOf(photo.id),
+                        onPhotosDeleted = {}
+                    )
+
                     is LocalPhoto -> mainViewModel.deleteLocalPhotos(longArrayOf(photo.id))
                 }
             },
@@ -271,7 +286,7 @@ private fun BottomBar(
         if (photo is LocalPhoto) {
             if (!photo.isSavedToCloud) {
                 IconButtonText(
-                    onClick = { backStack.add(UploadPhotosNav(listOf(photo.id))) },
+                    onClick = { backStack.add(UploadPhotosNav(longArrayOf(photo.id))) },
                     text = stringResource(id = R.string.action_upload),
                 ) {
                     Icon(
@@ -304,7 +319,7 @@ private fun BottomBar(
             }
         } else if (photo is NetworkPhoto) { // Network only
             IconButtonText(
-                onClick = { backStack.add(MovePhotosNav(listOf(photo.id))) },
+                onClick = { backStack.add(MovePhotosNav(longArrayOf(photo.id))) },
                 text = stringResource(id = R.string.action_move),
             ) {
                 Icon(

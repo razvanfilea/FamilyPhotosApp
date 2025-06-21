@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,7 +38,7 @@ import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 @Composable
 fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out Photo>) {
     val foldersViewModel: FoldersViewModel = viewModel()
-    val gridState = rememberLazyGridState()
+    val gridState by foldersViewModel.photoListState.collectAsState()
     val backStack = LocalNavBackStack.current
 
     Scaffold { paddingValues ->
@@ -72,7 +71,7 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out 
                     title = {
                         Text(
                             when (source) {
-                                FolderNav.Source.Favorites -> stringResource(R.string.favorites)
+                                FolderNav.Source.Favorites -> stringResource(R.string.title_favorites)
                                 is FolderNav.Source.Network -> source.folder.name
                                 is FolderNav.Source.Local -> source.name
                             },

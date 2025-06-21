@@ -20,7 +20,7 @@
     <string name="action_next">Următorul</string>
     <string name="confirm_delete">Șterge fișierele?</string>
     <string name="confirm_delete_detail">Sunteți sigur că vrei să ștergi fișierele?</string>
-    <string name="settings">Setări</string>
+    <string name="title_settings">Setări</string>
     <string name="status_saved">Salvată</string>
     <string name="send_to">Trimite la:</string>
     <string name="pref_category_cache">Cache</string>
@@ -45,7 +45,7 @@
     <string name="descending">Descrescător</string>
     <string name="notification_backup_fail">Nu s-au putut incarca fisierele</string>
     <string name="photo_type_family">Familie</string>
-    <string name="favorites">Favorite</string>
+    <string name="title_favorites">Favorite</string>
     <string name="photo_type_all">Toate</string>
     <string name="photo_type_personal">Personale</string>
     <plurals name="years_ago">

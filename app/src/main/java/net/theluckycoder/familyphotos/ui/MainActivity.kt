@@ -34,6 +34,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -57,10 +58,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.composables.PhotosViewer
+import net.theluckycoder.familyphotos.ui.screen.DuplicatesScreen
 import net.theluckycoder.familyphotos.ui.screen.FolderScreen
 import net.theluckycoder.familyphotos.ui.screen.LoginScreen
 import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
 import net.theluckycoder.familyphotos.ui.screen.RenameFolderScreen
+import net.theluckycoder.familyphotos.ui.screen.SettingsScreen
 import net.theluckycoder.familyphotos.ui.screen.UploadPhotosScreen
 import net.theluckycoder.familyphotos.ui.screen.tabs.DeviceTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.NetworkFoldersTab
@@ -68,6 +71,7 @@ import net.theluckycoder.familyphotos.ui.screen.tabs.TimelineTab
 import net.theluckycoder.familyphotos.ui.theme.AppTheme
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.TimelineViewModel
 import okhttp3.OkHttpClient
 import javax.inject.Inject
 
@@ -81,6 +85,7 @@ class MainActivity : ComponentActivity() {
 
     private val mainViewModel: MainViewModel by viewModels()
     private val foldersViewModel: FoldersViewModel by viewModels()
+    private val timelineViewModel: TimelineViewModel by viewModels()
 
     private val deletePhotoLauncher =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
@@ -124,7 +129,7 @@ class MainActivity : ComponentActivity() {
                         LocalSharedTransitionScope provides this@SharedTransitionLayout,
                         LocalNavBackStack provides backStack,
                     ) {
-                        Content(backStack, mainViewModel, foldersViewModel)
+                        Content(backStack, mainViewModel, foldersViewModel, timelineViewModel)
                     }
                 }
             }
@@ -182,9 +187,10 @@ private val transitionSpec =
 private fun Content(
     backStack: NavBackStack,
     mainViewModel: MainViewModel,
-    foldersViewModel: FoldersViewModel
+    foldersViewModel: FoldersViewModel,
+    timelineViewModel: TimelineViewModel,
 ) {
-    val timelinePagingItems = mainViewModel.timelinePager.collectAsLazyPagingItems()
+    val timelinePagingItems = timelineViewModel.timelinePager.collectAsLazyPagingItems()
     val networkFolderPagingItems =
         foldersViewModel.networkFolderPhotosPager.collectAsLazyPagingItems()
     val localFolderPagingItems = foldersViewModel.localFolderPhotosPager.collectAsLazyPagingItems()
@@ -222,7 +228,7 @@ private fun Content(
 
                 is FolderNav -> NavEntry(key) {
                     val source = key.source
-                    DisposableEffect(source) {
+                    LaunchedEffect(source) {
                         when (source) {
                             is FolderNav.Source.Network -> foldersViewModel.loadNetworkFolderPhotos(
                                 source.folder.name
@@ -233,20 +239,6 @@ private fun Content(
                             )
 
                             else -> Unit
-                        }
-
-                        onDispose {
-                            when (source) {
-                                is FolderNav.Source.Network -> foldersViewModel.loadNetworkFolderPhotos(
-                                    null
-                                )
-
-                                is FolderNav.Source.Local -> foldersViewModel.loadLocalFolderPhotos(
-                                    null
-                                )
-
-                                else -> Unit
-                            }
                         }
                     }
 
@@ -275,8 +267,16 @@ private fun Content(
                     RenameFolderScreen(key.folder)
                 }
 
-                else -> {
-                    error("Unknown route: $key")
+                is DuplicatesNav -> NavEntry(key) {
+                    DuplicatesScreen()
+                }
+
+                is SettingsNav -> NavEntry(key) {
+                    SettingsScreen()
+                }
+
+                else -> NavEntry(key) {
+                    Text("Invalid route: $key")
                 }
             }
         }

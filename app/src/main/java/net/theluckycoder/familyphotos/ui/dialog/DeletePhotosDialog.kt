@@ -33,16 +33,14 @@ import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 
 fun interface DeletePhotosDialogCaller {
-    fun show(photoIds: LongArray)
+    fun show(photoIds: LongArray, onPhotosDeleted: () -> Unit)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun rememberDeletePhotosDialog(
-    onPhotosDeleted: (() -> Unit)? = null
-): DeletePhotosDialogCaller {
-    var visible by remember { mutableStateOf(false) }
-    var receivedData by remember { mutableStateOf(longArrayOf()) }
+fun rememberDeletePhotosDialog(): DeletePhotosDialogCaller {
+    var receivedData by remember { mutableStateOf<Pair<LongArray, () -> Unit>?>(null) }
+    val visible = receivedData != null
 
     val mainViewModel: MainViewModel = viewModel()
     val scope = rememberCoroutineScope()
@@ -50,29 +48,28 @@ fun rememberDeletePhotosDialog(
     if (visible) {
         ModalBottomSheet(
             onDismissRequest = {
-                visible = false
-                receivedData = longArrayOf()
+                receivedData = null
             }
         ) {
             DeleteDialogContent(
-                onCancel = { visible = false },
+                onCancel = { receivedData = null },
                 onDelete = {
                     scope.launch {
-                        mainViewModel.deleteNetworkPhotos(receivedData)
+                        val (photosIds, callback) = receivedData!!
+                        mainViewModel.deleteNetworkPhotos(photosIds)
 
-                        onPhotosDeleted?.invoke()
+                        callback.invoke()
 
-                        visible = false
+                        receivedData = null
                     }
                 }
             )
         }
     }
 
-    return DeletePhotosDialogCaller { photos ->
+    return DeletePhotosDialogCaller { photos, callback ->
         if (photos.isNotEmpty()) {
-            receivedData = photos
-            visible = true
+            receivedData = photos to callback
         } else {
             Log.e("DeletePhotosDialog", "Failed to open dialog, no photos to delete")
         }

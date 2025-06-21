@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.data.model.ExifData
+import net.theluckycoder.familyphotos.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.data.repository.ServerRepository
@@ -18,6 +19,9 @@ class PhotoViewerViewModel @Inject constructor(
     private val photosRepository: PhotosRepository,
     private val serverRepository: ServerRepository,
 ) : ViewModel() {
+
+    fun getLocalPhotoFlow(photoId: Long): Flow<LocalPhoto?> =
+        photosRepository.getLocalPhotoFlow(photoId)
 
     fun getNetworkPhotoFlow(photoId: Long): Flow<NetworkPhoto?> =
         photosRepository.getNetworkPhotoFlow(photoId)

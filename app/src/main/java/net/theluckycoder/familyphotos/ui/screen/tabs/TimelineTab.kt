@@ -52,23 +52,25 @@ import net.theluckycoder.familyphotos.ui.composables.PhotoTypeSegmentedButtons
 import net.theluckycoder.familyphotos.ui.composables.PhotosList
 import net.theluckycoder.familyphotos.ui.composables.photoSharedBounds
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.TimelineViewModel
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun TimelineTab(photos: LazyPagingItems<NetworkPhoto>) {
     val mainViewModel: MainViewModel = viewModel()
-    val memories = mainViewModel.memories.collectAsState(emptyMap())
-    val selectedPhotoType by mainViewModel.selectedPhotoType.collectAsState()
+    val timelineViewModel: TimelineViewModel = viewModel()
+    val memories = timelineViewModel.memories.collectAsState(emptyMap())
+    val selectedPhotoType by timelineViewModel.selectedPhotoType.collectAsState()
     val backStack = LocalNavBackStack.current
 
     PhotosList(
-        gridState = rememberLazyGridState(),
+        gridState = timelineViewModel.timelineGridState,
         photos = photos,
         openPhoto = {
             backStack.add(PhotoViewerFlowNav(it, PhotoViewerFlowNav.Source.Timeline))
         },
         headerContent = {
-            Header(selectedPhotoType, mainViewModel)
+            Header(selectedPhotoType, mainViewModel, timelineViewModel)
         },
         memoriesContent = {
             MemoriesList(memories.value)
@@ -114,8 +116,8 @@ private fun MemoriesList(
                         }
                 ) {
                     CoilPhoto(
-                        modifier = Modifier.fillMaxSize(),
                         photo = photo,
+                        modifier = Modifier.fillMaxSize(),
                         preview = true,
                         contentScale = ContentScale.Crop,
                     )
@@ -137,7 +139,8 @@ private fun MemoriesList(
 @Composable
 private fun Header(
     selectedPhotoType: PhotoType,
-    mainViewModel: MainViewModel
+    mainViewModel: MainViewModel,
+    timelineViewModel: TimelineViewModel,
 ) {
     Column {
         val isOnline by mainViewModel.isOnline.collectAsState()
@@ -152,11 +155,14 @@ private fun Header(
         ) {
             PhotoTypeSegmentedButtons(
                 selectedPhotoType = selectedPhotoType,
+                onChangePhotoType = { type ->
+                    timelineViewModel.setSelectedPhotoType(type)
+                },
                 modifier = Modifier
                     .weight(1f)
                     .padding(8.dp),
-                mainViewModel = mainViewModel
-            )
+
+                )
 
             /*IconButton(
                 onClick = { navigator.push(SettingsScreen()) }

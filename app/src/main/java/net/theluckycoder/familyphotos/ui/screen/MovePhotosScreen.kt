@@ -21,7 +21,7 @@ import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @Composable
-fun MovePhotosScreen(photoIds: List<Long>) {
+fun MovePhotosScreen(photoIds: LongArray) {
     val mainViewModel: MainViewModel = viewModel()
     val foldersViewModel: FoldersViewModel = viewModel()
     val photosToShowcase = remember { mutableStateOf(emptyList<Photo>()) }
@@ -29,8 +29,7 @@ fun MovePhotosScreen(photoIds: List<Long>) {
     val backStack = LocalNavBackStack.current
 
     LaunchedEffect(photoIds) {
-        photosToShowcase.value =
-            photoIds.mapNotNull { mainViewModel.getNetworkPhotoFlow(it).first() }
+        photosToShowcase.value = mainViewModel.getNetworkPhotos(photoIds).await()
     }
 
     val moveSuccess = stringResource(R.string.status_move_success)

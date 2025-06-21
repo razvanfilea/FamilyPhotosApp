@@ -49,11 +49,9 @@ interface NetworkPhotosDao {
         """SELECT *, 
               CAST((strftime('%s','now') - network_photo.timeCreated) / (3600 * 24 * 365) AS INTEGER) AS yearOffset 
        FROM network_photo
-       WHERE (
-          :userName IS NULL
-          OR (network_photo.userId = :userName)
-      )
-         AND yearOffset BETWEEN :minYearsAgo AND :maxYearsAgo
+       WHERE (:userName IS NULL OR (network_photo.userId = :userName))
+       AND yearOffset BETWEEN :minYearsAgo AND :maxYearsAgo
+       AND ABS(strftime('%j', 'now') - strftime('%j', datetime(network_photo.timeCreated, 'unixepoch'))) <= 3
        ORDER BY yearOffset ASC, network_photo.timeCreated DESC"""
     )
     fun getPhotosGroupedByYearsAgo(

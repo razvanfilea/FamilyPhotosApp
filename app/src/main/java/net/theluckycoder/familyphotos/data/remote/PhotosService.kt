@@ -34,6 +34,9 @@ interface PhotosService {
         @Path("id") id: Long
     ): Response<List<ExifField>>
 
+    @GET("photos/duplicates")
+    suspend fun getDuplicates(): Response<List<List<Long>>>
+
     @Multipart
     @POST("/photos/upload")
     suspend fun uploadPhoto(

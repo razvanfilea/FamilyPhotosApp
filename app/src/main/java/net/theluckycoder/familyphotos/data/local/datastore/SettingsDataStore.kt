@@ -42,7 +42,7 @@ class SettingsDataStore @Inject constructor(@ApplicationContext context: Context
         preferences[SHOW_FOLDERS_ASCENDING] = value
     }
 
-    suspend fun setFolderFilterType(value: PhotoType) = settingsDataStore.edit { preferences ->
+    suspend fun setSelectedPhotoType(value: PhotoType) = settingsDataStore.edit { preferences ->
         preferences[FOLDERS_FILTER_TYPE] = value.index
     }
 

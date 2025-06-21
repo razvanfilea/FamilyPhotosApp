@@ -60,10 +60,10 @@ private fun UploadDialogContent(
         items(photosToShowcase) { photo ->
             Box(Modifier.size(72.dp)) {
                 CoilPhoto(
+                    photo = photo,
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1f),
-                    photo = photo,
                     preview = true,
                     contentScale = ContentScale.Crop,
                 )

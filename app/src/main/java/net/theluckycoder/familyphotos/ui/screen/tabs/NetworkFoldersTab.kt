@@ -16,9 +16,11 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -39,6 +41,7 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.isPublic
+import net.theluckycoder.familyphotos.ui.DuplicatesNav
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.composables.FolderFilterTextField
@@ -61,7 +64,7 @@ fun NetworkFoldersTab() = Column(
     val gridState = rememberLazyGridState()
     val folders by foldersViewModel.networkFolders.collectAsState()
     val sortAscending by foldersViewModel.showFoldersAscending.collectAsState()
-    val selectedPhotoType by mainViewModel.selectedPhotoType.collectAsState()
+    val selectedPhotoType by foldersViewModel.selectedPhotoType.collectAsState()
     var folderNameFilter by remember { mutableStateOf("") }
     FolderFilterTextField(folderNameFilter, onFilterChange = { folderNameFilter = it })
 
@@ -84,7 +87,7 @@ fun NetworkFoldersTab() = Column(
         columns = GridCells.Fixed(columnCount),
         modifier = Modifier.fillMaxSize(),
     ) {
-        item(span = { GridItemSpan(columnCount) }) {
+        item(span = { GridItemSpan(columnCount) }, key = "header") {
             Column(
                 Modifier
                     .fillMaxWidth()
@@ -92,10 +95,12 @@ fun NetworkFoldersTab() = Column(
             ) {
                 PhotoTypeSegmentedButtons(
                     selectedPhotoType = selectedPhotoType,
+                    onChangePhotoType = { type ->
+                        foldersViewModel.setSelectedPhotoType(type)
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp),
-                    mainViewModel = mainViewModel
                 )
 
                 Row(
@@ -104,19 +109,15 @@ fun NetworkFoldersTab() = Column(
                         .padding(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    SortButton(
-                        sortAscending = sortAscending,
-                        onClick = {
-                            foldersViewModel.setShowFoldersAscending(!sortAscending)
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-
                     FilledTonalButton(
                         modifier = Modifier.weight(1f),
                         onClick = {
                             backStack.add(FolderNav(FolderNav.Source.Favorites))
                         },
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
                     ) {
                         Icon(
                             painterResource(R.drawable.ic_star_outline),
@@ -125,10 +126,37 @@ fun NetworkFoldersTab() = Column(
 
                         Spacer(Modifier.width(12.dp))
 
-                        Text(stringResource(R.string.favorites))
+                        Text(stringResource(R.string.title_favorites))
                     }
 
+                    FilledTonalButton(
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            backStack.add(DuplicatesNav)
+                        },
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.tertiary
+                        )
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.ic_duplicates_outlined),
+                            contentDescription = null
+                        )
+
+                        Spacer(Modifier.width(12.dp))
+
+                        Text(stringResource(R.string.title_duplicates))
+                    }
                 }
+
+                SortButton(
+                    sortAscending = sortAscending,
+                    onClick = {
+                        foldersViewModel.setShowFoldersAscending(!sortAscending)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
 

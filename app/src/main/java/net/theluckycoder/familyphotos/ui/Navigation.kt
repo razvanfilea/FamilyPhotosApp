@@ -78,16 +78,22 @@ data class PhotoViewerListNav(
 ) : NavKey
 
 @Serializable
-data class MovePhotosNav(
-    val photoIds: List<Long>,
+class MovePhotosNav(
+    val photoIds: LongArray,
 ) : NavKey
 
 @Serializable
-data class UploadPhotosNav(
-    val photoIds: List<Long>,
+class UploadPhotosNav(
+    val photoIds: LongArray,
 ) : NavKey
 
 @Serializable
 data class RenameFolderNav(
     val folder: NetworkFolder
 ) : NavKey
+
+@Serializable
+object DuplicatesNav : NavKey
+
+@Serializable
+object SettingsNav : NavKey

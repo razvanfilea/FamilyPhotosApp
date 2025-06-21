@@ -59,8 +59,8 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun CoilPhoto(
-    modifier: Modifier = Modifier,
     photo: Photo,
+    modifier: Modifier = Modifier,
     preview: Boolean = false,
     contentScale: ContentScale = ContentScale.Fit,
 ) {

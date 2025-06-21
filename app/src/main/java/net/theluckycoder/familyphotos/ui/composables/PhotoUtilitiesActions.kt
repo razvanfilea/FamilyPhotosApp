@@ -24,7 +24,7 @@ fun PhotoUtilitiesActions(
 ) {
     val backStack = LocalNavBackStack.current
     val scope = rememberCoroutineScope()
-    val deletePhotosDialog = rememberDeletePhotosDialog(onPhotosDeleted = { selectedItems.clear() })
+    val deletePhotosDialog = rememberDeletePhotosDialog()
 
     if (selectedItems.isNotEmpty()) {
         IconButton(onClick = {
@@ -34,7 +34,9 @@ fun PhotoUtilitiesActions(
                     mainViewModel.deleteLocalPhotos(selectedItems.toLongArray())
                     selectedItems.clear()
                 } else {
-                    deletePhotosDialog.show(selectedItems.toLongArray())
+                    deletePhotosDialog.show(
+                        photoIds = selectedItems.toLongArray(),
+                        onPhotosDeleted = { selectedItems.clear() })
                 }
             }
         }) {
@@ -59,7 +61,7 @@ fun PhotoUtilitiesActions(
 
         if (isLocalPhoto) {
             IconButton(
-                onClick = { backStack.add(UploadPhotosNav(selectedItems.toList())) }
+                onClick = { backStack.add(UploadPhotosNav(selectedItems.toLongArray())) }
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_cloud_upload_outline),
@@ -69,7 +71,7 @@ fun PhotoUtilitiesActions(
             }
         } else {
             IconButton(
-                onClick = { backStack.add(MovePhotosNav(selectedItems.toList())) }
+                onClick = { backStack.add(MovePhotosNav(selectedItems.toLongArray())) }
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_move_folder),

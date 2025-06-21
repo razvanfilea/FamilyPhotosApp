@@ -63,38 +63,6 @@ class MainViewModel @Inject constructor(
     val settingsStore: SettingsDataStore,
 ) : ViewModel() {
 
-    val selectedPhotoType =
-        settingsStore.photoType.stateIn(viewModelScope, SharingStarted.Eagerly, PhotoType.All)
-
-    val timelinePager = Pager(PAGING_CONFIG) {
-        photosRepository.getAllPhotosPaged()
-    }.flow
-        .cachedIn(viewModelScope)
-        .combine(selectedPhotoType) { photos, photoType ->
-            if (photoType == PhotoType.All) {
-                return@combine photos
-            }
-            photos.filter {
-                when (photoType) {
-                    PhotoType.All -> true
-                    PhotoType.Personal -> !it.isPublic()
-                    PhotoType.Family -> it.isPublic()
-                }
-            }
-        }
-
-    val memories = selectedPhotoType
-        .combine(userDataStore.userIdFlow) { photoType, userName ->
-            when (photoType) {
-                PhotoType.All -> null
-                PhotoType.Personal -> userName
-                PhotoType.Family -> PUBLIC_USER_ID
-            }
-        }
-        .flatMapLatest { userName -> photosRepository.getMemories(userName) }
-        .flowOn(Dispatchers.Default)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyMap())
-
     private val _localPhotosToDelete = Channel<List<LocalPhoto>>()
     val localPhotosToDelete = _localPhotosToDelete.consumeAsFlow()
 
@@ -148,7 +116,7 @@ class MainViewModel @Inject constructor(
      * @returns true if all photos have been successfully moved
      */
     fun changePhotosLocationAsync(
-        networkPhotos: List<Long>,
+        networkPhotos: LongArray,
         makePublic: Boolean,
         newFolderName: String?
     ): Deferred<Boolean> = viewModelScope.async(Dispatchers.IO) {
@@ -171,24 +139,26 @@ class MainViewModel @Inject constructor(
         }.all { it }
     }
 
-    fun getLocalPhotoFlow(photoId: Long): Flow<LocalPhoto?> =
-        photosRepository.getLocalPhotoFlow(photoId)
+    fun getLocalPhotos(photoIds: LongArray): Deferred<List<LocalPhoto>> = viewModelScope.async(Dispatchers.IO) {
+        photoIds.map { photosRepository.getLocalPhoto(it) }.filterNotNull()
+    }
 
-    fun getNetworkPhotoFlow(photoId: Long): Flow<NetworkPhoto?> =
-        photosRepository.getNetworkPhotoFlow(photoId)
+    fun getNetworkPhotos(photoIds: LongArray): Deferred<List<NetworkPhoto>> = viewModelScope.async(Dispatchers.IO) {
+        photoIds.map { photosRepository.getNetworkPhoto(it) }.filterNotNull()
+    }
 
     /**
      * Receives a list of [LocalPhoto] ids that will be uploaded
      */
     fun uploadPhotosAsync(
-        localPhotos: List<Long>,
+        localPhotos: LongArray,
         makePublic: Boolean,
         uploadFolder: String?
     ): Operation {
         val data = Data.Builder()
             .putAll(
                 mapOf(
-                    UploadWorker.KEY_INPUT_LIST to localPhotos.toLongArray(),
+                    UploadWorker.KEY_INPUT_LIST to localPhotos,
                     UploadWorker.KEY_MAKE_PUBLIC to makePublic,
                     UploadWorker.KEY_UPLOAD_FOLDER to uploadFolder
                 )
@@ -244,6 +214,10 @@ class MainViewModel @Inject constructor(
             val photos = photoIds.map { photosRepository.getLocalPhoto(it) }.filterNotNull()
             _localPhotosToDelete.send(photos)
         }
+    }
+
+    fun getDuplicatesAsync() = viewModelScope.async(Dispatchers.IO) {
+        serverRepository.getDuplicates()
     }
 
     companion object {

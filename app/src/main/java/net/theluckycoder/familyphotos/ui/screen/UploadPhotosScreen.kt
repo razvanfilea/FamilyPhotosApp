@@ -19,7 +19,7 @@ import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 
 @Composable
-fun UploadPhotosScreen(photoIds: List<Long>) {
+fun UploadPhotosScreen(photoIds: LongArray) {
     val mainViewModel: MainViewModel = viewModel()
     val foldersViewModel: FoldersViewModel = viewModel()
 
@@ -28,8 +28,7 @@ fun UploadPhotosScreen(photoIds: List<Long>) {
     val networkFolders by foldersViewModel.networkFolders.collectAsState()
 
     LaunchedEffect(photoIds) {
-        photosToShowcase.value =
-            photoIds.mapNotNull { mainViewModel.getLocalPhotoFlow(it).first() }
+        photosToShowcase.value = mainViewModel.getNetworkPhotos(photoIds).await()
     }
 
     UploadPhotosLayout(

@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.ui.viewmodel
 
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -22,6 +23,7 @@ import net.theluckycoder.familyphotos.data.model.LocalFolderToBackup
 import net.theluckycoder.familyphotos.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.data.repository.ServerRepository
@@ -39,9 +41,13 @@ class FoldersViewModel @Inject constructor(
     private val settingsStore: SettingsDataStore,
 ) : ViewModel() {
 
+    val selectedPhotoType = settingsStore.photoType.stateIn(
+        viewModelScope, SharingStarted.Lazily, PhotoType.All
+    )
+
     val showFoldersAscending = settingsStore.showFoldersAscending.stateIn(
         viewModelScope,
-        SharingStarted.Eagerly, true
+        SharingStarted.Lazily, true
     )
 
     val favoritePhotosPager = Pager(PAGING_CONFIG) {
@@ -54,6 +60,8 @@ class FoldersViewModel @Inject constructor(
         .flatMapLatest { foldersRepository.networkFoldersFlow(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
+    val photoListState = MutableStateFlow(LazyGridState())
+
     private val _selectedNetworkFolder = MutableStateFlow<String?>(null)
     val networkFolderPhotosPager: Flow<PagingData<NetworkPhoto>> = _selectedNetworkFolder
         .flatMapLatest { folderName ->
@@ -65,7 +73,7 @@ class FoldersViewModel @Inject constructor(
                 emptyFlow()
             }
         }
-        .stateIn(viewModelScope, SharingStarted.Lazily, PagingData.empty())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), PagingData.empty())
 
     private val _selectedLocalFolder = MutableStateFlow<String?>(null)
     val localFolderPhotosPager: Flow<PagingData<LocalPhoto>> = _selectedLocalFolder
@@ -78,11 +86,17 @@ class FoldersViewModel @Inject constructor(
                 emptyFlow()
             }
         }
-        .stateIn(viewModelScope, SharingStarted.Lazily, PagingData.empty())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), PagingData.empty())
 
     fun refreshLocalPhotos() {
         viewModelScope.launch(Dispatchers.IO) {
             foldersRepository.updatePhoneAlbums()
+        }
+    }
+
+    fun setSelectedPhotoType(photoType: PhotoType) {
+        viewModelScope.launch(Dispatchers.Default) {
+            settingsStore.setSelectedPhotoType(photoType)
         }
     }
 
@@ -92,16 +106,23 @@ class FoldersViewModel @Inject constructor(
         }
     }
 
-    fun loadNetworkFolderPhotos(folderName: String?) {
-        _selectedNetworkFolder.value = folderName
+    fun loadNetworkFolderPhotos(folderName: String) {
+        if (_selectedNetworkFolder.value != folderName) {
+            photoListState.value = LazyGridState()
+            _selectedNetworkFolder.value = folderName
+        }
     }
 
-    fun loadLocalFolderPhotos(folderName: String?) {
-        _selectedLocalFolder.value = folderName
+    fun loadLocalFolderPhotos(folderName: String) {
+        if (_selectedLocalFolder.value != folderName) {
+            photoListState.value = LazyGridState()
+            _selectedLocalFolder.value = folderName
+        }
     }
 
-    fun isLocalFolderBackupUp(folder: String): Flow<Boolean> =
-        foldersToBackupDao.getAll().map { it.firstOrNull { it == folder } != null }
+    fun isLocalFolderBackupUp(folderName: String): Flow<Boolean> =
+        foldersToBackupDao.getAll()
+            .map { it.firstOrNull { folder -> folder == folderName } != null }
 
     fun backupLocalFolder(folder: String, add: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {

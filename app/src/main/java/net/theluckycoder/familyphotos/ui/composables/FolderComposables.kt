@@ -97,10 +97,10 @@ fun FolderPreviewItem(
             .clickable(onClick = onClick)
     ) {
         CoilPhoto(
-            modifier = Modifier.fillMaxSize(),
             photo = photo,
-            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
             preview = true,
+            contentScale = ContentScale.Crop,
         )
 
         if (content != null)

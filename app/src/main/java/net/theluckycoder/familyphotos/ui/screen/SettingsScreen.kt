@@ -12,7 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
@@ -30,7 +32,7 @@ fun SettingsScreen() = Scaffold(
 
         TopAppBar(
             title = {
-                Text(text = stringResource(id = R.string.settings))
+                Text(text = stringResource(id = R.string.title_settings))
             },
             navigationIcon = {
                 IconButton(onClick = { backStack.removeLastOrNull() }) {
@@ -76,7 +78,11 @@ private fun getPreferenceItems(
             EmptyPreferenceItem(
                 title = "Sign out",
                 summary = "Log out of the current user session",
-                onClick = { /*mainViewModel.logout() TODO*/ }
+                onClick = {
+                    mainViewModel.viewModelScope.launch {
+                        mainViewModel.loginRepository.logout()
+                    }
+                }
             )
         )
     )

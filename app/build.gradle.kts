@@ -22,7 +22,7 @@ android {
         targetSdk = 35
 
         versionCode = 29
-        versionName = "2.9.0"
+        versionName = "2.9.1"
     }
 
     androidResources {
@@ -78,6 +78,7 @@ dependencies {
     implementation(libs.kotlin.coroutinesAndroid)
     implementation(libs.kotlin.serializationJson)
     implementation(libs.kotlin.dateTime)
+    implementation(libs.kotlin.collections)
 
     // AndroidX
     implementation(libs.androidx.dataStore)
