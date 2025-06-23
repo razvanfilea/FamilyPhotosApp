@@ -9,6 +9,7 @@ import androidx.compose.foundation.gestures.calculateCentroidSize
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.runtime.Composable
@@ -31,7 +32,9 @@ import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toIntRect
@@ -59,7 +62,7 @@ fun Modifier.selectableClickable(
     selected: Boolean,
     onClick: () -> Unit,
     onSelect: () -> Unit,
-    onDeselect: () -> Unit
+    onDeselect: () -> Unit,
 ) = if (inSelectionMode) {
     this.toggleable(
         value = selected,
@@ -83,6 +86,7 @@ fun <T : Photo> Modifier.photoGridDrag(
     lazyGridState: LazyGridState,
     selectedIds: SnapshotStateSet<Long>,
     items: ItemSnapshotList<T>,
+    contentPadding: PaddingValues = PaddingValues(),
 ): Modifier {
     val autoScrollSpeed = remember { mutableFloatStateOf(0f) }
     LaunchedEffect(autoScrollSpeed.floatValue) {
@@ -102,10 +106,15 @@ fun <T : Photo> Modifier.photoGridDrag(
         autoScrollSpeed = autoScrollSpeed,
         autoScrollThreshold = with(LocalDensity.current) { 40.dp.toPx() },
         scrollGestureActive = scrollGestureActive,
+        contentPadding = contentPadding,
+        layoutDirection = LocalLayoutDirection.current,
         items = items
     )
 }
 
+/**
+ * Inspired by https://github.com/IacobIonut01/Gallery/blob/09d88ec6444cae2219248eb2b950da931bf43de0/app/src/main/kotlin/com/dot/gallery/feature_node/presentation/util/MultiSelectExt.kt#L26
+ */
 private fun <T : Photo> Modifier.photoGridDrag(
     lazyGridState: LazyGridState,
     haptics: HapticFeedback,
@@ -113,14 +122,20 @@ private fun <T : Photo> Modifier.photoGridDrag(
     autoScrollSpeed: MutableState<Float>,
     autoScrollThreshold: Float,
     scrollGestureActive: MutableState<Boolean>,
+    contentPadding: PaddingValues,
+    layoutDirection: LayoutDirection,
     items: ItemSnapshotList<T>,
 ) = pointerInput(Unit) {
+    val padLeft = contentPadding.calculateLeftPadding(layoutDirection).toPx()
+    val padTop = contentPadding.calculateTopPadding().toPx()
 
-    fun LazyGridState.hitKeyAt(contentOffset: Offset): Long? {
+    fun LazyGridState.hitKeyAt(rawOffset: Offset): Long? {
+        val paddedOffset = rawOffset - Offset(padLeft, padTop)
+
         return layoutInfo.visibleItemsInfo
             .find { info ->
                 info.size.toIntRect()
-                    .contains((contentOffset.round() - info.offset))
+                    .contains((paddedOffset.round() - info.offset))
             }
             ?.key as? Long
     }

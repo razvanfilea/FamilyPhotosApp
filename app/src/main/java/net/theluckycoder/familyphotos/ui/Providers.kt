@@ -22,5 +22,5 @@ val LocalOkHttpClient = staticCompositionLocalOf<Lazy<OkHttpClient>> {
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
-val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope> { error("No LocalSharedTransitionScope found!") }
+val LocalSharedTransitionScope = staticCompositionLocalOf<SharedTransitionScope> { error("No LocalSharedTransitionScope found!") }
 

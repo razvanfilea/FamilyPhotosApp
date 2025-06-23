@@ -42,7 +42,6 @@ import coil3.request.crossfade
 import coil3.request.maxBitmapSize
 import coil3.size.Size
 import me.saket.telephoto.zoomable.DoubleClickToZoomListener
-import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
@@ -63,7 +62,6 @@ import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewerViewModel
-import kotlin.collections.mutableListOf
 
 
 @Composable
@@ -344,14 +342,11 @@ private fun BottomBar(
 }
 
 @Composable
-private fun ZoomableImage(
+fun ZoomableImage(
     modifier: Modifier = Modifier,
     photo: Photo,
     showUI: (Boolean) -> Unit,
 ) {
-//    val configuration = LocalConfiguration.current
-//    val maxWidth = with(LocalDensity.current) { (configuration.screenWidthDp.dp * 2).roundToPx() }
-
     val ctx = LocalContext.current
 
     val zoomableState = rememberZoomableState()
@@ -368,7 +363,7 @@ private fun ZoomableImage(
             .crossfade(true)
             .placeholderMemoryCacheKey(cacheKey)
 //            .placeholder(R.drawable.ic_hourglass_bottom)
-//            .size(Size(width = maxWidth, height = Dimension.Undefined))
+            .size(Size.ORIGINAL)
             .maxBitmapSize(Size.Companion.ORIGINAL)
             .build()
     }

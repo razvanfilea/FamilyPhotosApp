@@ -31,7 +31,7 @@ import javax.inject.Singleton
 
 @Singleton // Needed for WorkManager
 class ServerRepository @Inject constructor(
-    @ApplicationContext
+    @param:ApplicationContext
     private val context: Context,
     private val photosService: Lazy<PhotosService>,
     private val networkPhotosDao: NetworkPhotosDao,

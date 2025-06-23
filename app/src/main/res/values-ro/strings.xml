@@ -39,12 +39,14 @@
     <string name="notification_backup_fail_cancelled">Încărcarea a fost anulată</string>
     <string name="notification_backup_fail_internet">Lipsă internet</string>
     <string name="action_previous">Anterior</string>
+    <string name="duplicates_no_folder">Niciun folder</string>
     <string name="action_info">Info</string>
     <string name="action_selected">Selectate</string>
     <string name="ascending">Crescător</string>
     <string name="descending">Descrescător</string>
     <string name="notification_backup_fail">Nu s-au putut incarca fisierele</string>
     <string name="photo_type_family">Familie</string>
+    <string name="title_duplicates">Dubluri</string>
     <string name="title_favorites">Favorite</string>
     <string name="photo_type_all">Toate</string>
     <string name="photo_type_personal">Personale</string>
@@ -66,4 +68,7 @@
         <item quantity="one">%d selectat</item>
         <item quantity="other">%d selectate</item>
     </plurals>
+    <string name="duplicates_which_to_keep">Pe care îl păstrezi</string>
+    <string name="duplicates_none">Nu s-au găsit dubluri</string>
+    <string name="duplicates_error">Nu s-au putut încărca dublurile</string>
 </resources>

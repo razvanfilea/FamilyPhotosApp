@@ -12,15 +12,14 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -29,8 +28,10 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.Photo
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
+import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
 import net.theluckycoder.familyphotos.ui.RenameFolderNav
+import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
 import net.theluckycoder.familyphotos.ui.composables.PhotosList
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 
@@ -41,7 +42,9 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out 
     val gridState by foldersViewModel.photoListState.collectAsState()
     val backStack = LocalNavBackStack.current
 
-    Scaffold { paddingValues ->
+    Scaffold(
+        snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
+    ) { paddingValues ->
         PhotosList(
             gridState = gridState,
             photos = lazyPagingItems,
@@ -56,26 +59,18 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out 
                 }
                 backStack.add(PhotoViewerFlowNav(it, viewerSource))
             },
-            headerContent = {
-                TopAppBar(
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            backStack.removeLastOrNull()
-                        }) {
-                            Icon(
-                                painterResource(R.drawable.ic_arrow_back),
-                                contentDescription = null
-                            )
-                        }
+            topBarContent = {
+                NavBackTopAppBar(
+                    navIconOnClick = backStack::removeLastOrNull,
+                    title = when (source) {
+                        FolderNav.Source.Favorites -> stringResource(R.string.title_favorites)
+                        is FolderNav.Source.Network -> source.folder.name
+                        is FolderNav.Source.Local -> source.name
                     },
-                    title = {
-                        Text(
-                            when (source) {
-                                FolderNav.Source.Favorites -> stringResource(R.string.title_favorites)
-                                is FolderNav.Source.Network -> source.folder.name
-                                is FolderNav.Source.Local -> source.name
-                            },
-                        )
+                    subtitle = when (source) { // TODO
+                        FolderNav.Source.Favorites -> null
+                        is FolderNav.Source.Local -> null
+                        is FolderNav.Source.Network -> source.folder.count.toString()
                     },
                     actions = {
                         if (source is FolderNav.Source.Network) {
@@ -88,7 +83,7 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out 
                     }
                 )
             },
-            memoriesContent = {
+            listHeaderContent = {
                 if (source is FolderNav.Source.Local) {
                     val backupEnabled by foldersViewModel.isLocalFolderBackupUp(source.name)
                         .collectAsState(false)

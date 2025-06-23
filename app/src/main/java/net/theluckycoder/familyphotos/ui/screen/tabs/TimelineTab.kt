@@ -15,8 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -54,12 +54,12 @@ import net.theluckycoder.familyphotos.ui.composables.photoSharedBounds
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.TimelineViewModel
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun TimelineTab(photos: LazyPagingItems<NetworkPhoto>) {
     val mainViewModel: MainViewModel = viewModel()
     val timelineViewModel: TimelineViewModel = viewModel()
-    val memories = timelineViewModel.memories.collectAsState(emptyMap())
+    val memories = timelineViewModel.memories.collectAsState()
     val selectedPhotoType by timelineViewModel.selectedPhotoType.collectAsState()
     val backStack = LocalNavBackStack.current
 
@@ -69,11 +69,29 @@ fun TimelineTab(photos: LazyPagingItems<NetworkPhoto>) {
         openPhoto = {
             backStack.add(PhotoViewerFlowNav(it, PhotoViewerFlowNav.Source.Timeline))
         },
-        headerContent = {
-            Header(selectedPhotoType, mainViewModel, timelineViewModel)
+        topBarContent = {
+            PhotoTypeSegmentedButtons(
+                selectedPhotoType = selectedPhotoType,
+                onChangePhotoType = { type ->
+                    timelineViewModel.setSelectedPhotoType(type)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                    .padding(8.dp),
+            )
         },
-        memoriesContent = {
-            MemoriesList(memories.value)
+        listHeaderContent = {
+            Column {
+                val isOnline by mainViewModel.isOnline.collectAsState()
+                val isRefreshing by mainViewModel.isOnline.collectAsState()
+
+                MemoriesList(memories.value, timelineViewModel.memoriesListState)
+
+                if (!isOnline && !isRefreshing) {
+                    FailedConnectionCard(mainViewModel)
+                }
+            }
         },
         mainViewModel = mainViewModel,
     )
@@ -82,12 +100,17 @@ fun TimelineTab(photos: LazyPagingItems<NetworkPhoto>) {
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun MemoriesList(
-    memories: Map<Int, List<NetworkPhoto>>
+    memories: Map<Int, List<NetworkPhoto>>?,
+    listState: LazyListState,
 ) {
     val backStack = LocalNavBackStack.current
 
-    LazyRow(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 16.dp)) {
-        if (memories.isEmpty()) {
+    LazyRow(
+        state = listState,
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 16.dp)
+    ) {
+        if (memories == null) {
             item("placeholder") {
                 Surface(
                     Modifier
@@ -98,6 +121,8 @@ private fun MemoriesList(
                     color = Color.DarkGray
                 ) {}
             }
+
+            return@LazyRow
         }
 
         memories.forEach { (yearsAgo, photos) ->
@@ -135,81 +160,33 @@ private fun MemoriesList(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Header(
-    selectedPhotoType: PhotoType,
-    mainViewModel: MainViewModel,
-    timelineViewModel: TimelineViewModel,
+private fun FailedConnectionCard(mainViewModel: MainViewModel) = Card(
+    modifier = Modifier
+        .fillMaxWidth()
+        .padding(16.dp)
+        .height(64.dp),
+    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.errorContainer),
+    onClick = { mainViewModel.refreshPhotos() }
 ) {
-    Column {
-        val isOnline by mainViewModel.isOnline.collectAsState()
-        val isRefreshing by mainViewModel.isOnline.collectAsState()
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .windowInsetsPadding(TopAppBarDefaults.windowInsets),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            PhotoTypeSegmentedButtons(
-                selectedPhotoType = selectedPhotoType,
-                onChangePhotoType = { type ->
-                    timelineViewModel.setSelectedPhotoType(type)
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(8.dp),
-
-                )
-
-            /*IconButton(
-                onClick = { navigator.push(SettingsScreen()) }
-            ) {
-                Icon(
-                    modifier = Modifier.size(32.dp),
-                    painter = painterResource(R.drawable.ic_settings_outline),
-                    contentDescription = stringResource(R.string.settings)
-                )
-            }*/
-        }
-
-        if (!isOnline && !isRefreshing) {
-            FailedConnectionCard(mainViewModel)
-        }
-    }
-}
-
-@Composable
-private fun FailedConnectionCard(mainViewModel: MainViewModel) {
-    Card(
+    Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .height(64.dp),
-        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.errorContainer),
-        onClick = { mainViewModel.refreshPhotos() }
+            .align(Alignment.CenterHorizontally)
+            .weight(1f),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .weight(1f),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Icon(
-                modifier = Modifier.size(32.dp),
-                painter = painterResource(R.drawable.ic_cloud_off_outline),
-                contentDescription = null,
-            )
+        Icon(
+            modifier = Modifier.size(32.dp),
+            painter = painterResource(R.drawable.ic_cloud_off_outline),
+            contentDescription = null,
+        )
 
-            Text(
-                "Failed to connect to server",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
+        Text(
+            "Failed to connect to server",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }
 

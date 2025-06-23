@@ -1,14 +1,17 @@
 package net.theluckycoder.familyphotos.utils
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
+import kotlinx.datetime.toJavaMonth
 import kotlinx.datetime.toLocalDateTime
 import net.theluckycoder.familyphotos.data.model.Photo
 import java.text.Normalizer
 import java.time.format.TextStyle
 import java.util.Locale
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 private val normalizationRegex = "\\p{InCombiningDiacriticalMarks}+".toRegex()
 
@@ -20,8 +23,10 @@ fun String.normalize(): String {
 fun String.normalizeLowerCase(): String =
     this.normalize().lowercase(Locale.getDefault())
 
+@OptIn(ExperimentalTime::class)
 private val currentDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
 
+@OptIn(ExperimentalTime::class)
 fun computeSeparatorText(before: Photo?, after: Photo): String? {
     val beforeDate = before?.let {
         val instant = Instant.fromEpochSeconds(it.timeCreated)
@@ -31,7 +36,7 @@ fun computeSeparatorText(before: Photo?, after: Photo): String? {
         Instant.fromEpochSeconds(after.timeCreated)
             .toLocalDateTime(TimeZone.currentSystemDefault())
 
-    return if (beforeDate == null || beforeDate.monthNumber != afterDate.monthNumber || beforeDate.year != afterDate.year
+    return if (beforeDate == null || beforeDate.month.number != afterDate.month.number || beforeDate.year != afterDate.year
     ) {
         buildDateString(afterDate)
     } else null
@@ -39,7 +44,7 @@ fun computeSeparatorText(before: Photo?, after: Photo): String? {
 
 private fun buildDateString(afterDate: LocalDateTime) = buildString {
     append(
-        afterDate.month.getDisplayName(
+        afterDate.month.toJavaMonth().getDisplayName(
             TextStyle.FULL,
             Locale.forLanguageTag("ro-RO")
         )

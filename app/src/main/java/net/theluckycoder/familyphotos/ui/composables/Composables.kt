@@ -1,9 +1,11 @@
 package net.theluckycoder.familyphotos.ui.composables
 
+import android.R.attr.label
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.animateInt
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -46,7 +48,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
@@ -56,6 +57,8 @@ import net.theluckycoder.familyphotos.data.model.getPreviewUri
 import net.theluckycoder.familyphotos.data.model.getUri
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import java.time.format.DateTimeFormatter
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 @Composable
 fun CoilPhoto(
@@ -136,58 +139,54 @@ fun NavBackTopAppBar(
 }
 
 @Composable
-fun SelectableItem(
+private fun SelectableItem(
     modifier: Modifier = Modifier,
     inSelectionMode: Boolean,
     selected: Boolean,
     content: @Composable BoxScope.() -> Unit
-) {
-
-    if (inSelectionMode) {
-        Surface(
-            modifier = modifier,
-            tonalElevation = 15.dp
-        ) {
-            val transition = updateTransition(selected, label = "selected")
-            val padding by transition.animateDp(label = "padding") { selected ->
-                if (selected) 10.dp else 0.dp
-            }
-            val roundedCornerShape by transition.animateDp(label = "corner") { selected ->
-                if (selected) 16.dp else 0.dp
-            }
-
-            Box(
-                modifier = Modifier
-                    .padding(padding)
-                    .clip(RoundedCornerShape(roundedCornerShape))
-            ) {
-                content()
-
-                if (selected) {
-                    val bgColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
-                    Icon(
-                        painter = painterResource(R.drawable.radio_button_checked),
-                        tint = MaterialTheme.colorScheme.primary,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .clip(CircleShape)
-                            .background(bgColor)
-                    )
-                } else {
-                    Icon(
-                        painter = painterResource(R.drawable.radio_button_unchecked),
-                        tint = Color.White.copy(alpha = 0.7f),
-                        contentDescription = null,
-                        modifier = Modifier.padding(6.dp)
-                    )
-                }
-            }
+) = if (inSelectionMode) {
+    Surface(
+        modifier = modifier,
+        tonalElevation = 15.dp
+    ) {
+        val transition = updateTransition(selected, label = "selected")
+        val padding by transition.animateDp(label = "padding") { selected ->
+            if (selected) 10.dp else 0.dp
         }
-    } else {
-        Box(modifier = modifier) {
+        val roundedCornerShape by transition.animateInt(label = "corner") { selected ->
+            if (selected) 30 else 0
+        }
+
+        Box(
+            modifier = Modifier
+                .padding(padding)
+                .clip(RoundedCornerShape(percent = roundedCornerShape))
+        ) {
             content()
         }
+
+        Box(Modifier.padding(4.dp)) {
+            if (selected) {
+                val bgColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+                Icon(
+                    painter = painterResource(R.drawable.radio_button_checked),
+                    tint = MaterialTheme.colorScheme.primary,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .background(bgColor, CircleShape)
+                )
+            } else {
+                Icon(
+                    painter = painterResource(R.drawable.radio_button_unchecked),
+                    tint = Color.White.copy(alpha = 0.8f),
+                    contentDescription = null,
+                )
+            }
+        }
+    }
+} else {
+    Box(modifier = modifier) {
+        content()
     }
 }
 
@@ -217,6 +216,7 @@ fun SelectablePhoto(
 
 private val PHOTO_DATE_FORMATTER = DateTimeFormatter.ofPattern("d MMM uuuu・HH:mm")
 
+@OptIn(ExperimentalTime::class)
 @Composable
 fun Photo.photoDateText(): String = remember(this) {
     val instant = Instant.fromEpochSeconds(this.timeCreated)
@@ -229,28 +229,26 @@ fun VerticallyAnimatedInt(
     targetState: Int,
     contentAlignment: Alignment = Alignment.TopStart,
     content: @Composable AnimatedVisibilityScope.(targetState: Int) -> Unit
-) {
-    AnimatedContent(
-        targetState = targetState,
-        transitionSpec = {
-            if (targetState > initialState) {
-                // If the target number is larger, it slides up and fades in
-                // while the initial (smaller) number slides up and fades out.
-                slideInVertically { height -> height } + fadeIn() togetherWith
-                        slideOutVertically { height -> -height } + fadeOut()
-            } else {
-                // If the target number is smaller, it slides down and fades in
-                // while the initial number slides down and fades out.
-                slideInVertically { height -> -height } + fadeIn() togetherWith
-                        slideOutVertically { height -> height } + fadeOut()
-            }.using(
-                // Disable clipping since the faded slide-in/out should
-                // be displayed out of bounds.
-                SizeTransform(clip = false)
-            )
-        },
-        contentAlignment = contentAlignment,
-        content = content,
-        label = "int_animation"
-    )
-}
+) = AnimatedContent(
+    targetState = targetState,
+    transitionSpec = {
+        if (targetState > initialState) {
+            // If the target number is larger, it slides up and fades in
+            // while the initial (smaller) number slides up and fades out.
+            slideInVertically { height -> height } + fadeIn() togetherWith
+                    slideOutVertically { height -> -height } + fadeOut()
+        } else {
+            // If the target number is smaller, it slides down and fades in
+            // while the initial number slides down and fades out.
+            slideInVertically { height -> -height } + fadeIn() togetherWith
+                    slideOutVertically { height -> height } + fadeOut()
+        }.using(
+            // Disable clipping since the faded slide-in/out should
+            // be displayed out of bounds.
+            SizeTransform(clip = false)
+        )
+    },
+    contentAlignment = contentAlignment,
+    content = content,
+    label = "int_animation"
+)

@@ -53,8 +53,11 @@ data class FolderNav(
 
     @Serializable
     sealed class Source {
+        @Serializable
         data object Favorites : Source()
+        @Serializable
         data class Network(val folder: NetworkFolder) : Source()
+        @Serializable
         data class Local(val name: String) : Source()
     }
 }
@@ -64,6 +67,7 @@ data class PhotoViewerFlowNav(
     val initialPhotoIndex: Int,
     val source: Source,
 ) : NavKey {
+    @Serializable
     enum class Source {
         Timeline,
         Network,

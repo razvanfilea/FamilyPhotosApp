@@ -2,30 +2,40 @@ package net.theluckycoder.familyphotos.ui.composables
 
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextFieldDefaults.contentPadding
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateSetOf
@@ -33,22 +43,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.LazyPagingItems
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.Photo
 import net.theluckycoder.familyphotos.data.model.isVideo
-import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.utils.computeSeparatorText
-import kotlin.time.ExperimentalTime
 
 private val PORTRAIT_ZOOM_LEVELS = intArrayOf(4, 5, 7)
 private val LANDSCAPE_ZOOM_LEVELS = intArrayOf(8, 10, 14)
@@ -70,18 +80,20 @@ private const val CONTENT_TYPE_HEADER = 3
 
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class,
-    ExperimentalTime::class
 )
 @Composable
 fun <T : Photo> PhotosList(
     photos: LazyPagingItems<T>,
     modifier: Modifier = Modifier,
     gridState: LazyGridState = rememberLazyGridState(),
-    headerContent: @Composable () -> Unit = {},
-    memoriesContent: @Composable ColumnScope.() -> Unit = {},
+    topBarContent: @Composable () -> Unit = {},
+    listHeaderContent: @Composable () -> Unit = {},
     openPhoto: (index: Int) -> Unit,
     mainViewModel: MainViewModel = viewModel()
-) = Column(Modifier.fillMaxSize()) {
+) = Box(Modifier.fillMaxSize()) {
+    val topBarHeight = 64.dp
+    val topBarPadding = 48.dp
+
     val zoomIndexState = mainViewModel.zoomIndexState
     LaunchedEffect(zoomIndexState.intValue) {
         mainViewModel.settingsStore.setPhotosZoomLevel(zoomIndexState.intValue)
@@ -91,37 +103,6 @@ fun <T : Photo> PhotosList(
 
     BackHandler(enabled = selectedPhotoIds.isNotEmpty()) {
         selectedPhotoIds.clear()
-    }
-
-    AnimatedVisibility(
-        visible = selectedPhotoIds.isNotEmpty(),
-        enter = expandVertically(),
-        exit = shrinkVertically(),
-    ) {
-        TopAppBar(
-            modifier = Modifier.fillMaxWidth(),
-            navigationIcon = {
-                IconButton(onClick = {
-                    selectedPhotoIds.clear()
-                }) {
-                    Icon(painterResource(R.drawable.ic_close), contentDescription = null)
-                }
-            },
-            title = {
-                Row {
-                    VerticallyAnimatedInt(targetState = selectedPhotoIds.size) { count ->
-                        Text("$count ")
-                    }
-
-                    Text(stringResource(R.string.action_selected))
-                }
-            },
-            actions = {
-                val isLocalPhoto =
-                    remember { photos.itemSnapshotList.items.firstOrNull() is LocalPhoto }
-                PhotoUtilitiesActions(isLocalPhoto, selectedPhotoIds)
-            },
-        )
     }
 
     val columnCount = getZoomColumnCount(zoomIndexState.intValue)
@@ -137,7 +118,7 @@ fun <T : Photo> PhotosList(
                 items = photos.itemSnapshotList,
             )
             .then(modifier),
-        columns = GridCells.Fixed(columnCount)
+        columns = GridCells.Fixed(columnCount),
     ) {
         item(
             key = "header",
@@ -145,10 +126,8 @@ fun <T : Photo> PhotosList(
             contentType = CONTENT_TYPE_HEADER
         ) {
             Column {
-                if (selectedPhotoIds.isEmpty()) {
-                    headerContent()
-                }
-                memoriesContent()
+                topBarContent()
+                listHeaderContent()
             }
         }
 
@@ -185,13 +164,11 @@ fun <T : Photo> PhotosList(
                 contentType = CONTENT_TYPE_PHOTO
             ) {
                 val photo = photos[index]!!
-                val modifier = with(LocalSharedTransitionScope.current) {
-                    Modifier
-                        .photoSharedBounds(photo.id)
-                        .animateItem(fadeInSpec = null, fadeOutSpec = null)
-                        .aspectRatio(1f)
-                        .padding(0.5.dp)
-                }
+                val modifier = Modifier
+                    .photoSharedBounds(photo.id)
+                    .animateItem(fadeInSpec = null, fadeOutSpec = null)
+                    .aspectRatio(1f)
+                    .padding(0.5.dp)
 
                 PhotoItem(
                     modifier = modifier,
@@ -200,6 +177,56 @@ fun <T : Photo> PhotosList(
                     openPhoto = { openPhoto(index) },
                 )
             }
+        }
+    }
+
+    AnimatedVisibility(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = topBarPadding)
+            .height(topBarHeight),
+        visible = selectedPhotoIds.isNotEmpty(),
+    ) {
+        val isLocalPhoto =
+            remember { photos.itemSnapshotList.items.firstOrNull() is LocalPhoto }
+        SelectionAppBar(selectedPhotoIds, isLocalPhoto)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SelectionAppBar(selectedPhotoIds: SnapshotStateSet<Long>, isLocalPhoto: Boolean) = Row(
+    Modifier
+        .fillMaxWidth()
+        .padding(8.dp)
+        .minimumInteractiveComponentSize(),
+    horizontalArrangement = Arrangement.SpaceBetween
+) {
+    Button(
+        modifier = Modifier.fillMaxHeight(),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = Color.White,
+        ),
+        onClick = {
+            selectedPhotoIds.clear()
+        }
+    ) {
+        Icon(painterResource(R.drawable.ic_close), contentDescription = null)
+
+        Spacer(Modifier.width(16.dp))
+
+        VerticallyAnimatedInt(
+            targetState = selectedPhotoIds.size,
+            contentAlignment = Alignment.Center
+        ) { count ->
+            Text(count.toString(), fontSize = 16.sp)
+        }
+    }
+
+    Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape) {
+        Row {
+            PhotoUtilitiesActions(isLocalPhoto, selectedPhotoIds)
         }
     }
 }

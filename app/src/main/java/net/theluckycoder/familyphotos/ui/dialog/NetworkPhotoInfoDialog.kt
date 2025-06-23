@@ -45,7 +45,7 @@ fun interface NetworkPhotoInfoDialogCaller {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun rememberNetworkPhotoInfoDialog(photo: NetworkPhoto?): NetworkPhotoInfoDialogCaller {
-    var visible by remember { mutableStateOf(false) }
+    var visible by remember(photo?.id) { mutableStateOf(false) }
 
     if (visible && photo != null) {
         ModalBottomSheet(onDismissRequest = { visible = false }) {

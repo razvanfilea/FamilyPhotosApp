@@ -57,7 +57,6 @@ import net.theluckycoder.familyphotos.utils.normalize
 fun NetworkFoldersTab() = Column(
     modifier = Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets)
 ) {
-    val mainViewModel: MainViewModel = viewModel()
     val foldersViewModel: FoldersViewModel = viewModel()
     val backStack = LocalNavBackStack.current
 

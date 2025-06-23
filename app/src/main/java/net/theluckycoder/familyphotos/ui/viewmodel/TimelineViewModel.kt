@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.ui.viewmodel
 
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -62,8 +63,9 @@ class TimelineViewModel @Inject constructor(
         }
         .flatMapLatest { userName -> photosRepository.getMemories(userName) }
         .flowOn(Dispatchers.Default)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyMap())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
+    val memoriesListState = LazyListState()
     val timelineGridState = LazyGridState()
 
     fun setSelectedPhotoType(photoType: PhotoType) {

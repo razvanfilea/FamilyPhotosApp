@@ -11,7 +11,6 @@ import androidx.core.database.getLongOrNull
 import androidx.core.database.getStringOrNull
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
-import kotlinx.datetime.Instant
 import net.theluckycoder.familyphotos.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.data.model.LocalFolder
@@ -19,10 +18,12 @@ import net.theluckycoder.familyphotos.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.NetworkFolder
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 @Singleton // Needed for WorkManager
 class FoldersRepository @Inject constructor(
-    @ApplicationContext
+    @param:ApplicationContext
     private val context: Context,
     private val localPhotosDao: LocalPhotosDao,
     private val networkPhotosDao: NetworkPhotosDao,
@@ -113,6 +114,7 @@ class FoldersRepository @Inject constructor(
     }
 }
 
+@OptIn(ExperimentalTime::class)
 fun Cursor.parseUriToLocalImage(
     contentUri: Uri,
     idColumn: Int,
