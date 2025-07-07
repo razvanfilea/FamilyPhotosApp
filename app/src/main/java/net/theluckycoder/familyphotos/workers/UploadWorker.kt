@@ -71,7 +71,7 @@ class UploadWorker @AssistedInject constructor(
                 )
 
                 val success = try {
-                    serverRepository.uploadFile(localPhoto, makePublic, uploadFolder, null)
+                    serverRepository.uploadFile(localPhoto, makePublic, uploadFolder)
                 } catch (e: Exception) {
                     Log.e(TAG, "Caught exception while uploading $localPhotoId", e)
                     false

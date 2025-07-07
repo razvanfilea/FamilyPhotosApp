@@ -1,6 +1,5 @@
 package net.theluckycoder.familyphotos.ui.composables
 
-import android.R.attr.label
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SizeTransform

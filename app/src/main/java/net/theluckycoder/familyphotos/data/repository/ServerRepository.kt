@@ -5,8 +5,10 @@ import android.content.Context
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 import android.util.Log
 import android.webkit.MimeTypeMap
+import androidx.compose.foundation.content.MediaType
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.async
@@ -23,7 +25,8 @@ import net.theluckycoder.familyphotos.data.remote.PhotosService
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
+import okio.BufferedSink
+import okio.source
 import java.io.File
 import java.io.IOException
 import javax.inject.Inject
@@ -198,22 +201,46 @@ class ServerRepository @Inject constructor(
         localPhoto: LocalPhoto,
         public: Boolean,
         uploadFolder: String?,
-        fileToUpload: File? = null,
     ): Boolean {
-        val bytes = fileToUpload?.readBytes()
-            ?: context.contentResolver.openInputStream(localPhoto.uri)?.buffered()?.use {
-                it.readBytes()
+        val contentResolver = context.contentResolver
+        val mediaType = contentResolver.getType(localPhoto.uri)?.toMediaTypeOrNull()
+
+        var contentLength = -1L
+        contentResolver.query(localPhoto.uri, arrayOf(OpenableColumns.SIZE), null, null, null)
+            ?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                    if (sizeIndex != -1 && !cursor.isNull(sizeIndex)) {
+                        contentLength = cursor.getLong(sizeIndex)
+                    }
+                }
             }
 
-        val requestFile: RequestBody = bytes!!
-            .toRequestBody(
-                context.contentResolver.getType(localPhoto.uri)!!.toMediaTypeOrNull(),
-                0, bytes.size
+        if (contentLength == -1L && mediaType == null) {
+            Log.e(
+                "Error uploading ${localPhoto.id}",
+                "Cannot determine content length ($contentLength) or media type ($mediaType)"
             )
+            return false
+        }
+
+        val requestBody = object : RequestBody() {
+            override fun contentType() = mediaType
+
+            override fun contentLength(): Long = contentLength
+
+            @Throws(IOException::class)
+            override fun writeTo(sink: BufferedSink) {
+                contentResolver.openInputStream(localPhoto.uri)?.use { inputStream ->
+                    inputStream.source().use { source ->
+                        sink.writeAll(source)
+                    }
+                } ?: throw IOException("Failed to open InputStream for URI: $localPhoto.uri")
+            }
+        }
 
         // MultipartBody.Part is used to send also the actual file name
-        val name = fileToUpload?.name ?: localPhoto.name
-        val fileBody = MultipartBody.Part.createFormData("file", name, requestFile)
+        val fileBody = MultipartBody.Part.createFormData("file", localPhoto.name, requestBody)
 
         val response = photosService.get().uploadPhoto(
             timeCreated = localPhoto.timeCreated.toString(),
