@@ -18,35 +18,40 @@ class RefreshPhotosUseCase @Inject constructor(
     val isOnlineState = MutableStateFlow(true)
 
     suspend operator fun invoke(): Result {
-        val pingResponse = try {
-            serverRepository.pingServer()
-        } catch (_: Exception) {
-            ServerRepository.PingResponse.UNSUCCESSFUL
-        }
-
-        if (pingResponse == ServerRepository.PingResponse.NOT_LOGGED_IN) {
-            // Consider how to signal logout. Maybe return a specific result.
-            // For now, let's assume the ViewModel handles actual logout triggering.
-            return Result.NotLoggedIn
-        }
-        isOnlineState.value = pingResponse == ServerRepository.PingResponse.SUCCESSFUL
-
         val localPhotosJob = CoroutineScope(Dispatchers.IO).async {
             foldersRepository.updatePhoneAlbums()
         }
 
-        if (pingResponse == ServerRepository.PingResponse.SUCCESSFUL) {
+        var response = try {
+            serverRepository.downloadPartialPhotos()
+        } catch (e: Exception) {
+            ServerRepository.DownloadResponse.UNSUCCESSFUL
+            localPhotosJob.await()
+            return Result.Error(e)
+        }
+
+        if (response == ServerRepository.DownloadResponse.FULL_DOWNLOAD_NEEDED) {
             try {
-                serverRepository.downloadAllPhotos()
+                response = serverRepository.downloadAllPhotos()
             } catch (e: Exception) {
                 Log.e("RefreshPhotosUseCase", "Failed to download photos", e)
+                localPhotosJob.await()
                 return Result.Error(e)
             }
         }
 
+        if (response == ServerRepository.DownloadResponse.NOT_LOGGED_IN) {
+            // Consider how to signal logout. Maybe return a specific result.
+            // For now, let's assume the ViewModel handles actual logout triggering.
+            localPhotosJob.await()
+            return Result.NotLoggedIn
+        }
+
+        isOnlineState.value = response == ServerRepository.DownloadResponse.SUCCESSFUL
+
         localPhotosJob.await()
 
-        return Result.Success
+        return Result.Success // TODO Handle error
     }
 
     sealed class Result {

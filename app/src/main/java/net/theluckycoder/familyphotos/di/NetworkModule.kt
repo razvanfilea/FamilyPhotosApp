@@ -1,6 +1,7 @@
 package net.theluckycoder.familyphotos.di
 
 import android.content.Context
+import android.net.TrafficStats
 import android.util.Log
 import coil3.ImageLoader
 import coil3.disk.DiskCache
@@ -103,7 +104,7 @@ object NetworkModule {
             .addInterceptor(BrotliInterceptor)
             .addInterceptor(setCookieInterceptor)
             .addInterceptor(receiveCookieInterceptor)
-            .addInterceptor(HttpLoggingInterceptor())
+//            .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })
             .build()
     }
 

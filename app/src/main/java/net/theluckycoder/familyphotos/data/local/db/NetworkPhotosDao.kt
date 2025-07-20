@@ -7,9 +7,12 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.json.Json
+import net.theluckycoder.familyphotos.data.model.BasicNetworkPhoto
 import net.theluckycoder.familyphotos.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.NetworkPhotoWithYearOffset
+import net.theluckycoder.familyphotos.data.model.PhotoEventLog
 
 @Dao
 interface NetworkPhotosDao {
@@ -69,6 +72,9 @@ interface NetworkPhotosDao {
     )
     fun getFavoritePhotosPaged(): PagingSource<Int, NetworkPhoto>
 
+    @Query("UPDATE network_photo SET isFavorite = 1 WHERE id IN (:photos)")
+    suspend fun setAsFavorites(photos: Collection<Long>)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(photo: NetworkPhoto)
 
@@ -76,12 +82,40 @@ interface NetworkPhotosDao {
     suspend fun insert(list: Collection<NetworkPhoto>)
 
     @Query("DELETE FROM network_photo WHERE id = :photoId")
-    fun delete(photoId: Long)
+    suspend fun delete(photoId: Long)
+
+    @Query("SELECT eventLogId FROM server_state LIMIT 1")
+    suspend fun getEventLogId(): Long
+
+    @Query("UPDATE server_state SET eventLogId = :eventLogId WHERE id = 0")
+    suspend fun updateEventLogId(eventLogId: Long)
 
     @Transaction
-    suspend fun replaceAll(list: Collection<NetworkPhoto>) {
+    suspend fun updatePartials(events: Collection<PhotoEventLog>, eventLogId: Long) {
+        for (event in events) {
+            if (event.data != null) {
+                val photo: BasicNetworkPhoto =
+                    Json.decodeFromString(event.data.toByteArray().toString(Charsets.UTF_8))
+                val isFavorite = findById(photo.id)?.isFavorite ?: false
+                insert(photo.toNetworkPhoto(isFavorite))
+            } else {
+                delete(event.photoId)
+            }
+        }
+
+        updateEventLogId(eventLogId)
+    }
+
+    @Transaction
+    suspend fun replaceAll(
+        list: Collection<NetworkPhoto>,
+        favorites: Collection<Long>,
+        eventLogId: Long
+    ) {
         deleteAll()
         insert(list)
+        setAsFavorites(favorites)
+        updateEventLogId(eventLogId)
     }
 
     @Query("DELETE FROM network_photo")

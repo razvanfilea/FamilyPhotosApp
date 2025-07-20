@@ -8,13 +8,13 @@ import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
 import android.webkit.MimeTypeMap
-import androidx.compose.foundation.content.MediaType
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import net.theluckycoder.familyphotos.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
+import net.theluckycoder.familyphotos.data.model.BasicNetworkPhoto
 import net.theluckycoder.familyphotos.data.model.ExifData
 import net.theluckycoder.familyphotos.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.NetworkFolder
@@ -41,54 +41,67 @@ class ServerRepository @Inject constructor(
     private val localPhotosDao: LocalPhotosDao,
 ) {
 
-    enum class PingResponse {
+    enum class DownloadResponse {
         SUCCESSFUL,
         UNSUCCESSFUL,
-        NOT_LOGGED_IN
+        NOT_LOGGED_IN,
+        FULL_DOWNLOAD_NEEDED
     }
 
-    suspend fun pingServer(): PingResponse {
-        val response = photosService.get().ping()
-        return when {
-            response.code() == 401 -> PingResponse.NOT_LOGGED_IN // UNAUTHORIZED
-            response.isSuccessful -> PingResponse.SUCCESSFUL
-            else -> PingResponse.UNSUCCESSFUL
+    suspend fun downloadPartialPhotos(): DownloadResponse {
+        val lastSyncedeventLogId = networkPhotosDao.getEventLogId()
+        Log.i("ServerRepository", "Last synced event id: $lastSyncedeventLogId")
+
+        val response = photosService.get().getEventLogsList(lastSyncedeventLogId)
+
+        if (!response.isSuccessful) {
+            return when (response.code()) {
+                401 -> DownloadResponse.NOT_LOGGED_IN // UNAUTHORIZED
+                409 -> DownloadResponse.FULL_DOWNLOAD_NEEDED // CONFLICT
+                else -> DownloadResponse.UNSUCCESSFUL
+            }
+        } else {
+            val partialPhotos = response.body()!!
+            if (partialPhotos.events.isNotEmpty()) {
+                networkPhotosDao.updatePartials(partialPhotos.events, partialPhotos.eventLogId)
+            }
+
+            Log.i("ServerRepository", "Downloaded partial photos. EventLogId: ${partialPhotos.eventLogId}")
+
+            return DownloadResponse.SUCCESSFUL
         }
     }
 
-    suspend fun downloadAllPhotos() = coroutineScope {
+    suspend fun downloadAllPhotos(): DownloadResponse = coroutineScope {
         val service = photosService.get()
-        val photosAsync = async { service.getPhotosList() }
+        val photosAsync = async { service.getFullPhotosList() }
 
         val favoritePhotosResponse = service.getFavorites()
         val photosResponse = photosAsync.await()
 
         if (favoritePhotosResponse.isSuccessful && photosResponse.isSuccessful) {
-            val favorites = (favoritePhotosResponse.body() ?: emptyList()).toSet()
-            val photos = (photosResponse.body() ?: emptyList()).map {
-                NetworkPhoto(
-                    id = it.id,
-                    userId = it.userId,
-                    name = it.name,
-                    timeCreated = it.createdAt,
-                    fileSize = it.fileSize,
-                    folder = it.folder,
-                    isFavorite = favorites.contains(it.id),
-                )
-            }
+            val favorites = favoritePhotosResponse.body() ?: emptyList()
+            val fullPhotos = photosResponse.body()!!
+            val photos = fullPhotos.photos.map(BasicNetworkPhoto::toNetworkPhoto)
 
             if (photos.isNotEmpty()) {
-                networkPhotosDao.replaceAll(photos)
-                Log.i("ServerRepository", "Downloaded all server photos")
-                return@coroutineScope photosResponse
+                networkPhotosDao.replaceAll(photos, favorites, fullPhotos.eventLogId)
+                Log.i("ServerRepository", "Downloaded all server photos. EventLogId: ${fullPhotos.eventLogId}")
+                return@coroutineScope DownloadResponse.SUCCESSFUL
             }
         }
 
-        photosResponse
+        photosResponse.errorBody()
+            ?.let { Log.e("ServerRepository", "Failed to get photos ${it.string()}") }
+        favoritePhotosResponse.errorBody()
+            ?.let { Log.e("ServerRepository", "Failed to get favorites ${it.string()}") }
+
+        DownloadResponse.UNSUCCESSFUL
     }
 
     suspend fun deleteNetworkPhoto(photoId: Long): Boolean {
-        val successful = photosService.get().deletePhoto(photoId).isSuccessful
+        val response = photosService.get().deletePhoto(photoId)
+        val successful = response.isSuccessful
 
         if (successful) {
             Log.d("PhotosListRepository", "Deleting photo $photoId")
@@ -250,7 +263,7 @@ class ServerRepository @Inject constructor(
         )
 
         response.body()?.let { networkPhoto ->
-            networkPhotosDao.insert(networkPhoto)
+            networkPhotosDao.insert(networkPhoto.toNetworkPhoto(networkPhotosDao.findById(networkPhoto.id)?.isFavorite ?: false))
             localPhotosDao.insertOrReplace(localPhoto.copy(networkPhotoId = networkPhoto.id))
             return true
         }
@@ -265,7 +278,7 @@ class ServerRepository @Inject constructor(
         makePublic: Boolean,
         newFolderName: String?,
     ): Boolean {
-        val response = photosService.get().changePhotoLocation(
+        val response = photosService.get().movePhoto(
             photoId = photo.id,
             makePublic = makePublic,
             newFolderName = newFolderName
@@ -276,7 +289,7 @@ class ServerRepository @Inject constructor(
         if (!response.isSuccessful || changedPhoto == null)
             return false
 
-        networkPhotosDao.insert(changedPhoto)
+        networkPhotosDao.insert(changedPhoto.toNetworkPhoto(photo.isFavorite))
         return true
     }
 
@@ -310,11 +323,12 @@ class ServerRepository @Inject constructor(
         )
 
         val changedPhotos = response.body()
-        Log.d("Moving Photos", response.errorBody()?.string().orEmpty())
         if (!response.isSuccessful || changedPhotos == null)
             return false
 
-        networkPhotosDao.insert(changedPhotos)
+        val photos = changedPhotos.map { it.toNetworkPhoto(networkPhotosDao.findById(it.id)?.isFavorite ?: false) }
+
+        networkPhotosDao.insert(photos)
         return true
     }
 

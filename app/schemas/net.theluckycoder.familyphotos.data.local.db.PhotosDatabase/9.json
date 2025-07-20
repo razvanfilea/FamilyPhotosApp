@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 8,
-    "identityHash": "19edeabd8df6e19628d2b4c76309f421",
+    "version": 9,
+    "identityHash": "4cd934fd6c8998f6736c46452c9f0336",
     "entities": [
       {
         "tableName": "local_photo",
@@ -139,11 +139,35 @@
             "name"
           ]
         }
+      },
+      {
+        "tableName": "server_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `eventLogId` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "eventLogId",
+            "columnName": "eventLogId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '19edeabd8df6e19628d2b4c76309f421')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4cd934fd6c8998f6736c46452c9f0336')"
     ]
   }
 }

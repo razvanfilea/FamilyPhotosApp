@@ -17,7 +17,7 @@ class DatabaseModule {
 
     @Provides
     fun provideAppDatabase(@ApplicationContext context: Context): PhotosDatabase =
-        PhotosDatabase.Companion.getDatabase(context)
+        PhotosDatabase.getDatabase(context)
 
     @Provides
     fun provideLocalPhotosDao(photosDatabase: PhotosDatabase): LocalPhotosDao =

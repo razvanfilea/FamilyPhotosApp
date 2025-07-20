@@ -14,6 +14,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.theluckycoder.familyphotos.di.NetworkModule
 import androidx.core.net.toUri
+import coil3.annotation.InternalCoilApi
 import net.theluckycoder.familyphotos.utils.UriAsStringSerializer
 
 @Serializable
@@ -55,23 +56,36 @@ data class LocalPhoto(
         get() = networkPhotoId != 0L
 }
 
+@Immutable
 @Serializable
 @Keep
 data class BasicNetworkPhoto(
     val id: Long,
+    @SerialName("user_id")
     val userId: String,
     val name: String,
+    @SerialName("created_at")
     val createdAt: Long,
+    @SerialName("file_size")
     val fileSize: Long,
     val folder: String?,
-)
+) {
+    fun toNetworkPhoto(isFavorite: Boolean = false) = NetworkPhoto(
+        id = id,
+        userId = userId,
+        name = name,
+        timeCreated = createdAt,
+        fileSize = fileSize,
+        folder = folder,
+        isFavorite = isFavorite,
+    )
+}
 
 @Immutable
 @Keep
-@Serializable
 @Parcelize
 @Entity(
-    tableName = "network_photo",
+    tableName = "network_photos",
     indices = [
         Index(value = ["timeCreated"], orders = [Index.Order.DESC])
     ]
@@ -79,19 +93,21 @@ data class BasicNetworkPhoto(
 data class NetworkPhoto(
     @PrimaryKey
     override val id: Long,
-    val userId: String,
+    val userId: String?,
     override val name: String,
-    @SerialName("createdAt")
     override val timeCreated: Long,
     val fileSize: Long = 0,
     override val folder: String? = null,
     val isFavorite: Boolean = false,
 ) : Photo(), Parcelable
 
+@OptIn(InternalCoilApi::class)
 val Photo.isVideo
     get() = when (this) {
-        is NetworkPhoto -> MimeTypeMap.getSingleton().getMimeTypeFromExtension(
-            name.substringAfterLast('.')
+        is NetworkPhoto -> coil3.util.MimeTypeMap.getMimeTypeFromExtension(
+            name.substringAfterLast(
+                '.'
+            )
         )
 
         is LocalPhoto -> mimeType

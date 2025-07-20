@@ -11,7 +11,7 @@ interface UserService {
     @FormUrlEncoded
     @POST("/login")
     suspend fun login(
-        @Field("userId") userId: String,
+        @Field("user_id") userId: String,
         @Field("password") password: String,
     ): Response<User>
 

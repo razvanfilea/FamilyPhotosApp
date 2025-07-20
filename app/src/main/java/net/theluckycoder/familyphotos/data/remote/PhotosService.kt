@@ -2,7 +2,9 @@ package net.theluckycoder.familyphotos.data.remote
 
 import net.theluckycoder.familyphotos.data.model.BasicNetworkPhoto
 import net.theluckycoder.familyphotos.data.model.ExifField
+import net.theluckycoder.familyphotos.data.model.FullPhotoList
 import net.theluckycoder.familyphotos.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.PartialPhotoList
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -17,11 +19,11 @@ import retrofit2.http.Streaming
 
 interface PhotosService {
 
-    @GET("/profile")
-    suspend fun ping(): Response<Void>
+    @GET("/photos/sync/full")
+    suspend fun getFullPhotosList(): Response<FullPhotoList>
 
-    @GET("/photos")
-    suspend fun getPhotosList(): Response<List<BasicNetworkPhoto>>
+    @GET("/photos/sync/changes")
+    suspend fun getEventLogsList(@Query("last_synced_event_id") lastSyncedeventLogId: Long): Response<PartialPhotoList>
 
     @Streaming
     @GET("photos/download/{id}")
@@ -40,31 +42,31 @@ interface PhotosService {
     @Multipart
     @POST("/photos/upload")
     suspend fun uploadPhoto(
-        @Query("timeCreated") timeCreated: String,
-        @Query("folderName") folderName: String?,
-        @Query("makePublic") makePublic: Boolean,
+        @Query("time_created") timeCreated: String,
+        @Query("folder_name") folderName: String?,
+        @Query("make_public") makePublic: Boolean,
         @Part file: MultipartBody.Part,
-    ): Response<NetworkPhoto>
+    ): Response<BasicNetworkPhoto>
 
     @DELETE("/photos/delete/{photoId}")
     suspend fun deletePhoto(
-        @Path("photoId") photoId: Long,
+        @Path("photo_id") photoId: Long,
     ): Response<Void>
 
-    @POST("/photos/change_location/{photoId}")
-    suspend fun changePhotoLocation(
-        @Path("photoId") photoId: Long,
+    @POST("/photos/move/{photoId}")
+    suspend fun movePhoto(
+        @Path("photo_id") photoId: Long,
         @Query("make_public") makePublic: Boolean,
         @Query("target_folder_name") newFolderName: String?,
-    ): Response<NetworkPhoto>
+    ): Response<BasicNetworkPhoto>
 
-    @POST("/photos/rename_folder")
+    @POST("/photos/move/folder")
     suspend fun renameFolder(
         @Query("source_is_public") isPublic: Boolean,
         @Query("source_folder_name") folderName: String,
         @Query("target_make_public") targetMakePublic: Boolean,
         @Query("target_folder_name") targetFolderName: String?,
-    ): Response<List<NetworkPhoto>>
+    ): Response<List<BasicNetworkPhoto>>
 
     @GET("/photos/favorite")
     suspend fun getFavorites(): Response<List<Long>>
