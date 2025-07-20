@@ -11,8 +11,7 @@ import kotlinx.serialization.Serializable
 data class User(
     @SerialName("user_id")
     val userId: String,
+    @SerialName("display_name")
     val displayName: String,
 )
-
-const val PUBLIC_USER_ID = "public"
 

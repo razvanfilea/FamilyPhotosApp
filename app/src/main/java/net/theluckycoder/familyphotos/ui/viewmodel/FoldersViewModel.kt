@@ -19,10 +19,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
-import net.theluckycoder.familyphotos.data.model.LocalFolderToBackup
-import net.theluckycoder.familyphotos.data.model.LocalPhoto
-import net.theluckycoder.familyphotos.data.model.NetworkFolder
-import net.theluckycoder.familyphotos.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.db.LocalFolderToBackup
+import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
+import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository

@@ -30,7 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.Photo
+import net.theluckycoder.familyphotos.data.model.db.Photo
 
 @Composable
 fun FolderFilterTextField(folderNameFilter: String, onFilterChange: (String) -> Unit) {

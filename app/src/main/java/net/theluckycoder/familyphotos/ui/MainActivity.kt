@@ -56,7 +56,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import net.theluckycoder.familyphotos.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.composables.PhotosViewer
 import net.theluckycoder.familyphotos.ui.screen.DuplicatesScreen
 import net.theluckycoder.familyphotos.ui.screen.FolderScreen

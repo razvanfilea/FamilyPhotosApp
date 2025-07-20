@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.LazyPagingItems
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.Photo
+import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState

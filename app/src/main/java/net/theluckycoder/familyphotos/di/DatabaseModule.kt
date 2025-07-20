@@ -6,6 +6,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import net.theluckycoder.familyphotos.data.local.db.FavoritePhotosDao
 import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
 import net.theluckycoder.familyphotos.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
@@ -30,4 +31,8 @@ class DatabaseModule {
     @Provides
     fun provideLocalFolderBackupDao(photosDatabase: PhotosDatabase): LocalFolderBackupDao =
         photosDatabase.localFolderBackupDao()
+
+    @Provides
+    fun provideFavoritesPhotosDao(photosDatabase: PhotosDatabase): FavoritePhotosDao =
+        photosDatabase.favoritePhotosDao()
 }

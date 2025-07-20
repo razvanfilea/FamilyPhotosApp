@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 9,
-    "identityHash": "4cd934fd6c8998f6736c46452c9f0336",
+    "identityHash": "a6bf9fe67bb8ed66fb1dcb0ea920eda8",
     "entities": [
       {
         "tableName": "local_photo",
@@ -58,7 +58,7 @@
       },
       {
         "tableName": "network_photo",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `userId` TEXT NOT NULL, `name` TEXT NOT NULL, `timeCreated` INTEGER NOT NULL, `fileSize` INTEGER NOT NULL, `folder` TEXT, `isFavorite` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `userId` TEXT, `name` TEXT NOT NULL, `timeCreated` INTEGER NOT NULL, `fileSize` INTEGER NOT NULL, `folder` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -69,8 +69,7 @@
           {
             "fieldPath": "userId",
             "columnName": "userId",
-            "affinity": "TEXT",
-            "notNull": true
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "name",
@@ -94,12 +93,6 @@
             "fieldPath": "folder",
             "columnName": "folder",
             "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "isFavorite",
-            "columnName": "isFavorite",
-            "affinity": "INTEGER",
-            "notNull": true
           }
         ],
         "primaryKey": {
@@ -141,6 +134,37 @@
         }
       },
       {
+        "tableName": "favorite_network_photo",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`photoId` INTEGER NOT NULL, PRIMARY KEY(`photoId`), FOREIGN KEY(`photoId`) REFERENCES `network_photo`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "photoId",
+            "columnName": "photoId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "photoId"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "network_photo",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "photoId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
         "tableName": "server_state",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `eventLogId` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
@@ -167,7 +191,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4cd934fd6c8998f6736c46452c9f0336')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a6bf9fe67bb8ed66fb1dcb0ea920eda8')"
     ]
   }
 }

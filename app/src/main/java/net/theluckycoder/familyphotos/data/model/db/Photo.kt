@@ -1,20 +1,20 @@
-package net.theluckycoder.familyphotos.data.model
+package net.theluckycoder.familyphotos.data.model.db
 
 import android.net.Uri
 import android.os.Parcelable
-import android.webkit.MimeTypeMap
 import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
+import androidx.core.net.toUri
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import coil3.annotation.InternalCoilApi
+import coil3.util.MimeTypeMap
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.theluckycoder.familyphotos.di.NetworkModule
-import androidx.core.net.toUri
-import coil3.annotation.InternalCoilApi
 import net.theluckycoder.familyphotos.utils.UriAsStringSerializer
 
 @Serializable
@@ -57,35 +57,11 @@ data class LocalPhoto(
 }
 
 @Immutable
-@Serializable
-@Keep
-data class BasicNetworkPhoto(
-    val id: Long,
-    @SerialName("user_id")
-    val userId: String,
-    val name: String,
-    @SerialName("created_at")
-    val createdAt: Long,
-    @SerialName("file_size")
-    val fileSize: Long,
-    val folder: String?,
-) {
-    fun toNetworkPhoto(isFavorite: Boolean = false) = NetworkPhoto(
-        id = id,
-        userId = userId,
-        name = name,
-        timeCreated = createdAt,
-        fileSize = fileSize,
-        folder = folder,
-        isFavorite = isFavorite,
-    )
-}
-
-@Immutable
 @Keep
 @Parcelize
+@Serializable
 @Entity(
-    tableName = "network_photos",
+    tableName = "network_photo",
     indices = [
         Index(value = ["timeCreated"], orders = [Index.Order.DESC])
     ]
@@ -93,18 +69,20 @@ data class BasicNetworkPhoto(
 data class NetworkPhoto(
     @PrimaryKey
     override val id: Long,
+    @SerialName("user_id")
     val userId: String?,
     override val name: String,
+    @SerialName("created_at")
     override val timeCreated: Long,
+    @SerialName("file_size")
     val fileSize: Long = 0,
     override val folder: String? = null,
-    val isFavorite: Boolean = false,
 ) : Photo(), Parcelable
 
 @OptIn(InternalCoilApi::class)
 val Photo.isVideo
     get() = when (this) {
-        is NetworkPhoto -> coil3.util.MimeTypeMap.getMimeTypeFromExtension(
+        is NetworkPhoto -> MimeTypeMap.getMimeTypeFromExtension(
             name.substringAfterLast(
                 '.'
             )
@@ -123,4 +101,5 @@ fun Photo.getPreviewUri(): Uri = when (this) {
     is LocalPhoto -> uri
 }
 
-fun NetworkPhoto.isPublic() = this.userId == PUBLIC_USER_ID
+val NetworkPhoto.isPublic
+    get() = this.userId == null

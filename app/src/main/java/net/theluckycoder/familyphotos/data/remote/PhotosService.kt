@@ -1,9 +1,8 @@
 package net.theluckycoder.familyphotos.data.remote
 
-import net.theluckycoder.familyphotos.data.model.BasicNetworkPhoto
 import net.theluckycoder.familyphotos.data.model.ExifField
 import net.theluckycoder.familyphotos.data.model.FullPhotoList
-import net.theluckycoder.familyphotos.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.PartialPhotoList
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
@@ -23,7 +22,7 @@ interface PhotosService {
     suspend fun getFullPhotosList(): Response<FullPhotoList>
 
     @GET("/photos/sync/changes")
-    suspend fun getEventLogsList(@Query("last_synced_event_id") lastSyncedeventLogId: Long): Response<PartialPhotoList>
+    suspend fun getEventLogsList(@Query("last_synced_event_id") lastSyncedEventLogId: Long): Response<PartialPhotoList>
 
     @Streaming
     @GET("photos/download/{id}")
@@ -46,19 +45,19 @@ interface PhotosService {
         @Query("folder_name") folderName: String?,
         @Query("make_public") makePublic: Boolean,
         @Part file: MultipartBody.Part,
-    ): Response<BasicNetworkPhoto>
+    ): Response<NetworkPhoto>
 
-    @DELETE("/photos/delete/{photoId}")
+    @DELETE("/photos/delete/{photo_id}")
     suspend fun deletePhoto(
         @Path("photo_id") photoId: Long,
     ): Response<Void>
 
-    @POST("/photos/move/{photoId}")
+    @POST("/photos/move/{photo_id}")
     suspend fun movePhoto(
         @Path("photo_id") photoId: Long,
         @Query("make_public") makePublic: Boolean,
         @Query("target_folder_name") newFolderName: String?,
-    ): Response<BasicNetworkPhoto>
+    ): Response<NetworkPhoto>
 
     @POST("/photos/move/folder")
     suspend fun renameFolder(
@@ -66,14 +65,14 @@ interface PhotosService {
         @Query("source_folder_name") folderName: String,
         @Query("target_make_public") targetMakePublic: Boolean,
         @Query("target_folder_name") targetFolderName: String?,
-    ): Response<List<BasicNetworkPhoto>>
+    ): Response<List<NetworkPhoto>>
 
     @GET("/photos/favorite")
     suspend fun getFavorites(): Response<List<Long>>
 
-    @POST("/photos/favorite/{photoId}")
-    suspend fun addFavorite(@Path("photoId") photoId: Long): Response<Void>
+    @POST("/photos/favorite/{photo_id}")
+    suspend fun addFavorite(@Path("photo_id") photoId: Long): Response<Void>
 
-    @DELETE("/photos/favorite/{photoId}")
-    suspend fun removeFavorite(@Path("photoId") photoId: Long): Response<Void>
+    @DELETE("/photos/favorite/{photo_id}")
+    suspend fun removeFavorite(@Path("photo_id") photoId: Long): Response<Void>
 }

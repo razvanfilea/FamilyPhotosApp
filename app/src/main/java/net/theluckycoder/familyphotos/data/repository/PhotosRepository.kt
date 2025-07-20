@@ -2,9 +2,11 @@ package net.theluckycoder.familyphotos.data.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import net.theluckycoder.familyphotos.data.local.db.FavoritePhotosDao
 import net.theluckycoder.familyphotos.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
-import net.theluckycoder.familyphotos.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.PhotoType
+import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -12,6 +14,7 @@ import javax.inject.Singleton
 class PhotosRepository @Inject constructor(
     private val localPhotosDao: LocalPhotosDao,
     private val networkPhotosDao: NetworkPhotosDao,
+    private val favoritePhotosDao: FavoritePhotosDao,
 ) {
     fun getLocalPhoto(photoId: Long) = localPhotosDao.findById(photoId)
 
@@ -24,8 +27,8 @@ class PhotosRepository @Inject constructor(
     suspend fun getLocalPhotoFromNetwork(networkPhotoId: Long) =
         localPhotosDao.findByNetworkId(networkPhotoId)
 
-    fun getMemories(userName: String?): Flow<Map<Int, List<NetworkPhoto>>> =
-        networkPhotosDao.getPhotosGroupedByYearsAgo(userName).map { photosWithOffset ->
+    fun getMemories(photoType: PhotoType): Flow<Map<Int, List<NetworkPhoto>>> =
+        networkPhotosDao.getPhotosGroupedByYearsAgo(photoType).map { photosWithOffset ->
             photosWithOffset.groupBy { it.yearOffset }
                 .mapValues { entry -> entry.value.map { it.photo } }
         }
@@ -38,5 +41,7 @@ class PhotosRepository @Inject constructor(
 
     fun getAllPhotosPaged() = networkPhotosDao.getPhotosPaged()
 
-    fun getFavoritePhotosPaged() = networkPhotosDao.getFavoritePhotosPaged()
+    fun getFavoritePhotosPaged() = favoritePhotosDao.getFavoritePhotosPaged()
+
+    fun isNetworkPhotoFavorite(photoId: Long) = favoritePhotosDao.isFavorite(photoId)
 }

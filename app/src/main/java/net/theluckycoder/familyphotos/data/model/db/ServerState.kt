@@ -1,4 +1,4 @@
-package net.theluckycoder.familyphotos.data.model
+package net.theluckycoder.familyphotos.data.model.db
 
 import androidx.annotation.Keep
 import androidx.room.Entity

@@ -1,4 +1,4 @@
-package net.theluckycoder.familyphotos.data.model
+package net.theluckycoder.familyphotos.data.model.db
 
 import android.net.Uri
 import androidx.compose.runtime.Immutable
@@ -19,7 +19,7 @@ data class NetworkFolder(
     @ColumnInfo(name = "id")
     override val coverPhotoId: Long,
     @ColumnInfo(name = "userId")
-    val userId: String,
+    val userId: String?,
     @ColumnInfo(name = "photoCount")
     override val count: Int,
 ) : PhotoFolder() {
@@ -43,7 +43,8 @@ data class NetworkFolder(
     }
 }
 
-fun NetworkFolder.isPublic() = this.userId == PUBLIC_USER_ID
+val NetworkFolder.isPublic
+    get() = this.userId == null
 
 @Immutable
 data class LocalFolder(

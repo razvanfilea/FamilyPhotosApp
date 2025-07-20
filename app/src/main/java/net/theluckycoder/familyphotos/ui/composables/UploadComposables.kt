@@ -35,9 +35,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.NetworkFolder
-import net.theluckycoder.familyphotos.data.model.Photo
-import net.theluckycoder.familyphotos.data.model.isPublic
+import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
+import net.theluckycoder.familyphotos.data.model.db.Photo
+import net.theluckycoder.familyphotos.data.model.db.isPublic
+import net.theluckycoder.familyphotos.data.model.db.isPublic
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.utils.normalize
 
@@ -151,7 +152,7 @@ fun UploadPhotosLayout(
         val filteredFoldersList = remember(networkFolders, choice, folderName) {
             val normalizedName = folderName.normalize()
             networkFolders.asSequence()
-                .filter { it.isPublic() == (choice == UploadChoice.Public) }
+                .filter { it.isPublic == (choice == UploadChoice.Public) }
                 .map { it.name }
                 .filter { it.normalize().contains(normalizedName, ignoreCase = true) }
                 .toList()

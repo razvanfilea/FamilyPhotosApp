@@ -33,7 +33,7 @@ import androidx.exifinterface.media.ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.ExifData
-import net.theluckycoder.familyphotos.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.composables.photoDateText
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewerViewModel
 import java.text.DecimalFormat

@@ -32,8 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.NetworkPhoto
-import net.theluckycoder.familyphotos.data.model.PUBLIC_USER_ID
+import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.db.isPublic
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
@@ -161,7 +161,7 @@ private fun PagerContent(
                 },
             ) {
                 val icon =
-                    if (photo.userId == PUBLIC_USER_ID) familyDrawable else personalDrawable
+                    if (photo.isPublic) familyDrawable else personalDrawable
                 Icon(
                     icon,
                     contentDescription = null,

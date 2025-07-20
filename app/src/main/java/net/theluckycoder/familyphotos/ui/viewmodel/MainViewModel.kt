@@ -38,11 +38,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.data.local.datastore.UserDataStore
-import net.theluckycoder.familyphotos.data.model.LocalPhoto
-import net.theluckycoder.familyphotos.data.model.NetworkPhoto
-import net.theluckycoder.familyphotos.data.model.PUBLIC_USER_ID
+import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.PhotoType
-import net.theluckycoder.familyphotos.data.model.isPublic
+import net.theluckycoder.familyphotos.data.model.db.isPublic
 import net.theluckycoder.familyphotos.data.repository.LoginRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.data.repository.ServerRepository
@@ -96,7 +95,8 @@ class MainViewModel @Inject constructor(
             when (result) {
                 is RefreshPhotosUseCase.Result.Error -> Log.e(
                     "MainViewModel",
-                    "Failed to refresh data"
+                    "Failed to refresh data",
+                    result.throwable
                 )
 
                 RefreshPhotosUseCase.Result.NotLoggedIn -> {
@@ -137,10 +137,6 @@ class MainViewModel @Inject constructor(
                 false
             }
         }.all { it }
-    }
-
-    fun getLocalPhotos(photoIds: LongArray): Deferred<List<LocalPhoto>> = viewModelScope.async(Dispatchers.IO) {
-        photoIds.map { photosRepository.getLocalPhoto(it) }.filterNotNull()
     }
 
     fun getNetworkPhotos(photoIds: LongArray): Deferred<List<NetworkPhoto>> = viewModelScope.async(Dispatchers.IO) {

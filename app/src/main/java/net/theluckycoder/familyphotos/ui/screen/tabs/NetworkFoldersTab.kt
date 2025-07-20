@@ -38,9 +38,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.PhotoType
-import net.theluckycoder.familyphotos.data.model.isPublic
+import net.theluckycoder.familyphotos.data.model.db.isPublic
+import net.theluckycoder.familyphotos.data.model.db.isPublic
 import net.theluckycoder.familyphotos.ui.DuplicatesNav
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
@@ -72,8 +73,8 @@ fun NetworkFoldersTab() = Column(
         folders.filter {
             when (selectedPhotoType) {
                 PhotoType.All -> true
-                PhotoType.Personal -> !it.isPublic()
-                PhotoType.Family -> it.isPublic()
+                PhotoType.Personal -> !it.isPublic
+                PhotoType.Family -> it.isPublic
             } && it.name.normalize().contains(filterName, ignoreCase = true)
         }
     }
@@ -178,7 +179,7 @@ fun NetworkFoldersTab() = Column(
                     backStack.add(FolderNav(FolderNav.Source.Network(folder)))
                 },
             ) {
-                if (folder.isPublic()) {
+                if (folder.isPublic) {
                     Icon(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)

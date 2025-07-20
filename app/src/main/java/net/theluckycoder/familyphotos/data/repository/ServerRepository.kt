@@ -12,15 +12,15 @@ import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import net.theluckycoder.familyphotos.data.local.db.FavoritePhotosDao
 import net.theluckycoder.familyphotos.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
-import net.theluckycoder.familyphotos.data.model.BasicNetworkPhoto
 import net.theluckycoder.familyphotos.data.model.ExifData
-import net.theluckycoder.familyphotos.data.model.LocalPhoto
-import net.theluckycoder.familyphotos.data.model.NetworkFolder
-import net.theluckycoder.familyphotos.data.model.NetworkPhoto
-import net.theluckycoder.familyphotos.data.model.isPublic
-import net.theluckycoder.familyphotos.data.model.isVideo
+import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
+import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.db.isVideo
+import net.theluckycoder.familyphotos.data.model.db.isPublic
 import net.theluckycoder.familyphotos.data.remote.PhotosService
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -39,6 +39,7 @@ class ServerRepository @Inject constructor(
     private val photosService: Lazy<PhotosService>,
     private val networkPhotosDao: NetworkPhotosDao,
     private val localPhotosDao: LocalPhotosDao,
+    private val favoritePhotosDao: FavoritePhotosDao,
 ) {
 
     enum class DownloadResponse {
@@ -49,10 +50,10 @@ class ServerRepository @Inject constructor(
     }
 
     suspend fun downloadPartialPhotos(): DownloadResponse {
-        val lastSyncedeventLogId = networkPhotosDao.getEventLogId()
-        Log.i("ServerRepository", "Last synced event id: $lastSyncedeventLogId")
+        val lastSyncedEventLogId = networkPhotosDao.getEventLogId()
+        Log.i("ServerRepository", "Last synced event id: $lastSyncedEventLogId")
 
-        val response = photosService.get().getEventLogsList(lastSyncedeventLogId)
+        val response = photosService.get().getEventLogsList(lastSyncedEventLogId)
 
         if (!response.isSuccessful) {
             return when (response.code()) {
@@ -66,7 +67,10 @@ class ServerRepository @Inject constructor(
                 networkPhotosDao.updatePartials(partialPhotos.events, partialPhotos.eventLogId)
             }
 
-            Log.i("ServerRepository", "Downloaded partial photos. EventLogId: ${partialPhotos.eventLogId}")
+            Log.i(
+                "ServerRepository",
+                "Downloaded partial photos. EventLogId: ${partialPhotos.eventLogId}"
+            )
 
             return DownloadResponse.SUCCESSFUL
         }
@@ -77,24 +81,32 @@ class ServerRepository @Inject constructor(
         val photosAsync = async { service.getFullPhotosList() }
 
         val favoritePhotosResponse = service.getFavorites()
+        favoritePhotosResponse.errorBody()
+            ?.let { Log.e("ServerRepository", "Failed to get favorites ${it.string()}") }
+
         val photosResponse = photosAsync.await()
 
-        if (favoritePhotosResponse.isSuccessful && photosResponse.isSuccessful) {
-            val favorites = favoritePhotosResponse.body() ?: emptyList()
+        if (photosResponse.isSuccessful) {
             val fullPhotos = photosResponse.body()!!
-            val photos = fullPhotos.photos.map(BasicNetworkPhoto::toNetworkPhoto)
 
-            if (photos.isNotEmpty()) {
-                networkPhotosDao.replaceAll(photos, favorites, fullPhotos.eventLogId)
-                Log.i("ServerRepository", "Downloaded all server photos. EventLogId: ${fullPhotos.eventLogId}")
+            if (fullPhotos.photos.isNotEmpty()) {
+                networkPhotosDao.replaceAll(fullPhotos.photos, fullPhotos.eventLogId)
+                Log.i(
+                    "ServerRepository",
+                    "Downloaded all server photos. EventLogId: ${fullPhotos.eventLogId}"
+                )
+
+                // Only insert favorite photos after downloading all photos
+                favoritePhotosResponse.body()?.let { favoritePhotos ->
+                    favoritePhotosDao.replaceAll(favoritePhotos)
+                }
+
                 return@coroutineScope DownloadResponse.SUCCESSFUL
             }
         }
 
         photosResponse.errorBody()
             ?.let { Log.e("ServerRepository", "Failed to get photos ${it.string()}") }
-        favoritePhotosResponse.errorBody()
-            ?.let { Log.e("ServerRepository", "Failed to get favorites ${it.string()}") }
 
         DownloadResponse.UNSUCCESSFUL
     }
@@ -263,7 +275,7 @@ class ServerRepository @Inject constructor(
         )
 
         response.body()?.let { networkPhoto ->
-            networkPhotosDao.insert(networkPhoto.toNetworkPhoto(networkPhotosDao.findById(networkPhoto.id)?.isFavorite ?: false))
+            networkPhotosDao.insert(networkPhoto)
             localPhotosDao.insertOrReplace(localPhoto.copy(networkPhotoId = networkPhoto.id))
             return true
         }
@@ -289,7 +301,7 @@ class ServerRepository @Inject constructor(
         if (!response.isSuccessful || changedPhoto == null)
             return false
 
-        networkPhotosDao.insert(changedPhoto.toNetworkPhoto(photo.isFavorite))
+        networkPhotosDao.insert(changedPhoto)
         return true
     }
 
@@ -301,7 +313,10 @@ class ServerRepository @Inject constructor(
         }
 
         if (response.isSuccessful) {
-            networkPhotosDao.insert(photo.copy(isFavorite = add))
+            if (add)
+                favoritePhotosDao.addFavorite(photo.id)
+            else
+                favoritePhotosDao.removeFavorite(photo.id)
         } else {
             Log.e(
                 "ServerRepository",
@@ -316,19 +331,21 @@ class ServerRepository @Inject constructor(
         newName: String?
     ): Boolean {
         val response = photosService.get().renameFolder(
-            isPublic = folder.isPublic(),
+            isPublic = folder.isPublic,
             folderName = folder.name,
             targetMakePublic = makePublic,
             targetFolderName = newName
         )
+        Log.d("ServerRepository", "Renamed folder ${folder.name}")
 
         val changedPhotos = response.body()
-        if (!response.isSuccessful || changedPhotos == null)
+        if (!response.isSuccessful || changedPhotos == null) {
+            Log.e("ServerRepository", response.errorBody()?.string().orEmpty())
             return false
+        }
 
-        val photos = changedPhotos.map { it.toNetworkPhoto(networkPhotosDao.findById(it.id)?.isFavorite ?: false) }
-
-        networkPhotosDao.insert(photos)
+        networkPhotosDao.insert(changedPhotos)
+        Log.d("ServerRepository", "Updated moved folder photos (${changedPhotos.size})")
         return true
     }
 

@@ -9,13 +9,14 @@ import androidx.room.RoomMasterTable.TABLE_NAME
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import net.theluckycoder.familyphotos.data.model.LocalFolderToBackup
-import net.theluckycoder.familyphotos.data.model.LocalPhoto
-import net.theluckycoder.familyphotos.data.model.NetworkPhoto
-import net.theluckycoder.familyphotos.data.model.ServerState
+import net.theluckycoder.familyphotos.data.model.db.FavoriteNetworkPhoto
+import net.theluckycoder.familyphotos.data.model.db.LocalFolderToBackup
+import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.db.ServerState
 
 @Database(
-    entities = [LocalPhoto::class, NetworkPhoto::class, LocalFolderToBackup::class, ServerState::class],
+    entities = [LocalPhoto::class, NetworkPhoto::class, LocalFolderToBackup::class, FavoriteNetworkPhoto::class, ServerState::class],
     version = 9,
     exportSchema = true,
 )
@@ -28,15 +29,11 @@ abstract class PhotosDatabase : RoomDatabase() {
 
     abstract fun localFolderBackupDao(): LocalFolderBackupDao
 
+    abstract fun favoritePhotosDao(): FavoritePhotosDao
+
     companion object {
         @Volatile
         private var INSTANCE: PhotosDatabase? = null
-
-        private val MIGRATION_6 = object : Migration(5, 6) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE INDEX index_network_photo_timeCreated ON network_photo(timeCreated DESC)")
-            }
-        }
 
         private val MIGRATION_7 = object : Migration(6, 7) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -54,6 +51,12 @@ abstract class PhotosDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE server_state(id INTEGER NOT NULL PRIMARY KEY CHECK (id = 0), eventLogId INTEGER NOT NULL)")
                 db.execSQL("INSERT INTO server_state VALUES (0, 0)")
+
+                db.execSQL("DROP TABLE network_photo")
+                db.execSQL("CREATE TABLE network_photo (id INTEGER NOT NULL PRIMARY KEY, userId TEXT, name TEXT NOT NULL, timeCreated INTEGER NOT NULL, fileSize INTEGER NOT NULL, folder TEXT)")
+                db.execSQL("CREATE INDEX index_network_photo_timeCreated ON network_photo(timeCreated DESC)")
+
+                db.execSQL("CREATE TABLE favorite_network_photo (photoId INTEGER NOT NULL PRIMARY KEY REFERENCES network_photo(id) ON DELETE CASCADE)")
             }
         }
 
@@ -66,7 +69,6 @@ abstract class PhotosDatabase : RoomDatabase() {
                     PhotosDatabase::class.java,
                     "photos_database"
                 ).addMigrations(
-                    MIGRATION_6,
                     MIGRATION_7,
                     MIGRATION_8,
                     MIGRATION_9,

@@ -25,38 +25,35 @@ class RefreshPhotosUseCase @Inject constructor(
         var response = try {
             serverRepository.downloadPartialPhotos()
         } catch (e: Exception) {
+            Log.e("RefreshPhotosUseCase", "Failed to download partial photos", e)
             ServerRepository.DownloadResponse.UNSUCCESSFUL
-            localPhotosJob.await()
-            return Result.Error(e)
-        }
-
-        if (response == ServerRepository.DownloadResponse.FULL_DOWNLOAD_NEEDED) {
-            try {
-                response = serverRepository.downloadAllPhotos()
-            } catch (e: Exception) {
-                Log.e("RefreshPhotosUseCase", "Failed to download photos", e)
-                localPhotosJob.await()
-                return Result.Error(e)
-            }
         }
 
         if (response == ServerRepository.DownloadResponse.NOT_LOGGED_IN) {
-            // Consider how to signal logout. Maybe return a specific result.
-            // For now, let's assume the ViewModel handles actual logout triggering.
             localPhotosJob.await()
             return Result.NotLoggedIn
+        }
+
+        if (response == ServerRepository.DownloadResponse.FULL_DOWNLOAD_NEEDED || response == ServerRepository.DownloadResponse.UNSUCCESSFUL) {
+            try {
+                response = serverRepository.downloadAllPhotos()
+            } catch (e: Exception) {
+                Log.e("RefreshPhotosUseCase", "Failed to download photos")
+                localPhotosJob.await()
+                return Result.Error(e)
+            }
         }
 
         isOnlineState.value = response == ServerRepository.DownloadResponse.SUCCESSFUL
 
         localPhotosJob.await()
 
-        return Result.Success // TODO Handle error
+        return Result.Success
     }
 
     sealed class Result {
         object Success : Result()
         object NotLoggedIn : Result()
-        data class Error(val throwable: Throwable) : Result()
+        data class Error(val throwable: Throwable? = null) : Result()
     }
 }

@@ -42,16 +42,17 @@ import coil3.request.crossfade
 import coil3.request.maxBitmapSize
 import coil3.size.Size
 import me.saket.telephoto.zoomable.DoubleClickToZoomListener
+import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.LocalPhoto
-import net.theluckycoder.familyphotos.data.model.NetworkPhoto
-import net.theluckycoder.familyphotos.data.model.Photo
-import net.theluckycoder.familyphotos.data.model.getPreviewUri
-import net.theluckycoder.familyphotos.data.model.getUri
-import net.theluckycoder.familyphotos.data.model.isVideo
+import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.db.Photo
+import net.theluckycoder.familyphotos.data.model.db.getPreviewUri
+import net.theluckycoder.familyphotos.data.model.db.getUri
+import net.theluckycoder.familyphotos.data.model.db.isVideo
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
@@ -208,20 +209,25 @@ private fun TopBar(
     enter = fadeIn(),
     exit = fadeOut()
 ) {
+    val title = photo.photoDateText()
+    val isFavoriteFlow =
+        remember(photo.id) { photoViewerViewModel.isNetworkPhotoFavorite(photo.id) }
+    val isFavorite by isFavoriteFlow.collectAsState(false)
+
     NavBackTopAppBar(
-        modifier = Modifier.Companion.fillMaxWidth(),
-        title = photo.photoDateText(),
+        modifier = Modifier.fillMaxWidth(),
+        title = title,
         navIconOnClick = onClose,
         actions = {
             if (photo is NetworkPhoto) {
                 IconButton(onClick = {
                     photoViewerViewModel.updateFavorite(
                         photo,
-                        !photo.isFavorite
+                        !isFavorite
                     )
                 }) {
                     val icon =
-                        if (photo.isFavorite) R.drawable.ic_star_filled else R.drawable.ic_star_outline
+                        if (isFavorite) R.drawable.ic_star_filled else R.drawable.ic_star_outline
 
                     Icon(painterResource(icon), null)
                 }

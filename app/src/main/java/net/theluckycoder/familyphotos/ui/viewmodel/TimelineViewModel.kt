@@ -18,9 +18,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.data.local.datastore.UserDataStore
-import net.theluckycoder.familyphotos.data.model.PUBLIC_USER_ID
 import net.theluckycoder.familyphotos.data.model.PhotoType
-import net.theluckycoder.familyphotos.data.model.isPublic
+import net.theluckycoder.familyphotos.data.model.db.isPublic
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel.Companion.PAGING_CONFIG
 import javax.inject.Inject
@@ -47,21 +46,14 @@ class TimelineViewModel @Inject constructor(
             photos.filter {
                 when (photoType) {
                     PhotoType.All -> true
-                    PhotoType.Personal -> !it.isPublic()
-                    PhotoType.Family -> it.isPublic()
+                    PhotoType.Personal -> !it.isPublic
+                    PhotoType.Family -> it.isPublic
                 }
             }
         }
 
     val memories = selectedPhotoType
-        .combine(userDataStore.userIdFlow) { photoType, userName ->
-            when (photoType) {
-                PhotoType.All -> null
-                PhotoType.Personal -> userName
-                PhotoType.Family -> PUBLIC_USER_ID
-            }
-        }
-        .flatMapLatest { userName -> photosRepository.getMemories(userName) }
+        .flatMapLatest { photoType -> photosRepository.getMemories(photoType) }
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 

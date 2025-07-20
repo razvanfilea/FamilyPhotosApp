@@ -10,7 +10,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.first
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.Photo
+import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.composables.UploadChoice
 import net.theluckycoder.familyphotos.ui.composables.UploadPhotosLayout

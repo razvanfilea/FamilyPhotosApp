@@ -13,9 +13,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
-import net.theluckycoder.familyphotos.data.model.LocalFolder
-import net.theluckycoder.familyphotos.data.model.LocalPhoto
-import net.theluckycoder.familyphotos.data.model.NetworkFolder
+import net.theluckycoder.familyphotos.data.model.db.LocalFolder
+import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.ExperimentalTime

@@ -3,6 +3,7 @@ package net.theluckycoder.familyphotos.data.model
 import android.util.Base64
 import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
+import kotlinx.serialization.SerialName
 
 @Immutable
 @Keep

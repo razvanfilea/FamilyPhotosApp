@@ -53,9 +53,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.LazyPagingItems
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.LocalPhoto
-import net.theluckycoder.familyphotos.data.model.Photo
-import net.theluckycoder.familyphotos.data.model.isVideo
+import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.data.model.db.Photo
+import net.theluckycoder.familyphotos.data.model.db.isVideo
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.utils.computeSeparatorText
 

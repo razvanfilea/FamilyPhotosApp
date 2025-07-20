@@ -51,9 +51,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.Photo
-import net.theluckycoder.familyphotos.data.model.getPreviewUri
-import net.theluckycoder.familyphotos.data.model.getUri
+import net.theluckycoder.familyphotos.data.model.db.Photo
+import net.theluckycoder.familyphotos.data.model.db.getPreviewUri
+import net.theluckycoder.familyphotos.data.model.db.getUri
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import java.time.format.DateTimeFormatter
 import kotlin.time.ExperimentalTime

@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.data.model.ExifData
-import net.theluckycoder.familyphotos.data.model.LocalPhoto
-import net.theluckycoder.familyphotos.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.data.repository.ServerRepository
 import javax.inject.Inject
@@ -25,6 +25,9 @@ class PhotoViewerViewModel @Inject constructor(
 
     fun getNetworkPhotoFlow(photoId: Long): Flow<NetworkPhoto?> =
         photosRepository.getNetworkPhotoFlow(photoId)
+
+    fun isNetworkPhotoFavorite(photoId: Long): Flow<Boolean> =
+        photosRepository.isNetworkPhotoFavorite(photoId)
 
     fun updateFavorite(photo: NetworkPhoto, add: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {

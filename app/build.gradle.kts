@@ -22,7 +22,7 @@ android {
         targetSdk = 35
 
         versionCode = 29
-        versionName = "2.9.2"
+        versionName = "2.9.4"
     }
 
     androidResources {
@@ -37,7 +37,7 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles("proguard-rules.pro")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 
