@@ -136,6 +136,5 @@ dependencies {
     implementation(libs.coil.video)
 
     // Other
-    implementation(libs.processPheonix)
     implementation(libs.telephoto)
 }

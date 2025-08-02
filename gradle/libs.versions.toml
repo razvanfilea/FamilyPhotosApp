@@ -1,5 +1,5 @@
 [versions]
-agp = "8.11.1"
+agp = "8.12.0"
 kotlin_base = "2.2.0"
 kotlin_ksp = "2.2.0-2.0.2"
 kotlin_coroutines = "1.10.2"
@@ -23,7 +23,6 @@ coil = "3.3.0"
 dagger = "2.57"
 retrofit = "3.0.0"
 okhttp = "5.1.0"
-processPheonix = "3.0.0"
 telephoto = "0.16.0"
 nav3Core = "1.0.0-alpha06"
 lifecycleViewmodelNav3 = "1.0.0-alpha04"
@@ -60,6 +59,10 @@ compose_toolingPreview = { module = "androidx.compose.ui:ui-tooling-preview", ve
 compose_activity = { module = "androidx.activity:activity-compose", version.ref = "compose_activity" }
 compose_lifecycleViewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "compose_lifecycleViewmodel" }
 
+androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "nav3Core" }
+androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "nav3Core" }
+androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycleViewmodelNav3" }
+
 room_runtime = { module = "androidx.room:room-ktx", version.ref = "androidx_room" }
 room_compiler = { module = "androidx.room:room-compiler", version.ref = "androidx_room" }
 room_paging = { module = "androidx.room:room-paging", version.ref = "androidx_room" }
@@ -90,9 +93,4 @@ retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit
 retrofitSerializer = { module = "com.squareup.retrofit2:converter-kotlinx-serialization", version.ref = "retrofit" }
 okhttp_logging = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
 okhttp_brotli = { module = "com.squareup.okhttp3:okhttp-brotli", version.ref = "okhttp" }
-processPheonix = { module = "com.jakewharton:process-phoenix", version.ref = "processPheonix"}
 telephoto = { module = "me.saket.telephoto:zoomable-image-coil3", version.ref = "telephoto"}
-
-androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "nav3Core" }
-androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "nav3Core" }
-androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycleViewmodelNav3" }

@@ -71,11 +71,13 @@ fun DuplicatesScreen() {
                 },
                 subtitle = duplicates.size.takeIf { it != 0 }?.toString(),
                 actions = {
-                    IconButton(onClick = networkPhotoInfoDialog::show) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_outline_info),
-                            contentDescription = null
-                        )
+                    if (currentPhoto != null) {
+                        IconButton(onClick = networkPhotoInfoDialog::show) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_outline_info),
+                                contentDescription = null
+                            )
+                        }
                     }
                 }
             )

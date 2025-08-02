@@ -2,14 +2,12 @@ package net.theluckycoder.familyphotos.ui.composables
 
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -31,7 +29,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextFieldDefaults.contentPadding
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -47,7 +44,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -90,9 +86,6 @@ fun <T : Photo> PhotosList(
     openPhoto: (index: Int) -> Unit,
     mainViewModel: MainViewModel = viewModel()
 ) = Box(Modifier.fillMaxSize()) {
-    val topBarHeight = 64.dp
-    val topBarPadding = 48.dp
-
     val zoomIndexState = mainViewModel.zoomIndexState
     LaunchedEffect(zoomIndexState.intValue) {
         mainViewModel.settingsStore.setPhotosZoomLevel(zoomIndexState.intValue)
@@ -182,12 +175,12 @@ fun <T : Photo> PhotosList(
     AnimatedVisibility(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = topBarPadding)
-            .height(topBarHeight),
+            .padding(top = 48.dp)
+            .height(64.dp),
         visible = selectedPhotoIds.isNotEmpty(),
     ) {
         val isLocalPhoto =
-            remember { photos.itemSnapshotList.items.firstOrNull() is LocalPhoto }
+            remember(photos) { photos.itemSnapshotList.items.firstOrNull() is LocalPhoto }
         SelectionAppBar(selectedPhotoIds, isLocalPhoto)
     }
 }

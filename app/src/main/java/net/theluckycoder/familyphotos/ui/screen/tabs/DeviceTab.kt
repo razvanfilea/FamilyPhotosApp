@@ -79,20 +79,6 @@ fun DeviceTab() = Column(
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp),
             ) {
-                FilledTonalButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { backStack.add(SettingsNav) },
-                ) {
-                    Icon(
-                        painterResource(R.drawable.ic_settings_outline),
-                        contentDescription = null
-                    )
-
-                    Spacer(Modifier.width(12.dp))
-
-                    Text(stringResource(R.string.title_settings))
-                }
-
                 SortButton(
                     sortAscending = sortAscending,
                     onClick = {

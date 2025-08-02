@@ -13,6 +13,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -29,7 +30,6 @@ import javax.inject.Inject
 class TimelineViewModel @Inject constructor(
     private val photosRepository: PhotosRepository,
     private val settingsStore: SettingsDataStore,
-    userDataStore: UserDataStore,
 ) : ViewModel() {
 
     val selectedPhotoType =

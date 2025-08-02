@@ -103,53 +103,6 @@ fun NetworkFoldersTab() = Column(
                         .padding(horizontal = 8.dp),
                 )
 
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    FilledTonalButton(
-                        modifier = Modifier.weight(1f),
-                        onClick = {
-                            backStack.add(FolderNav(FolderNav.Source.Favorites))
-                        },
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Icon(
-                            painterResource(R.drawable.ic_star_outline),
-                            contentDescription = null
-                        )
-
-                        Spacer(Modifier.width(12.dp))
-
-                        Text(stringResource(R.string.title_favorites))
-                    }
-
-                    FilledTonalButton(
-                        modifier = Modifier.weight(1f),
-                        onClick = {
-                            backStack.add(DuplicatesNav)
-                        },
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            contentColor = MaterialTheme.colorScheme.tertiary
-                        )
-                    ) {
-                        Icon(
-                            painterResource(R.drawable.ic_duplicates_outlined),
-                            contentDescription = null
-                        )
-
-                        Spacer(Modifier.width(12.dp))
-
-                        Text(stringResource(R.string.title_duplicates))
-                    }
-                }
-
                 SortButton(
                     sortAscending = sortAscending,
                     onClick = {

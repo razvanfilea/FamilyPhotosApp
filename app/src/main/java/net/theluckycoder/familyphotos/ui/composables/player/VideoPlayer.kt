@@ -11,6 +11,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -72,6 +73,7 @@ fun VideoPlayer(
     sourceUri: Uri,
     showControls: MutableState<Boolean>,
     modifier: Modifier = Modifier,
+    controlsPadding: PaddingValues = PaddingValues()
 ) = Box(modifier) {
 
     val context = LocalContext.current
@@ -134,6 +136,7 @@ fun VideoPlayer(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(0.1f))
+                .padding(controlsPadding)
         ) {
             MinimalControls(exoPlayer, Modifier.align(Alignment.Center))
 

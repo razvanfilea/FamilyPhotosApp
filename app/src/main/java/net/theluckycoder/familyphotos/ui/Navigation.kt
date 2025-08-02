@@ -2,48 +2,28 @@ package net.theluckycoder.familyphotos.ui
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import net.theluckycoder.familyphotos.data.model.db.Photo
 
-fun NavBackStack.replaceAll(route: TopLevelRouteNav) {
-    clear()
-    add(route)
-}
-
-sealed interface TopLevelRouteNav : NavKey {
-    @get:DrawableRes
-    val icon: Int
-
-    @get:DrawableRes
-    val selectedIcon: Int
-
-    @get:StringRes
-    val name: Int
-}
-
 @Serializable
-data object TimelineNav : TopLevelRouteNav {
-    override val icon: Int = R.drawable.ic_photo_outline
-    override val selectedIcon: Int = R.drawable.ic_photo_filled
-    override val name: Int = R.string.section_photos
-}
+object TopLevelNav : NavKey
 
-@Serializable
-data object NetworkFolderNav : TopLevelRouteNav {
-    override val icon: Int = R.drawable.tab_network_folder_outlined
-    override val selectedIcon: Int = R.drawable.tab_network_folder_filled
-    override val name: Int = R.string.section_folders
-}
-
-@Serializable
-data object DeviceNav : TopLevelRouteNav {
-    override val icon: Int = R.drawable.ic_storage_outline
-    override val selectedIcon: Int = R.drawable.ic_storage_filled
-    override val name: Int = R.string.section_device
+enum class TopLevelTab(
+    @param:DrawableRes val icon: Int,
+    @param:DrawableRes val selectedIcon: Int,
+    @param:StringRes val sectionName: Int
+) {
+    Timeline(R.drawable.tab_photos_outline, R.drawable.tab_photos_filled, R.string.section_photos),
+    NetworkFolders(
+        R.drawable.tab_network_folder_outlined,
+        R.drawable.tab_network_folder_filled,
+        R.string.section_folders
+    ),
+    Device(R.drawable.tab_device_outline, R.drawable.tab_device_filled, R.string.section_device),
+    Utility(R.drawable.tab_utilities_outline, R.drawable.tab_utilities_filled, R.string.section_utilities),
 }
 
 @Serializable
@@ -55,8 +35,10 @@ data class FolderNav(
     sealed class Source {
         @Serializable
         data object Favorites : Source()
+
         @Serializable
         data class Network(val folder: NetworkFolder) : Source()
+
         @Serializable
         data class Local(val name: String) : Source()
     }

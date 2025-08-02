@@ -2,12 +2,10 @@ package net.theluckycoder.familyphotos.ui.viewmodel
 
 import android.util.Log
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.cachedIn
-import androidx.paging.filter
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.Data
@@ -22,30 +20,23 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
-import net.theluckycoder.familyphotos.data.model.PhotoType
-import net.theluckycoder.familyphotos.data.model.db.isPublic
 import net.theluckycoder.familyphotos.data.repository.LoginRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.data.repository.ServerRepository
 import net.theluckycoder.familyphotos.domain.RefreshPhotosUseCase
+import net.theluckycoder.familyphotos.ui.TopLevelTab
 import net.theluckycoder.familyphotos.workers.UploadWorker
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -65,6 +56,7 @@ class MainViewModel @Inject constructor(
     private val _localPhotosToDelete = Channel<List<LocalPhoto>>()
     val localPhotosToDelete = _localPhotosToDelete.consumeAsFlow()
 
+    val selectedTabState = mutableStateOf(TopLevelTab.Timeline)
     val zoomIndexState = mutableIntStateOf(1)
     val isRefreshing = MutableStateFlow(false)
     val isOnline = refreshPhotosUseCase.isOnlineState.asStateFlow()
@@ -139,9 +131,10 @@ class MainViewModel @Inject constructor(
         }.all { it }
     }
 
-    fun getNetworkPhotos(photoIds: LongArray): Deferred<List<NetworkPhoto>> = viewModelScope.async(Dispatchers.IO) {
-        photoIds.map { photosRepository.getNetworkPhoto(it) }.filterNotNull()
-    }
+    fun getNetworkPhotos(photoIds: LongArray): Deferred<List<NetworkPhoto>> =
+        viewModelScope.async(Dispatchers.IO) {
+            photoIds.map { photosRepository.getNetworkPhoto(it) }.filterNotNull()
+        }
 
     /**
      * Receives a list of [LocalPhoto] ids that will be uploaded
@@ -216,7 +209,11 @@ class MainViewModel @Inject constructor(
         serverRepository.getDuplicates()
     }
 
+    fun getLargePhotosAsync() = viewModelScope.async(Dispatchers.IO) {
+
+    }
+
     companion object {
-        val PAGING_CONFIG = PagingConfig(pageSize = 150, enablePlaceholders = false)
+        val PAGING_CONFIG = PagingConfig(pageSize = 200, enablePlaceholders = false)
     }
 }

@@ -9,6 +9,7 @@
     <string name="section_photos">Photos</string>
     <string name="section_folders">Folders</string>
     <string name="section_device">Device</string>
+    <string name="section_utilities">Utilities</string>
 
     <!-- Duplicates -->
     <string name="duplicates_which_to_keep">Which do you want to keep?</string>

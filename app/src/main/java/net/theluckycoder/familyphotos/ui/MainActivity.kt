@@ -33,8 +33,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -68,6 +68,7 @@ import net.theluckycoder.familyphotos.ui.screen.UploadPhotosScreen
 import net.theluckycoder.familyphotos.ui.screen.tabs.DeviceTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.NetworkFoldersTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.TimelineTab
+import net.theluckycoder.familyphotos.ui.screen.tabs.UtilitiesTab
 import net.theluckycoder.familyphotos.ui.theme.AppTheme
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
@@ -107,7 +108,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val backStack = rememberNavBackStack(TimelineNav)
+            val backStack = rememberNavBackStack(TopLevelNav)
             val snackbarHostState = remember { SnackbarHostState() }
 
             AppTheme {
@@ -203,9 +204,8 @@ private fun Content(
         predictivePopTransitionSpec = { transitionSpec },
         entryProvider = { key ->
             when (key) {
-                is TopLevelRouteNav -> NavEntry(key) {
+                is TopLevelNav -> NavEntry(key) {
                     TopLevelScreen(
-                        key,
                         timelinePagingItems,
                         mainViewModel,
                         Modifier.fillMaxSize()
@@ -284,18 +284,16 @@ private fun Content(
 }
 
 @Composable
-private fun RowScope.TabNavigationItem(route: TopLevelRouteNav) {
-    val backStack = LocalNavBackStack.current
-    val selected = backStack.lastOrNull() == route
-
+private fun RowScope.TabNavigationItem(tab: TopLevelTab, selectedTabState: MutableState<TopLevelTab>) {
+    val selected = selectedTabState.value == tab
     NavigationBarItem(
         selected = selected,
-        onClick = { backStack.replaceAll(route) },
-        label = { Text(stringResource(route.name)) },
+        onClick = { selectedTabState.value = tab },
+        label = { Text(stringResource(tab.sectionName)) },
         icon = {
             Icon(
-                painter = painterResource(if (selected) route.selectedIcon else route.icon),
-                contentDescription = stringResource(route.name)
+                painter = painterResource(if (selected) tab.selectedIcon else tab.icon),
+                contentDescription = stringResource(tab.sectionName)
             )
         }
     )
@@ -304,11 +302,12 @@ private fun RowScope.TabNavigationItem(route: TopLevelRouteNav) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopLevelScreen(
-    key: TopLevelRouteNav,
     timelinePagingItems: LazyPagingItems<NetworkPhoto>,
     mainViewModel: MainViewModel,
     modifier: Modifier = Modifier
 ) {
+    val selectedTabState = mainViewModel.selectedTabState
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
@@ -316,9 +315,9 @@ private fun TopLevelScreen(
             NavigationBar(
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                TabNavigationItem(TimelineNav)
-                TabNavigationItem(NetworkFolderNav)
-                TabNavigationItem(DeviceNav)
+                TopLevelTab.entries.forEach { tab ->
+                    TabNavigationItem(tab, selectedTabState)
+                }
             }
         }
     ) { paddingValues ->
@@ -331,10 +330,11 @@ private fun TopLevelScreen(
             },
             modifier = modifier.padding(bottom = paddingValues.calculateBottomPadding()),
         ) {
-            when (key) {
-                TimelineNav -> TimelineTab(timelinePagingItems)
-                NetworkFolderNav -> NetworkFoldersTab()
-                DeviceNav -> DeviceTab()
+            when (selectedTabState.value) {
+                TopLevelTab.Timeline -> TimelineTab(timelinePagingItems)
+                TopLevelTab.NetworkFolders -> NetworkFoldersTab()
+                TopLevelTab.Device -> DeviceTab()
+                TopLevelTab.Utility -> UtilitiesTab()
             }
         }
     }
