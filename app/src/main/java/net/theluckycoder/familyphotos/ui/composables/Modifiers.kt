@@ -51,7 +51,7 @@ import kotlin.math.abs
 fun Modifier.photoSharedBounds(photoId: Long): Modifier {
     with(LocalSharedTransitionScope.current) {
         return sharedBounds(
-            rememberSharedContentState(key = photoId),
+            rememberSharedContentState(key = "photo-$photoId"),
             animatedVisibilityScope = LocalNavAnimatedContentScope.current,
         )
     }

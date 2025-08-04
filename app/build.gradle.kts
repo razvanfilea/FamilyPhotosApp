@@ -101,6 +101,7 @@ dependencies {
     debugImplementation(libs.compose.tooling)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
+    implementation(libs.compose.material3Adaptive)
     implementation(libs.compose.animation)
     implementation(libs.compose.activity)
     implementation(libs.compose.lifecycleViewmodel)

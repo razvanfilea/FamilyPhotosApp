@@ -30,6 +30,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScope
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -49,6 +54,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.window.core.layout.WindowWidthSizeClass
 import coil3.ImageLoader
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
@@ -283,22 +289,6 @@ private fun Content(
     )
 }
 
-@Composable
-private fun RowScope.TabNavigationItem(tab: TopLevelTab, selectedTabState: MutableState<TopLevelTab>) {
-    val selected = selectedTabState.value == tab
-    NavigationBarItem(
-        selected = selected,
-        onClick = { selectedTabState.value = tab },
-        label = { Text(stringResource(tab.sectionName)) },
-        icon = {
-            Icon(
-                painter = painterResource(if (selected) tab.selectedIcon else tab.icon),
-                contentDescription = stringResource(tab.sectionName)
-            )
-        }
-    )
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopLevelScreen(
@@ -308,19 +298,34 @@ private fun TopLevelScreen(
 ) {
     val selectedTabState = mainViewModel.selectedTabState
 
-    Scaffold(
+    val adaptiveInfo = currentWindowAdaptiveInfo()
+    val customNavSuiteType = with(adaptiveInfo) {
+        if (windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.MEDIUM) {
+            NavigationSuiteType.NavigationRail
+        } else {
+            NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(adaptiveInfo)
+        }
+    }
+
+    NavigationSuiteScaffold(
         modifier = Modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
-        bottomBar = {
-            NavigationBar(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                TopLevelTab.entries.forEach { tab ->
-                    TabNavigationItem(tab, selectedTabState)
-                }
+        layoutType = customNavSuiteType,
+        navigationSuiteItems = {
+            TopLevelTab.entries.forEach { tab ->
+                item(
+                    icon = {
+                        Icon(
+                            painter = painterResource(if (selectedTabState.value == tab) tab.selectedIcon else tab.icon),
+                            contentDescription = stringResource(tab.sectionName)
+                        )
+                    },
+                    label = { Text(stringResource(tab.sectionName)) },
+                    selected = selectedTabState.value == tab,
+                    onClick = { selectedTabState.value = tab }
+                )
             }
         }
-    ) { paddingValues ->
+    ) {
         val isRefreshing by mainViewModel.isRefreshing.collectAsState()
 
         PullToRefreshBox(
@@ -328,7 +333,7 @@ private fun TopLevelScreen(
             onRefresh = {
                 mainViewModel.refreshPhotos()
             },
-            modifier = modifier.padding(bottom = paddingValues.calculateBottomPadding()),
+            modifier = modifier
         ) {
             when (selectedTabState.value) {
                 TopLevelTab.Timeline -> TimelineTab(timelinePagingItems)

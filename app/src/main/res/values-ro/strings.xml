@@ -68,6 +68,7 @@
         <item quantity="one">%d selectat</item>
         <item quantity="other">%d selectate</item>
     </plurals>
+    <string name="section_utilities">Utilități</string>
     <string name="duplicates_which_to_keep">Pe care îl păstrezi</string>
     <string name="duplicates_none">Nu s-au găsit dubluri</string>
     <string name="duplicates_error">Nu s-au putut încărca dublurile</string>

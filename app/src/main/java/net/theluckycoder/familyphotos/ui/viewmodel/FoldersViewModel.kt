@@ -12,6 +12,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -24,6 +25,7 @@ import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.PhotoType
+import net.theluckycoder.familyphotos.data.model.db.isPublic
 import net.theluckycoder.familyphotos.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.data.repository.ServerRepository
@@ -49,6 +51,10 @@ class FoldersViewModel @Inject constructor(
         viewModelScope,
         SharingStarted.Lazily, true
     )
+    val showFoldersAsGrid = settingsStore.showFoldersAsGrid.stateIn(
+        viewModelScope,
+        SharingStarted.Lazily, true
+    )
 
     val favoritePhotosPager = Pager(PAGING_CONFIG) {
         photosRepository.getFavoritePhotosPaged()
@@ -58,6 +64,15 @@ class FoldersViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
     val networkFolders = showFoldersAscending
         .flatMapLatest { foldersRepository.networkFoldersFlow(it) }
+        .combine(selectedPhotoType) { folders, photoType ->
+            folders.filter {
+                when (photoType) {
+                    PhotoType.All -> true
+                    PhotoType.Personal -> !it.isPublic
+                    PhotoType.Family -> it.isPublic
+                }
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     val photoListState = MutableStateFlow(LazyGridState())
@@ -103,6 +118,12 @@ class FoldersViewModel @Inject constructor(
     fun setShowFoldersAscending(ascending: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             settingsStore.setShowFoldersAscending(ascending)
+        }
+    }
+
+    fun setShowAsGrid(asGrid: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            settingsStore.setShowFoldersAsGrid(asGrid)
         }
     }
 

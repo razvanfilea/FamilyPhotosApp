@@ -9,6 +9,8 @@ abstract class PhotoFolder {
     abstract val name: String
     abstract val coverPhotoId: Long
     abstract val count: Int
+
+    abstract fun getCoverPhoto(): Photo
 }
 
 @Immutable
@@ -41,6 +43,14 @@ data class NetworkFolder(
         result = 31 * result + userId.hashCode()
         return result
     }
+
+    override fun getCoverPhoto(): Photo = NetworkPhoto(
+        id = coverPhotoId,
+        name = "",
+        userId = userId,
+        timeCreated = 0L,
+        folder = name
+    )
 }
 
 val NetworkFolder.isPublic
@@ -56,4 +66,12 @@ data class LocalFolder(
     val coverPhotoUri: Uri,
     @ColumnInfo(name = "COUNT(id)")
     override val count: Int,
-) : PhotoFolder()
+) : PhotoFolder() {
+    override fun getCoverPhoto(): Photo = LocalPhoto(
+        id = coverPhotoId,
+        name = "",
+        uri = coverPhotoUri,
+        timeCreated = 0L,
+        folder = name
+    )
+}

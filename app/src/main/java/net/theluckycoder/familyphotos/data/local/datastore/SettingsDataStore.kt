@@ -26,6 +26,9 @@ class SettingsDataStore @Inject constructor(@ApplicationContext context: Context
     val showFoldersAscending: Flow<Boolean> =
         settingsDataStore.data.map { it[SHOW_FOLDERS_ASCENDING] != false }.distinctUntilChanged()
 
+    val showFoldersAsGrid: Flow<Boolean> =
+        settingsDataStore.data.map { it[SHOW_FOLDERS_AS_GRID] != false }.distinctUntilChanged()
+
     val photoType: Flow<PhotoType> =
         settingsDataStore.data.map {
             when (it[FOLDERS_FILTER_TYPE]) {
@@ -42,6 +45,10 @@ class SettingsDataStore @Inject constructor(@ApplicationContext context: Context
         preferences[SHOW_FOLDERS_ASCENDING] = value
     }
 
+    suspend fun setShowFoldersAsGrid(value: Boolean) = settingsDataStore.edit { preferences ->
+        preferences[SHOW_FOLDERS_AS_GRID] = value
+    }
+
     suspend fun setSelectedPhotoType(value: PhotoType) = settingsDataStore.edit { preferences ->
         preferences[FOLDERS_FILTER_TYPE] = value.index
     }
@@ -55,6 +62,7 @@ class SettingsDataStore @Inject constructor(@ApplicationContext context: Context
 
         val CACHE_SIZE = intPreferencesKey("cache_size")
         val SHOW_FOLDERS_ASCENDING = booleanPreferencesKey("show_folders_ascending")
+        val SHOW_FOLDERS_AS_GRID = booleanPreferencesKey("show_folders_as_grid")
         val FOLDERS_FILTER_TYPE = intPreferencesKey("folders_filter_type")
         val PHOTOS_ZOOM_LEVEL = intPreferencesKey("photos_zoom_level")
 
