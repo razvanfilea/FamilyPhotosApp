@@ -9,6 +9,7 @@
     <string name="section_photos">Photos</string>
     <string name="section_folders">Folders</string>
     <string name="section_device">Device</string>
+    <string name="title_trash">Trash</string>
     <string name="section_utilities">Utilities</string>
 
     <!-- Duplicates -->
@@ -76,6 +77,15 @@
     <string name="notification_backup_fail_internet">Missing internet connection</string>
     <string name="notification_backup_fail_io">Error in the files</string>
     <string name="notification_backup_fail_unknown">Unknown reason</string>
+
+    <!-- Photo Detail Dialog -->
+    <string name="photo_detail_title_location">Location</string>
+    <string name="photo_detail_open_maps">Open in Maps</string>
+    <string name="photo_detail_title_details">Details</string>
+    <string name="photo_detail_no_folder">No folder</string>
+
+    <!-- Trash -->
+    <string name="trash_is_empty">Trash is empty</string>
 
     <!-- Preferences -->
     <string name="pref_category_cache">Cache</string>

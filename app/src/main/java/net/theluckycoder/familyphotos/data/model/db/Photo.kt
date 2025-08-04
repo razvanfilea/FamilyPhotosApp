@@ -77,6 +77,8 @@ data class NetworkPhoto(
     @SerialName("file_size")
     val fileSize: Long = 0,
     override val folder: String? = null,
+    @SerialName("trashed_on")
+    val trashedOn: Long? = null,
 ) : Photo(), Parcelable
 
 @OptIn(InternalCoilApi::class)

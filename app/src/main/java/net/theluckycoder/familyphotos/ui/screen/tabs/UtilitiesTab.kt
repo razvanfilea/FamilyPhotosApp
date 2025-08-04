@@ -28,6 +28,7 @@ import net.theluckycoder.familyphotos.ui.DuplicatesNav
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.SettingsNav
+import net.theluckycoder.familyphotos.ui.TrashNav
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,6 +64,14 @@ fun UtilitiesTab() = Column(
                 iconId = R.drawable.ic_settings_outline,
                 text = stringResource(R.string.title_settings),
                 onClick = { backStack.add(SettingsNav) },
+            )
+        }
+
+        item {
+            UtilityButton(
+                iconId = R.drawable.ic_action_delete,
+                text = stringResource(R.string.title_trash),
+                onClick = { backStack.add(TrashNav) },
             )
         }
 

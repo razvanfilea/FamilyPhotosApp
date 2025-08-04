@@ -70,6 +70,7 @@ import net.theluckycoder.familyphotos.ui.screen.LoginScreen
 import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
 import net.theluckycoder.familyphotos.ui.screen.RenameFolderScreen
 import net.theluckycoder.familyphotos.ui.screen.SettingsScreen
+import net.theluckycoder.familyphotos.ui.screen.TrashScreen
 import net.theluckycoder.familyphotos.ui.screen.UploadPhotosScreen
 import net.theluckycoder.familyphotos.ui.screen.tabs.DeviceTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.NetworkFoldersTab
@@ -279,6 +280,10 @@ private fun Content(
 
                 is SettingsNav -> NavEntry(key) {
                     SettingsScreen()
+                }
+
+                is TrashNav -> NavEntry(key) {
+                    TrashScreen()
                 }
 
                 else -> NavEntry(key) {

@@ -25,13 +25,14 @@ interface NetworkPhotosDao {
 
     @Query(
         """SELECT * FROM network_photo
+            WHERE trashedOn IS NULL
             ORDER BY network_photo.timeCreated DESC"""
     )
     fun getPhotosPaged(): PagingSource<Int, NetworkPhoto>
 
     @Query(
         """SELECT * FROM network_photo
-        WHERE network_photo.folder = :folder
+        WHERE network_photo.folder = :folder AND trashedOn IS NULL
         ORDER BY network_photo.timeCreated DESC"""
     )
     fun getFolderPhotos(folder: String): PagingSource<Int, NetworkPhoto> // TODO include userId in query
@@ -39,7 +40,7 @@ interface NetworkPhotosDao {
     @Query(
         """
         SELECT folder, id, userId, COUNT(id) as photoCount FROM network_photo
-        WHERE folder <> ''
+        WHERE folder <> '' AND trashedOn is null
         GROUP BY folder HAVING timeCreated = MAX(timeCreated)
         ORDER BY
             CASE WHEN :ascending <> 0 THEN folder END ASC,
@@ -59,6 +60,7 @@ interface NetworkPhotosDao {
         END
         AND yearOffset BETWEEN :minYearsAgo AND :maxYearsAgo
         AND ABS(strftime('%j', 'now') - strftime('%j', datetime(network_photo.timeCreated, 'unixepoch'))) <= 3
+        AND trashedOn is null
         ORDER BY yearOffset ASC, network_photo.timeCreated DESC"""
     )
     fun getPhotosGroupedByYearsAgo(
@@ -66,6 +68,9 @@ interface NetworkPhotosDao {
         minYearsAgo: Int = 1,
         maxYearsAgo: Int = 10
     ): Flow<List<NetworkPhotoWithYearOffset>>
+
+    @Query("SELECT * FROM network_photo WHERE trashedOn IS NOT NULL ORDER BY trashedOn DESC")
+    fun getTrashedPhotos(): Flow<List<NetworkPhoto>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(photo: NetworkPhoto)

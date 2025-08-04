@@ -85,7 +85,7 @@ fun Modifier.selectableClickable(
 fun <T : Photo> Modifier.photoGridDrag(
     lazyGridState: LazyGridState,
     selectedIds: SnapshotStateSet<Long>,
-    items: ItemSnapshotList<T>,
+    items: List<T?>,
     contentPadding: PaddingValues = PaddingValues(),
 ): Modifier {
     val autoScrollSpeed = remember { mutableFloatStateOf(0f) }
@@ -124,7 +124,7 @@ private fun <T : Photo> Modifier.photoGridDrag(
     scrollGestureActive: MutableState<Boolean>,
     contentPadding: PaddingValues,
     layoutDirection: LayoutDirection,
-    items: ItemSnapshotList<T>,
+    items: List<T?>,
 ) = pointerInput(Unit) {
     val padLeft = contentPadding.calculateLeftPadding(layoutDirection).toPx()
     val padTop = contentPadding.calculateTopPadding().toPx()

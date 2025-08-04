@@ -83,3 +83,6 @@ object DuplicatesNav : NavKey
 
 @Serializable
 object SettingsNav : NavKey
+
+@Serializable
+object TrashNav : NavKey

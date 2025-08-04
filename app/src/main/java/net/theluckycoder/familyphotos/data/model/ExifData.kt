@@ -15,7 +15,5 @@ class ExifData(exifData: List<ExifField>) {
 
     operator fun get(tag: String) = map[tag]
 
-    val isEmpty = map.isEmpty()
-
     val isNotEmpty = map.isNotEmpty()
 }

@@ -55,8 +55,8 @@ import net.theluckycoder.familyphotos.data.model.db.isVideo
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.utils.computeSeparatorText
 
-private val PORTRAIT_ZOOM_LEVELS = intArrayOf(4, 5, 7)
-private val LANDSCAPE_ZOOM_LEVELS = intArrayOf(8, 10, 14)
+private val PORTRAIT_ZOOM_LEVELS = intArrayOf(4, 5, 7, 8)
+private val LANDSCAPE_ZOOM_LEVELS = intArrayOf(8, 10, 13, 15)
 private val MAX_ZOOM_LEVEL_INDEX = PORTRAIT_ZOOM_LEVELS.size - 1
 
 @Composable
@@ -69,9 +69,8 @@ private fun getZoomColumnCount(zoomIndex: Int): Int {
     return levels[zoomIndex.coerceIn(0, MAX_ZOOM_LEVEL_INDEX)]
 }
 
-private const val CONTENT_TYPE_PHOTO = 1
-private const val CONTENT_TYPE_TITLE = 2
-private const val CONTENT_TYPE_HEADER = 3
+private const val CONTENT_TYPE_TITLE = 1
+private const val CONTENT_TYPE_HEADER = 2
 
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class,
@@ -98,6 +97,15 @@ fun <T : Photo> PhotosList(
     }
 
     val columnCount = getZoomColumnCount(zoomIndexState.intValue)
+
+    val headerModifier = Modifier
+        .fillMaxWidth()
+        .background(MaterialTheme.colorScheme.background)
+        .padding(16.dp)
+
+    val photosModifier = Modifier
+        .aspectRatio(1f)
+        .padding(0.5.dp)
 
     LazyVerticalGrid(
         state = gridState,
@@ -138,12 +146,10 @@ fun <T : Photo> PhotosList(
                 item(
                     key = headerDate,
                     span = { GridItemSpan(columnCount) },
-                    contentType = { CONTENT_TYPE_TITLE }) {
+                    contentType = CONTENT_TYPE_TITLE
+                ) {
                     Text(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.background)
-                            .padding(16.dp),
+                        modifier = headerModifier,
                         text = headerDate,
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Medium
@@ -151,18 +157,14 @@ fun <T : Photo> PhotosList(
                 }
             }
 
-            item(
-                key = photo.id,
-                contentType = CONTENT_TYPE_PHOTO
-            ) {
+            item(key = photo.id) {
                 val photo = photos[index]!!
                 val modifier = Modifier
                     .photoSharedBounds(photo.id)
                     .animateItem(fadeInSpec = null, fadeOutSpec = null)
-                    .aspectRatio(1f)
-                    .padding(0.5.dp)
+                    .then(photosModifier)
 
-                PhotoItem(
+                PhotoListItem(
                     modifier = modifier,
                     photo = photo,
                     selectedPhotoIds = selectedPhotoIds,
@@ -172,59 +174,16 @@ fun <T : Photo> PhotosList(
         }
     }
 
-    AnimatedVisibility(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 48.dp)
-            .height(64.dp),
-        visible = selectedPhotoIds.isNotEmpty(),
-    ) {
-        val isLocalPhoto =
-            remember(photos) { photos.itemSnapshotList.items.firstOrNull() is LocalPhoto }
-        SelectionAppBar(selectedPhotoIds, isLocalPhoto)
-    }
-}
+    val isLocalPhoto =
+        remember(photos.itemSnapshotList.items) { photos.itemSnapshotList.items.any { it is LocalPhoto } }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SelectionAppBar(selectedPhotoIds: SnapshotStateSet<Long>, isLocalPhoto: Boolean) = Row(
-    Modifier
-        .fillMaxWidth()
-        .padding(8.dp)
-        .minimumInteractiveComponentSize(),
-    horizontalArrangement = Arrangement.SpaceBetween
-) {
-    Button(
-        modifier = Modifier.fillMaxHeight(),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = Color.White,
-        ),
-        onClick = {
-            selectedPhotoIds.clear()
-        }
-    ) {
-        Icon(painterResource(R.drawable.ic_close), contentDescription = null)
-
-        Spacer(Modifier.width(16.dp))
-
-        VerticallyAnimatedInt(
-            targetState = selectedPhotoIds.size,
-            contentAlignment = Alignment.Center
-        ) { count ->
-            Text(count.toString(), fontSize = 16.sp)
-        }
-    }
-
-    Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape) {
-        Row {
-            PhotoUtilitiesActions(isLocalPhoto, selectedPhotoIds)
-        }
+    PhotosSelectionBar(selectedPhotoIds) {
+        PhotoUtilitiesActions(isLocalPhoto, selectedPhotoIds)
     }
 }
 
 @Composable
-private fun PhotoItem(
+fun PhotoListItem(
     modifier: Modifier,
     photo: Photo,
     selectedPhotoIds: SnapshotStateSet<Long>,
