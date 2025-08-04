@@ -28,7 +28,7 @@ fun UploadPhotosScreen(photoIds: LongArray) {
     val networkFolders by foldersViewModel.networkFolders.collectAsState()
 
     LaunchedEffect(photoIds) {
-        photosToShowcase.value = mainViewModel.getNetworkPhotos(photoIds).await()
+        photosToShowcase.value = mainViewModel.getLocalPhotos(photoIds).await()
     }
 
     UploadPhotosLayout(

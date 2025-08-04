@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -56,7 +55,7 @@ fun rememberDeletePhotosDialog(): DeletePhotosDialogCaller {
                 onDelete = {
                     scope.launch {
                         val (photosIds, callback) = receivedData!!
-                        mainViewModel.deleteNetworkPhotos(photosIds)
+                        mainViewModel.trashNetworkPhotos(photosIds)
 
                         callback.invoke()
 
@@ -84,7 +83,6 @@ private fun DeleteDialogContent(
     Modifier
         .fillMaxWidth()
         .padding(16.dp)
-        .safeDrawingPadding()
 ) {
     Text(
         modifier = Modifier

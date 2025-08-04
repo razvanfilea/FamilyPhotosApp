@@ -131,6 +131,11 @@ class MainViewModel @Inject constructor(
         }.all { it }
     }
 
+    fun getLocalPhotos(photoIds: LongArray): Deferred<List<LocalPhoto>> =
+        viewModelScope.async(Dispatchers.IO) {
+            photoIds.map { photosRepository.getLocalPhoto(it) }.filterNotNull()
+        }
+
     fun getNetworkPhotos(photoIds: LongArray): Deferred<List<NetworkPhoto>> =
         viewModelScope.async(Dispatchers.IO) {
             photoIds.map { photosRepository.getNetworkPhoto(it) }.filterNotNull()
@@ -187,13 +192,10 @@ class MainViewModel @Inject constructor(
         photoIds.map { photosRepository.getLocalPhoto(it)?.uri }.filterNotNull()
     }
 
-    suspend fun deleteNetworkPhotos(photoIds: LongArray) = withContext(Dispatchers.IO) {
+    suspend fun trashNetworkPhotos(photoIds: LongArray) = withContext(Dispatchers.IO) {
         photoIds.map { photoId ->
             async {
-                val networkPhoto = photosRepository.getNetworkPhoto(photoId)
-                if (networkPhoto != null && serverRepository.deleteNetworkPhoto(photoId)) {
-                    photosRepository.removeNetworkReference(networkPhoto)
-                }
+                serverRepository.trashNetworkPhoto(photoId, true)
             }
         }
     }.toList().map { it.await() }
@@ -207,10 +209,6 @@ class MainViewModel @Inject constructor(
 
     fun getDuplicatesAsync() = viewModelScope.async(Dispatchers.IO) {
         serverRepository.getDuplicates()
-    }
-
-    fun getLargePhotosAsync() = viewModelScope.async(Dispatchers.IO) {
-
     }
 
     companion object {

@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 9,
-    "identityHash": "a6bf9fe67bb8ed66fb1dcb0ea920eda8",
+    "version": 10,
+    "identityHash": "885d2292fba406cb81233e9877cecf61",
     "entities": [
       {
         "tableName": "local_photo",
@@ -58,7 +58,7 @@
       },
       {
         "tableName": "network_photo",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `userId` TEXT, `name` TEXT NOT NULL, `timeCreated` INTEGER NOT NULL, `fileSize` INTEGER NOT NULL, `folder` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `userId` TEXT, `name` TEXT NOT NULL, `timeCreated` INTEGER NOT NULL, `fileSize` INTEGER NOT NULL, `folder` TEXT, `trashedOn` INTEGER, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -93,6 +93,11 @@
             "fieldPath": "folder",
             "columnName": "folder",
             "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "trashedOn",
+            "columnName": "trashedOn",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {

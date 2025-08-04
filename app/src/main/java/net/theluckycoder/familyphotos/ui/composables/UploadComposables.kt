@@ -59,16 +59,12 @@ private fun UploadDialogContent(
 ) = Column {
     LazyRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(0.5.dp)) {
         items(photosToShowcase) { photo ->
-            Box(Modifier.size(72.dp)) {
-                CoilPhoto(
-                    photo = photo,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f),
-                    preview = true,
-                    contentScale = ContentScale.Crop,
-                )
-            }
+            CoilPhoto(
+                photo = photo,
+                modifier = Modifier.size(72.dp),
+                preview = true,
+                contentScale = ContentScale.Crop,
+            )
         }
     }
 
