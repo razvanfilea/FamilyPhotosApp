@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -99,6 +98,8 @@ dependencies {
     ksp(libs.room.compiler)
 
     // Compose
+    val composeBom = platform(libs.compose.bom)
+    implementation(composeBom)
     implementation(libs.compose.compiler)
     implementation(libs.compose.ui)
     implementation(libs.compose.toolingPreview)

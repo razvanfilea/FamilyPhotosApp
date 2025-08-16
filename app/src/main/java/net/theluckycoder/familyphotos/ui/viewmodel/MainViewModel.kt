@@ -49,7 +49,6 @@ class MainViewModel @Inject constructor(
     private val userDataStore: UserDataStore,
     private val refreshPhotosUseCase: RefreshPhotosUseCase,
     val loginRepository: LoginRepository,
-    private val workManager: WorkManager,
     val settingsStore: SettingsDataStore,
 ) : ViewModel() {
 
@@ -58,6 +57,7 @@ class MainViewModel @Inject constructor(
 
     val selectedTabState = mutableStateOf(TopLevelTab.Timeline)
     val zoomIndexState = mutableIntStateOf(1)
+
     val isRefreshing = MutableStateFlow(false)
     val isOnline = refreshPhotosUseCase.isOnlineState.asStateFlow()
 
@@ -102,80 +102,6 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Change the folder and the user where these [NetworkPhoto]s belong
-     *
-     * @returns true if all photos have been successfully moved
-     */
-    fun changePhotosLocationAsync(
-        networkPhotos: LongArray,
-        makePublic: Boolean,
-        newFolderName: String?
-    ): Deferred<Boolean> = viewModelScope.async(Dispatchers.IO) {
-        networkPhotos.map { id ->
-            try {
-                val photo =
-                    photosRepository.getNetworkPhotoFlow(id).firstOrNull() ?: return@map false
-
-                val result = serverRepository.changePhotoLocation(
-                    photo = photo,
-                    makePublic = makePublic,
-                    newFolderName = newFolderName
-                )
-                Log.d("Moving Photos", "Moved $id result=$result")
-                result
-            } catch (e: Exception) {
-                Log.e("Moving Photos", "Moved $id failed!", e)
-                false
-            }
-        }.all { it }
-    }
-
-    fun getLocalPhotos(photoIds: LongArray): Deferred<List<LocalPhoto>> =
-        viewModelScope.async(Dispatchers.IO) {
-            photoIds.map { photosRepository.getLocalPhoto(it) }.filterNotNull()
-        }
-
-    fun getNetworkPhotos(photoIds: LongArray): Deferred<List<NetworkPhoto>> =
-        viewModelScope.async(Dispatchers.IO) {
-            photoIds.map { photosRepository.getNetworkPhoto(it) }.filterNotNull()
-        }
-
-    /**
-     * Receives a list of [LocalPhoto] ids that will be uploaded
-     */
-    fun uploadPhotosAsync(
-        localPhotos: LongArray,
-        makePublic: Boolean,
-        uploadFolder: String?
-    ): Operation {
-        val data = Data.Builder()
-            .putAll(
-                mapOf(
-                    UploadWorker.KEY_INPUT_LIST to localPhotos,
-                    UploadWorker.KEY_MAKE_PUBLIC to makePublic,
-                    UploadWorker.KEY_UPLOAD_FOLDER to uploadFolder
-                )
-            )
-            .build()
-
-        val constraints = Constraints.Builder()
-            .setRequiresStorageNotLow(true)
-            .setRequiredNetworkType(NetworkType.NOT_ROAMING)
-            .build()
-
-        val uploadRequest = OneTimeWorkRequestBuilder<UploadWorker>()
-            .setInputData(data)
-            .setConstraints(constraints)
-            .addTag(UploadWorker.TAG)
-            .setBackoffCriteria(BackoffPolicy.LINEAR, 15, TimeUnit.SECONDS)
-            .build()
-
-        return workManager
-//            .beginUniqueWork("upload_work", ExistingWorkPolicy.APPEND, uploadRequest)
-            .enqueue(uploadRequest)
-    }
-
     fun getNetworkPhotosUriAsync(photoIds: LongArray) = viewModelScope.async(Dispatchers.IO) {
         photoIds
             .map { photoId ->
@@ -212,6 +138,6 @@ class MainViewModel @Inject constructor(
     }
 
     companion object {
-        val PAGING_CONFIG = PagingConfig(pageSize = 200, enablePlaceholders = false)
+        val PAGING_CONFIG = PagingConfig(pageSize = 256, enablePlaceholders = false)
     }
 }

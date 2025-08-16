@@ -20,24 +20,20 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
+import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.db.LocalFolderToBackup
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
-import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
-import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.db.isPublic
 import net.theluckycoder.familyphotos.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
-import net.theluckycoder.familyphotos.data.repository.ServerRepository
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel.Companion.PAGING_CONFIG
 import javax.inject.Inject
-
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class FoldersViewModel @Inject constructor(
     private val photosRepository: PhotosRepository,
-    private val serverRepository: ServerRepository,
     private val foldersRepository: FoldersRepository,
     private val foldersToBackupDao: LocalFolderBackupDao,
     private val settingsStore: SettingsDataStore,
@@ -154,19 +150,4 @@ class FoldersViewModel @Inject constructor(
             }
         }
     }
-
-    fun renameNetworkFolder(
-        folder: NetworkFolder,
-        makePublic: Boolean,
-        newName: String
-    ) {
-        viewModelScope.launch(Dispatchers.IO) {
-            serverRepository.renameNetworkFolder(
-                folder,
-                makePublic,
-                newName.trim().takeIf { it.isNotEmpty() }
-            )
-        }
-    }
-
 }

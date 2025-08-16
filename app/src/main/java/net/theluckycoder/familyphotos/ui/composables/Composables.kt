@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.ui.composables
 
+import android.R.attr.onClick
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SizeTransform
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -47,6 +49,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter.State.Empty.painter
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
@@ -138,79 +141,62 @@ fun NavBackTopAppBar(
 }
 
 @Composable
-private fun SelectableItem(
-    modifier: Modifier = Modifier,
-    inSelectionMode: Boolean,
-    selected: Boolean,
-    content: @Composable BoxScope.() -> Unit
-) = if (inSelectionMode) {
-    Surface(
-        modifier = modifier,
-        tonalElevation = 15.dp
-    ) {
-        val transition = updateTransition(selected, label = "selected")
-        val padding by transition.animateDp(label = "padding") { selected ->
-            if (selected) 10.dp else 0.dp
-        }
-        val roundedCornerShape by transition.animateInt(label = "corner") { selected ->
-            if (selected) 30 else 0
-        }
-
-        Box(
-            modifier = Modifier
-                .padding(padding)
-                .clip(RoundedCornerShape(percent = roundedCornerShape))
-        ) {
-            content()
-        }
-
-        Box(Modifier.padding(4.dp)) {
-            if (selected) {
-                val bgColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
-                Icon(
-                    painter = painterResource(R.drawable.radio_button_checked),
-                    tint = MaterialTheme.colorScheme.primary,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .background(bgColor, CircleShape)
-                )
-            } else {
-                Icon(
-                    painter = painterResource(R.drawable.radio_button_unchecked),
-                    tint = Color.White.copy(alpha = 0.8f),
-                    contentDescription = null,
-                )
-            }
-        }
-    }
-} else {
-    Box(modifier = modifier) {
-        content()
-    }
-}
-
-@Composable
 fun SelectablePhoto(
     modifier: Modifier = Modifier,
     inSelectionMode: Boolean,
     selected: Boolean,
     onClick: () -> Unit = {},
-    onSelect: () -> Unit = {},
-    onDeselect: () -> Unit = {},
+    onSelect: () -> Unit,
+    onDeselect: () -> Unit,
     content: @Composable BoxScope.() -> Unit
-) {
-    SelectableItem(
-        modifier = modifier.selectableClickable(
-            inSelectionMode = inSelectionMode,
-            selected = selected,
-            onClick = onClick,
-            onSelect = onSelect,
-            onDeselect = onDeselect
-        ),
+) = Box(
+    modifier = modifier.selectableClickable(
         inSelectionMode = inSelectionMode,
         selected = selected,
-        content = content
+        onClick = onClick,
+        onSelect = onSelect,
+        onDeselect = onDeselect
     )
+) {
+    val transition = updateTransition(selected, label = "selected")
+    val padding by transition.animateDp(label = "padding") { selected ->
+        if (selected) 8.dp else 0.dp
+    }
+    val roundedCornerShape by transition.animateInt(label = "corner") { selected ->
+        if (selected) 30 else 0
+    }
+
+    Box(
+        modifier = Modifier
+            .padding(padding)
+            .clip(RoundedCornerShape(percent = roundedCornerShape))
+    ) {
+        content()
+    }
+
+    if (inSelectionMode) {
+        val iconPadding = Modifier.padding(4.dp)
+
+        val iconRes =
+            if (selected) R.drawable.radio_button_checked else R.drawable.radio_button_unchecked
+        val tint =
+            if (selected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.85f)
+        val iconModifier = if (selected) {
+            iconPadding.background(
+                MaterialTheme.colorScheme.surface,
+                CircleShape
+            )
+        } else {
+            iconPadding
+        }
+
+        Icon(
+            painter = painterResource(iconRes),
+            tint = tint,
+            contentDescription = null,
+            modifier = iconModifier
+        )
+    }
 }
 
 private val PHOTO_DATE_FORMATTER = DateTimeFormatter.ofPattern("d MMM uuuu・HH:mm")
