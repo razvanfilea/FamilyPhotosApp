@@ -10,21 +10,21 @@ import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.composables.UploadChoice
 import net.theluckycoder.familyphotos.ui.composables.UploadPhotosLayout
-import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.UploadPhotosViewModel
 
 @Composable
 fun RenameFolderScreen(folder: NetworkFolder) {
-    val foldersViewModel: FoldersViewModel = viewModel()
+    val uploadPhotosViewModel: UploadPhotosViewModel = viewModel()
     val backStack = LocalNavBackStack.current
 
-    val networkFolders by foldersViewModel.networkFolders.collectAsState()
+    val networkFolders by uploadPhotosViewModel.networkFolders.collectAsState(emptyList())
 
     UploadPhotosLayout(
         networkFolders = networkFolders,
         title = stringResource(R.string.action_rename_folder),
         photosToShowcase = emptyList(),
         doneAction = { choice, folderName ->
-            foldersViewModel.renameNetworkFolder(
+            uploadPhotosViewModel.renameNetworkFolder(
                 folder,
                 choice == UploadChoice.Public,
                 folderName

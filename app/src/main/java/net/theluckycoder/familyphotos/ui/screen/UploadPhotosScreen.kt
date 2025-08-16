@@ -8,27 +8,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.flow.first
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.composables.UploadChoice
 import net.theluckycoder.familyphotos.ui.composables.UploadPhotosLayout
-import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.UploadPhotosViewModel
 
 
 @Composable
 fun UploadPhotosScreen(photoIds: LongArray) {
-    val mainViewModel: MainViewModel = viewModel()
-    val foldersViewModel: FoldersViewModel = viewModel()
+    val uploadPhotosViewModel: UploadPhotosViewModel = viewModel()
 
     val photosToShowcase = remember { mutableStateOf(emptyList<Photo>()) }
     val backStack = LocalNavBackStack.current
-    val networkFolders by foldersViewModel.networkFolders.collectAsState()
+    val networkFolders by uploadPhotosViewModel.networkFolders.collectAsState(emptyList())
 
     LaunchedEffect(photoIds) {
-        photosToShowcase.value = mainViewModel.getLocalPhotos(photoIds).await()
+        photosToShowcase.value = uploadPhotosViewModel.getLocalPhotos(photoIds).await()
     }
 
     UploadPhotosLayout(
@@ -36,7 +34,7 @@ fun UploadPhotosScreen(photoIds: LongArray) {
         title = stringResource(R.string.action_upload_photos),
         photosToShowcase = photosToShowcase.value,
         doneAction = { choice, folderName ->
-            mainViewModel.uploadPhotosAsync(
+            uploadPhotosViewModel.uploadPhotosAsync(
                 photoIds,
                 choice == UploadChoice.Public,
                 folderName.trim().takeIf { it.isNotEmpty() })

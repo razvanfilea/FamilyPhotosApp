@@ -1,10 +1,12 @@
 package net.theluckycoder.familyphotos.ui.composables
 
+import android.R.attr.columnCount
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,13 +53,17 @@ import androidx.paging.compose.LazyPagingItems
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.db.Photo
+import net.theluckycoder.familyphotos.data.model.db.getPreviewUri
+import net.theluckycoder.familyphotos.data.model.db.getUri
 import net.theluckycoder.familyphotos.data.model.db.isVideo
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.utils.computeSeparatorText
 
-private val PORTRAIT_ZOOM_LEVELS = intArrayOf(4, 5, 7, 8)
-private val LANDSCAPE_ZOOM_LEVELS = intArrayOf(8, 10, 13, 15)
+private val PORTRAIT_ZOOM_LEVELS = intArrayOf(4, 5, 7, 9)
+private val LANDSCAPE_ZOOM_LEVELS = intArrayOf(8, 10, 13, 17)
 private val MAX_ZOOM_LEVEL_INDEX = PORTRAIT_ZOOM_LEVELS.size - 1
+
+private const val HIGH_ZOOM_LEVEL = 3
 
 @Composable
 private fun getZoomColumnCount(zoomIndex: Int): Int {
@@ -69,8 +75,8 @@ private fun getZoomColumnCount(zoomIndex: Int): Int {
     return levels[zoomIndex.coerceIn(0, MAX_ZOOM_LEVEL_INDEX)]
 }
 
-private const val CONTENT_TYPE_TITLE = 1
-private const val CONTENT_TYPE_HEADER = 2
+private const val CONTENT_TYPE_TITLE = "title"
+private const val CONTENT_TYPE_HEADER = "header"
 
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class,
@@ -85,38 +91,39 @@ fun <T : Photo> PhotosList(
     openPhoto: (index: Int) -> Unit,
     mainViewModel: MainViewModel = viewModel()
 ) = Box(Modifier.fillMaxSize()) {
-    val zoomIndexState = mainViewModel.zoomIndexState
-    LaunchedEffect(zoomIndexState.intValue) {
-        mainViewModel.settingsStore.setPhotosZoomLevel(zoomIndexState.intValue)
-    }
-
     val selectedPhotoIds = remember { mutableStateSetOf<Long>() }
 
     BackHandler(enabled = selectedPhotoIds.isNotEmpty()) {
         selectedPhotoIds.clear()
     }
 
+    val zoomIndexState = mainViewModel.zoomIndexState
+    val highZoomLevel = zoomIndexState.intValue >= HIGH_ZOOM_LEVEL
     val columnCount = getZoomColumnCount(zoomIndexState.intValue)
-
-    val headerModifier = Modifier
-        .fillMaxWidth()
-        .background(MaterialTheme.colorScheme.background)
-        .padding(16.dp)
+    LaunchedEffect(zoomIndexState.intValue) {
+        mainViewModel.settingsStore.setPhotosZoomLevel(zoomIndexState.intValue)
+        if (zoomIndexState.intValue >= HIGH_ZOOM_LEVEL) {
+            selectedPhotoIds.clear()
+        }
+    }
 
     val photosModifier = Modifier
         .aspectRatio(1f)
         .padding(0.5.dp)
+
+    val photoDragModifier = if (!highZoomLevel) Modifier
+        .photoGridDrag(
+            lazyGridState = gridState,
+            selectedIds = selectedPhotoIds,
+            items = photos.itemSnapshotList,
+        ) else Modifier
 
     LazyVerticalGrid(
         state = gridState,
         modifier = Modifier
             .fillMaxSize()
             .detectZoomIn(zoomIndexState, MAX_ZOOM_LEVEL_INDEX)
-            .photoGridDrag(
-                lazyGridState = gridState,
-                selectedIds = selectedPhotoIds,
-                items = photos.itemSnapshotList,
-            )
+            .then(photoDragModifier)
             .then(modifier),
         columns = GridCells.Fixed(columnCount),
     ) {
@@ -149,9 +156,9 @@ fun <T : Photo> PhotosList(
                     contentType = CONTENT_TYPE_TITLE
                 ) {
                     Text(
-                        modifier = headerModifier,
+                        modifier = Modifier.padding(12.dp),
                         text = headerDate,
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = if (highZoomLevel) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -164,18 +171,27 @@ fun <T : Photo> PhotosList(
                     .animateItem(fadeInSpec = null, fadeOutSpec = null)
                     .then(photosModifier)
 
-                PhotoListItem(
-                    modifier = modifier,
-                    photo = photo,
-                    selectedPhotoIds = selectedPhotoIds,
-                    openPhoto = { openPhoto(index) },
-                )
+                if (highZoomLevel) {
+                    CoilPhoto(
+                        modifier = modifier.clickable(onClick = { openPhoto(index) }),
+                        photo = photo,
+                        preview = true,
+                        contentScale = ContentScale.Crop,
+                    )
+                } else {
+                    PhotoListItem(
+                        modifier = modifier,
+                        photo = photo,
+                        selectedPhotoIds = selectedPhotoIds,
+                        openPhoto = { openPhoto(index) },
+                    )
+                }
             }
         }
     }
 
     val isLocalPhoto =
-        remember(photos.itemSnapshotList.items) { photos.itemSnapshotList.items.any { it is LocalPhoto } }
+        remember(photos.itemSnapshotList.items) { photos.itemSnapshotList.items.firstOrNull() is LocalPhoto }
 
     PhotosSelectionBar(selectedPhotoIds) {
         PhotoUtilitiesActions(isLocalPhoto, selectedPhotoIds)
@@ -189,7 +205,7 @@ fun PhotoListItem(
     selectedPhotoIds: SnapshotStateSet<Long>,
     openPhoto: (id: Long) -> Unit
 ) {
-    val isVideo = remember(photo) { photo.isVideo }
+    val isVideo = remember(photo.id) { photo.isVideo }
 
     SelectablePhoto(
         modifier = modifier,
