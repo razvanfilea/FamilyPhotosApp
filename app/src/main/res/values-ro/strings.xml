@@ -23,6 +23,7 @@
     <string name="title_settings">Setări</string>
     <string name="status_saved">Salvată</string>
     <string name="send_to">Trimite la:</string>
+    <string name="trash_is_empty">Coșul de gunoi este gol</string>
     <string name="pref_category_cache">Cache</string>
     <string name="pref_cache_size">Dimensiune Cache (MB)</string>
     <string name="pref_restart_needed">Un restart e necesar</string>
@@ -39,7 +40,6 @@
     <string name="notification_backup_fail_cancelled">Încărcarea a fost anulată</string>
     <string name="notification_backup_fail_internet">Lipsă internet</string>
     <string name="action_previous">Anterior</string>
-    <string name="duplicates_no_folder">Niciun folder</string>
     <string name="action_info">Info</string>
     <string name="action_selected">Selectate</string>
     <string name="ascending">Crescător</string>
@@ -68,8 +68,18 @@
         <item quantity="one">%d selectat</item>
         <item quantity="other">%d selectate</item>
     </plurals>
+
+    <plurals name="items_photos">
+        <item quantity="one">%d poză</item>
+        <item quantity="other">%d poze</item>
+    </plurals>
+    <string name="title_trash">Coș de gunoi</string>
     <string name="section_utilities">Utilități</string>
     <string name="duplicates_which_to_keep">Pe care îl păstrezi</string>
     <string name="duplicates_none">Nu s-au găsit dubluri</string>
     <string name="duplicates_error">Nu s-au putut încărca dublurile</string>
+    <string name="photo_detail_title_location">Locație</string>
+    <string name="photo_detail_open_maps">Dechide in Maps</string>
+    <string name="photo_detail_title_details">Detalii</string>
+    <string name="photo_detail_no_folder">Niciun folder</string>
 </resources>

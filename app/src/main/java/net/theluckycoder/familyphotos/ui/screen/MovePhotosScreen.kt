@@ -16,7 +16,6 @@ import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.composables.UploadChoice
 import net.theluckycoder.familyphotos.ui.composables.UploadPhotosLayout
-import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.UploadPhotosViewModel
 
 @Composable
@@ -37,7 +36,7 @@ fun MovePhotosScreen(photoIds: LongArray) {
 
     UploadPhotosLayout(
         networkFolders = networkFolders,
-        title = stringResource(R.string.action_move_photos),
+        actionName = stringResource(R.string.action_move_photos),
         photosToShowcase = photosToShowcase.value,
         doneAction = { choice, folderName ->
             uploadPhotosViewModel.viewModelScope.launch {
