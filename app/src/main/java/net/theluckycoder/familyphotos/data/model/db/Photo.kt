@@ -79,6 +79,8 @@ data class NetworkPhoto(
     override val folder: String? = null,
     @SerialName("trashed_on")
     val trashedOn: Long? = null,
+//    @SerialName("thumb_hash")
+//    val thumbHash: String? = null,
 ) : Photo(), Parcelable
 
 @OptIn(InternalCoilApi::class)

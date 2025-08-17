@@ -344,7 +344,7 @@ private fun BottomBar(
         } else if (photo is NetworkPhoto) { // Network only
             IconButtonText(
                 onClick = { backStack.add(MovePhotosNav(longArrayOf(photo.id))) },
-                text = stringResource(id = R.string.action_move),
+                text = stringResource(R.string.action_move),
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_move_folder),
@@ -356,7 +356,7 @@ private fun BottomBar(
 
             IconButtonText(
                 onClick = { networkPhotoInfoDialog.show() },
-                text = stringResource(id = R.string.action_info),
+                text = stringResource(R.string.action_info),
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_outline_info),

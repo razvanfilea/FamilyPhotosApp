@@ -1,6 +1,5 @@
 package net.theluckycoder.familyphotos.ui.composables
 
-import android.R.attr.onClick
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SizeTransform
@@ -22,19 +21,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ripple
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -49,7 +45,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import coil3.compose.AsyncImagePainter.State.Empty.painter
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
@@ -58,6 +53,7 @@ import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.data.model.db.getPreviewUri
 import net.theluckycoder.familyphotos.data.model.db.getUri
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
+import net.theluckycoder.familyphotos.utils.rememberThumbHashPainter
 import java.time.format.DateTimeFormatter
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -69,13 +65,15 @@ fun CoilPhoto(
     preview: Boolean = false,
     contentScale: ContentScale = ContentScale.Fit,
 ) {
+    val placeholder = rememberThumbHashPainter("1QcSHQRnh493V4dIh4eXh1h4kJUI")
+
     AsyncImage(
         modifier = modifier,
         model = if (!preview) photo.getUri() else photo.getPreviewUri(),
+        placeholder = placeholder,
         contentScale = contentScale,
         contentDescription = photo.name,
         imageLoader = LocalImageLoader.current.get(),
-        placeholder = ColorPainter(Color.DarkGray),
         error = ColorPainter(Color(0xB6D63535))
     )
 }
