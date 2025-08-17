@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.ui.composables
 
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.fadeIn
@@ -90,7 +91,15 @@ fun <T : Photo> PhotosViewer(
                 return@HorizontalPager
             }
 
-            PagerContent(photo, showUi, paddingValues)
+            val localUri = remember { mutableStateOf<Uri?>(null) }
+            LaunchedEffect(photo) {
+                if (photo is NetworkPhoto) {
+                    val d = photoViewerViewModel.getEquivalentLocalUri2(photo)
+                    localUri.value = d
+                }
+            }
+
+            PagerContent(photo, localUri.value, showUi, paddingValues)
         }
     }
 }
@@ -131,7 +140,15 @@ fun <T : Photo> PhotosViewer(
                 }
             }
 
-            PagerContent(updatedPhoto ?: photo, showUi, paddingValues)
+            val localUri = if (photo is NetworkPhoto) {
+                remember(photo) { photoViewerViewModel.getEquivalentLocalUri(photo) }.collectAsState(
+                    null
+                )
+            } else {
+                null
+            }
+
+            PagerContent(updatedPhoto ?: photo, localUri?.value, showUi, paddingValues)
         }
     }
 }
@@ -178,6 +195,7 @@ private fun PhotoViewerScaffold(
 @Composable
 private fun PagerContent(
     photo: Photo,
+    localUri: Uri?,
     showUi: MutableState<Boolean>,
     paddingValues: PaddingValues,
 ) {
@@ -187,11 +205,12 @@ private fun PagerContent(
     if (!isVideo) {
         ZoomableImage(
             modifier = sharedBoundsModifier.fillMaxSize(),
+            localUri = localUri,
             photo = photo
         ) { showUi.value = it }
     } else {
         VideoPlayer(
-            sourceUri = photo.getUri(),
+            sourceUri = localUri ?: photo.getUri(),
             showControls = showUi,
             modifier = sharedBoundsModifier,
             controlsPadding = paddingValues,
@@ -352,6 +371,7 @@ private fun BottomBar(
 fun ZoomableImage(
     modifier: Modifier = Modifier,
     photo: Photo,
+    localUri: Uri? = null,
     showUI: (Boolean) -> Unit,
 ) {
     val ctx = LocalContext.current
@@ -363,15 +383,16 @@ fun ZoomableImage(
         showUI(zoomFraction < 0.1f)
     }
 
-    val model = remember(photo.id) {
+    val uri = localUri ?: photo.getUri()
+    val model = remember(photo.id, uri) {
         val cacheKey = photo.getPreviewUri().toString()
         ImageRequest.Builder(ctx)
-            .data(photo.getUri())
+            .data(uri)
             .crossfade(true)
             .placeholderMemoryCacheKey(cacheKey)
 //            .placeholder(R.drawable.ic_hourglass_bottom)
-            .size(Size.ORIGINAL)
-            .maxBitmapSize(Size.Companion.ORIGINAL)
+//            .size(Size.ORIGINAL)
+//            .maxBitmapSize(Size.Companion.ORIGINAL)
             .build()
     }
 

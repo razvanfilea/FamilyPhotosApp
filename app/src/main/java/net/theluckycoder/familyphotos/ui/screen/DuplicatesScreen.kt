@@ -174,7 +174,7 @@ private fun PagerContent(
                     Text(photo.folder)
                 } else {
                     Text(
-                        stringResource(R.string.duplicates_no_folder),
+                        stringResource(R.string.photo_detail_no_folder),
                         fontStyle = FontStyle.Italic
                     )
                 }

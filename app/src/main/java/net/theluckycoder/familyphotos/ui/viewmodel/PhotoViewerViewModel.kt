@@ -1,10 +1,12 @@
 package net.theluckycoder.familyphotos.ui.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.data.model.ExifData
@@ -34,6 +36,12 @@ class PhotoViewerViewModel @Inject constructor(
             serverRepository.updateFavorite(photo, add)
         }
     }
+
+    fun getEquivalentLocalUri(photo: NetworkPhoto): Flow<Uri?> =
+        flow { photosRepository.getLocalPhotoFromNetwork(photo.id)?.uri }
+
+    suspend fun getEquivalentLocalUri2(photo: NetworkPhoto): Uri? =
+         photosRepository.getLocalPhotoFromNetwork(photo.id)?.uri
 
     suspend fun getExifData(photo: NetworkPhoto): ExifData? = withContext(Dispatchers.IO) {
         serverRepository.getExifData(photo)

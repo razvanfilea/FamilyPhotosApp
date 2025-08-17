@@ -21,7 +21,7 @@ fun RenameFolderScreen(folder: NetworkFolder) {
 
     UploadPhotosLayout(
         networkFolders = networkFolders,
-        title = stringResource(R.string.action_rename_folder),
+        actionName = stringResource(R.string.action_rename_folder),
         photosToShowcase = emptyList(),
         doneAction = { choice, folderName ->
             uploadPhotosViewModel.renameNetworkFolder(

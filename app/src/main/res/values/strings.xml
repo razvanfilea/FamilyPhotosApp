@@ -16,7 +16,6 @@
     <string name="duplicates_which_to_keep">Which do you want to keep?</string>
     <string name="duplicates_none">No duplicates found</string>
     <string name="duplicates_error">Failed to load duplicates</string>
-    <string name="duplicates_no_folder">No folder</string>
 
     <!-- Actions -->
     <string name="action_info">Info</string>
@@ -43,6 +42,10 @@
     <plurals name="images_deleted_failure">
         <item quantity="one">Failed to delete %d image</item>
         <item quantity="other">Failed to delete %d images</item>
+    </plurals>
+
+    <plurals name="items_photos">
+        <item quantity="other">%d photos</item>
     </plurals>
 
     <plurals name="items_selected">

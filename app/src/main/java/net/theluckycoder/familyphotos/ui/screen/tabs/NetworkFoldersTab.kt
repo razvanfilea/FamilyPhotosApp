@@ -5,7 +5,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -13,7 +16,7 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.db.isPublic
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
-import net.theluckycoder.familyphotos.ui.composables.FoldersTab
+import net.theluckycoder.familyphotos.ui.composables.FoldersGridList
 import net.theluckycoder.familyphotos.ui.composables.PhotoTypeSegmentedButtons
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 
@@ -26,15 +29,20 @@ fun NetworkFoldersTab() {
     val personalString = stringResource(R.string.photo_type_personal)
     val familyString = stringResource(R.string.photo_type_family)
 
-    FoldersTab(
+    val folderNameFilter = remember { mutableStateOf("") }
+
+    FoldersGridList(
         folders = folders,
         onFolderClick = { folder ->
             backStack.add(FolderNav(FolderNav.Source.Network(folder)))
         },
         folderDetailsText = { folder ->
             val owner = if (folder.isPublic) familyString else personalString
-            "${folder.count} items • $owner"
+            val items = pluralStringResource(R.plurals.items_photos, folder.count, folder.count)
+            "$items • $owner"
         },
+        folderNameFilter = folderNameFilter.value,
+        onSearch = { folderNameFilter.value = it },
         foldersViewModel = foldersViewModel,
         extraHeader = {
             val selectedPhotoType by foldersViewModel.selectedPhotoType.collectAsState()

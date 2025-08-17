@@ -13,7 +13,6 @@ import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.composables.UploadChoice
 import net.theluckycoder.familyphotos.ui.composables.UploadPhotosLayout
-import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.UploadPhotosViewModel
 
 
@@ -31,7 +30,7 @@ fun UploadPhotosScreen(photoIds: LongArray) {
 
     UploadPhotosLayout(
         networkFolders = networkFolders,
-        title = stringResource(R.string.action_upload_photos),
+        actionName = stringResource(R.string.action_upload_photos),
         photosToShowcase = photosToShowcase.value,
         doneAction = { choice, folderName ->
             uploadPhotosViewModel.uploadPhotosAsync(
