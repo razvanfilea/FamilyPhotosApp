@@ -18,7 +18,7 @@ androidx_camerax = "1.4.2"
 androidx_work = "2.10.3"
 androidx_nav3 = "1.0.0-alpha07"
 coil = "3.3.0"
-dagger = "2.57"
+dagger = "2.57.1"
 retrofit = "3.0.0"
 okhttp = "5.1.0"
 

@@ -79,8 +79,8 @@ data class NetworkPhoto(
     override val folder: String? = null,
     @SerialName("trashed_on")
     val trashedOn: Long? = null,
-//    @SerialName("thumb_hash")
-//    val thumbHash: String? = null,
+    @SerialName("thumb_hash")
+    val thumbHash: String? = null,
 ) : Photo(), Parcelable
 
 @OptIn(InternalCoilApi::class)
@@ -104,6 +104,12 @@ fun Photo.getPreviewUri(): Uri = when (this) {
     is NetworkPhoto -> "${NetworkModule.BASE_URL}photos/preview/$id".toUri()
     is LocalPhoto -> uri
 }
+
+val Photo.thumbHash
+    get() = when (this) {
+        is NetworkPhoto -> thumbHash
+        is LocalPhoto -> null
+    }
 
 val NetworkPhoto.isPublic
     get() = this.userId == null

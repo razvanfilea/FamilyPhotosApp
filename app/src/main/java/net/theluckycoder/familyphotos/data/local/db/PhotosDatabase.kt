@@ -17,7 +17,7 @@ import net.theluckycoder.familyphotos.data.model.db.ServerState
 
 @Database(
     entities = [LocalPhoto::class, NetworkPhoto::class, LocalFolderToBackup::class, FavoriteNetworkPhoto::class, ServerState::class],
-    version = 10,
+    version = 11,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -60,6 +60,12 @@ abstract class PhotosDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE network_photo ADD COLUMN thumbHash TEXT")
+            }
+        }
+
         fun getDatabase(context: Context): PhotosDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE?.let { return it }
@@ -71,7 +77,8 @@ abstract class PhotosDatabase : RoomDatabase() {
                 ).addMigrations(
                     MIGRATION_8,
                     MIGRATION_9,
-                    MIGRATION_10
+                    MIGRATION_10,
+                    MIGRATION_11
                 ).addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)
