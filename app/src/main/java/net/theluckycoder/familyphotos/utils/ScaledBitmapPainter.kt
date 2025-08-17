@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.utils
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Size
@@ -12,10 +13,15 @@ import androidx.compose.ui.graphics.painter.Painter
 import kotlin.io.encoding.Base64
 
 @Composable
-fun rememberThumbHashPainter(thumbHash: String): Painter = remember(thumbHash) {
-    val hash = Base64.decode(thumbHash)
-    val bitmap = ThumbHash.thumbHashToRGBA(hash).asImageBitmap()
-    ScaledBitmapPainter(bitmap)
+fun rememberThumbHashPainter(thumbHash: String): Painter? = remember(thumbHash) {
+    try {
+        val hash = Base64.decode(thumbHash)
+        val bitmap = ThumbHash.thumbHashToRGBA(hash).asImageBitmap()
+        ScaledBitmapPainter(bitmap)
+    } catch (e: Exception) {
+        Log.e("ThumbHash", "Failed to decode thumb hash", e)
+        null
+    }
 }
 
 class ScaledBitmapPainter(private val imageBitmap: ImageBitmap) : Painter() {

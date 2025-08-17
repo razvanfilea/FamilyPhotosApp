@@ -52,6 +52,7 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.data.model.db.getPreviewUri
 import net.theluckycoder.familyphotos.data.model.db.getUri
+import net.theluckycoder.familyphotos.data.model.db.thumbHash
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.utils.rememberThumbHashPainter
 import java.time.format.DateTimeFormatter
@@ -65,7 +66,8 @@ fun CoilPhoto(
     preview: Boolean = false,
     contentScale: ContentScale = ContentScale.Fit,
 ) {
-    val placeholder = rememberThumbHashPainter("1QcSHQRnh493V4dIh4eXh1h4kJUI")
+    val placeholder =
+        photo.thumbHash?.let { rememberThumbHashPainter(it) } ?: ColorPainter(Color.DarkGray)
 
     AsyncImage(
         modifier = modifier,
