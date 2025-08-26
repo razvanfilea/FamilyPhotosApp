@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlinAndroid)
+    alias(libs.plugins.android.baselineprofile)
 
     kotlin("plugin.serialization") version libs.versions.kotlin.base.get()
     alias(libs.plugins.ksp)
@@ -55,6 +56,10 @@ android {
         buildConfig = true
     }
 
+    baselineProfile {
+        dexLayoutOptimization = true
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -75,6 +80,9 @@ kotlin {
 
 dependencies {
     implementation(project(":camera"))
+
+    implementation(libs.androidx.profileinstaller)
+    baselineProfile(project(":baselineprofile"))
 
     // Kotlin
     debugImplementation(libs.kotlin.reflect)

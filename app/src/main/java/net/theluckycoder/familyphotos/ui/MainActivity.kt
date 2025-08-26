@@ -77,7 +77,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private val storagePermissionLauncher =
+    private val permissionLauncher =
         registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { }
@@ -105,13 +105,15 @@ class MainActivity : ComponentActivity() {
         window.isNavigationBarContrastEnforced = false
         super.onCreate(savedInstanceState)
 
+        val isBenchmark = intent.extras?.getBoolean("benchmark") == true
+
         setContent {
             val backStack = rememberNavBackStack(TopLevelNav)
             val snackbarHostState = remember { SnackbarHostState() }
 
             AppTheme {
                 val isLoggedIn = mainViewModel.loginRepository.isLoggedIn.collectAsState(true)
-                if (!isLoggedIn.value) {
+                if (!isLoggedIn.value && !isBenchmark) {
                     LoginScreen(loginAction = {
                         lifecycleScope.launch(Dispatchers.IO) {
                             mainViewModel.loginRepository.login(it)
@@ -150,9 +152,9 @@ class MainActivity : ComponentActivity() {
         if (ContextCompat.checkSelfPermission(
                 this,
                 readImagePermission.first()
-            ) == PackageManager.PERMISSION_DENIED
+            ) == PackageManager.PERMISSION_DENIED && !isBenchmark
         ) {
-            storagePermissionLauncher.launch(readImagePermission)
+            permissionLauncher.launch(readImagePermission)
         }
 
         lifecycleScope.launch(Dispatchers.IO) {

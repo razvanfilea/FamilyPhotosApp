@@ -6,26 +6,9 @@ plugins {
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.compose.compiler) apply false
     id("com.github.ben-manes.versions") version "0.52.0"
+    alias(libs.plugins.android.test) apply false
+    alias(libs.plugins.android.baselineprofile) apply false
 }
-
-/*subprojects {
-    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).configureEach {
-        kotlinOptions {
-            if (project.findProperty("composeCompilerReports") == true) {
-                freeCompilerArgs = freeCompilerArgs + listOf(
-                    "-P",
-                    "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=" + project.buildDir.absolutePath + "/compose_compiler"
-                )
-            }
-            if (project.findProperty("composeCompilerMetrics") == true) {
-                freeCompilerArgs = freeCompilerArgs + listOf(
-                    "-P",
-                    "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=" + project.buildDir.absolutePath + "/compose_compiler"
-                )
-            }
-        }
-    }
-}*/
 
 tasks.named(
     "dependencyUpdates",
