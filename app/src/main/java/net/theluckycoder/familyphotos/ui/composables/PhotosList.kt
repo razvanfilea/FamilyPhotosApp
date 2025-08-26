@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -105,7 +106,8 @@ fun <T : Photo> PhotosList(
             .fillMaxSize()
             .detectZoomIn(zoomIndexState, MAX_ZOOM_LEVEL_INDEX)
             .then(photoDragModifier)
-            .then(modifier),
+            .then(modifier)
+            .testTag("photos_list"),
         columns = GridCells.Fixed(columnCount),
     ) {
         item(

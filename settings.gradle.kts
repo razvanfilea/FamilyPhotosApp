@@ -17,5 +17,6 @@ dependencyResolutionManagement {
 rootProject.name = "FamilyPhotos"
 include(
     ":app",
-    ":camera"
+    ":camera",
+    ":baselineprofile",
 )
