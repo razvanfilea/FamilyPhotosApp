@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toIntRect
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
-import androidx.paging.ItemSnapshotList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import net.theluckycoder.familyphotos.data.model.db.Photo
@@ -51,7 +50,7 @@ import kotlin.math.abs
 fun Modifier.photoSharedBounds(photoId: Long): Modifier {
     with(LocalSharedTransitionScope.current) {
         return sharedBounds(
-            rememberSharedContentState(key = "photo-$photoId"),
+            sharedContentState = rememberSharedContentState(key = "photo-$photoId"),
             animatedVisibilityScope = LocalNavAnimatedContentScope.current,
         )
     }
