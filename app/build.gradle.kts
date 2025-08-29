@@ -23,7 +23,7 @@ android {
         targetSdk = 35
 
         versionCode = 29
-        versionName = "2.9.5"
+        versionName = "2.9.6"
     }
 
     androidResources {

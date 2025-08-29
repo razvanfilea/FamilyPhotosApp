@@ -18,34 +18,20 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.window.core.layout.WindowWidthSizeClass
 import coil3.ImageLoader
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
@@ -53,7 +39,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.composables.PhotosViewer
 import net.theluckycoder.familyphotos.ui.screen.DuplicatesScreen
 import net.theluckycoder.familyphotos.ui.screen.FolderScreen
@@ -61,12 +46,9 @@ import net.theluckycoder.familyphotos.ui.screen.LoginScreen
 import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
 import net.theluckycoder.familyphotos.ui.screen.RenameFolderScreen
 import net.theluckycoder.familyphotos.ui.screen.SettingsScreen
+import net.theluckycoder.familyphotos.ui.screen.TopLevelScreen
 import net.theluckycoder.familyphotos.ui.screen.TrashScreen
 import net.theluckycoder.familyphotos.ui.screen.UploadPhotosScreen
-import net.theluckycoder.familyphotos.ui.screen.tabs.DeviceTab
-import net.theluckycoder.familyphotos.ui.screen.tabs.NetworkFoldersTab
-import net.theluckycoder.familyphotos.ui.screen.tabs.TimelineTab
-import net.theluckycoder.familyphotos.ui.screen.tabs.UtilitiesTab
 import net.theluckycoder.familyphotos.ui.theme.AppTheme
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
@@ -208,7 +190,6 @@ private fun Content(
                     TopLevelScreen(
                         timelinePagingItems,
                         mainViewModel,
-                        Modifier.fillMaxSize()
                     )
                 }
 
@@ -285,60 +266,4 @@ private fun Content(
             }
         }
     )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TopLevelScreen(
-    timelinePagingItems: LazyPagingItems<NetworkPhoto>,
-    mainViewModel: MainViewModel,
-    modifier: Modifier = Modifier
-) {
-    val selectedTabState = mainViewModel.selectedTabState
-
-    val adaptiveInfo = currentWindowAdaptiveInfo()
-    val customNavSuiteType = with(adaptiveInfo) {
-        if (windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.MEDIUM) {
-            NavigationSuiteType.NavigationRail
-        } else {
-            NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(adaptiveInfo)
-        }
-    }
-
-    NavigationSuiteScaffold(
-        modifier = Modifier.fillMaxSize(),
-        layoutType = customNavSuiteType,
-        navigationSuiteItems = {
-            TopLevelTab.entries.forEach { tab ->
-                item(
-                    icon = {
-                        Icon(
-                            painter = painterResource(if (selectedTabState.value == tab) tab.selectedIcon else tab.icon),
-                            contentDescription = stringResource(tab.sectionName)
-                        )
-                    },
-                    label = { Text(stringResource(tab.sectionName)) },
-                    selected = selectedTabState.value == tab,
-                    onClick = { selectedTabState.value = tab }
-                )
-            }
-        }
-    ) {
-        val isRefreshing by mainViewModel.isRefreshing.collectAsState()
-
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = {
-                mainViewModel.refreshPhotos()
-            },
-            modifier = modifier
-        ) {
-            when (selectedTabState.value) {
-                TopLevelTab.Timeline -> TimelineTab(timelinePagingItems)
-                TopLevelTab.NetworkFolders -> NetworkFoldersTab()
-                TopLevelTab.Device -> DeviceTab()
-                TopLevelTab.Utility -> UtilitiesTab()
-            }
-        }
-    }
 }
