@@ -1,22 +1,22 @@
 [versions]
-agp = "8.13.0-rc02"
-kotlin_base = "2.2.10"
-kotlin_ksp = "2.2.10-2.0.2"
+agp = "8.13.0"
+kotlin_base = "2.2.20"
+kotlin_ksp = "2.2.20-2.0.3"
 kotlin_coroutines = "1.10.2"
 kotlin_serialization = "1.9.0"
 kotlin_datetime = "0.7.1"
 kotlin_collections = "0.4.0"
-compose_bom = "2025.08.01"
-compose_activity = "1.10.1"
+compose_bom = "2025.09.00"
+compose_activity = "1.11.0"
 compose_compiler = "1.5.15"
 compose_lifecycleViewmodel = "2.9.3"
 androidx_core = "1.17.0"
-androidx_room = "2.7.2"
+androidx_room = "2.8.0"
 androidx_media = "1.8.0"
 androidx_paging = "3.3.6"
-androidx_camerax = "1.4.2"
-androidx_work = "2.10.3"
-androidx_nav3 = "1.0.0-alpha08"
+androidx_camerax = "1.5.0"
+androidx_work = "2.10.4"
+androidx_nav3 = "1.0.0-alpha09"
 coil = "3.3.0"
 dagger = "2.57.1"
 retrofit = "3.0.0"
@@ -24,15 +24,13 @@ okhttp = "5.1.0"
 junit = "1.3.0"
 espressoCore = "3.7.0"
 uiautomator = "2.3.0"
-benchmarkMacroJunit4 = "1.4.0"
-profileinstaller = "1.4.1"
 
 
 [plugins]
 android_application = { id = "com.android.application", version.ref = "agp" }
 android_library = { id = "com.android.library", version.ref = "agp" }
 android_test = { id = "com.android.test", version.ref = "agp" }
-android_baselineprofile = { id = "androidx.baselineprofile", version = "1.4.0" }
+android_baselineprofile = { id = "androidx.baselineprofile", version = "1.4.1" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin_base" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "dagger" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "kotlin_ksp" }
@@ -90,8 +88,8 @@ coil_video = { module = "io.coil-kt.coil3:coil-video", version.ref = "coil" }
 
 dagger_android = { module = "com.google.dagger:hilt-android", version.ref = "dagger" }
 dagger_compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "dagger" }
-dagger_hilt_compiler = "androidx.hilt:hilt-compiler:1.2.0"
-dagger_hilt_work = "androidx.hilt:hilt-work:1.2.0"
+dagger_hilt_compiler = "androidx.hilt:hilt-compiler:1.3.0"
+dagger_hilt_work = "androidx.hilt:hilt-work:1.3.0"
 
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofitSerializer = { module = "com.squareup.retrofit2:converter-kotlinx-serialization", version.ref = "retrofit" }
@@ -101,5 +99,5 @@ telephoto = { module = "me.saket.telephoto:zoomable-image-coil3", version = "0.1
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junit" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
-androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmarkMacroJunit4" }
-androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
+androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version = "1.4.1" }
+androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version = "1.4.1" }

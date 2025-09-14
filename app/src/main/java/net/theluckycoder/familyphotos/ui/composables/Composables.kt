@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -32,19 +33,33 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.compose.ConstraintsSizeResolver
+import coil3.compose.rememberAsyncImagePainter
+import coil3.compose.rememberConstraintsSizeResolver
+import coil3.request.ImageRequest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
@@ -54,7 +69,7 @@ import net.theluckycoder.familyphotos.data.model.db.getPreviewUri
 import net.theluckycoder.familyphotos.data.model.db.getUri
 import net.theluckycoder.familyphotos.data.model.db.thumbHash
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
-import net.theluckycoder.familyphotos.utils.rememberThumbHashPainter
+import net.theluckycoder.familyphotos.utils.loadThumbHashPainter
 import java.time.format.DateTimeFormatter
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -65,18 +80,56 @@ fun CoilPhoto(
     modifier: Modifier = Modifier,
     preview: Boolean = false,
     contentScale: ContentScale = ContentScale.Fit,
+    sizeResolver: ConstraintsSizeResolver = rememberConstraintsSizeResolver()
 ) {
-    val placeholder =
-        photo.thumbHash?.let { rememberThumbHashPainter(it) } ?: ColorPainter(Color.DarkGray)
+    val scope = rememberCoroutineScope()
+    var thumbHashPainter by remember { mutableStateOf<Painter?>(null) }
+    LaunchedEffect(photo.thumbHash) {
+        photo.thumbHash?.let { hash ->
+            scope.launch(Dispatchers.Main.immediate) {
+                thumbHashPainter = loadThumbHashPainter(hash)
+            }
+        }
+    }
 
-    AsyncImage(
-        modifier = modifier,
-        model = if (!preview) photo.getUri() else photo.getPreviewUri(),
-        placeholder = placeholder,
-        contentScale = contentScale,
-        contentDescription = photo.name,
+    val ctx = LocalContext.current
+    val fullImagePainter = rememberAsyncImagePainter(
         imageLoader = LocalImageLoader.current.get(),
-        error = ColorPainter(Color(0xB6D63535))
+        model = remember(photo.id) {
+            ImageRequest.Builder(ctx)
+                .data(if (!preview) photo.getUri() else photo.getPreviewUri())
+                .size(sizeResolver)
+                .build()
+        },
+        contentScale = contentScale,
+    )
+
+    val state by fullImagePainter.state.collectAsState()
+    val painter = remember(state, thumbHashPainter) {
+        when (state) {
+            is AsyncImagePainter.State.Empty,
+            is AsyncImagePainter.State.Loading -> {
+                thumbHashPainter ?: ColorPainter(Color.DarkGray)
+            }
+
+            is AsyncImagePainter.State.Success -> {
+                scope.cancel()
+                thumbHashPainter = null // Free the bitmap from memory
+                fullImagePainter
+            }
+
+            is AsyncImagePainter.State.Error -> {
+                thumbHashPainter ?: ColorPainter(Color(0xB6D63535))
+            }
+        }
+    }
+
+    Image(
+        modifier = modifier
+            .then(sizeResolver),
+        painter = painter,
+        contentDescription = null,
+        contentScale = contentScale,
     )
 }
 

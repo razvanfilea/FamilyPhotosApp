@@ -38,9 +38,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.LazyPagingItems
+import coil3.asImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import coil3.request.maxBitmapSize
+import coil3.size.Dimension
 import coil3.size.Size
 import me.saket.telephoto.zoomable.DoubleClickToZoomListener
 import me.saket.telephoto.zoomable.ZoomableImage
@@ -54,6 +56,7 @@ import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.data.model.db.getPreviewUri
 import net.theluckycoder.familyphotos.data.model.db.getUri
 import net.theluckycoder.familyphotos.data.model.db.isVideo
+import net.theluckycoder.familyphotos.data.model.db.thumbHash
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
@@ -64,6 +67,7 @@ import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewerViewModel
+import net.theluckycoder.familyphotos.utils.loadThumbHashImage
 
 
 @Composable
@@ -383,6 +387,10 @@ fun ZoomableImage(
         showUI(zoomFraction < 0.1f)
     }
 
+    val thumbHashImage = remember(photo.thumbHash) {
+        photo.thumbHash?.let { loadThumbHashImage(it)?.asImage(true) }
+    }
+
     val uri = localUri ?: photo.getUri()
     val model = remember(photo.id, uri) {
         val cacheKey = photo.getPreviewUri().toString()
@@ -390,8 +398,8 @@ fun ZoomableImage(
             .data(uri)
             .crossfade(true)
             .placeholderMemoryCacheKey(cacheKey)
-//            .placeholder(R.drawable.ic_hourglass_bottom)
-//            .size(Size.ORIGINAL)
+            .placeholder(thumbHashImage)
+            .size(Size.ORIGINAL)
 //            .maxBitmapSize(Size.Companion.ORIGINAL)
             .build()
     }
