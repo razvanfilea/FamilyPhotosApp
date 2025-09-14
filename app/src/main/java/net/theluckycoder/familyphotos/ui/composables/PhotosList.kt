@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.LazyPagingItems
+import coil3.compose.rememberConstraintsSizeResolver
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.db.Photo
@@ -100,6 +101,8 @@ fun <T : Photo> PhotosList(
             items = photos.itemSnapshotList,
         ) else Modifier
 
+    val photoItemSizeResolver = rememberConstraintsSizeResolver()
+
     LazyVerticalGrid(
         state = gridState,
         modifier = Modifier
@@ -160,6 +163,7 @@ fun <T : Photo> PhotosList(
                         photo = photo,
                         preview = true,
                         contentScale = ContentScale.Crop,
+                        sizeResolver = photoItemSizeResolver,
                     )
                 } else {
                     PhotoListItem(

@@ -29,6 +29,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -168,7 +169,7 @@ private val transitionSpec =
 
 @Composable
 private fun Content(
-    backStack: NavBackStack,
+    backStack: NavBackStack<NavKey>,
     mainViewModel: MainViewModel,
     foldersViewModel: FoldersViewModel,
     timelineViewModel: TimelineViewModel,
