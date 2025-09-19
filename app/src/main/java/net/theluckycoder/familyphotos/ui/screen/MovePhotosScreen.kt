@@ -40,7 +40,7 @@ fun MovePhotosScreen(photoIds: LongArray) {
         photosToShowcase = photosToShowcase.value,
         doneAction = { choice, folderName ->
             uploadPhotosViewModel.viewModelScope.launch {
-                val result = uploadPhotosViewModel.changePhotosLocationAsync(
+                val result = uploadPhotosViewModel.movePhotos(
                     photoIds,
                     choice == UploadChoice.Public,
                     folderName

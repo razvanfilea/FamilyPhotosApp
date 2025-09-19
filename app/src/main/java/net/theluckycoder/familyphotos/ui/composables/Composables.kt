@@ -95,7 +95,7 @@ fun CoilPhoto(
     val ctx = LocalContext.current
     val fullImagePainter = rememberAsyncImagePainter(
         imageLoader = LocalImageLoader.current.get(),
-        model = remember(photo.id) {
+        model = remember(photo) {
             ImageRequest.Builder(ctx)
                 .data(if (!preview) photo.getUri() else photo.getPreviewUri())
                 .size(sizeResolver)

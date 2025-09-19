@@ -67,7 +67,7 @@ private fun UploadDialogContent(
             items(photosToShowcase) { photo ->
                 CoilPhoto(
                     photo = photo,
-                    modifier = Modifier.size(72.dp),
+                    modifier = Modifier.size(72.dp).photoSharedBounds(photo.id),
                     preview = true,
                     contentScale = ContentScale.Crop,
                 )

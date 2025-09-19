@@ -298,23 +298,23 @@ class ServerRepository @Inject constructor(
         return false
     }
 
-    suspend fun changePhotoLocation(
-        photo: NetworkPhoto,
+    suspend fun movePhotos(
+        photos: List<NetworkPhoto>,
         makePublic: Boolean,
         newFolderName: String?,
     ): Boolean {
-        val response = photosService.get().movePhoto(
-            photoId = photo.id,
+        val response = photosService.get().movePhotos(
+            photoId = photos.map { it.id },
             makePublic = makePublic,
             newFolderName = newFolderName
         )
 
-        val changedPhoto = response.body()
+        val changedPhotos = response.body()
         Log.d("Moving Photos", response.errorBody()?.string().orEmpty())
-        if (!response.isSuccessful || changedPhoto == null)
+        if (!response.isSuccessful || changedPhotos == null)
             return false
 
-        networkPhotosDao.insert(changedPhoto)
+        networkPhotosDao.insert(changedPhotos)
         return true
     }
 

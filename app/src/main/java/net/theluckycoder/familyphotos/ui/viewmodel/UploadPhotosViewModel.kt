@@ -92,28 +92,24 @@ class UploadPhotosViewModel @Inject constructor(
      *
      * @returns true if all photos have been successfully moved
      */
-    fun changePhotosLocationAsync(
+    fun movePhotos(
         networkPhotos: LongArray,
         makePublic: Boolean,
         newFolderName: String?
     ): Deferred<Boolean> = viewModelScope.async(Dispatchers.IO) {
-        networkPhotos.map { id ->
-            try {
-                val photo =
-                    photosRepository.getNetworkPhotoFlow(id).firstOrNull() ?: return@map false
+        val photos = networkPhotos.map { id ->
+            photosRepository.getNetworkPhotoFlow(id).firstOrNull()
+        }.filterNotNull()
 
-                val result = serverRepository.changePhotoLocation(
-                    photo = photo,
-                    makePublic = makePublic,
-                    newFolderName = newFolderName
-                )
-                Log.d("Moving Photos", "Moved $id result=$result")
-                result
-            } catch (e: Exception) {
-                Log.e("Moving Photos", "Moved $id failed!", e)
-                false
-            }
-        }.all { it }
+        val result = serverRepository.movePhotos(
+            photos = photos,
+            makePublic = makePublic,
+            newFolderName = newFolderName
+        )
+
+        Log.d("Moving Photos", "Moved $photos result=$result")
+
+        result
     }
 
     fun renameNetworkFolder(
