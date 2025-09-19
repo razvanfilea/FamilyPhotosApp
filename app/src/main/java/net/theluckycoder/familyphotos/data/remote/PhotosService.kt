@@ -7,6 +7,7 @@ import net.theluckycoder.familyphotos.data.model.PartialPhotoList
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
@@ -21,7 +22,7 @@ interface PhotosService {
     @GET("/photos/sync/full")
     suspend fun getFullPhotosList(): Response<FullPhotoList>
 
-    @GET("/photos/sync/changes")
+    @GET("/photos/sync/partial")
     suspend fun getEventLogsList(@Query("last_synced_event_id") lastSyncedEventLogId: Long): Response<PartialPhotoList>
 
     @Streaming
@@ -62,12 +63,12 @@ interface PhotosService {
         @Path("photo_id") photoId: Long,
     ): Response<Void>
 
-    @POST("/photos/move/{photo_id}")
-    suspend fun movePhoto(
-        @Path("photo_id") photoId: Long,
+    @POST("/photos/move")
+    suspend fun movePhotos(
         @Query("make_public") makePublic: Boolean,
         @Query("target_folder_name") newFolderName: String?,
-    ): Response<NetworkPhoto>
+        @Body photoId: List<Long>,
+    ): Response<List<NetworkPhoto>>
 
     @POST("/photos/move/folder")
     suspend fun renameFolder(
