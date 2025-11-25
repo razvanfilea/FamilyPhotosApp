@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,13 +34,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,19 +45,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
-import coil3.compose.ConstraintsSizeResolver
-import coil3.compose.rememberAsyncImagePainter
-import coil3.compose.rememberConstraintsSizeResolver
-import coil3.request.ImageRequest
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
@@ -69,10 +60,13 @@ import net.theluckycoder.familyphotos.data.model.db.getPreviewUri
 import net.theluckycoder.familyphotos.data.model.db.getUri
 import net.theluckycoder.familyphotos.data.model.db.thumbHash
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
-import net.theluckycoder.familyphotos.utils.loadThumbHashPainter
+import net.theluckycoder.familyphotos.utils.ScaledBitmapPainter
+import net.theluckycoder.familyphotos.utils.ThumbHashCache
 import java.time.format.DateTimeFormatter
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+
+private val LOADING_PAINTER = ColorPainter(Color.DarkGray)
 
 @Composable
 fun CoilPhoto(
@@ -80,57 +74,35 @@ fun CoilPhoto(
     modifier: Modifier = Modifier,
     preview: Boolean = false,
     contentScale: ContentScale = ContentScale.Fit,
-    sizeResolver: ConstraintsSizeResolver = rememberConstraintsSizeResolver()
 ) {
-    val scope = rememberCoroutineScope()
-    var thumbHashPainter by remember { mutableStateOf<Painter?>(null) }
-    LaunchedEffect(photo.thumbHash) {
-        photo.thumbHash?.let { hash ->
-            scope.launch(Dispatchers.Main.immediate) {
-                thumbHashPainter = loadThumbHashPainter(hash)
-            }
-        }
+    val isImageLoaded = remember { mutableStateOf(false) }
+    val thumbHashPainter by produceState<Painter?>(initialValue = null, key1 = photo.thumbHash) {
+        value = ThumbHashCache.get(photo.thumbHash)?.let { ScaledBitmapPainter(it) }
     }
 
-    val ctx = LocalContext.current
-    val fullImagePainter = rememberAsyncImagePainter(
-        imageLoader = LocalImageLoader.current.get(),
-        model = remember(photo) {
-            ImageRequest.Builder(ctx)
-                .data(if (!preview) photo.getUri() else photo.getPreviewUri())
-                .size(sizeResolver)
-                .build()
-        },
-        contentScale = contentScale,
-    )
-
-    val state by fullImagePainter.state.collectAsState()
-    val painter = remember(state, thumbHashPainter) {
-        when (state) {
-            is AsyncImagePainter.State.Empty,
-            is AsyncImagePainter.State.Loading -> {
-                thumbHashPainter ?: ColorPainter(Color.DarkGray)
-            }
-
-            is AsyncImagePainter.State.Success -> {
-                scope.cancel()
-                thumbHashPainter = null // Free the bitmap from memory
-                fullImagePainter
-            }
-
-            is AsyncImagePainter.State.Error -> {
-                thumbHashPainter ?: ColorPainter(Color(0xB6D63535))
-            }
+    Box(modifier = modifier) {
+        if (!isImageLoaded.value) {
+            Image(
+                painter = thumbHashPainter ?: LOADING_PAINTER,
+                contentDescription = null,
+                contentScale = contentScale,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
-    }
 
-    Image(
-        modifier = modifier
-            .then(sizeResolver),
-        painter = painter,
-        contentDescription = null,
-        contentScale = contentScale,
-    )
+        AsyncImage(
+            model = if (!preview) photo.getUri() else photo.getPreviewUri(),
+            imageLoader = LocalImageLoader.current.get(),
+            contentDescription = null,
+            contentScale = contentScale,
+            modifier = Modifier.fillMaxSize(),
+            onState = { state ->
+                if (state is AsyncImagePainter.State.Success) {
+                    isImageLoaded.value = true
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -141,27 +113,25 @@ fun IconButtonText(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable () -> Unit
-) {
-    Column(
-        modifier = modifier
-            .clickable(
-                onClick = onClick,
-                role = Role.Button,
-                enabled = enabled,
-                interactionSource = interactionSource,
-                indication = ripple(bounded = false, radius = 24.dp)
-            )
-            .defaultMinSize(48.dp, 48.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        content()
-        Text(
-            modifier = Modifier.padding(top = 2.dp),
-            text = text,
-            fontSize = 12.sp,
+) = Column(
+    modifier = modifier
+        .clickable(
+            onClick = onClick,
+            role = Role.Button,
+            enabled = enabled,
+            interactionSource = interactionSource,
+            indication = ripple(bounded = false, radius = 24.dp)
         )
-    }
+        .defaultMinSize(48.dp, 48.dp),
+    verticalArrangement = Arrangement.Center,
+    horizontalAlignment = Alignment.CenterHorizontally
+) {
+    content()
+    Text(
+        modifier = Modifier.padding(top = 2.dp),
+        text = text,
+        fontSize = 12.sp,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

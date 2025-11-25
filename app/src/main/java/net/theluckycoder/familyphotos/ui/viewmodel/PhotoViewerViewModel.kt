@@ -37,10 +37,10 @@ class PhotoViewerViewModel @Inject constructor(
         }
     }
 
-    fun getEquivalentLocalUri(photo: NetworkPhoto): Flow<Uri?> =
+    fun getEquivalentLocalUriFlow(photo: NetworkPhoto): Flow<Uri?> =
         flow { photosRepository.getLocalPhotoFromNetwork(photo.id)?.uri }
 
-    suspend fun getEquivalentLocalUri2(photo: NetworkPhoto): Uri? =
+    suspend fun getEquivalentLocalUri(photo: NetworkPhoto): Uri? =
          photosRepository.getLocalPhotoFromNetwork(photo.id)?.uri
 
     suspend fun getExifData(photo: NetworkPhoto): ExifData? = withContext(Dispatchers.IO) {

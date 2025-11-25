@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -34,7 +36,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 import coil3.compose.rememberConstraintsSizeResolver
+import com.google.common.collect.Multimaps.index
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.db.Photo
@@ -91,6 +96,7 @@ fun <T : Photo> PhotosList(
     }
 
     val photosModifier = Modifier
+        .fillMaxWidth()
         .aspectRatio(1f)
         .padding(0.5.dp)
 
@@ -100,8 +106,6 @@ fun <T : Photo> PhotosList(
             selectedIds = selectedPhotoIds,
             items = photos.itemSnapshotList,
         ) else Modifier
-
-    val photoItemSizeResolver = rememberConstraintsSizeResolver()
 
     LazyVerticalGrid(
         state = gridState,
@@ -125,10 +129,7 @@ fun <T : Photo> PhotosList(
         }
 
         for (index in 0..<photos.itemCount) {
-            val photo = photos.peek(index)
-            if (photo == null) {
-                continue
-            }
+            val photo = photos.peek(index) ?: continue
 
             val headerDate = computeSeparatorText(
                 photos.itemSnapshotList.getOrNull(index - 1),
@@ -163,7 +164,6 @@ fun <T : Photo> PhotosList(
                         photo = photo,
                         preview = true,
                         contentScale = ContentScale.Crop,
-                        sizeResolver = photoItemSizeResolver,
                     )
                 } else {
                     PhotoListItem(

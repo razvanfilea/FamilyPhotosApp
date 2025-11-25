@@ -29,23 +29,24 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.LazyPagingItems
+import coil3.Image
 import coil3.asImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import coil3.request.maxBitmapSize
-import coil3.size.Dimension
 import coil3.size.Size
 import me.saket.telephoto.zoomable.DoubleClickToZoomListener
-import me.saket.telephoto.zoomable.ZoomableImage
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
@@ -67,6 +68,8 @@ import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewerViewModel
+import net.theluckycoder.familyphotos.utils.ScaledBitmapPainter
+import net.theluckycoder.familyphotos.utils.ThumbHashCache
 import net.theluckycoder.familyphotos.utils.loadThumbHashImage
 
 
@@ -98,7 +101,7 @@ fun <T : Photo> PhotosViewer(
             val localUri = remember { mutableStateOf<Uri?>(null) }
             LaunchedEffect(photo) {
                 if (photo is NetworkPhoto) {
-                    val d = photoViewerViewModel.getEquivalentLocalUri2(photo)
+                    val d = photoViewerViewModel.getEquivalentLocalUri(photo)
                     localUri.value = d
                 }
             }
@@ -145,7 +148,7 @@ fun <T : Photo> PhotosViewer(
             }
 
             val localUri = if (photo is NetworkPhoto) {
-                remember(photo) { photoViewerViewModel.getEquivalentLocalUri(photo) }.collectAsState(
+                remember(photo) { photoViewerViewModel.getEquivalentLocalUriFlow(photo) }.collectAsState(
                     null
                 )
             } else {
@@ -387,8 +390,8 @@ fun ZoomableImage(
         showUI(zoomFraction < 0.1f)
     }
 
-    val thumbHashImage = remember(photo.thumbHash) {
-        photo.thumbHash?.let { loadThumbHashImage(it)?.asImage(true) }
+    val thumbHashPainter by produceState<Image?>(initialValue = null, key1 = photo.thumbHash) {
+        value = ThumbHashCache.get(photo.thumbHash)?.asAndroidBitmap()?.asImage()
     }
 
     val uri = localUri ?: photo.getUri()
@@ -398,7 +401,7 @@ fun ZoomableImage(
             .data(uri)
             .crossfade(true)
             .placeholderMemoryCacheKey(cacheKey)
-            .placeholder(thumbHashImage)
+            .placeholder(thumbHashPainter)
             .size(Size.ORIGINAL)
 //            .maxBitmapSize(Size.Companion.ORIGINAL)
             .build()
