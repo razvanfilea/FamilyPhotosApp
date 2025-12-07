@@ -2,50 +2,63 @@ package net.theluckycoder.familyphotos.ui.composables.player
 
 import android.net.Uri
 import androidx.annotation.OptIn
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -60,12 +73,16 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
+import androidx.media3.ui.compose.material3.buttons.MuteButton
+import androidx.media3.ui.compose.material3.buttons.PlayPauseButton
+import androidx.media3.ui.compose.material3.buttons.SeekBackButton
+import androidx.media3.ui.compose.material3.buttons.SeekForwardButton
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
-import androidx.media3.ui.compose.state.PlayPauseButtonState
-import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberPresentationState
-import net.theluckycoder.familyphotos.R
+import androidx.media3.ui.compose.state.rememberProgressStateWithTickCount
+import androidx.media3.ui.compose.state.rememberProgressStateWithTickInterval
 import net.theluckycoder.familyphotos.ui.LocalOkHttpClient
+import java.util.Locale
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -80,7 +97,7 @@ fun VideoPlayer(
     val lifecycleOwner = rememberUpdatedState(LocalLifecycleOwner.current)
     val okHttpClient = LocalOkHttpClient.current.get()
 
-    val exoPlayer = remember {
+    val exoPlayer = remember(sourceUri) {
         val dataSourceFactory: DataSource.Factory = DefaultDataSource.Factory(
             context,
             OkHttpDataSource.Factory(okHttpClient),
@@ -140,9 +157,9 @@ fun VideoPlayer(
         ) {
             MinimalControls(exoPlayer, Modifier.align(Alignment.Center))
 
-            PlaybackTimeBar(
-                exoPlayer,
-                Modifier
+            TimeProgressBar2(
+                player = exoPlayer,
+                modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
                     .navigationBarsPadding()
@@ -173,242 +190,362 @@ fun VideoPlayer(
 
 @OptIn(UnstableApi::class)
 @Composable
-private fun PlayPauseButton(state: PlayPauseButtonState, modifier: Modifier = Modifier) {
-    val icon =
-        if (state.showPlay) painterResource(R.drawable.ic_video_play) else painterResource(R.drawable.ic_video_pause)
+private fun MinimalControls(player: Player, modifier: Modifier = Modifier) = Row(
+    modifier = modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.SpaceEvenly,
+    verticalAlignment = Alignment.CenterVertically
+) {
+    val backgroundModifier = Modifier
+        .background(Color.Black.copy(alpha = 0.4f), CircleShape)
+    val modifierForIconMutton = backgroundModifier.size(42.dp)
 
-    IconButton(
-        onClick = state::onClick,
-        modifier = modifier,
-        enabled = state.isEnabled
+    SeekBackButton(player, modifierForIconMutton)
+
+    PlayPauseButton(player, backgroundModifier.size(52.dp))
+
+    SeekForwardButton(player, modifierForIconMutton)
+}
+
+@OptIn(UnstableApi::class)
+@Composable
+private fun TimeProgressBar2(
+    player: Player,
+    modifier: Modifier = Modifier,
+    totalTickCount: Int = 0,
+    color: Color = MaterialTheme.colorScheme.primary,
+    trackColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    thumbColor: Color = MaterialTheme.colorScheme.primary,
+    textColor: Color = MaterialTheme.colorScheme.onSurface
+) {
+    var ticks by remember(totalTickCount) { mutableIntStateOf(totalTickCount) }
+    val barProgressState = rememberProgressStateWithTickCount(player, ticks)
+    val textProgressState = rememberProgressStateWithTickInterval(player, 1000L)
+
+    var isDragging by remember { mutableStateOf(false) }
+    var dragProgress by remember { mutableFloatStateOf(0f) }
+    val hapticFeedback = LocalHapticFeedback.current
+
+    // Duration caching to prevent UI flicker during seek operations
+    var duration by remember { mutableLongStateOf(player.duration.coerceAtLeast(0L)) }
+    LaunchedEffect(player.currentTimeline) {
+        duration = player.duration.coerceAtLeast(0L)
+    }
+
+    val barHeight = 4.dp
+    val thumbRadius = 8.dp
+    val hitAreaHeight = 48.dp // Taller hit area for better touch accessibility
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
     ) {
-        Icon(
-            icon,
-            contentDescription = null,
-            modifier = Modifier.size(30.dp),
-            tint = Color.White
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Spacer(Modifier.size(48.dp))
+
+            val currentMs =
+                if (isDragging) (dragProgress * duration).toLong() else textProgressState.currentPositionMs.coerceAtLeast(
+                    0
+                )
+
+            // TODO: Maybe switch to TimeText when it properly colors the text
+            Text(
+                text = "${stringForTime(currentMs)}/${stringForTime(duration)}",
+                style = MaterialTheme.typography.labelMedium,
+                color = textColor,
+                textAlign = TextAlign.Start,
+                fontFamily = FontFamily.Monospace,
+            )
+
+            MuteButton(player)
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(hitAreaHeight)
+                .systemGestureExclusion()
+                .onSizeChanged { size ->
+                    if (totalTickCount == 0 && size.width > 0 && ticks != size.width) {
+                        ticks = size.width
+                    }
+                }
+                .semantics {
+                    progressBarRangeInfo = ProgressBarRangeInfo(
+                        current = if (duration > 0) barProgressState.currentPositionProgress else 0f,
+                        range = 0f..1f,
+                        steps = 0
+                    )
+                    // Allow TalkBack users to scrub
+                    setProgress { targetValue ->
+                        val newPos = (targetValue * duration).toLong()
+                        player.seekTo(newPos)
+                        true
+                    }
+                }
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown()
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+
+                        val change = awaitTouchSlopOrCancellation(down.id) { change, _ ->
+                            change.consume()
+                        }
+
+                        if (change != null) {
+                            // Dragging started
+                            isDragging = true
+                            val startProgress = (change.position.x / size.width.toFloat()).coerceIn(0f, 1f)
+                            dragProgress = startProgress
+
+                            // Handle subsequent drag events
+                            drag(change.id) { dragChange ->
+                                dragChange.consume()
+                                val newProgress = (dragChange.position.x / size.width.toFloat()).coerceIn(0f, 1f)
+                                dragProgress = newProgress
+                            }
+                        } else {
+                            // It was a Tap
+                            val tapProgress = (down.position.x / size.width.toFloat()).coerceIn(0f, 1f)
+                            val seekPos = (tapProgress * duration).toLong()
+                            player.seekTo(seekPos)
+                        }
+
+                        // Gesture finished (Drag or Tap released)
+                        if (isDragging) {
+                            isDragging = false
+                            val seekPos = (dragProgress * duration).toLong()
+                            player.seekTo(seekPos)
+                        }
+                    }
+                }
+                // D. PERFORMANCE: DrawWithCache
+                // By reading state inside onDrawBehind, we skip the Composition/Layout phases entirely
+                // and only invalidate the Draw phase when the progress changes (60fps).
+                .drawWithCache {
+                    val barHeightPx = barHeight.toPx()
+                    val thumbRadiusPx = thumbRadius.toPx()
+                    val activeThumbRadius = if (isDragging) thumbRadiusPx * 1.5f else thumbRadiusPx
+                    val cornerRadius = CornerRadius(barHeightPx / 2)
+
+                    onDrawBehind {
+                        // READ STATE HERE (Inside the draw scope)
+                        // This ensures only the drawing logic re-runs on tick updates
+                        val currentProgress = if (isDragging) dragProgress else barProgressState.currentPositionProgress
+                        val bufferedProgress = barProgressState.bufferedPositionProgress
+
+                        val width = size.width
+                        val centerY = size.height / 2
+
+                        // 1. Track
+                        drawRoundRect(
+                            color = trackColor.copy(alpha = 0.5f),
+                            topLeft = Offset(0f, centerY - barHeightPx / 2),
+                            size = Size(width, barHeightPx),
+                            cornerRadius = cornerRadius
+                        )
+
+                        // 2. Buffer
+                        val safeBuffer = if (bufferedProgress.isNaN()) 0f else bufferedProgress
+                        drawRoundRect(
+                            color = color.copy(alpha = 0.3f),
+                            topLeft = Offset(0f, centerY - barHeightPx / 2),
+                            size = Size(width * safeBuffer, barHeightPx),
+                            cornerRadius = cornerRadius
+                        )
+
+                        // 3. Progress
+                        val safeProgress = if (currentProgress.isNaN()) 0f else currentProgress
+                        val progressWidth = width * safeProgress
+                        drawRoundRect(
+                            color = color,
+                            topLeft = Offset(0f, centerY - barHeightPx / 2),
+                            size = Size(progressWidth, barHeightPx),
+                            cornerRadius = cornerRadius
+                        )
+
+                        // 4. Thumb
+                        drawCircle(
+                            color = thumbColor,
+                            radius = activeThumbRadius,
+                            center = Offset(progressWidth, centerY)
+                        )
+                    }
+                }
         )
     }
 }
 
 @OptIn(UnstableApi::class)
 @Composable
-private fun MinimalControls(player: Player, modifier: Modifier = Modifier) = Row(
-    modifier = modifier.fillMaxWidth(),
-    horizontalArrangement = Arrangement.SpaceEvenly,
-    verticalAlignment = Alignment.CenterVertically
+private fun TimeProgressBar(
+    player: Player,
+    modifier: Modifier = Modifier,
+    totalTickCount: Int = 0,
+    color: Color = MaterialTheme.colorScheme.primary,
+    trackColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    thumbColor: Color = MaterialTheme.colorScheme.primary,
+    textColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
-    val playPauseState = rememberPlayPauseButtonState(player)
-    val backgroundModifier = Modifier
-        .background(Color.Black.copy(alpha = 0.4f), CircleShape)
-    val modifierForIconMutton = backgroundModifier.size(42.dp)
+    // Auto-calculate ticks based on width if totalTickCount is 0 (default)
+    var ticks by remember(totalTickCount) { mutableIntStateOf(totalTickCount) }
 
-    IconButton(
-        onClick = player::seekBack,
-        modifier = modifierForIconMutton,
-        enabled = playPauseState.isEnabled
-    ) {
-        Icon(
-            painterResource(R.drawable.ic_video_backward_5),
-            contentDescription = null,
-            tint = Color.White
-        )
-    }
+    val progressState = rememberProgressStateWithTickCount(player, ticks)
+    val textProgressState = rememberProgressStateWithTickInterval(player, 1000L)
 
-    PlayPauseButton(playPauseState, backgroundModifier.size(52.dp))
-
-    IconButton(
-        onClick = player::seekForward,
-        modifier = modifierForIconMutton,
-        enabled = playPauseState.isEnabled
-    ) {
-        Icon(
-            painterResource(R.drawable.ic_video_forward_5),
-            contentDescription = null,
-            tint = Color.White
-        )
-    }
-}
-
-@Composable
-private fun PlaybackTimeBar(player: Player, modifier: Modifier = Modifier) = Row(
-    modifier = modifier
-        .fillMaxWidth()
-        .padding(
-            vertical = 8.dp,
-            horizontal = 16.dp
-        ),
-    verticalAlignment = Alignment.CenterVertically
-) {
-    val state = rememberPlayerPositionState(player)
-
-    DefaultTimeBar(
-        currentPosition = state.position,
-        bufferingPosition = state.currentBufferedPosition,
-        duration = state.currentDuration,
-        onSeek = { position ->
-            state.seekTo(position)
-        }
-    )
-}
-
-@Composable
-private fun DefaultTimeBar(
-    currentPosition: Long,
-    bufferingPosition: Long,
-    duration: Long,
-    onSeek: (Long) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val progressColor = MaterialTheme.colorScheme.primary
-    val bufferingColor = progressColor.copy(alpha = 0.5f)
-    val thumbColor = progressColor
-    val backgroundColor = Color.Gray
-
-    var progressBarSize by remember { mutableStateOf(IntSize.Zero) }
-
+    // 2. Interaction State
     var isDragging by remember { mutableStateOf(false) }
-    var dragPosition by remember { mutableFloatStateOf(0f) }
+    var dragProgress by remember { mutableFloatStateOf(0f) }
 
-    val progressFraction = if (duration > 0) currentPosition.toFloat() / duration else 0f
-    val buggeredFraction = if (duration > 0) bufferingPosition.toFloat() / duration else 0f
+    // Duration is needed for time text. We can cache it to avoid seeking flicker.
+    var duration by remember { mutableLongStateOf(player.duration.coerceAtLeast(0L)) }
 
-    val thumbPositionFraction = if (isDragging) dragPosition else progressFraction
+    // Update duration periodically or when player changes events (simplified here)
+    LaunchedEffect(player.currentTimeline) {
+        duration = player.duration.coerceAtLeast(0L)
+    }
 
-    val animatedThumbPosition by animateFloatAsState(
-        targetValue = thumbPositionFraction,
-        animationSpec = if (isDragging) {
-            spring(
-                dampingRatio = 1f,
-                stiffness = 300f
-            )
-        } else {
-            spring(
-                dampingRatio = 0.8f,
-                stiffness = 150f
-            )
-        },
-        label = "thumbPosition"
-    )
+    // Determine what to show: Drag position or Player position
+    val currentProgress = if (isDragging) dragProgress else progressState.currentPositionProgress
+    val bufferedProgress = progressState.bufferedPositionProgress
 
-    val currentTimeText = formatTime(
-        if (isDragging) (thumbPositionFraction * duration).toLong() else currentPosition
-    )
-    val durationText = remember(duration) { formatTime(duration) }
+    val barHeight = 4.dp
+    val thumbRadius = 8.dp
+    val hitAreaHeight = 36.dp
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp)
+            .padding(horizontal = 16.dp),
     ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Spacer(Modifier.size(48.dp))
+
+            val currentMs =
+                if (isDragging) (dragProgress * duration).toLong() else textProgressState.currentPositionMs.coerceAtLeast(
+                    0
+                )
+
+            Text(
+                text = "${stringForTime(currentMs)}/${stringForTime(duration)}",
+                style = MaterialTheme.typography.labelMedium,
+                color = textColor,
+                textAlign = TextAlign.Start,
+                fontFamily = FontFamily.Monospace,
+            )
+
+            MuteButton(player)
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(36.dp)
-                .onSizeChanged { progressBarSize = it }
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onPress = { offset ->
-                            isDragging = true
-                            dragPosition = (offset.x / progressBarSize.width).coerceIn(0f, 1f)
-
-                            tryAwaitRelease()
-
-                            isDragging = false
-                            val seekPosition = (dragPosition * duration).toLong()
-                            onSeek(seekPosition)
+                .height(hitAreaHeight)
+                .systemGestureExclusion() // Prevents system gestures (like "back") from interfering with scrubbing
+                .onSizeChanged { size ->
+                    if (totalTickCount == 0 && size.width > 0) {
+                        // Only update if the width actually changed to avoid loop
+                        if (ticks != size.width) {
+                            ticks = size.width
                         }
-                    )
-
-                    /*detectDragGestures(
+                    }
+                }
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
                         onDragStart = { offset ->
                             isDragging = true
-                            dragPosition = (offset.x / progressBarSize.width).coerceIn(0f, 1f)
-                        },
-                        onDrag = { change, _ ->
-                            dragPosition =
-                                (change.position.x / progressBarSize.width).coerceIn(0f, 1f)
-                            change.consume()
+                            dragProgress = (offset.x / size.width.toFloat()).coerceIn(0f, 1f)
                         },
                         onDragEnd = {
-                            val seekPosition = (dragPosition * duration).toLong()
-                            onSeek(seekPosition)
                             isDragging = false
+                            val seekPos = (dragProgress * duration).toLong()
+                            player.seekTo(seekPos)
                         },
                         onDragCancel = {
                             isDragging = false
-                        }
-                    )*/
-                }
-        ) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(backgroundColor)
-            )
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .fillMaxWidth(buggeredFraction)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(bufferingColor)
-            )
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .fillMaxWidth(animatedThumbPosition)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(progressColor)
-            )
-
-            Box(
-                modifier = Modifier
-                    .offset(
-                        x = with(LocalDensity.current) {
-                            (animatedThumbPosition * progressBarSize.width - 6.dp.toPx()).coerceAtLeast(
-                                0f
-                            ).toDp()
+                        },
+                        onHorizontalDrag = { _, dragAmount ->
+                            val delta = dragAmount / size.width.toFloat()
+                            dragProgress = (dragProgress + delta).coerceIn(0f, 1f)
                         }
                     )
-                    .size(12.dp)
-                    .clip(CircleShape)
-                    .background(thumbColor)
-                    .align(Alignment.CenterStart)
-            )
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                }
+                .pointerInput(Unit) {
+                    detectTapGestures { offset ->
+                        val tappedProgress = (offset.x / size.width.toFloat()).coerceIn(0f, 1f)
+                        val seekPos = (tappedProgress * duration).toLong()
+                        player.seekTo(seekPos)
+                    }
+                }
         ) {
-            Text(
-                text = currentTimeText,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.White
-            )
+            Canvas(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(hitAreaHeight)
+                    .align(Alignment.Center)
+            ) {
+                val width = size.width
 
-            Text(
-                text = durationText,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.White
-            )
+                val centerY = size.height / 2
+                val barHeightPx = barHeight.toPx()
+                val cornerRadius = CornerRadius(barHeightPx / 2)
+
+                // A. Draw Background Track
+                drawRoundRect(
+                    color = trackColor.copy(alpha = 0.5f),
+                    topLeft = Offset(0f, centerY - barHeightPx / 2),
+                    size = Size(width, barHeightPx),
+                    cornerRadius = cornerRadius
+                )
+
+                // B. Draw Buffer
+                val safeBuffer = if (bufferedProgress.isNaN()) 0f else bufferedProgress
+                val bufferWidth = width * safeBuffer
+                drawRoundRect(
+                    color = color.copy(alpha = 0.3f),
+                    topLeft = Offset(0f, centerY - barHeightPx / 2),
+                    size = Size(bufferWidth, barHeightPx),
+                    cornerRadius = cornerRadius
+                )
+
+                // C. Draw Played Progress
+                val safeProgress = if (currentProgress.isNaN()) 0f else currentProgress
+                val progressWidth = width * safeProgress
+                drawRoundRect(
+                    color = color,
+                    topLeft = Offset(0f, centerY - barHeightPx / 2),
+                    size = Size(progressWidth, barHeightPx),
+                    cornerRadius = cornerRadius
+                )
+
+                // D. Draw Thumb
+                drawCircle(
+                    color = thumbColor,
+                    radius = if (isDragging) thumbRadius.toPx() * 1.2f else thumbRadius.toPx(),
+                    center = Offset(progressWidth, centerY)
+                )
+            }
         }
     }
 }
 
-private fun formatTime(timeMs: Long): String {
-    val totalSeconds = timeMs / 1000
-    val minutes = totalSeconds / 60
+private fun stringForTime(timeMs: Long): String {
+    val totalSeconds = if (timeMs < 0) 0 else timeMs / 1000
     val seconds = totalSeconds % 60
-    return "%02d:%02d".format(minutes, seconds)
+    val minutes = (totalSeconds / 60) % 60
+    val hours = totalSeconds / 3600
+
+    return if (hours > 0) {
+        String.format(Locale.US, "%d:%02d:%02d", hours, minutes, seconds)
+    } else {
+        String.format(Locale.US, "%02d:%02d", minutes, seconds)
+    }
 }

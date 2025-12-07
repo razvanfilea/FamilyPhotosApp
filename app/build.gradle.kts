@@ -99,6 +99,7 @@ dependencies {
     implementation(libs.media.exoplayer)
     implementation(libs.media.okhttp)
     implementation(libs.media.compose)
+    implementation(libs.media.compose.material3)
 
     // Room
     implementation(libs.room.runtime)

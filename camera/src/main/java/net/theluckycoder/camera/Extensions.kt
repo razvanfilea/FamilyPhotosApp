@@ -30,7 +30,7 @@ import kotlin.coroutines.suspendCoroutine
 private const val BITMAP_DATE_FORMAT = "dd.MM.yyyy"
 private const val FILENAME_FORMAT = "yyyyMMdd_HHmmssSS"
 
-private val TEXT_COLOR = "#5cf992".toColorInt()
+private val TEXT_COLOR = "#43f1ed".toColorInt()
 
 internal suspend fun CameraController.takePicture(context: Context): Uri {
     return suspendCoroutine { continuation ->
