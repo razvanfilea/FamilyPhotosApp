@@ -17,6 +17,7 @@ import kotlinx.serialization.Serializable
 import net.theluckycoder.familyphotos.di.NetworkModule
 import net.theluckycoder.familyphotos.utils.UriAsStringSerializer
 
+@Immutable
 @Serializable
 sealed class Photo : Parcelable {
 

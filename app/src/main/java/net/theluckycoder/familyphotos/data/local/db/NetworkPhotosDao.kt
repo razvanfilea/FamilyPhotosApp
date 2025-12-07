@@ -25,10 +25,15 @@ interface NetworkPhotosDao {
 
     @Query(
         """SELECT * FROM network_photo
-            WHERE trashedOn IS NULL
+            WHERE CASE 
+                WHEN :photoType = 1 THEN (userId IS NOT NULL)
+                WHEN :photoType = 2 THEN (userId IS NULL)
+                ELSE 1
+            END
+            AND trashedOn IS NULL
             ORDER BY network_photo.timeCreated DESC"""
     )
-    fun getPhotosPaged(): PagingSource<Int, NetworkPhoto>
+    fun getPhotosPaged(photoType: PhotoType): PagingSource<Int, NetworkPhoto>
 
     @Query(
         """SELECT * FROM network_photo
@@ -40,22 +45,27 @@ interface NetworkPhotosDao {
     @Query(
         """
         SELECT folder, id, userId, COUNT(id) as photoCount FROM network_photo
-        WHERE folder <> '' AND trashedOn is null
+        WHERE folder <> '' AND trashedOn is null AND
+        CASE 
+            WHEN :photoType = 1 THEN (userId IS NOT NULL)
+            WHEN :photoType = 2 THEN (userId IS NULL)
+            ELSE 1
+        END
         GROUP BY folder HAVING timeCreated = MAX(timeCreated)
         ORDER BY
             CASE WHEN :ascending <> 0 THEN folder END ASC,
             CASE WHEN :ascending = 0 THEN folder END DESC
         """
     )
-    fun getFolders(ascending: Boolean): Flow<List<NetworkFolder>>
+    fun getFolders(photoType: PhotoType, ascending: Boolean): Flow<List<NetworkFolder>>
 
     @Query(
         """SELECT *, 
               CAST((strftime('%s','now') - network_photo.timeCreated) / (3600 * 24 * 365) AS INTEGER) AS yearOffset 
         FROM network_photo
         WHERE CASE 
-            WHEN :photoType = 'Personal' THEN (userId IS NOT NULL)
-            WHEN :photoType = 'Family' THEN (userId IS NULL)
+            WHEN :photoType = 1 THEN (userId IS NOT NULL)
+            WHEN :photoType = 2 THEN (userId IS NULL)
             ELSE 1
         END
         AND yearOffset BETWEEN :minYearsAgo AND :maxYearsAgo

@@ -11,4 +11,10 @@ class Converters {
 
     @TypeConverter
     fun stringToUri(value: String?): Uri? = value?.toUri()
+
+    @TypeConverter
+    fun toPhotoType(value: Int) = enumValues<PhotoType>().find { it.index == value }
+
+    @TypeConverter
+    fun fromPhotoType(value: PhotoType) = value.index
 }

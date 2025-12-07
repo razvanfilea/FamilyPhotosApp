@@ -21,7 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -29,19 +28,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.LazyPagingItems
-import coil3.Image
 import coil3.asImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
@@ -51,6 +47,8 @@ import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.data.model.DataOrSeparator
+import net.theluckycoder.familyphotos.data.model.LazyPagingData
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.db.Photo
@@ -68,35 +66,36 @@ import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewerViewModel
-import net.theluckycoder.familyphotos.utils.ScaledBitmapPainter
 import net.theluckycoder.familyphotos.utils.ThumbHashCache
-import net.theluckycoder.familyphotos.utils.loadThumbHashImage
 
 
 @Composable
 fun <T : Photo> PhotosViewer(
-    lazyPagingItems: LazyPagingItems<out T>,
+    lazyPagingItems: LazyPagingData<T>,
     initialPhotoIndex: Int,
     photoViewerViewModel: PhotoViewerViewModel = viewModel()
 ) {
+    val showUi = remember { mutableStateOf(true) }
+    val items = remember(lazyPagingItems.itemSnapshotList) {
+        lazyPagingItems.itemSnapshotList.withIndex()
+            .mapNotNull { (index, data) -> (data as? DataOrSeparator.Data)?.data?.let { index to it } }
+    }
+    val actualInitialIndex = items.indexOfFirst { it.first == initialPhotoIndex }.coerceAtLeast(0)
+
     val pagerState = rememberPagerState(
-        initialPage = initialPhotoIndex,
-        pageCount = { lazyPagingItems.itemCount }
+        initialPage = actualInitialIndex,
+        pageCount = { items.size }
     )
 
-    val showUi = remember { mutableStateOf(true) }
-    val currentPhoto = lazyPagingItems.itemSnapshotList.getOrNull(pagerState.currentPage)
+    val currentPhoto = items[pagerState.currentPage].second
 
     PhotoViewerScaffold(currentPhoto, showUi.value, photoViewerViewModel) { paddingValues ->
         HorizontalPager(
             state = pagerState,
-            key = { index -> (lazyPagingItems.itemSnapshotList.getOrNull(index))?.id ?: index },
+            key = { index -> items[index].second.id },
         ) { page ->
-            val photo = lazyPagingItems[page]
-            if (photo == null) {
-                Text("Loading photo...")
-                return@HorizontalPager
-            }
+            val (originalIndex, photo) = items[page]
+            lazyPagingItems[originalIndex] // Notify Paging Data!!
 
             val localUri = remember { mutableStateOf<Uri?>(null) }
             LaunchedEffect(photo) {
@@ -390,10 +389,6 @@ fun ZoomableImage(
         showUI(zoomFraction < 0.1f)
     }
 
-    val thumbHashPainter by produceState<Image?>(initialValue = null, key1 = photo.thumbHash) {
-        value = ThumbHashCache.get(photo.thumbHash)?.asAndroidBitmap()?.asImage()
-    }
-
     val uri = localUri ?: photo.getUri()
     val model = remember(photo.id, uri) {
         val cacheKey = photo.getPreviewUri().toString()
@@ -401,7 +396,8 @@ fun ZoomableImage(
             .data(uri)
             .crossfade(true)
             .placeholderMemoryCacheKey(cacheKey)
-            .placeholder(thumbHashPainter)
+            // TODO Better ThumbHash
+            .placeholder { ThumbHashCache.get(photo.thumbHash)?.asAndroidBitmap()?.asImage() }
             .size(Size.ORIGINAL)
 //            .maxBitmapSize(Size.Companion.ORIGINAL)
             .build()

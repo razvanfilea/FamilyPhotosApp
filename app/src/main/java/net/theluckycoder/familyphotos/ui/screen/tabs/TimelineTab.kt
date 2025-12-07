@@ -40,8 +40,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.paging.compose.LazyPagingItems
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.data.model.LazyPagingData
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
@@ -55,7 +55,7 @@ import net.theluckycoder.familyphotos.ui.viewmodel.TimelineViewModel
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun TimelineTab(photos: LazyPagingItems<NetworkPhoto>) {
+fun TimelineTab(photos: LazyPagingData<NetworkPhoto>) {
     val mainViewModel: MainViewModel = viewModel()
     val timelineViewModel: TimelineViewModel = viewModel()
     val memories = timelineViewModel.memories.collectAsState()

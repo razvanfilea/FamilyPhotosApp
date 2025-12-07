@@ -1,6 +1,5 @@
 package net.theluckycoder.familyphotos.ui.screen
 
-import android.R.attr.bottom
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
@@ -46,7 +45,7 @@ fun TrashScreen() {
     val trashViewModel: TrashViewModel = viewModel()
     val backStack = LocalNavBackStack.current
 
-    val trashedPhotosState = trashViewModel.trashedPhotos.collectAsState(null)
+    val trashedPhotosState = trashViewModel.trashedPhotos.collectAsState(null) // TODO make this paginated
     val trashedPhotos = trashedPhotosState.value
     val selectedPhotoIds = remember { mutableStateSetOf<Long>() }
     val gridState = rememberLazyGridState()
@@ -64,11 +63,11 @@ fun TrashScreen() {
         LazyVerticalGrid(
             modifier = Modifier
                 .fillMaxSize()
-                .photoGridDrag(
+                /*.photoGridDrag( // TODO fix when this is paginated
                     lazyGridState = gridState,
                     selectedIds = selectedPhotoIds,
                     items = trashedPhotos ?: emptyList()
-                ),
+                )*/,
             state = gridState,
             columns = GridCells.Fixed(columnCount),
             contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding())

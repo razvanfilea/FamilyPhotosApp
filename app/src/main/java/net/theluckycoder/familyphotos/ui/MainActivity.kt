@@ -40,6 +40,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import net.theluckycoder.familyphotos.data.model.LazyPagingData
+import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.ui.composables.PhotosViewer
 import net.theluckycoder.familyphotos.ui.screen.DuplicatesScreen
 import net.theluckycoder.familyphotos.ui.screen.FolderScreen
@@ -200,7 +202,7 @@ private fun Content(
                         PhotoViewerFlowNav.Source.Network -> networkFolderPagingItems
                         PhotoViewerFlowNav.Source.Local -> localFolderPagingItems
                         PhotoViewerFlowNav.Source.Favorites -> favoritesFolderPagingItems
-                    }
+                    } as LazyPagingData<Photo>
 
                     PhotosViewer(
                         lazyPagingItems = lazyPagingItems,
@@ -228,7 +230,7 @@ private fun Content(
                         FolderNav.Source.Favorites -> favoritesFolderPagingItems
                         is FolderNav.Source.Network -> networkFolderPagingItems
                         is FolderNav.Source.Local -> localFolderPagingItems
-                    }
+                    } as LazyPagingData<Photo>
 
                     FolderScreen(key.source, lazyPagingItems)
                 }

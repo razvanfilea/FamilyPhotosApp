@@ -77,7 +77,7 @@ fun CoilPhoto(
 ) {
     val isImageLoaded = remember { mutableStateOf(false) }
     val thumbHashPainter by produceState<Painter?>(initialValue = null, key1 = photo.thumbHash) {
-        value = ThumbHashCache.get(photo.thumbHash)?.let { ScaledBitmapPainter(it) }
+        value = ThumbHashCache.getOrCompute(photo.thumbHash)?.let { ScaledBitmapPainter(it) }
     }
 
     Box(modifier = modifier) {

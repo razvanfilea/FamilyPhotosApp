@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -23,6 +22,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateSet
@@ -35,17 +36,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
-import coil3.compose.rememberConstraintsSizeResolver
-import com.google.common.collect.Multimaps.index
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.data.model.DataOrSeparator
+import net.theluckycoder.familyphotos.data.model.LazyPagingData
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.data.model.db.isVideo
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
-import net.theluckycoder.familyphotos.utils.computeSeparatorText
 
 private val PORTRAIT_ZOOM_LEVELS = intArrayOf(4, 5, 7, 9)
 private val LANDSCAPE_ZOOM_LEVELS = intArrayOf(8, 10, 13, 17)
@@ -55,10 +54,9 @@ private const val HIGH_ZOOM_LEVEL = 3
 
 @Composable
 private fun getZoomColumnCount(zoomIndex: Int): Int {
-    val levels = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT)
-        PORTRAIT_ZOOM_LEVELS
-    else
-        LANDSCAPE_ZOOM_LEVELS
+    val levels =
+        if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) PORTRAIT_ZOOM_LEVELS
+        else LANDSCAPE_ZOOM_LEVELS
 
     return levels[zoomIndex.coerceIn(0, MAX_ZOOM_LEVEL_INDEX)]
 }
@@ -71,7 +69,7 @@ private const val CONTENT_TYPE_HEADER = "header"
 )
 @Composable
 fun <T : Photo> PhotosList(
-    photos: LazyPagingItems<T>,
+    photos: LazyPagingData<T>,
     modifier: Modifier = Modifier,
     gridState: LazyGridState = rememberLazyGridState(),
     topBarContent: @Composable () -> Unit = {},
@@ -107,6 +105,8 @@ fun <T : Photo> PhotosList(
             items = photos.itemSnapshotList,
         ) else Modifier
 
+    val isScrolling = remember { derivedStateOf { gridState.isScrollInProgress } }
+
     LazyVerticalGrid(
         state = gridState,
         modifier = Modifier
@@ -118,9 +118,7 @@ fun <T : Photo> PhotosList(
         columns = GridCells.Fixed(columnCount),
     ) {
         item(
-            key = "header",
-            span = { GridItemSpan(columnCount) },
-            contentType = CONTENT_TYPE_HEADER
+            key = "header", span = { GridItemSpan(columnCount) }, contentType = CONTENT_TYPE_HEADER
         ) {
             Column {
                 topBarContent()
@@ -128,60 +126,88 @@ fun <T : Photo> PhotosList(
             }
         }
 
-        for (index in 0..<photos.itemCount) {
-            val photo = photos.peek(index) ?: continue
+        items(
+            count = photos.itemCount,
+            key = photos.itemKey {
+                when (it) {
+                    is DataOrSeparator.Data<T> -> it.data.id
+                    is DataOrSeparator.Separator<T> -> it.text
+                }
+            },
+            contentType = photos.itemContentType {
+                when (it) {
+                    is DataOrSeparator.Data<T> -> null
+                    is DataOrSeparator.Separator<T> -> CONTENT_TYPE_TITLE
+                }
+            },
+            span = { index ->
+                val span = if (photos.peek(index) is DataOrSeparator.Separator) columnCount else 1
+                GridItemSpan(span)
+            }) { index ->
+            when (val item = photos[index]) {
+                is DataOrSeparator.Data<T> -> {
+                    val photo = item.data
+                    // If scrolling, use an empty Modifier. If idle, use the expensive shared bounds.
+                    val sharedBoundsModifier = if (isScrolling.value) {
+                        Modifier
+                    } else {
+                        Modifier.photoSharedBounds(photo.id)
+                    }
 
-            val headerDate = computeSeparatorText(
-                photos.itemSnapshotList.getOrNull(index - 1),
-                photo
-            )
+                    val modifier = Modifier
+                        .then(sharedBoundsModifier)
+                        .animateItem(fadeInSpec = null, fadeOutSpec = null)
+                        .then(photosModifier)
 
-            if (headerDate != null) {
-                item(
-                    key = headerDate,
-                    span = { GridItemSpan(columnCount) },
-                    contentType = CONTENT_TYPE_TITLE
-                ) {
+                    if (highZoomLevel) {
+                        CoilPhoto(
+                            modifier = modifier.clickable(onClick = { openPhoto(index) }),
+                            photo = photo,
+                            preview = true,
+                            contentScale = ContentScale.Crop,
+                        )
+                    } else {
+                        PhotoListItem(
+                            modifier = modifier,
+                            photo = photo,
+                            selectedPhotoIds = selectedPhotoIds,
+                            openPhoto = { openPhoto(index) },
+                        )
+                    }
+                }
+
+                is DataOrSeparator.Separator<T> -> {
                     Text(
                         modifier = Modifier.padding(12.dp),
-                        text = headerDate,
+                        text = item.text,
                         style = if (highZoomLevel) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Medium
                     )
                 }
-            }
 
-            item(key = photo.id) {
-                val photo = photos[index]!!
-                val modifier = Modifier
-                    .photoSharedBounds(photo.id)
-                    .animateItem(fadeInSpec = null, fadeOutSpec = null)
-                    .then(photosModifier)
-
-                if (highZoomLevel) {
-                    CoilPhoto(
-                        modifier = modifier.clickable(onClick = { openPhoto(index) }),
-                        photo = photo,
-                        preview = true,
-                        contentScale = ContentScale.Crop,
-                    )
-                } else {
-                    PhotoListItem(
-                        modifier = modifier,
-                        photo = photo,
-                        selectedPhotoIds = selectedPhotoIds,
-                        openPhoto = { openPhoto(index) },
-                    )
-                }
+                null -> {}
             }
         }
     }
 
-    val isLocalPhoto =
-        remember(photos.itemSnapshotList.items) { photos.itemSnapshotList.items.firstOrNull() is LocalPhoto }
+    val containsLocalPhotos = remember { mutableStateOf<Boolean?>(null) }
+    LaunchedEffect(photos.itemSnapshotList.items) {
+        if (containsLocalPhotos.value == null) {
+            val photo = photos.itemSnapshotList.items.asSequence()
+                .take(10)
+                .mapNotNull { it as? DataOrSeparator.Data<*> }
+                .firstOrNull()
 
-    PhotosSelectionBar(selectedPhotoIds) {
-        PhotoUtilitiesActions(isLocalPhoto, selectedPhotoIds)
+            if (photo != null) {
+                containsLocalPhotos.value = photo.data is LocalPhoto
+            }
+        }
+    }
+
+    containsLocalPhotos.value?.let {
+        PhotosSelectionBar(selectedPhotoIds) {
+            PhotoUtilitiesActions(it, selectedPhotoIds)
+        }
     }
 }
 

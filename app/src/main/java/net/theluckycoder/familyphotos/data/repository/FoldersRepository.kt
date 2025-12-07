@@ -13,6 +13,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
+import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.db.LocalFolder
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
@@ -32,8 +33,8 @@ class FoldersRepository @Inject constructor(
     fun localFoldersFlow(ascending: Boolean): Flow<List<LocalFolder>> =
         localPhotosDao.getFolders(ascending)
 
-    fun networkFoldersFlow(ascending: Boolean): Flow<List<NetworkFolder>> =
-        networkPhotosDao.getFolders(ascending)
+    fun networkFoldersFlow(photoType: PhotoType, ascending: Boolean): Flow<List<NetworkFolder>> =
+        networkPhotosDao.getFolders(photoType, ascending)
 
     fun localPhotosFromFolder(folder: String, count: Int) =
         localPhotosDao.getFolderPhotos(folder, count)

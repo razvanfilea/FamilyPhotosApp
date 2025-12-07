@@ -6,18 +6,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingConfig
-import androidx.work.BackoffPolicy
-import androidx.work.Constraints
-import androidx.work.Data
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.Operation
-import androidx.work.WorkManager
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,20 +18,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
-import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.repository.LoginRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.data.repository.ServerRepository
 import net.theluckycoder.familyphotos.domain.RefreshPhotosUseCase
 import net.theluckycoder.familyphotos.ui.TopLevelTab
-import net.theluckycoder.familyphotos.workers.UploadWorker
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -82,9 +71,7 @@ class MainViewModel @Inject constructor(
         isRefreshing.value = true
 
         viewModelScope.launch(Dispatchers.IO) {
-            val result = refreshPhotosUseCase()
-
-            when (result) {
+            when (val result = refreshPhotosUseCase()) {
                 is RefreshPhotosUseCase.Result.Error -> Log.e(
                     "MainViewModel",
                     "Failed to refresh data",
@@ -124,7 +111,7 @@ class MainViewModel @Inject constructor(
                 serverRepository.trashNetworkPhoto(photoId, true)
             }
         }
-    }.toList().map { it.await() }
+    }.toList().awaitAll()
 
     fun deleteLocalPhotos(photoIds: LongArray) {
         viewModelScope.launch(Dispatchers.Default) {
@@ -138,6 +125,6 @@ class MainViewModel @Inject constructor(
     }
 
     companion object {
-        val PAGING_CONFIG = PagingConfig(pageSize = 256, enablePlaceholders = false)
+        val PAGING_CONFIG = PagingConfig(pageSize = 300, enablePlaceholders = false)
     }
 }

@@ -82,7 +82,7 @@ class ServerRepository @Inject constructor(
 
         val favoritePhotosResponse = service.getFavorites()
         favoritePhotosResponse.errorBody()
-            ?.let { Log.e("ServerRepository", "Failed to get favorites ${it.string()}") }
+            ?.let { Log.e("ServerRepository", "Failed to getOrCompute favorites ${it.string()}") }
 
         val photosResponse = photosAsync.await()
 
@@ -106,7 +106,7 @@ class ServerRepository @Inject constructor(
         }
 
         photosResponse.errorBody()
-            ?.let { Log.e("ServerRepository", "Failed to get photos ${it.string()}") }
+            ?.let { Log.e("ServerRepository", "Failed to getOrCompute photos ${it.string()}") }
 
         DownloadResponse.UNSUCCESSFUL
     }

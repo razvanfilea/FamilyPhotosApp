@@ -4,7 +4,6 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
-import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -12,6 +11,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -22,12 +22,11 @@ import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
 import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.db.LocalFolderToBackup
-import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
-import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
-import net.theluckycoder.familyphotos.data.model.db.isPublic
+import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import net.theluckycoder.familyphotos.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel.Companion.PAGING_CONFIG
+import net.theluckycoder.familyphotos.utils.mapPagingPhotos
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -54,50 +53,47 @@ class FoldersViewModel @Inject constructor(
 
     val favoritePhotosPager = Pager(PAGING_CONFIG) {
         photosRepository.getFavoritePhotosPaged()
-    }.flow.cachedIn(viewModelScope)
+    }.flow.mapPagingPhotos().cachedIn(viewModelScope)
+
     val localFolders = showFoldersAscending
         .flatMapLatest { foldersRepository.localFoldersFlow(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
-    val networkFolders = showFoldersAscending
-        .flatMapLatest { foldersRepository.networkFoldersFlow(it) }
-        .combine(selectedPhotoType) { folders, photoType ->
-            folders.filter {
-                when (photoType) {
-                    PhotoType.All -> true
-                    PhotoType.Personal -> !it.isPublic
-                    PhotoType.Family -> it.isPublic
-                }
-            }
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+
+    val networkFolders: StateFlow<List<NetworkFolder>> = selectedPhotoType
+        .combine(showFoldersAscending) { type, ascending -> type to ascending }
+        .flatMapLatest { (type, ascending) ->
+            foldersRepository.networkFoldersFlow(type, ascending)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     val photoListState = MutableStateFlow(LazyGridState())
 
     private val _selectedNetworkFolder = MutableStateFlow<String?>(null)
-    val networkFolderPhotosPager: Flow<PagingData<NetworkPhoto>> = _selectedNetworkFolder
+    val networkFolderPhotosPager = _selectedNetworkFolder
         .flatMapLatest { folderName ->
             if (folderName != null) {
                 Pager(PAGING_CONFIG) {
                     foldersRepository.networkPhotosFromFolderPaged(folderName)
-                }.flow.cachedIn(viewModelScope)
+                }.flow
             } else {
                 emptyFlow()
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), PagingData.empty())
+        .mapPagingPhotos()
+        .cachedIn(viewModelScope)
 
     private val _selectedLocalFolder = MutableStateFlow<String?>(null)
-    val localFolderPhotosPager: Flow<PagingData<LocalPhoto>> = _selectedLocalFolder
+    val localFolderPhotosPager = _selectedLocalFolder
         .flatMapLatest { folderName ->
             if (folderName != null) {
                 Pager(PAGING_CONFIG) {
                     foldersRepository.localPhotosFromFolderPaged(folderName)
-                }.flow.cachedIn(viewModelScope)
+                }.flow
             } else {
                 emptyFlow()
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), PagingData.empty())
+        .mapPagingPhotos()
+        .cachedIn(viewModelScope)
 
     fun refreshLocalPhotos() {
         viewModelScope.launch(Dispatchers.IO) {

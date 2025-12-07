@@ -6,15 +6,15 @@ kotlin_coroutines = "1.10.2"
 kotlin_serialization = "1.9.0"
 kotlin_datetime = "0.7.1"
 kotlin_collections = "0.4.0"
-compose_bom = "2025.11.01"
-compose_activity = "1.12.0"
+compose_bom = "2025.12.00"
+compose_activity = "1.12.1"
 compose_compiler = "1.5.15"
 compose_lifecycleViewmodel = "2.10.0"
 androidx_core = "1.17.0"
 androidx_room = "2.8.4"
-androidx_media = "1.8.0"
+androidx_media = "1.9.0-rc01"
 androidx_paging = "3.3.6"
-androidx_camerax = "1.5.1"
+androidx_camerax = "1.5.2"
 androidx_work = "2.11.0"
 androidx_nav3 = "1.0.0"
 coil = "3.3.0"
@@ -46,7 +46,7 @@ kotlin_reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref =
 
 androidx_core = { group = "androidx.core", name = "core-ktx", version.ref = "androidx_core" }
 androidx_dataStore = { module = "androidx.datastore:datastore-preferences", version = "1.2.0" }
-androidx_exif = { module = "androidx.exifinterface:exifinterface", version = "1.4.1" }
+androidx_exif = { module = "androidx.exifinterface:exifinterface", version = "1.4.2" }
 androidx_work = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx_work" }
 
 compose_bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose_bom" }
@@ -71,6 +71,7 @@ room_paging = { module = "androidx.room:room-paging", version.ref = "androidx_ro
 
 media_exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "androidx_media" }
 media_compose = { module = "androidx.media3:media3-ui-compose", version.ref = "androidx_media" }
+media_compose_material3 = { module = "androidx.media3:media3-ui-compose-material3", version.ref = "androidx_media" }
 media_okhttp = { module = "androidx.media3:media3-datasource-okhttp", version.ref = "androidx_media" }
 
 paging_runtime = { module = "androidx.paging:paging-runtime-ktx", version.ref = "androidx_paging" }

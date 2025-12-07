@@ -9,18 +9,15 @@ import androidx.compose.foundation.gestures.calculateCentroidSize
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -32,15 +29,14 @@ import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toIntRect
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import net.theluckycoder.familyphotos.data.model.DataOrSeparator
 import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
 import kotlin.math.abs
@@ -84,8 +80,7 @@ fun Modifier.selectableClickable(
 fun <T : Photo> Modifier.photoGridDrag(
     lazyGridState: LazyGridState,
     selectedIds: SnapshotStateSet<Long>,
-    items: List<T?>,
-    contentPadding: PaddingValues = PaddingValues(),
+    items: List<DataOrSeparator<T>?>,
 ): Modifier {
     val autoScrollSpeed = remember { mutableFloatStateOf(0f) }
     LaunchedEffect(autoScrollSpeed.floatValue) {
@@ -105,14 +100,12 @@ fun <T : Photo> Modifier.photoGridDrag(
         autoScrollSpeed = autoScrollSpeed,
         autoScrollThreshold = with(LocalDensity.current) { 40.dp.toPx() },
         scrollGestureActive = scrollGestureActive,
-        contentPadding = contentPadding,
-        layoutDirection = LocalLayoutDirection.current,
         items = items
     )
 }
 
 /**
- * Inspired by https://github.com/IacobIonut01/Gallery/blob/09d88ec6444cae2219248eb2b950da931bf43de0/app/src/main/kotlin/com/dot/gallery/feature_node/presentation/util/MultiSelectExt.kt#L26
+ * Heavily inspired by https://github.com/IacobIonut01/Gallery/blob/09d88ec6444cae2219248eb2b950da931bf43de0/app/src/main/kotlin/com/dot/gallery/feature_node/presentation/util/MultiSelectExt.kt#L26
  */
 private fun <T : Photo> Modifier.photoGridDrag(
     lazyGridState: LazyGridState,
@@ -121,23 +114,19 @@ private fun <T : Photo> Modifier.photoGridDrag(
     autoScrollSpeed: MutableState<Float>,
     autoScrollThreshold: Float,
     scrollGestureActive: MutableState<Boolean>,
-    contentPadding: PaddingValues,
-    layoutDirection: LayoutDirection,
-    items: List<T?>,
+    items: List<DataOrSeparator<T>?>,
 ) = pointerInput(Unit) {
-    val padLeft = contentPadding.calculateLeftPadding(layoutDirection).toPx()
-    val padTop = contentPadding.calculateTopPadding().toPx()
-
     fun LazyGridState.hitKeyAt(rawOffset: Offset): Long? {
-        val paddedOffset = rawOffset - Offset(padLeft, padTop)
-
         return layoutInfo.visibleItemsInfo
             .find { info ->
                 info.size.toIntRect()
-                    .contains((paddedOffset.round() - info.offset))
+                    .contains((rawOffset.round() - info.offset))
             }
             ?.key as? Long
     }
+
+    fun IntRange.mapIndexToId() =
+        this.mapNotNull { (items.getOrNull(it) as? DataOrSeparator.Data)?.data?.id }
 
     var initialMediaIndex: Int? = null
     var currentMediaIndex: Int? = null
@@ -146,7 +135,7 @@ private fun <T : Photo> Modifier.photoGridDrag(
         onDragStart = { raw ->
             scrollGestureActive.value = true
             lazyGridState.hitKeyAt(raw)?.let { key ->
-                val idx = items.indexOfFirst { it?.id == key }
+                val idx = items.indexOfFirst { (it as? DataOrSeparator.Data)?.data?.id == key }
                 if (key !in selectedIds) {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     initialMediaIndex = idx
@@ -178,15 +167,16 @@ private fun <T : Photo> Modifier.photoGridDrag(
                 }
 
                 lazyGridState.hitKeyAt(raw)?.let { key ->
-                    val newIdx = items.indexOfFirst { it?.id == key }
+                    val newIdx =
+                        items.indexOfFirst { (it as? DataOrSeparator.Data)?.data?.id == key }
                     if (newIdx >= 0 && newIdx != currentMediaIndex) {
                         val start = initialMediaIndex ?: return@let
                         val oldEnd = currentMediaIndex ?: return@let
                         val oldRange = if (oldEnd >= start) start..oldEnd else oldEnd..start
                         val newRange = if (newIdx >= start) start..newIdx else newIdx..start
 
-                        val oldIds = oldRange.mapNotNull { items.getOrNull(it)?.id }
-                        val newIds = newRange.mapNotNull { items.getOrNull(it)?.id }
+                        val oldIds = oldRange.mapIndexToId()
+                        val newIds = newRange.mapIndexToId()
 
                         selectedIds.removeAll(oldIds)
                         selectedIds.addAll(newIds)
@@ -201,34 +191,31 @@ private fun <T : Photo> Modifier.photoGridDrag(
 private const val UPPER_THRESHOLD = 1.8f
 private const val LOWER_THRESHOLD = 0.6f
 
-@Composable
 fun Modifier.detectZoomIn(
     zoomIndexState: MutableIntState,
     maxZoomIndex: Int
-): Modifier {
-    var accumulatedZoom by remember { mutableFloatStateOf(1f) }
+): Modifier = this.pointerInput(Unit) {
+    var accumulatedZoom = 1f
 
-    return this.pointerInput(Unit) {
-        detectPinchGestures(
-            pass = PointerEventPass.Initial,
-            onGesture = { _, newZoom ->
-                accumulatedZoom *= newZoom
+    detectPinchGestures(
+        pass = PointerEventPass.Initial,
+        onGesture = { _, newZoom ->
+            accumulatedZoom *= newZoom
 
-                val zoomIndex = zoomIndexState.intValue
+            val zoomIndex = zoomIndexState.intValue
 
-                while (accumulatedZoom > UPPER_THRESHOLD) {
-                    zoomIndexState.intValue = zoomIndex.dec().coerceIn(0, maxZoomIndex)
-                    accumulatedZoom /= UPPER_THRESHOLD // retain leftover zoom beyond the threshold
-                }
+            while (accumulatedZoom > UPPER_THRESHOLD) {
+                zoomIndexState.intValue = zoomIndex.dec().coerceIn(0, maxZoomIndex)
+                accumulatedZoom /= UPPER_THRESHOLD // retain leftover zoom beyond the threshold
+            }
 
-                while (accumulatedZoom < LOWER_THRESHOLD) {
-                    zoomIndexState.intValue = zoomIndex.inc().coerceIn(0, maxZoomIndex)
-                    accumulatedZoom /= LOWER_THRESHOLD
-                }
-            },
-            onGestureEnd = { accumulatedZoom = 1f }
-        )
-    }
+            while (accumulatedZoom < LOWER_THRESHOLD) {
+                zoomIndexState.intValue = zoomIndex.inc().coerceIn(0, maxZoomIndex)
+                accumulatedZoom /= LOWER_THRESHOLD
+            }
+        },
+        onGestureEnd = { accumulatedZoom = 1f }
+    )
 }
 
 private suspend fun PointerInputScope.detectPinchGestures(

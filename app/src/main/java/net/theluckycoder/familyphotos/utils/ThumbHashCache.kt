@@ -11,7 +11,15 @@ import kotlin.io.encoding.Base64
 object ThumbHashCache {
     private val cache = object : LruCache<String, ImageBitmap>(1000) {} // ~4MB memory
 
-    suspend fun get(thumbHash: String?): ImageBitmap? {
+    fun get(thumbHash: String?): ImageBitmap? {
+        if (thumbHash == null) return null
+
+        synchronized(cache) {
+            return cache.get(thumbHash)
+        }
+    }
+
+    suspend fun getOrCompute(thumbHash: String?): ImageBitmap? {
         if (thumbHash == null) return null
 
         synchronized(cache) {

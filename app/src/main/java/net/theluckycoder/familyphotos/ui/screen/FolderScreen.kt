@@ -22,8 +22,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.paging.compose.LazyPagingItems
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.data.model.LazyPagingData
 import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
@@ -36,7 +36,7 @@ import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out Photo>) {
+fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingData<Photo>) {
     val foldersViewModel: FoldersViewModel = viewModel()
     val gridState by foldersViewModel.photoListState.collectAsState()
     val backStack = LocalNavBackStack.current

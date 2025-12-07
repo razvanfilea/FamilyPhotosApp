@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
+import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
@@ -40,7 +41,7 @@ class UploadPhotosViewModel @Inject constructor(
 ) : ViewModel() {
 
     val networkFolders = settingsStore.showFoldersAscending
-        .flatMapLatest { foldersRepository.networkFoldersFlow(it) }
+        .flatMapLatest { foldersRepository.networkFoldersFlow(PhotoType.All, it) }
 
     fun getLocalPhotos(photoIds: LongArray): Deferred<List<LocalPhoto>> =
         viewModelScope.async(Dispatchers.IO) {

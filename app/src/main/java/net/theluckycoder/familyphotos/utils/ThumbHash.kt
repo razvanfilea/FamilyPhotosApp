@@ -2,6 +2,7 @@ package net.theluckycoder.familyphotos.utils
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color.blue
 import androidx.core.graphics.createBitmap
 import java.nio.ByteBuffer
 import kotlin.math.cos
@@ -63,7 +64,7 @@ object ThumbHash {
         val ratio = thumbHashToApproximateAspectRatio(hash)
         val w = (if (ratio > 1.0f) 32.0f else 32.0f * ratio).roundToInt()
         val h = (if (ratio > 1.0f) 32.0f / ratio else 32.0f).roundToInt()
-        val rgba = ByteArray(w * h * 4)
+        val pixels = IntArray(w * h)
         val cx_stop = max(lx, if (hasAlpha) 5 else 3)
         val cy_stop = max(ly, if (hasAlpha) 5 else 3)
         val fx = FloatArray(cx_stop)
@@ -134,18 +135,19 @@ object ThumbHash {
                 val b = l - 2.0f / 3.0f * p
                 val r = (3.0f * l - b + q) / 2.0f
                 val g = r - q
-                rgba[i] = max(0, (255.0f * min(1f, r)).roundToInt()).toByte()
-                rgba[i + 1] = max(0, (255.0f * min(1f, g)).roundToInt()).toByte()
-                rgba[i + 2] = max(0, (255.0f * min(1f, b)).roundToInt()).toByte()
-                rgba[i + 3] = max(0, (255.0f * min(1f, a)).roundToInt()).toByte()
+
+                val red = max(0, (255.0f * min(1f, r)).roundToInt())
+                val green = max(0, (255.0f * min(1f, g)).roundToInt())
+                val blue = max(0, (255.0f * min(1f, b)).roundToInt())
+                val alpha = max(0, (255.0f * min(1f, a)).roundToInt())
+                pixels[i++] = (alpha shl 24) or (red shl 16) or (green shl 8) or blue
                 x++
-                i += 4
             }
             y++
         }
 
         val bitmap = createBitmap(w, h)
-        bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(rgba))
+        bitmap.setPixels(pixels, 0, w, 0, 0, w, h)
         return bitmap
     }
 
