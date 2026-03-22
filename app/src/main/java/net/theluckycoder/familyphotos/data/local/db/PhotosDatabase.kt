@@ -14,10 +14,11 @@ import net.theluckycoder.familyphotos.data.model.db.LocalFolderToBackup
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.db.ServerState
+import net.theluckycoder.familyphotos.data.model.db.UploadQueueEntry
 
 @Database(
-    entities = [LocalPhoto::class, NetworkPhoto::class, LocalFolderToBackup::class, FavoriteNetworkPhoto::class, ServerState::class],
-    version = 11,
+    entities = [LocalPhoto::class, NetworkPhoto::class, LocalFolderToBackup::class, FavoriteNetworkPhoto::class, ServerState::class, UploadQueueEntry::class],
+    version = 12,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -30,6 +31,8 @@ abstract class PhotosDatabase : RoomDatabase() {
     abstract fun localFolderBackupDao(): LocalFolderBackupDao
 
     abstract fun favoritePhotosDao(): FavoritePhotosDao
+
+    abstract fun uploadQueueDao(): UploadQueueDao
 
     companion object {
         @Volatile
@@ -66,6 +69,23 @@ abstract class PhotosDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """CREATE TABLE upload_queue (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        localPhotoId INTEGER NOT NULL,
+                        makePublic INTEGER NOT NULL,
+                        uploadFolder TEXT,
+                        retryCount INTEGER NOT NULL DEFAULT 0,
+                        maxRetries INTEGER NOT NULL DEFAULT 3,
+                        createdAt INTEGER NOT NULL
+                    )"""
+                )
+                db.execSQL("CREATE UNIQUE INDEX index_upload_queue_localPhotoId ON upload_queue(localPhotoId)")
+            }
+        }
+
         fun getDatabase(context: Context): PhotosDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE?.let { return it }
@@ -78,7 +98,8 @@ abstract class PhotosDatabase : RoomDatabase() {
                     MIGRATION_8,
                     MIGRATION_9,
                     MIGRATION_10,
-                    MIGRATION_11
+                    MIGRATION_11,
+                    MIGRATION_12
                 ).addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)

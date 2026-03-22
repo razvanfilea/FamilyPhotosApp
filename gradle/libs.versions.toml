@@ -4,7 +4,7 @@ kotlin_base = "2.3.20"
 kotlin_ksp = "2.3.6"
 kotlin_coroutines = "1.10.2"
 kotlin_serialization = "1.10.0"
-kotlin_datetime = "0.7.1-0.6.x-compat"
+kotlin_datetime = "0.7.1"
 kotlin_collections = "0.4.0"
 compose_bom = "2026.03.00"
 compose_activity = "1.13.0"
@@ -30,7 +30,6 @@ android_application = { id = "com.android.application", version.ref = "agp" }
 android_library = { id = "com.android.library", version.ref = "agp" }
 android_test = { id = "com.android.test", version.ref = "agp" }
 android_baselineprofile = { id = "androidx.baselineprofile", version = "1.5.0-alpha04" }
-kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin_base" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "dagger" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "kotlin_ksp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin_base" }

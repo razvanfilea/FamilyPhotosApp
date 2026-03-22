@@ -11,6 +11,7 @@ import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
 import net.theluckycoder.familyphotos.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.data.local.db.PhotosDatabase
+import net.theluckycoder.familyphotos.data.local.db.UploadQueueDao
 
 @InstallIn(SingletonComponent::class)
 @Module
@@ -35,4 +36,8 @@ class DatabaseModule {
     @Provides
     fun provideFavoritesPhotosDao(photosDatabase: PhotosDatabase): FavoritePhotosDao =
         photosDatabase.favoritePhotosDao()
+
+    @Provides
+    fun provideUploadQueueDao(photosDatabase: PhotosDatabase): UploadQueueDao =
+        photosDatabase.uploadQueueDao()
 }

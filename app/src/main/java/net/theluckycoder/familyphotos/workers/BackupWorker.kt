@@ -4,24 +4,24 @@ import android.content.Context
 import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
+import net.theluckycoder.familyphotos.data.local.db.UploadQueueDao
+import net.theluckycoder.familyphotos.data.model.db.UploadQueueEntry
 import net.theluckycoder.familyphotos.data.repository.FoldersRepository
-import net.theluckycoder.familyphotos.data.repository.ServerRepository
-import java.io.IOException
-import java.net.ConnectException
 
 @HiltWorker
 class BackupWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
     private val foldersRepository: FoldersRepository,
-    private val serverRepository: ServerRepository,
+    private val uploadQueueDao: UploadQueueDao,
     private val localFolderBackupDao: LocalFolderBackupDao,
+    private val workManager: WorkManager,
 ) : CoroutineWorker(context, workerParams) {
 
     override suspend fun doWork(): Result {
@@ -29,32 +29,27 @@ class BackupWorker @AssistedInject constructor(
 
         val folderNames = localFolderBackupDao.getAll().first()
 
-        val result = try {
+        val entries = mutableListOf<UploadQueueEntry>()
 
-            for (folderName in folderNames) {
-                Log.i("BackupWorker", "Backing Up folder: $folderName)")
-                val photos = foldersRepository.localPhotosFromFolder(folderName, 100)
-                    .filter { !it.isSavedToCloud } // Photos not uploaded
+        for (folderName in folderNames) {
+            Log.i("BackupWorker", "Backing Up folder: $folderName)")
+            val photos = foldersRepository.localPhotosFromFolder(folderName, 100)
+                .filter { !it.isSavedToCloud }
 
-                photos.forEach { localPhoto ->
-                    serverRepository.uploadFile(localPhoto, false, null)
-                }
+            photos.mapTo(entries) { localPhoto ->
+                UploadQueueEntry(
+                    localPhotoId = localPhoto.id,
+                    makePublic = false,
+                    uploadFolder = folderName,
+                )
             }
-
-            Result.success()
-        } catch (e: ConnectException) {
-            Result.retry()
-        } catch (e: IOException) {
-            e.printStackTrace()
-            Result.failure()
-        } catch (e: CancellationException) {
-            Result.failure()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Log.e(BackupWorker::class.simpleName, e.stackTraceToString())
-            Result.failure()
         }
 
-        return result
+        if (entries.isNotEmpty()) {
+            uploadQueueDao.insertAll(entries)
+            workManager.enqueueUploadWorker()
+        }
+
+        return Result.success()
     }
 }

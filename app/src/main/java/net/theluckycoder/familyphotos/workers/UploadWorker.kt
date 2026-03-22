@@ -22,11 +22,11 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.data.local.db.UploadQueueDao
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.data.repository.ServerRepository
 import java.io.File
 import java.net.ConnectException
-import kotlin.random.Random
 
 @HiltWorker
 class UploadWorker @AssistedInject constructor(
@@ -34,9 +34,10 @@ class UploadWorker @AssistedInject constructor(
     @Assisted workerParams: WorkerParameters,
     private val photosRepository: PhotosRepository,
     private val serverRepository: ServerRepository,
+    private val uploadQueueDao: UploadQueueDao,
 ) : CoroutineWorker(context, workerParams) {
 
-    private val notificationId = Random.nextInt(1, Int.MAX_VALUE)
+    private val notificationId = id.hashCode()
     private val backupFolder = File(applicationContext.cacheDir, "backup_temp")
 
     override suspend fun doWork(): Result {
@@ -50,51 +51,54 @@ class UploadWorker @AssistedInject constructor(
         NotificationManagerCompat.from(ctx).createNotificationChannel(channel)
         setForeground(createForegroundInfo("Starting upload", 0, 0))
 
-        val ids = inputData.getLongArray(KEY_INPUT_LIST) ?: return Result.failure()
-        val makePublic = inputData.getBoolean(KEY_MAKE_PUBLIC, false)
-        val uploadFolder = inputData.getString(KEY_UPLOAD_FOLDER)
-            .orEmpty().trim().takeIf { it.isNotEmpty() }
+        var successCount = 0
+        var failCount = 0
 
         val result = try {
-            var total = ids.size
-            var failedCount = 0
+            while (true) {
+                val entry = uploadQueueDao.getNextPending() ?: break
 
-            ids.forEachIndexed { index, localPhotoId ->
-                val localPhoto = photosRepository.getLocalPhotoFlow(localPhotoId).first()
+                val localPhoto = photosRepository.getLocalPhotoFlow(entry.localPhotoId).first()
                 if (localPhoto == null || localPhoto.isSavedToCloud) {
-                    total--
-                    return@forEachIndexed
+                    uploadQueueDao.deleteById(entry.id)
+                    continue
                 }
 
                 setForeground(
-                    createForegroundInfo("Uploaded $index/$total files", index, total)
+                    createForegroundInfo(
+                        "Uploaded ${successCount + failCount} files",
+                        successCount + failCount,
+                        0
+                    )
                 )
 
                 val success = try {
-                    serverRepository.uploadFile(localPhoto, makePublic, uploadFolder)
+                    serverRepository.uploadFile(localPhoto, entry.makePublic, entry.uploadFolder)
+                } catch (e: ConnectException) {
+                    return Result.retry()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Caught exception while uploading $localPhotoId", e)
+                    Log.e(TAG, "Caught exception while uploading ${entry.localPhotoId}", e)
                     false
                 }
 
-                if (!success) {
-                    Log.e(TAG, "Failed to upload $localPhotoId")
-                    failedCount++
+                if (success) {
+                    uploadQueueDao.deleteById(entry.id)
+                    successCount++
+                } else {
+                    uploadQueueDao.incrementRetryCount(entry.id)
+                    failCount++
                 }
             }
 
-            createSuccessNotification(total - failedCount, failedCount)
+            createSuccessNotification(successCount, failCount)
 
             Result.success()
-        } catch (_: ConnectException) {
-            createFailNotification(FailReason.NoInternet)
-            Result.retry()
         } catch (_: CancellationException) {
             createFailNotification(FailReason.Cancelled)
             Result.failure()
         } catch (e: Exception) {
             e.printStackTrace()
-            Log.e("Family", e.stackTraceToString())
+            Log.e(TAG, e.stackTraceToString())
             createFailNotification(FailReason.Other, e.stackTraceToString())
             Result.failure()
         }
@@ -220,9 +224,6 @@ class UploadWorker @AssistedInject constructor(
         private const val NOTIFICATION_FAIL_ID = -100
         private const val NOTIFICATION_CHANNEL = "backup"
         const val TAG = "upload"
-
-        const val KEY_INPUT_LIST = "input_list"
-        const val KEY_MAKE_PUBLIC = "make_public"
-        const val KEY_UPLOAD_FOLDER = "upload_folder"
+        const val UNIQUE_WORK_NAME = "upload_work"
     }
 }

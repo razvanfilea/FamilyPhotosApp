@@ -3,12 +3,6 @@ package net.theluckycoder.familyphotos.ui.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.work.BackoffPolicy
-import androidx.work.Constraints
-import androidx.work.Data
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.Operation
 import androidx.work.WorkManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Deferred
@@ -19,15 +13,16 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
+import net.theluckycoder.familyphotos.data.local.db.UploadQueueDao
 import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.db.UploadQueueEntry
 import net.theluckycoder.familyphotos.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.data.repository.ServerRepository
-import net.theluckycoder.familyphotos.workers.UploadWorker
-import java.util.concurrent.TimeUnit
+import net.theluckycoder.familyphotos.workers.enqueueUploadWorker
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -38,6 +33,7 @@ class UploadPhotosViewModel @Inject constructor(
     private val serverRepository: ServerRepository,
     settingsStore: SettingsDataStore,
     private val workManager: WorkManager,
+    private val uploadQueueDao: UploadQueueDao,
 ) : ViewModel() {
 
     val networkFolders = settingsStore.showFoldersAscending
@@ -60,32 +56,18 @@ class UploadPhotosViewModel @Inject constructor(
         localPhotos: LongArray,
         makePublic: Boolean,
         uploadFolder: String?
-    ): Operation {
-        val data = Data.Builder()
-            .putAll(
-                mapOf(
-                    UploadWorker.KEY_INPUT_LIST to localPhotos,
-                    UploadWorker.KEY_MAKE_PUBLIC to makePublic,
-                    UploadWorker.KEY_UPLOAD_FOLDER to uploadFolder
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val entries = localPhotos.map { localPhotoId ->
+                UploadQueueEntry(
+                    localPhotoId = localPhotoId,
+                    makePublic = makePublic,
+                    uploadFolder = uploadFolder,
                 )
-            )
-            .build()
-
-        val constraints = Constraints.Builder()
-            .setRequiresStorageNotLow(true)
-            .setRequiredNetworkType(NetworkType.NOT_ROAMING)
-            .build()
-
-        val uploadRequest = OneTimeWorkRequestBuilder<UploadWorker>()
-            .setInputData(data)
-            .setConstraints(constraints)
-            .addTag(UploadWorker.TAG)
-            .setBackoffCriteria(BackoffPolicy.LINEAR, 15, TimeUnit.SECONDS)
-            .build()
-
-        return workManager
-//            .beginUniqueWork("upload_work", ExistingWorkPolicy.APPEND, uploadRequest)
-            .enqueue(uploadRequest)
+            }
+            uploadQueueDao.insertAll(entries)
+            workManager.enqueueUploadWorker()
+        }
     }
 
     /**
