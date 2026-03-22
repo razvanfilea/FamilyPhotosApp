@@ -19,6 +19,7 @@ interface FavoritePhotosDao {
         """
         SELECT p.* FROM network_photo p
         JOIN favorite_network_photo ON p.id = favorite_network_photo.photoId
+        WHERE p.trashedOn IS NULL
         ORDER BY p.timeCreated DESC
     """
     )

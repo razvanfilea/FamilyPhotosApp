@@ -37,10 +37,16 @@ interface NetworkPhotosDao {
 
     @Query(
         """SELECT * FROM network_photo
-        WHERE network_photo.folder = :folder AND trashedOn IS NULL
+        WHERE network_photo.folder = :folder
+        AND CASE
+            WHEN :photoType = 1 THEN (userId IS NOT NULL)
+            WHEN :photoType = 2 THEN (userId IS NULL)
+            ELSE 1
+        END
+        AND trashedOn IS NULL
         ORDER BY network_photo.timeCreated DESC"""
     )
-    fun getFolderPhotos(folder: String): PagingSource<Int, NetworkPhoto> // TODO include userId in query
+    fun getFolderPhotos(folder: String, photoType: PhotoType): PagingSource<Int, NetworkPhoto>
 
     @Query(
         """
@@ -60,16 +66,19 @@ interface NetworkPhotosDao {
     fun getFolders(photoType: PhotoType, ascending: Boolean): Flow<List<NetworkFolder>>
 
     @Query(
-        """SELECT *, 
-              CAST((strftime('%s','now') - network_photo.timeCreated) / (3600 * 24 * 365) AS INTEGER) AS yearOffset 
+        """SELECT *,
+              CAST(strftime('%Y', 'now') AS INTEGER) - CAST(strftime('%Y', datetime(network_photo.timeCreated, 'unixepoch')) AS INTEGER) AS yearOffset
         FROM network_photo
-        WHERE CASE 
+        WHERE CASE
             WHEN :photoType = 1 THEN (userId IS NOT NULL)
             WHEN :photoType = 2 THEN (userId IS NULL)
             ELSE 1
         END
         AND yearOffset BETWEEN :minYearsAgo AND :maxYearsAgo
-        AND ABS(strftime('%j', 'now') - strftime('%j', datetime(network_photo.timeCreated, 'unixepoch'))) <= 3
+        AND MIN(
+            ABS(CAST(strftime('%j', 'now') AS INTEGER) - CAST(strftime('%j', datetime(network_photo.timeCreated, 'unixepoch')) AS INTEGER)),
+            366 - ABS(CAST(strftime('%j', 'now') AS INTEGER) - CAST(strftime('%j', datetime(network_photo.timeCreated, 'unixepoch')) AS INTEGER))
+        ) <= 3
         AND trashedOn is null
         ORDER BY yearOffset ASC, network_photo.timeCreated DESC"""
     )

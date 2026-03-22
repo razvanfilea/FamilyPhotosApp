@@ -18,21 +18,31 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
+private val displayLocale: Locale = Locale.forLanguageTag("ro-RO")
+private val titleCaseLocale: Locale = Locale.getDefault()
+
+@OptIn(ExperimentalTime::class)
 fun <T : Photo> Flow<PagingData<T>>.mapPagingPhotos(): Flow<PagingData<DataOrSeparator<T>>> =
     map { pagingData ->
+        val timeZone = TimeZone.currentSystemDefault()
+        val currentDate = Clock.System.now().toLocalDateTime(timeZone)
+
         pagingData
             .map { photo -> DataOrSeparator.Data(photo) }
             .insertSeparators { before, after ->
                 after ?: return@insertSeparators null
-                computeSeparatorText(before?.data, after.data)?.let {
+                computeSeparatorText(before?.data, after.data, timeZone, currentDate)?.let {
                     DataOrSeparator.Separator(it)
                 }
             }
     }
 
-@OptIn(ExperimentalTime::class)
-private fun computeSeparatorText(before: Photo?, after: Photo): String? {
-    val timeZone = TimeZone.currentSystemDefault()
+private fun computeSeparatorText(
+    before: Photo?,
+    after: Photo,
+    timeZone: TimeZone,
+    currentDate: LocalDateTime,
+): String? {
     val beforeDate = before?.let {
         val instant = Instant.fromEpochSeconds(it.timeCreated)
         instant.toLocalDateTime(timeZone)
@@ -44,8 +54,6 @@ private fun computeSeparatorText(before: Photo?, after: Photo): String? {
     if (beforeDate != null && beforeDate.month.number == afterDate.month.number && beforeDate.year == afterDate.year)
         return null
 
-    val currentDate =
-        Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
     return buildDateString(currentDate, afterDate)
 }
 
@@ -54,11 +62,11 @@ private fun buildDateString(currentDate: LocalDateTime, afterDate: LocalDateTime
         append(
             afterDate.month.toJavaMonth().getDisplayName(
                 TextStyle.FULL,
-                Locale.forLanguageTag("ro-RO")
+                displayLocale
             )
         )
 
         val year = afterDate.year
         if (year != currentDate.year)
             append(' ').append(year)
-    }.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+    }.replaceFirstChar { if (it.isLowerCase()) it.titlecase(titleCaseLocale) else it.toString() }

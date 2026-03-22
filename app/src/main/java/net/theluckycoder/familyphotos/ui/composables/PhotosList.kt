@@ -79,7 +79,9 @@ fun <T : Photo> PhotosList(
 ) = Box(Modifier.fillMaxSize()) {
     val selectedPhotoIds = remember { mutableStateSetOf<Long>() }
 
-    BackHandler(enabled = selectedPhotoIds.isNotEmpty()) {
+    val hasSelection = remember { derivedStateOf { selectedPhotoIds.isNotEmpty() } }
+
+    BackHandler(enabled = hasSelection.value) {
         selectedPhotoIds.clear()
     }
 

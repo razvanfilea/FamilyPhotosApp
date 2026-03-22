@@ -69,10 +69,11 @@ class FoldersViewModel @Inject constructor(
 
     private val _selectedNetworkFolder = MutableStateFlow<String?>(null)
     val networkFolderPhotosPager = _selectedNetworkFolder
-        .flatMapLatest { folderName ->
+        .combine(selectedPhotoType) { folderName, photoType -> folderName to photoType }
+        .flatMapLatest { (folderName, photoType) ->
             if (folderName != null) {
                 Pager(PAGING_CONFIG) {
-                    foldersRepository.networkPhotosFromFolderPaged(folderName)
+                    foldersRepository.networkPhotosFromFolderPaged(folderName, photoType)
                 }.flow
             } else {
                 emptyFlow()

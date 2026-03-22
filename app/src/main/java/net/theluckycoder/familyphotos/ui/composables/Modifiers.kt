@@ -18,6 +18,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -83,15 +84,17 @@ fun <T : Photo> Modifier.photoGridDrag(
     items: List<DataOrSeparator<T>?>,
 ): Modifier {
     val autoScrollSpeed = remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(autoScrollSpeed.floatValue) {
-        if (autoScrollSpeed.floatValue != 0f) {
-            while (isActive) {
-                lazyGridState.scrollBy(autoScrollSpeed.floatValue)
-                delay(10)
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            val speed = autoScrollSpeed.floatValue
+            if (speed != 0f) {
+                lazyGridState.scrollBy(speed)
             }
+            delay(10)
         }
     }
     val scrollGestureActive = remember { mutableStateOf(false) }
+    val currentItems = rememberUpdatedState(items)
 
     return photoGridDrag(
         lazyGridState = lazyGridState,
@@ -100,7 +103,7 @@ fun <T : Photo> Modifier.photoGridDrag(
         autoScrollSpeed = autoScrollSpeed,
         autoScrollThreshold = with(LocalDensity.current) { 40.dp.toPx() },
         scrollGestureActive = scrollGestureActive,
-        items = items
+        getItems = { currentItems.value }
     )
 }
 
@@ -114,7 +117,7 @@ private fun <T : Photo> Modifier.photoGridDrag(
     autoScrollSpeed: MutableState<Float>,
     autoScrollThreshold: Float,
     scrollGestureActive: MutableState<Boolean>,
-    items: List<DataOrSeparator<T>?>,
+    getItems: () -> List<DataOrSeparator<T>?>,
 ) = pointerInput(Unit) {
     fun LazyGridState.hitKeyAt(rawOffset: Offset): Long? {
         return layoutInfo.visibleItemsInfo
@@ -125,17 +128,37 @@ private fun <T : Photo> Modifier.photoGridDrag(
             ?.key as? Long
     }
 
-    fun IntRange.mapIndexToId() =
-        this.mapNotNull { (items.getOrNull(it) as? DataOrSeparator.Data)?.data?.id }
+    fun IntRange.mapIndexToId(): List<Long> {
+        val items = getItems()
+        return this.mapNotNull { (items.getOrNull(it) as? DataOrSeparator.Data)?.data?.id }
+    }
 
     var initialMediaIndex: Int? = null
     var currentMediaIndex: Int? = null
+    var idToIndexMap: Map<Long, Int> = emptyMap()
+
+    fun buildIdToIndexMap(): Map<Long, Int> {
+        val items = getItems()
+        return buildMap(items.size) {
+            items.forEachIndexed { index, item ->
+                (item as? DataOrSeparator.Data)?.data?.id?.let { put(it, index) }
+            }
+        }
+    }
+
+    fun resolveIndex(key: Long): Int? {
+        idToIndexMap[key]?.let { return it }
+        // Map is stale (paging loaded/discarded pages), rebuild
+        idToIndexMap = buildIdToIndexMap()
+        return idToIndexMap[key]
+    }
 
     detectDragGesturesAfterLongPress(
         onDragStart = { raw ->
             scrollGestureActive.value = true
+            idToIndexMap = buildIdToIndexMap()
             lazyGridState.hitKeyAt(raw)?.let { key ->
-                val idx = items.indexOfFirst { (it as? DataOrSeparator.Data)?.data?.id == key }
+                val idx = resolveIndex(key) ?: return@let
                 if (key !in selectedIds) {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     initialMediaIndex = idx
@@ -147,17 +170,18 @@ private fun <T : Photo> Modifier.photoGridDrag(
         onDragCancel = {
             scrollGestureActive.value = false
             initialMediaIndex = null
+            idToIndexMap = emptyMap()
             autoScrollSpeed.value = 0f
         },
         onDragEnd = {
             scrollGestureActive.value = false
             initialMediaIndex = null
+            idToIndexMap = emptyMap()
             autoScrollSpeed.value = 0f
         },
         onDrag = { change, _ ->
             val raw = change.position
             if (initialMediaIndex != null) {
-                // auto-scroll logic unchanged…
                 val distB = lazyGridState.layoutInfo.viewportSize.height - raw.y
                 val distT = raw.y
                 autoScrollSpeed.value = when {
@@ -167,9 +191,8 @@ private fun <T : Photo> Modifier.photoGridDrag(
                 }
 
                 lazyGridState.hitKeyAt(raw)?.let { key ->
-                    val newIdx =
-                        items.indexOfFirst { (it as? DataOrSeparator.Data)?.data?.id == key }
-                    if (newIdx >= 0 && newIdx != currentMediaIndex) {
+                    val newIdx = resolveIndex(key) ?: return@let
+                    if (newIdx != currentMediaIndex) {
                         val start = initialMediaIndex ?: return@let
                         val oldEnd = currentMediaIndex ?: return@let
                         val oldRange = if (oldEnd >= start) start..oldEnd else oldEnd..start
