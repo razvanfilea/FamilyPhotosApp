@@ -1,8 +1,5 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlinAndroid)
     alias(libs.plugins.compose.compiler)
 }
 
@@ -14,18 +11,7 @@ android {
         minSdk = 30
     }
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
     buildFeatures.compose = true
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_17
-    }
 }
 
 dependencies {
@@ -34,7 +20,6 @@ dependencies {
     // Compose
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
-    implementation(libs.compose.compiler)
     implementation(libs.compose.ui)
     implementation(libs.compose.toolingPreview)
     debugImplementation(libs.compose.tooling)

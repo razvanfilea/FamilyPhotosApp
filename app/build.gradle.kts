@@ -1,13 +1,10 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlinAndroid)
     alias(libs.plugins.android.baselineprofile)
 
-    kotlin("plugin.serialization") version libs.versions.kotlin.base.get()
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
-    id("kotlin-parcelize")
+    alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.compose.compiler)
 
     alias(libs.plugins.hilt)
@@ -59,23 +56,12 @@ android {
     baselineProfile {
         dexLayoutOptimization = true
     }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
 }
 
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
     arg("room.incremental", true.toString())
     arg("room.expandProjection", true.toString())
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_17
-    }
 }
 
 dependencies {
@@ -109,7 +95,6 @@ dependencies {
     // Compose
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
-    implementation(libs.compose.compiler)
     implementation(libs.compose.ui)
     implementation(libs.compose.toolingPreview)
     debugImplementation(libs.compose.tooling)

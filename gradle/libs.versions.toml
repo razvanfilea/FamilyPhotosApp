@@ -8,7 +8,6 @@ kotlin_datetime = "0.7.1-0.6.x-compat"
 kotlin_collections = "0.4.0"
 compose_bom = "2026.03.00"
 compose_activity = "1.13.0"
-compose_compiler = "1.5.15"
 compose_lifecycleViewmodel = "2.10.0"
 androidx_core = "1.18.0"
 androidx_room = "2.8.4"
@@ -30,11 +29,13 @@ uiautomator = "2.3.0"
 android_application = { id = "com.android.application", version.ref = "agp" }
 android_library = { id = "com.android.library", version.ref = "agp" }
 android_test = { id = "com.android.test", version.ref = "agp" }
-android_baselineprofile = { id = "androidx.baselineprofile", version = "1.4.1" }
+android_baselineprofile = { id = "androidx.baselineprofile", version = "1.5.0-alpha04" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin_base" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "dagger" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "kotlin_ksp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin_base" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin_base" }
+kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin_base" }
 
 
 [libraries]
@@ -50,7 +51,6 @@ androidx_exif = { module = "androidx.exifinterface:exifinterface", version = "1.
 androidx_work = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx_work" }
 
 compose_bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose_bom" }
-compose_compiler = { module = "androidx.compose.compiler:compiler", version.ref = "compose_compiler" }
 compose_foundation = { group = "androidx.compose.foundation", name = "foundation" }
 compose_ui = { group = "androidx.compose.ui", name = "ui" }
 compose_material3 = { group = "androidx.compose.material3", name = "material3" }
@@ -100,5 +100,5 @@ telephoto = { module = "me.saket.telephoto:zoomable-image-coil3", version = "0.1
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junit" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
-androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version = "1.4.1" }
+androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version = "1.5.0-alpha04" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version = "1.4.1" }
