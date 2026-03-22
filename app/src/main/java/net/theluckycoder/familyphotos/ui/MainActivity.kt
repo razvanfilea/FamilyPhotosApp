@@ -25,6 +25,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation3.runtime.NavBackStack
@@ -40,6 +43,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import net.theluckycoder.familyphotos.BuildConfig
 import net.theluckycoder.familyphotos.data.model.LazyPagingData
 import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.ui.composables.PhotosViewer
@@ -90,7 +94,7 @@ class MainActivity : ComponentActivity() {
         window.isNavigationBarContrastEnforced = false
         super.onCreate(savedInstanceState)
 
-        val isBenchmark = intent.extras?.getBoolean("benchmark") == true
+        val isBenchmark = BuildConfig.BENCHMARK
 
         setContent {
             val backStack = rememberNavBackStack(TopLevelNav)
@@ -107,7 +111,11 @@ class MainActivity : ComponentActivity() {
                     return@AppTheme
                 }
 
-                SharedTransitionLayout {
+                val benchmarkModifier = if (isBenchmark) {
+                    Modifier.semantics { testTagsAsResourceId = true }
+                } else Modifier
+
+                SharedTransitionLayout(benchmarkModifier) {
                     CompositionLocalProvider(
                         LocalImageLoader provides imageLoaderLazy,
                         LocalOkHttpClient provides okHttpClientLazy,

@@ -21,6 +21,8 @@ android {
 
         versionCode = 29
         versionName = "2.9.8"
+
+        buildConfigField("boolean", "BENCHMARK", "false")
     }
 
     androidResources {
@@ -39,6 +41,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        create("nonMinifiedRelease") {
+            buildConfigField("boolean", "BENCHMARK", "true")
+        }
+        create("benchmarkRelease") {
+            buildConfigField("boolean", "BENCHMARK", "true")
         }
     }
 
@@ -62,6 +70,7 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
     arg("room.incremental", true.toString())
     arg("room.expandProjection", true.toString())
+    arg("room.generateKotlin", true.toString())
 }
 
 dependencies {
