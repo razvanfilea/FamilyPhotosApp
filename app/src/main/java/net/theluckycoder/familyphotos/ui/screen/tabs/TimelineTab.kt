@@ -59,12 +59,14 @@ fun TimelineTab(photos: LazyPagingData<NetworkPhoto>) {
     val mainViewModel: MainViewModel = viewModel()
     val timelineViewModel: TimelineViewModel = viewModel()
     val memories = timelineViewModel.memories.collectAsState()
+    val monthSummaries by timelineViewModel.monthSummaries.collectAsState()
     val selectedPhotoType by timelineViewModel.selectedPhotoType.collectAsState()
     val backStack = LocalNavBackStack.current
 
     PhotosList(
         gridState = timelineViewModel.timelineGridState,
         photos = photos,
+        monthSummaries = monthSummaries,
         openPhoto = {
             backStack.add(PhotoViewerFlowNav(it, PhotoViewerFlowNav.Source.Timeline))
         },

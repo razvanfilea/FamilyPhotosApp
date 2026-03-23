@@ -57,7 +57,15 @@ private fun computeSeparatorText(
     return buildDateString(currentDate, afterDate)
 }
 
-private fun buildDateString(currentDate: LocalDateTime, afterDate: LocalDateTime) =
+@OptIn(ExperimentalTime::class)
+internal fun buildDateString(epochSeconds: Long): String {
+    val timeZone = TimeZone.currentSystemDefault()
+    val currentDate = Clock.System.now().toLocalDateTime(timeZone)
+    val date = Instant.fromEpochSeconds(epochSeconds).toLocalDateTime(timeZone)
+    return buildDateString(currentDate, date)
+}
+
+internal fun buildDateString(currentDate: LocalDateTime, afterDate: LocalDateTime) =
     buildString {
         append(
             afterDate.month.toJavaMonth().getDisplayName(

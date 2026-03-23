@@ -18,6 +18,7 @@
     <string name="action_share">Partajează</string>
     <string name="action_move">Mută</string>
     <string name="action_next">Următorul</string>
+    <string name="action_select_month">Selectează o lună</string>
     <string name="confirm_delete">Șterge fișierele?</string>
     <string name="confirm_delete_detail">Sunteți sigur că vrei să ștergi fișierele?</string>
     <string name="title_settings">Setări</string>

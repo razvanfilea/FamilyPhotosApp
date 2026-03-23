@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.data.model.PhotoType
+import net.theluckycoder.familyphotos.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel.Companion.PAGING_CONFIG
 import net.theluckycoder.familyphotos.utils.mapPagingPhotos
@@ -43,6 +44,11 @@ class TimelineViewModel @Inject constructor(
         .flatMapLatest { photoType -> photosRepository.getMemories(photoType) }
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+
+    val monthSummaries: kotlinx.coroutines.flow.StateFlow<List<MonthSummary>> = selectedPhotoType
+        .flatMapLatest { photoType -> photosRepository.getMonthSummaries(photoType) }
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     val memoriesListState = LazyListState()
     val timelineGridState = LazyGridState()

@@ -23,9 +23,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,13 +37,17 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.DataOrSeparator
 import net.theluckycoder.familyphotos.data.model.LazyPagingData
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.data.model.db.isVideo
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
@@ -72,11 +78,13 @@ fun <T : Photo> PhotosList(
     photos: LazyPagingData<T>,
     modifier: Modifier = Modifier,
     gridState: LazyGridState = rememberLazyGridState(),
+    monthSummaries: List<MonthSummary> = emptyList(),
     topBarContent: @Composable () -> Unit = {},
     listHeaderContent: @Composable () -> Unit = {},
     openPhoto: (index: Int) -> Unit,
     mainViewModel: MainViewModel = viewModel()
 ) = Box(Modifier.fillMaxSize()) {
+    var showMonthOverlay by remember { mutableStateOf(false) }
     val selectedPhotoIds = remember { mutableStateSetOf<Long>() }
 
     val hasSelection = remember { derivedStateOf { selectedPhotoIds.isNotEmpty() } }
@@ -180,14 +188,19 @@ fun <T : Photo> PhotosList(
 
                 is DataOrSeparator.Separator<T> -> {
                     Text(
-                        modifier = Modifier.padding(12.dp),
+                        modifier = Modifier
+                            .clickable { showMonthOverlay = true }
+                            .padding(12.dp),
                         text = item.text,
                         style = if (highZoomLevel) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Medium
                     )
                 }
 
-                null -> {}
+                null -> {
+                    // Draw on empty rectangle
+                    Box(photosModifier)
+                }
             }
         }
     }
@@ -196,9 +209,7 @@ fun <T : Photo> PhotosList(
     LaunchedEffect(photos.itemSnapshotList.items) {
         if (containsLocalPhotos.value == null) {
             val photo = photos.itemSnapshotList.items.asSequence()
-                .take(10)
-                .mapNotNull { it as? DataOrSeparator.Data<*> }
-                .firstOrNull()
+                .take(10).firstNotNullOfOrNull { it as? DataOrSeparator.Data<*> }
 
             if (photo != null) {
                 containsLocalPhotos.value = photo.data is LocalPhoto
@@ -210,6 +221,26 @@ fun <T : Photo> PhotosList(
         PhotosSelectionBar(selectedPhotoIds) {
             PhotoUtilitiesActions(it, selectedPhotoIds)
         }
+    }
+
+    if (showMonthOverlay && monthSummaries.isNotEmpty()) {
+        MonthPickerBottomSheet(
+            monthSummaries = monthSummaries,
+            onMonthSelected = { summary ->
+                showMonthOverlay = false
+                val monthIndex = monthSummaries.indexOf(summary)
+                if (monthIndex < 0) return@MonthPickerBottomSheet
+                var targetIndex = 0
+                for (i in 0 until monthIndex) {
+                    targetIndex += 1 + monthSummaries[i].photoCount // separator + photos
+                }
+                targetIndex += 1 // grid header
+                mainViewModel.viewModelScope.launch {
+                    gridState.scrollToItem(targetIndex)
+                }
+            },
+            onDismiss = { showMonthOverlay = false },
+        )
     }
 }
 

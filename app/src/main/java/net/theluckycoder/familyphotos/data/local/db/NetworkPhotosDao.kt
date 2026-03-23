@@ -13,6 +13,7 @@ import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhotoWithYearOffset
 import net.theluckycoder.familyphotos.data.model.PhotoEventLog
 import net.theluckycoder.familyphotos.data.model.PhotoType
+import net.theluckycoder.familyphotos.data.model.db.MonthSummary
 
 @Dao
 interface NetworkPhotosDao {
@@ -87,6 +88,24 @@ interface NetworkPhotosDao {
         minYearsAgo: Int = 1,
         maxYearsAgo: Int = 10
     ): Flow<List<NetworkPhotoWithYearOffset>>
+
+    @Query(
+        """
+        SELECT MAX(timeCreated) as timeCreated,
+               id as coverPhotoId, 
+               COUNT(*) as photoCount
+        FROM network_photo
+        WHERE trashedOn IS NULL
+        AND CASE
+            WHEN :photoType = 1 THEN (userId IS NOT NULL)
+            WHEN :photoType = 2 THEN (userId IS NULL)
+            ELSE 1
+        END
+        GROUP BY strftime('%Y-%m', datetime(timeCreated, 'unixepoch', 'localtime'))
+        ORDER BY timeCreated DESC
+        """
+    )
+    fun getMonthSummaries(photoType: PhotoType): Flow<List<MonthSummary>>
 
     @Query("SELECT * FROM network_photo WHERE trashedOn IS NOT NULL ORDER BY trashedOn DESC")
     fun getTrashedPhotos(): Flow<List<NetworkPhoto>>
