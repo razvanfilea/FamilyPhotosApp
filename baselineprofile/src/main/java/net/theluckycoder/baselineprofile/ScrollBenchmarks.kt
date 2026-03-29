@@ -20,25 +20,17 @@ class ScrollBenchmarks {
     val rule = MacrobenchmarkRule()
 
     @Test
-    fun scrollCompilationNone() =
-        benchmark(CompilationMode.None())
-
-    @Test
-    fun scrollCompilationBaselineProfiles() =
-        benchmark(CompilationMode.Partial(BaselineProfileMode.Require))
-
-    private fun benchmark(compilationMode: CompilationMode) {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
+    fun scroll() {
         val packageName = InstrumentationRegistry.getArguments().getString("targetAppId")
             ?: throw Exception("targetAppId not passed as instrumentation runner arg")
-        val launchIntent = context.packageManager.getLaunchIntentForPackage(packageName)!!
+        val launchIntent = createBenchmarkLaunchIntent(packageName)
 
         rule.measureRepeated(
             packageName = packageName,
             metrics = listOf(FrameTimingMetric()),
-            compilationMode = compilationMode,
+            compilationMode = CompilationMode.Partial(BaselineProfileMode.Require),
             startupMode = StartupMode.WARM,
-            iterations = 5,
+            iterations = 3,
             setupBlock = {
                 pressHome()
                 startActivityAndWait(launchIntent)

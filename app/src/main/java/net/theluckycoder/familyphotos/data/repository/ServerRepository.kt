@@ -119,6 +119,8 @@ class ServerRepository @Inject constructor(
         if (successful) {
             Log.d("PhotosListRepository", "Trashed photo ($trash): $photoId")
             networkPhotosDao.insert(response.body()!!)
+        } else {
+            Log.e("PhotosListRepository", "Failed to trash photo ($trash): $photoId, code=${response.code()}, error=${response.errorBody()?.string()}")
         }
 
         return successful

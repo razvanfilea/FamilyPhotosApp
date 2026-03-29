@@ -8,7 +8,9 @@ import coil3.disk.DiskCache
 import coil3.gif.AnimatedImageDecoder
 import coil3.memory.MemoryCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import coil3.util.DebugLogger
 import coil3.video.VideoFrameDecoder
+import kotlinx.coroutines.Dispatchers
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,7 +31,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.brotli.BrotliInterceptor
-import okhttp3.logging.HttpLoggingInterceptor
 import okio.Path.Companion.toOkioPath
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
@@ -104,7 +105,7 @@ object NetworkModule {
             .addInterceptor(BrotliInterceptor)
             .addInterceptor(setCookieInterceptor)
             .addInterceptor(receiveCookieInterceptor)
-//            .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })
+//            .addInterceptor(okhttp3.logging.HttpLoggingInterceptor().apply { level = okhttp3.logging.HttpLoggingInterceptor.Level.BASIC })
             .build()
     }
 
@@ -149,13 +150,14 @@ object NetworkModule {
                     )
                 )
             }
-            // Cache
-            .memoryCache { MemoryCache.Builder().maxSizePercent(context, 0.35).build() }
+            // Limit parallelism to reduce DiskLruCache lock contention during fast scrolling
+            .fetcherCoroutineContext(Dispatchers.IO.limitedParallelism((Runtime.getRuntime().availableProcessors() * 1.5).toInt()))
+            .memoryCache { MemoryCache.Builder().maxSizePercent(context, 0.40).build() }
             .diskCache {
                 runBlocking {
                     DiskCache.Builder()
                         .directory(context.cacheDir.resolve("image_cache").toOkioPath())
-                        .minimumMaxSizeBytes(1024L * 1024L * 1024L * 512L) // 512MB
+                        .minimumMaxSizeBytes(512L * 1024L * 1024L) // 512MB
                         .maximumMaxSizeBytes(settingsDataStore.cacheSizeMbFlow.first() * 1024L)
                         .build()
                 }

@@ -25,15 +25,17 @@ class BackupWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, workerParams) {
 
     override suspend fun doWork(): Result {
+        Log.i("BackupWorker", "BackupWorker started")
         foldersRepository.updatePhoneAlbums()
 
         val folderNames = localFolderBackupDao.getAll().first()
+        Log.i("BackupWorker", "Folders to backup: $folderNames")
 
         val entries = mutableListOf<UploadQueueEntry>()
 
         for (folderName in folderNames) {
             Log.i("BackupWorker", "Backing Up folder: $folderName)")
-            val photos = foldersRepository.localPhotosFromFolder(folderName, 100)
+            val photos = foldersRepository.localPhotosFromFolder(folderName, 1000)
                 .filter { !it.isSavedToCloud }
 
             photos.mapTo(entries) { localPhoto ->

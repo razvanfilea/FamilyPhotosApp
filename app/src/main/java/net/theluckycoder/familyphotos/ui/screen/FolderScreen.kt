@@ -16,6 +16,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -24,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.LazyPagingData
+import net.theluckycoder.familyphotos.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
@@ -40,6 +43,11 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingData<Photo
     val foldersViewModel: FoldersViewModel = viewModel()
     val gridState by foldersViewModel.photoListState.collectAsState()
     val backStack = LocalNavBackStack.current
+    val monthSummaries by when (source) {
+        FolderNav.Source.Favorites -> remember { mutableStateOf(emptyList<MonthSummary>()) }
+        is FolderNav.Source.Local -> foldersViewModel.localFolderMonthSummaries.collectAsState()
+        is FolderNav.Source.Network -> foldersViewModel.networkFolderMonthSummaries.collectAsState()
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
@@ -47,6 +55,7 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingData<Photo
         PhotosList(
             gridState = gridState,
             photos = lazyPagingItems,
+            monthSummaries = monthSummaries,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(bottom = paddingValues.calculateBottomPadding()),

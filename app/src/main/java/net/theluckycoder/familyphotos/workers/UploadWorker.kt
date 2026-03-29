@@ -17,6 +17,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.google.common.collect.Multimaps.index
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
@@ -57,6 +58,8 @@ class UploadWorker @AssistedInject constructor(
         val result = try {
             while (true) {
                 val entry = uploadQueueDao.getNextPending() ?: break
+                val pending = uploadQueueDao.getPendingCountFlow().first()
+                val total = successCount + pending
 
                 val localPhoto = photosRepository.getLocalPhotoFlow(entry.localPhotoId).first()
                 if (localPhoto == null || localPhoto.isSavedToCloud) {
@@ -65,11 +68,7 @@ class UploadWorker @AssistedInject constructor(
                 }
 
                 setForeground(
-                    createForegroundInfo(
-                        "Uploaded ${successCount + failCount} files",
-                        successCount + failCount,
-                        0
-                    )
+                    createForegroundInfo("Uploaded $successCount/$total files", successCount, total)
                 )
 
                 val success = try {

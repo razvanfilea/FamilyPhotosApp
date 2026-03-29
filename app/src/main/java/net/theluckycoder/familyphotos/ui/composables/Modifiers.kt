@@ -84,17 +84,21 @@ fun <T : Photo> Modifier.photoGridDrag(
     items: List<DataOrSeparator<T>?>,
 ): Modifier {
     val autoScrollSpeed = remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(Unit) {
-        while (isActive) {
-            val speed = autoScrollSpeed.floatValue
-            if (speed != 0f) {
-                lazyGridState.scrollBy(speed)
-            }
-            delay(10)
-        }
-    }
     val scrollGestureActive = remember { mutableStateOf(false) }
     val currentItems = rememberUpdatedState(items)
+
+    // Only run auto-scroll loop when drag gesture is active
+    if (scrollGestureActive.value) {
+        LaunchedEffect(Unit) {
+            while (isActive) {
+                val speed = autoScrollSpeed.floatValue
+                if (speed != 0f) {
+                    lazyGridState.scrollBy(speed)
+                }
+                delay(10)
+            }
+        }
+    }
 
     return photoGridDrag(
         lazyGridState = lazyGridState,

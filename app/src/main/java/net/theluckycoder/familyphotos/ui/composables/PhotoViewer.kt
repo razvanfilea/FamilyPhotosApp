@@ -87,7 +87,7 @@ fun <T : Photo> PhotosViewer(
         pageCount = { items.size }
     )
 
-    val currentPhoto = items[pagerState.currentPage].second
+    val currentPhoto = items.getOrNull(pagerState.currentPage)?.second
 
     PhotoViewerScaffold(currentPhoto, showUi.value, photoViewerViewModel) { paddingValues ->
         HorizontalPager(
@@ -124,7 +124,7 @@ fun <T : Photo> PhotosViewer(
     val pagerState = rememberPagerState(pageCount = { items.size })
 
     val showUi = remember { mutableStateOf(true) }
-    val currentPhoto = items[pagerState.currentPage]
+    val currentPhoto = items.getOrNull(pagerState.currentPage)
 
     PhotoViewerScaffold(currentPhoto, showUi.value, photoViewerViewModel) { paddingValues ->
         HorizontalPager(

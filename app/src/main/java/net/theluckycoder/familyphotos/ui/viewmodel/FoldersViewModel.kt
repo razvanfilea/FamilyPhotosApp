@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.cachedIn
+import androidx.work.WorkManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,6 +16,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -22,11 +25,13 @@ import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
 import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.db.LocalFolderToBackup
+import net.theluckycoder.familyphotos.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import net.theluckycoder.familyphotos.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel.Companion.PAGING_CONFIG
 import net.theluckycoder.familyphotos.utils.mapPagingPhotos
+import net.theluckycoder.familyphotos.workers.enqueueBackupWorkerOnce
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -36,6 +41,7 @@ class FoldersViewModel @Inject constructor(
     private val foldersRepository: FoldersRepository,
     private val foldersToBackupDao: LocalFolderBackupDao,
     private val settingsStore: SettingsDataStore,
+    private val workManager: WorkManager,
 ) : ViewModel() {
 
     val selectedPhotoType = settingsStore.photoType.stateIn(
@@ -96,6 +102,29 @@ class FoldersViewModel @Inject constructor(
         .mapPagingPhotos()
         .cachedIn(viewModelScope)
 
+    val networkFolderMonthSummaries: StateFlow<List<MonthSummary>> = _selectedNetworkFolder
+        .combine(selectedPhotoType) { folderName, photoType -> folderName to photoType }
+        .flatMapLatest { (folderName, photoType) ->
+            if (folderName != null) {
+                foldersRepository.networkMonthSummariesForFolder(folderName, photoType)
+            } else {
+                flowOf(emptyList())
+            }
+        }
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+
+    val localFolderMonthSummaries: StateFlow<List<MonthSummary>> = _selectedLocalFolder
+        .flatMapLatest { folderName ->
+            if (folderName != null) {
+                foldersRepository.localMonthSummariesForFolder(folderName)
+            } else {
+                flowOf(emptyList())
+            }
+        }
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+
     fun refreshLocalPhotos() {
         viewModelScope.launch(Dispatchers.IO) {
             foldersRepository.updatePhoneAlbums()
@@ -142,6 +171,7 @@ class FoldersViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             if (add) {
                 foldersToBackupDao.insert(LocalFolderToBackup(folder))
+                workManager.enqueueBackupWorkerOnce()
             } else {
                 foldersToBackupDao.delete(LocalFolderToBackup(folder))
             }

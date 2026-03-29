@@ -16,6 +16,7 @@ import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.db.LocalFolder
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -44,6 +45,12 @@ class FoldersRepository @Inject constructor(
 
     fun networkPhotosFromFolderPaged(folder: String, photoType: PhotoType) =
         networkPhotosDao.getFolderPhotos(folder, photoType)
+
+    fun localMonthSummariesForFolder(folder: String): Flow<List<MonthSummary>> =
+        localPhotosDao.getMonthSummariesForFolder(folder)
+
+    fun networkMonthSummariesForFolder(folder: String, photoType: PhotoType): Flow<List<MonthSummary>> =
+        networkPhotosDao.getMonthSummariesForFolder(folder, photoType)
 
     suspend fun updatePhoneAlbums() {
         val photos = try {

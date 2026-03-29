@@ -45,4 +45,12 @@ class LoginRepository @Inject constructor(
         }
         userDataStore.clear()
     }
+
+    /**
+     * Set credentials directly for benchmark tests, bypassing the login API.
+     */
+    suspend fun setBenchmarkCredentials(sessionCookie: String, username: String) {
+        userDataStore.setSessionCookie(sessionCookie)
+        userDataStore.setUserName(username)
+    }
 }

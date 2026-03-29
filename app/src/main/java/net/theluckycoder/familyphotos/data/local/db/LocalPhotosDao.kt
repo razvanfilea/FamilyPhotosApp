@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.data.model.db.LocalFolder
 import net.theluckycoder.familyphotos.data.model.LocalNetworkReference
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.data.model.db.MonthSummary
 
 @Dao
 interface LocalPhotosDao {
@@ -35,6 +36,19 @@ interface LocalPhotosDao {
 
     @Query("SELECT * FROM local_photo WHERE local_photo.folder = :folder ORDER BY local_photo.timeCreated DESC")
     fun getFolderPhotosPaged(folder: String): PagingSource<Int, LocalPhoto>
+
+    @Query(
+        """
+        SELECT MAX(timeCreated) as timeCreated,
+               id as coverPhotoId,
+               COUNT(*) as photoCount
+        FROM local_photo
+        WHERE folder = :folder
+        GROUP BY strftime('%Y-%m', datetime(timeCreated, 'unixepoch', 'localtime'))
+        ORDER BY timeCreated DESC
+        """
+    )
+    fun getMonthSummariesForFolder(folder: String): Flow<List<MonthSummary>>
 
     @Query("SELECT * FROM local_photo WHERE local_photo.networkPhotoId = :networkPhotoId")
     suspend fun findByNetworkId(networkPhotoId: Long): LocalPhoto?

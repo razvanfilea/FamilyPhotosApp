@@ -25,7 +25,7 @@ class RefreshPhotosUseCase @Inject constructor(
         var response = try {
             serverRepository.downloadPartialPhotos()
         } catch (e: Exception) {
-            Log.e("RefreshPhotosUseCase", "Failed to download partial photos", e)
+            Log.e("RefreshPhotosUseCase", "Failed to download partial photos: ${e.message}", e)
             ServerRepository.DownloadResponse.UNSUCCESSFUL
         }
 
@@ -38,7 +38,7 @@ class RefreshPhotosUseCase @Inject constructor(
             try {
                 response = serverRepository.downloadAllPhotos()
             } catch (e: Exception) {
-                Log.e("RefreshPhotosUseCase", "Failed to download photos")
+                Log.e("RefreshPhotosUseCase", "Failed to download photos", e)
                 localPhotosJob.await()
                 return Result.Error(e)
             }

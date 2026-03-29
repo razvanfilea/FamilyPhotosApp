@@ -28,15 +28,14 @@ class BaselineProfileGenerator {
 
     @Test
     fun generate() {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
         val packageName = InstrumentationRegistry.getArguments().getString("targetAppId")
             ?: throw Exception("targetAppId not passed as instrumentation runner arg")
-        val launchIntent = context.packageManager.getLaunchIntentForPackage(packageName)!!
+        val launchIntent = createBenchmarkLaunchIntent(packageName)
 
         rule.collect(
             packageName = packageName,
             includeInStartupProfile = true,
-            maxIterations = 10,
+            maxIterations = 5,
         ) {
             pressHome()
             startActivityAndWait(launchIntent)

@@ -3,19 +3,19 @@ agp = "9.1.0"
 kotlin_base = "2.3.20"
 kotlin_ksp = "2.3.6"
 kotlin_coroutines = "1.10.2"
-kotlin_serialization = "1.10.0"
+kotlin_serialization = "1.11.0"
 kotlin_datetime = "0.7.1"
 kotlin_collections = "0.4.0"
-compose_bom = "2026.03.00"
+compose_bom = "2026.03.01"
 compose_activity = "1.13.0"
 compose_lifecycleViewmodel = "2.10.0"
 androidx_core = "1.18.0"
 androidx_room = "2.8.4"
-androidx_media = "1.9.3"
+androidx_media = "1.10.0"
 androidx_paging = "3.4.2"
-androidx_camerax = "1.5.3"
-androidx_work = "2.11.1"
-androidx_nav3 = "1.0.1"
+androidx_camerax = "1.6.0"
+androidx_work = "2.11.2"
+androidx_nav3 = "1.1.0"
 coil = "3.4.0"
 dagger = "2.59.2"
 retrofit = "3.0.0"
@@ -29,7 +29,7 @@ uiautomator = "2.3.0"
 android_application = { id = "com.android.application", version.ref = "agp" }
 android_library = { id = "com.android.library", version.ref = "agp" }
 android_test = { id = "com.android.test", version.ref = "agp" }
-android_baselineprofile = { id = "androidx.baselineprofile", version = "1.5.0-alpha04" }
+android_baselineprofile = { id = "androidx.baselineprofile", version = "1.5.0-alpha05" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "dagger" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "kotlin_ksp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin_base" }
@@ -95,9 +95,9 @@ retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit
 retrofitSerializer = { module = "com.squareup.retrofit2:converter-kotlinx-serialization", version.ref = "retrofit" }
 okhttp_logging = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
 okhttp_brotli = { module = "com.squareup.okhttp3:okhttp-brotli", version.ref = "okhttp" }
-telephoto = { module = "me.saket.telephoto:zoomable-image-coil3", version = "0.18.0" }
+telephoto = { module = "me.saket.telephoto:zoomable-image-coil3", version = "0.19.0" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junit" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
-androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version = "1.5.0-alpha04" }
+androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version = "1.5.0-alpha05" }
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version = "1.4.1" }

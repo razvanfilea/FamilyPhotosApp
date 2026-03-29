@@ -1,7 +1,16 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.test)
     alias(libs.plugins.android.baselineprofile)
 }
+
+// Load credentials from local.properties for benchmark authentication
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+val benchmarkSessionCookie: String? = localProperties.getProperty("benchmark.sessionCookie")
+val benchmarkUsername: String? = localProperties.getProperty("benchmark.username")
 
 android {
     namespace = "net.theluckycoder.baselineprofile"
@@ -12,6 +21,12 @@ android {
         targetSdk = 36
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Allow running on emulator for development (results won't be production-accurate)
+        testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR"
+
+        // Pass benchmark credentials if available
+        benchmarkSessionCookie?.let { testInstrumentationRunnerArguments["benchmarkSessionCookie"] = it }
+        benchmarkUsername?.let { testInstrumentationRunnerArguments["benchmarkUsername"] = it }
     }
 
     targetProjectPath = ":app"

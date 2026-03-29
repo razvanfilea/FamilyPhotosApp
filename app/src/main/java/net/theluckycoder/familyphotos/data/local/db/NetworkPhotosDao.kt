@@ -107,6 +107,25 @@ interface NetworkPhotosDao {
     )
     fun getMonthSummaries(photoType: PhotoType): Flow<List<MonthSummary>>
 
+    @Query(
+        """
+        SELECT MAX(timeCreated) as timeCreated,
+               id as coverPhotoId,
+               COUNT(*) as photoCount
+        FROM network_photo
+        WHERE folder = :folder
+        AND trashedOn IS NULL
+        AND CASE
+            WHEN :photoType = 1 THEN (userId IS NOT NULL)
+            WHEN :photoType = 2 THEN (userId IS NULL)
+            ELSE 1
+        END
+        GROUP BY strftime('%Y-%m', datetime(timeCreated, 'unixepoch', 'localtime'))
+        ORDER BY timeCreated DESC
+        """
+    )
+    fun getMonthSummariesForFolder(folder: String, photoType: PhotoType): Flow<List<MonthSummary>>
+
     @Query("SELECT * FROM network_photo WHERE trashedOn IS NOT NULL ORDER BY trashedOn DESC")
     fun getTrashedPhotos(): Flow<List<NetworkPhoto>>
 

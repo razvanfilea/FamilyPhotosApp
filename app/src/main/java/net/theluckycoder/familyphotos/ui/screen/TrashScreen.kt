@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.data.model.DataOrSeparator
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
@@ -63,11 +64,11 @@ fun TrashScreen() {
         LazyVerticalGrid(
             modifier = Modifier
                 .fillMaxSize()
-                /*.photoGridDrag( // TODO fix when this is paginated
+                .photoGridDrag(
                     lazyGridState = gridState,
                     selectedIds = selectedPhotoIds,
-                    items = trashedPhotos ?: emptyList()
-                )*/,
+                    items = trashedPhotos?.map { DataOrSeparator.Data(it) } ?: emptyList()
+                ),
             state = gridState,
             columns = GridCells.Fixed(columnCount),
             contentPadding = PaddingValues(bottom = paddingValues.calculateBottomPadding())

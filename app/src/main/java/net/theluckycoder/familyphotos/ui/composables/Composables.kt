@@ -3,9 +3,7 @@ package net.theluckycoder.familyphotos.ui.composables
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.animateDp
-import androidx.compose.animation.core.animateInt
-import androidx.compose.animation.core.updateTransition
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -34,23 +32,30 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.painter.ColorPainter
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import coil3.size.Size
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
@@ -76,11 +81,24 @@ fun CoilPhoto(
     contentScale: ContentScale = ContentScale.Fit,
 ) {
     val isImageLoaded = remember { mutableStateOf(false) }
-    val thumbHashPainter by produceState<Painter?>(initialValue = null, key1 = photo.thumbHash) {
-        value = ThumbHashCache.getOrCompute(photo.thumbHash)?.let { ScaledBitmapPainter(it) }
+    var targetSizePx by remember { mutableIntStateOf(0) }
+
+    // Check synchronous cache first to avoid coroutine overhead for cached items
+    var thumbHashPainter by remember(photo.thumbHash) {
+        mutableStateOf(ThumbHashCache.get(photo.thumbHash)?.let { ScaledBitmapPainter(it) })
+    }
+    // Only launch coroutine for cache misses
+    if (thumbHashPainter == null && photo.thumbHash != null) {
+        LaunchedEffect(photo.thumbHash) {
+            ThumbHashCache.getOrCompute(photo.thumbHash)?.let {
+                thumbHashPainter = ScaledBitmapPainter(it)
+            }
+        }
     }
 
-    Box(modifier = modifier) {
+    Box(modifier = modifier.onSizeChanged { size ->
+        targetSizePx = maxOf(size.width, size.height)
+    }) {
         if (!isImageLoaded.value) {
             Image(
                 painter = thumbHashPainter ?: LOADING_PAINTER,
@@ -90,18 +108,33 @@ fun CoilPhoto(
             )
         }
 
-        AsyncImage(
-            model = if (!preview) photo.getUri() else photo.getPreviewUri(),
-            imageLoader = LocalImageLoader.current.get(),
-            contentDescription = null,
-            contentScale = contentScale,
-            modifier = Modifier.fillMaxSize(),
-            onState = { state ->
-                if (state is AsyncImagePainter.State.Success) {
-                    isImageLoaded.value = true
-                }
+        // Only start loading once we know the target size to avoid loading full-size images
+        if (targetSizePx > 0) {
+            val context = LocalContext.current
+            // Round to 64px buckets for better memory cache hits across similar-sized cells
+            val bucketSize = ((targetSizePx + 63) / 64) * 64
+            val model = remember(preview, bucketSize) {
+                ImageRequest.Builder(context)
+                    .data(if (!preview) photo.getUri() else photo.getPreviewUri())
+                    .size(Size(bucketSize, bucketSize))
+                    .crossfade(false) // Disable crossfade animation for grid items
+                    .build()
             }
-        )
+
+            AsyncImage(
+                model = model,
+                imageLoader = LocalImageLoader.current.get(),
+                contentDescription = null,
+                contentScale = contentScale,
+                modifier = Modifier.fillMaxSize(),
+                filterQuality = if (preview) FilterQuality.None else FilterQuality.Low,
+                onState = { state ->
+                    if (state is AsyncImagePainter.State.Success) {
+                        isImageLoaded.value = true
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -181,43 +214,38 @@ fun SelectablePhoto(
         onDeselect = onDeselect
     )
 ) {
-    val transition = updateTransition(selected, label = "selected")
-    val padding by transition.animateDp(label = "padding") { selected ->
-        if (selected) 8.dp else 0.dp
-    }
-    val roundedCornerShape by transition.animateInt(label = "corner") { selected ->
-        if (selected) 30 else 0
+    val progress = remember { Animatable(0f) }
+
+    LaunchedEffect(inSelectionMode, selected) {
+        progress.animateTo(if (inSelectionMode && selected) 1f else 0f)
     }
 
     Box(
         modifier = Modifier
-            .padding(padding)
-            .clip(RoundedCornerShape(percent = roundedCornerShape))
+            .padding((progress.value * 8f).dp)
+            .clip(RoundedCornerShape(percent = (progress.value * 30f).toInt()))
     ) {
         content()
     }
 
     if (inSelectionMode) {
-        val iconPadding = Modifier.padding(4.dp)
-
-        val iconRes =
-            if (selected) R.drawable.radio_button_checked else R.drawable.radio_button_unchecked
-        val tint =
-            if (selected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.85f)
-        val iconModifier = if (selected) {
-            iconPadding.background(
-                MaterialTheme.colorScheme.surface,
-                CircleShape
-            )
-        } else {
-            iconPadding
-        }
-
         Icon(
-            painter = painterResource(iconRes),
-            tint = tint,
+            painter = painterResource(
+                if (selected) R.drawable.radio_button_checked
+                else R.drawable.radio_button_unchecked
+            ),
+            tint =
+                if (selected) MaterialTheme.colorScheme.primary
+                else Color.White.copy(alpha = 0.85f),
             contentDescription = null,
-            modifier = iconModifier
+            modifier = Modifier
+                .padding(4.dp)
+                .then(
+                    if (selected) Modifier.background(
+                        MaterialTheme.colorScheme.surface,
+                        CircleShape
+                    ) else Modifier
+                )
         )
     }
 }

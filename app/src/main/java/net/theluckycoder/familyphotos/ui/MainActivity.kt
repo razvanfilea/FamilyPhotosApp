@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
@@ -88,13 +89,34 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var okHttpClientLazy: Lazy<OkHttpClient>
 
+    companion object {
+        const val EXTRA_BENCHMARK_SESSION_COOKIE = "benchmark_session_cookie"
+        const val EXTRA_BENCHMARK_USERNAME = "benchmark_username"
+    }
+
     @OptIn(ExperimentalSharedTransitionApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         window.isNavigationBarContrastEnforced = false
         super.onCreate(savedInstanceState)
+        val viewModel = mainViewModel
 
         val isBenchmark = BuildConfig.BENCHMARK
+
+        // Inject benchmark credentials from intent extras and trigger sync
+        if (isBenchmark) {
+            val sessionCookie = intent.getStringExtra(EXTRA_BENCHMARK_SESSION_COOKIE)
+            val username = intent.getStringExtra(EXTRA_BENCHMARK_USERNAME)
+            if (sessionCookie != null && username != null) {
+                lifecycleScope.launch(Dispatchers.Main.immediate) {
+                    withContext(Dispatchers.IO) {
+                        viewModel.loginRepository.setBenchmarkCredentials(sessionCookie, username)
+                    }
+                    // Trigger refresh after credentials are set (initial sync ran before credentials existed)
+                    viewModel.refreshPhotos()
+                }
+            }
+        }
 
         setContent {
             val backStack = rememberNavBackStack(TopLevelNav)

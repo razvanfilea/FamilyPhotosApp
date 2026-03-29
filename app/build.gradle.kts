@@ -43,9 +43,11 @@ android {
             )
         }
         create("nonMinifiedRelease") {
+            applicationIdSuffix = ".benchmark"
             buildConfigField("boolean", "BENCHMARK", "true")
         }
         create("benchmarkRelease") {
+            applicationIdSuffix = ".benchmark"
             buildConfigField("boolean", "BENCHMARK", "true")
         }
     }

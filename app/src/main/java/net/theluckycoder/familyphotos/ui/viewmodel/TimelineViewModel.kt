@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
@@ -45,7 +46,7 @@ class TimelineViewModel @Inject constructor(
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
-    val monthSummaries: kotlinx.coroutines.flow.StateFlow<List<MonthSummary>> = selectedPhotoType
+    val monthSummaries: StateFlow<List<MonthSummary>> = selectedPhotoType
         .flatMapLatest { photoType -> photosRepository.getMonthSummaries(photoType) }
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
