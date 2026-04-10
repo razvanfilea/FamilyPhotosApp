@@ -9,7 +9,7 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import coil3.ImageLoader
 import dagger.Lazy
-import okhttp3.OkHttpClient
+import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 
 val LocalImageLoader = staticCompositionLocalOf<Lazy<ImageLoader>> { error("No ImageLoader found!") }
 
@@ -18,8 +18,8 @@ val LocalNavBackStack = compositionLocalOf<NavBackStack<NavKey>> { error("No Nav
 val LocalSnackbarHostState =
     staticCompositionLocalOf<SnackbarHostState> { error("No SnackbarHostState found!") }
 
-val LocalOkHttpClient = staticCompositionLocalOf<Lazy<OkHttpClient>> {
-    error("No OkHttpClient found!")
+val LocalSettingsDataStore = staticCompositionLocalOf<SettingsDataStore> {
+    error("No SettingsDataStore found!")
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)

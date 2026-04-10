@@ -15,8 +15,8 @@ interface LocalFolderBackupDao {
     fun getAll(): Flow<List<String>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(folder: LocalFolderToBackup)
+    suspend fun insert(folder: LocalFolderToBackup)
 
     @Delete
-    fun delete(folder: LocalFolderToBackup)
+    suspend fun delete(folder: LocalFolderToBackup)
 }

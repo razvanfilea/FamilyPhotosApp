@@ -11,8 +11,10 @@ import androidx.core.database.getLongOrNull
 import androidx.core.database.getStringOrNull
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
 import net.theluckycoder.familyphotos.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
+import net.theluckycoder.familyphotos.data.model.db.LocalFolderToBackup
 import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.db.LocalFolder
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
@@ -29,6 +31,7 @@ class FoldersRepository @Inject constructor(
     private val context: Context,
     private val localPhotosDao: LocalPhotosDao,
     private val networkPhotosDao: NetworkPhotosDao,
+    private val localFolderBackupDao: LocalFolderBackupDao,
 ) {
 
     fun localFoldersFlow(ascending: Boolean): Flow<List<LocalFolder>> =
@@ -63,6 +66,17 @@ class FoldersRepository @Inject constructor(
         if (!photos.isNullOrEmpty())
             localPhotosDao.replaceAll(photos)
     }
+
+    // Backup folder operations
+
+    fun getBackupFolders(): Flow<List<String>> =
+        localFolderBackupDao.getAll()
+
+    suspend fun addBackupFolder(folderName: String) =
+        localFolderBackupDao.insert(LocalFolderToBackup(folderName))
+
+    suspend fun removeBackupFolder(folderName: String) =
+        localFolderBackupDao.delete(LocalFolderToBackup(folderName))
 
     private fun queryLocalPhotos(): List<LocalPhoto> {
         val photos = mutableListOf<LocalPhoto>()

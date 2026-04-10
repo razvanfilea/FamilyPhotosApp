@@ -39,7 +39,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.collectAsState
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import kotlinx.coroutines.CoroutineScope
@@ -53,7 +53,7 @@ import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.data.model.db.isVideo
-import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
+import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.utils.buildDateString
 
 private val PORTRAIT_ZOOM_LEVELS = intArrayOf(4, 5, 7, 9)
@@ -83,7 +83,6 @@ fun <T : Photo> PhotosList(
     topBarContent: @Composable () -> Unit = {},
     listHeaderContent: @Composable () -> Unit = {},
     openPhoto: (index: Int) -> Unit,
-    mainViewModel: MainViewModel = viewModel()
 ) = Box(Modifier.fillMaxSize()) {
     val coroutineScope = rememberCoroutineScope()
     var showMonthOverlay by remember { mutableStateOf(false) }
@@ -95,12 +94,12 @@ fun <T : Photo> PhotosList(
         selectedPhotoIds.clear()
     }
 
-    val zoomIndexState = mainViewModel.zoomIndexState
-    val highZoomLevel = zoomIndexState.intValue >= HIGH_ZOOM_LEVEL
-    val columnCount = getZoomColumnCount(zoomIndexState.intValue)
-    LaunchedEffect(zoomIndexState.intValue) {
-        mainViewModel.settingsStore.setPhotosZoomLevel(zoomIndexState.intValue)
-        if (zoomIndexState.intValue >= HIGH_ZOOM_LEVEL) {
+    val settingsDataStore = LocalSettingsDataStore.current
+    val zoomIndex by settingsDataStore.zoomLevelState.collectAsState()
+    val highZoomLevel = zoomIndex >= HIGH_ZOOM_LEVEL
+    val columnCount = getZoomColumnCount(zoomIndex)
+    LaunchedEffect(zoomIndex) {
+        if (zoomIndex >= HIGH_ZOOM_LEVEL) {
             selectedPhotoIds.clear()
         }
     }
@@ -136,7 +135,11 @@ fun <T : Photo> PhotosList(
         state = gridState,
         modifier = Modifier
             .fillMaxSize()
-            .detectZoomIn(zoomIndexState, MAX_ZOOM_LEVEL_INDEX)
+            .detectZoomIn(
+                zoomIndex = zoomIndex,
+                maxZoomIndex = MAX_ZOOM_LEVEL_INDEX,
+                onZoomChange = { coroutineScope.launch { settingsDataStore.setPhotosZoomLevel(it) } }
+            )
             .then(photoDragModifier)
             .then(modifier)
             .testTag("photos_list"),

@@ -6,9 +6,16 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.model.PhotoType
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,6 +24,15 @@ import javax.inject.Singleton
 class SettingsDataStore @Inject constructor(@ApplicationContext context: Context) {
 
     private val settingsDataStore = context.settingsDataStore
+
+    private val _zoomLevelState = MutableStateFlow(DEFAULT_ZOOM_LEVEL)
+    val zoomLevelState: StateFlow<Int> = _zoomLevelState.asStateFlow()
+
+    init {
+        CoroutineScope(Dispatchers.IO).launch {
+            zoomLevel.first()?.let { _zoomLevelState.value = it }
+        }
+    }
 
     fun dataStore() = settingsDataStore
 
@@ -60,8 +76,9 @@ class SettingsDataStore @Inject constructor(@ApplicationContext context: Context
         preferences[FOLDERS_FILTER_TYPE] = value.index
     }
 
-    suspend fun setPhotosZoomLevel(value: Int) = settingsDataStore.edit { preferences ->
-        preferences[PHOTOS_ZOOM_LEVEL] = value
+    suspend fun setPhotosZoomLevel(value: Int) {
+        _zoomLevelState.value = value
+        settingsDataStore.edit { it[PHOTOS_ZOOM_LEVEL] = value }
     }
 
     companion object {
@@ -75,5 +92,6 @@ class SettingsDataStore @Inject constructor(@ApplicationContext context: Context
         val BACKUP_OVER_MOBILE_DATA = booleanPreferencesKey("backup_over_mobile_data")
 
         const val DEFAULT_CACHE_SIZE = 1024
+        const val DEFAULT_ZOOM_LEVEL = 1
     }
 }

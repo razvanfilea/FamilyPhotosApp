@@ -1,8 +1,12 @@
 package net.theluckycoder.familyphotos.ui.viewmodel
 
+import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.okhttp.OkHttpDataSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -14,13 +18,21 @@ import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.data.repository.ServerRepository
+import okhttp3.OkHttpClient
 import javax.inject.Inject
 
 @HiltViewModel
 class PhotoViewerViewModel @Inject constructor(
+    application: Application,
+    okHttpClient: OkHttpClient,
     private val photosRepository: PhotosRepository,
     private val serverRepository: ServerRepository,
 ) : ViewModel() {
+
+    val dataSourceFactory: DataSource.Factory = DefaultDataSource.Factory(
+        application,
+        OkHttpDataSource.Factory(okHttpClient),
+    )
 
     fun getLocalPhotoFlow(photoId: Long): Flow<LocalPhoto?> =
         photosRepository.getLocalPhotoFlow(photoId)

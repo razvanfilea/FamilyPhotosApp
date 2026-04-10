@@ -40,6 +40,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.ImageLoader
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
+import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
@@ -61,7 +62,6 @@ import net.theluckycoder.familyphotos.ui.theme.AppTheme
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.TimelineViewModel
-import okhttp3.OkHttpClient
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -87,7 +87,7 @@ class MainActivity : ComponentActivity() {
     lateinit var imageLoaderLazy: Lazy<ImageLoader>
 
     @Inject
-    lateinit var okHttpClientLazy: Lazy<OkHttpClient>
+    lateinit var settingsDataStore: SettingsDataStore
 
     companion object {
         const val EXTRA_BENCHMARK_SESSION_COOKIE = "benchmark_session_cookie"
@@ -140,10 +140,10 @@ class MainActivity : ComponentActivity() {
                 SharedTransitionLayout(benchmarkModifier) {
                     CompositionLocalProvider(
                         LocalImageLoader provides imageLoaderLazy,
-                        LocalOkHttpClient provides okHttpClientLazy,
                         LocalSnackbarHostState provides snackbarHostState,
                         LocalSharedTransitionScope provides this@SharedTransitionLayout,
                         LocalNavBackStack provides backStack,
+                        LocalSettingsDataStore provides settingsDataStore,
                     ) {
                         Content(backStack, mainViewModel, foldersViewModel, timelineViewModel)
                     }

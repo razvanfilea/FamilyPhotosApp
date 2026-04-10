@@ -67,8 +67,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.compose.PlayerSurface
@@ -81,13 +79,13 @@ import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.media3.ui.compose.state.rememberProgressStateWithTickCount
 import androidx.media3.ui.compose.state.rememberProgressStateWithTickInterval
-import net.theluckycoder.familyphotos.ui.LocalOkHttpClient
 import java.util.Locale
 
 @OptIn(UnstableApi::class)
 @Composable
 fun VideoPlayer(
     sourceUri: Uri,
+    dataSourceFactory: DataSource.Factory,
     showControls: MutableState<Boolean>,
     modifier: Modifier = Modifier,
     controlsPadding: PaddingValues = PaddingValues()
@@ -95,14 +93,8 @@ fun VideoPlayer(
 
     val context = LocalContext.current
     val lifecycleOwner = rememberUpdatedState(LocalLifecycleOwner.current)
-    val okHttpClient = LocalOkHttpClient.current.get()
 
     val exoPlayer = remember(sourceUri) {
-        val dataSourceFactory: DataSource.Factory = DefaultDataSource.Factory(
-            context,
-            OkHttpDataSource.Factory(okHttpClient),
-        )
-
         val mediaItem = MediaItem.Builder()
             .setUri(sourceUri)
             .build()

@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -219,9 +218,10 @@ private const val UPPER_THRESHOLD = 1.8f
 private const val LOWER_THRESHOLD = 0.6f
 
 fun Modifier.detectZoomIn(
-    zoomIndexState: MutableIntState,
-    maxZoomIndex: Int
-): Modifier = this.pointerInput(Unit) {
+    zoomIndex: Int,
+    maxZoomIndex: Int,
+    onZoomChange: (Int) -> Unit
+): Modifier = this.pointerInput(zoomIndex) {
     var accumulatedZoom = 1f
 
     detectPinchGestures(
@@ -229,15 +229,13 @@ fun Modifier.detectZoomIn(
         onGesture = { _, newZoom ->
             accumulatedZoom *= newZoom
 
-            val zoomIndex = zoomIndexState.intValue
-
             while (accumulatedZoom > UPPER_THRESHOLD) {
-                zoomIndexState.intValue = zoomIndex.dec().coerceIn(0, maxZoomIndex)
+                onZoomChange(zoomIndex.dec().coerceIn(0, maxZoomIndex))
                 accumulatedZoom /= UPPER_THRESHOLD // retain leftover zoom beyond the threshold
             }
 
             while (accumulatedZoom < LOWER_THRESHOLD) {
-                zoomIndexState.intValue = zoomIndex.inc().coerceIn(0, maxZoomIndex)
+                onZoomChange(zoomIndex.inc().coerceIn(0, maxZoomIndex))
                 accumulatedZoom /= LOWER_THRESHOLD
             }
         },

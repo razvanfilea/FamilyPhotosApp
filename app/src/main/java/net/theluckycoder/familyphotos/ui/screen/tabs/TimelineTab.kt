@@ -85,7 +85,7 @@ fun TimelineTab(photos: LazyPagingData<NetworkPhoto>) {
         listHeaderContent = {
             Column {
                 val isOnline by mainViewModel.isOnline.collectAsState()
-                val isRefreshing by mainViewModel.isOnline.collectAsState()
+                val isRefreshing by mainViewModel.isRefreshing.collectAsState()
 
                 MemoriesList(memories.value, timelineViewModel.memoriesListState)
 
@@ -94,7 +94,6 @@ fun TimelineTab(photos: LazyPagingData<NetworkPhoto>) {
                 }
             }
         },
-        mainViewModel = mainViewModel,
     )
 }
 

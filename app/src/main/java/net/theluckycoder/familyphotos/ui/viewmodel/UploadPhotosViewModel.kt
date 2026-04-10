@@ -13,13 +13,13 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
-import net.theluckycoder.familyphotos.data.local.db.UploadQueueDao
 import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.db.UploadQueueEntry
 import net.theluckycoder.familyphotos.data.repository.FoldersRepository
+import net.theluckycoder.familyphotos.data.repository.PhotoUploadRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.data.repository.ServerRepository
 import net.theluckycoder.familyphotos.workers.enqueueBackupAndUploadWorker
@@ -31,9 +31,9 @@ class UploadPhotosViewModel @Inject constructor(
     private val photosRepository: PhotosRepository,
     private val foldersRepository: FoldersRepository,
     private val serverRepository: ServerRepository,
+    private val photoUploadRepository: PhotoUploadRepository,
     settingsStore: SettingsDataStore,
     private val workManager: WorkManager,
-    private val uploadQueueDao: UploadQueueDao,
 ) : ViewModel() {
 
     val networkFolders = settingsStore.showFoldersAscending
@@ -66,7 +66,7 @@ class UploadPhotosViewModel @Inject constructor(
                     isManualUpload = true,
                 )
             }
-            uploadQueueDao.insertAll(entries)
+            photoUploadRepository.enqueueUploads(entries)
             workManager.enqueueBackupAndUploadWorker(skipFolderScan = true)
         }
     }

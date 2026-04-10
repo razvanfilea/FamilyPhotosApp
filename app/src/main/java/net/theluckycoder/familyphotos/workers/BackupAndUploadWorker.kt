@@ -23,11 +23,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
-import net.theluckycoder.familyphotos.data.local.db.UploadQueueDao
 import net.theluckycoder.familyphotos.data.model.db.UploadQueueEntry
 import net.theluckycoder.familyphotos.data.repository.FoldersRepository
+import net.theluckycoder.familyphotos.data.repository.PhotoUploadRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
-import net.theluckycoder.familyphotos.data.repository.ServerRepository
 import java.io.File
 import java.net.ConnectException
 
@@ -37,8 +36,7 @@ class BackupAndUploadWorker @AssistedInject constructor(
     @Assisted workerParams: WorkerParameters,
     private val foldersRepository: FoldersRepository,
     private val photosRepository: PhotosRepository,
-    private val serverRepository: ServerRepository,
-    private val uploadQueueDao: UploadQueueDao,
+    private val photoUploadRepository: PhotoUploadRepository,
     private val localFolderBackupDao: LocalFolderBackupDao,
 ) : CoroutineWorker(context, workerParams) {
 
@@ -51,11 +49,11 @@ class BackupAndUploadWorker @AssistedInject constructor(
         // Setup notification channel
         val channel = NotificationChannel(
             NOTIFICATION_CHANNEL,
-            "Backup",
+            ctx.getString(R.string.notification_channel_backup),
             NotificationManager.IMPORTANCE_DEFAULT
         )
         NotificationManagerCompat.from(ctx).createNotificationChannel(channel)
-        setForeground(createForegroundInfo("Starting backup", 0, 0))
+        setForeground(createForegroundInfo(ctx.getString(R.string.notification_backup_starting), 0, 0))
 
         // Step 1: Scan folders if not skipped
         val skipScan = inputData.getBoolean(KEY_SKIP_FOLDER_SCAN, false)
@@ -69,27 +67,27 @@ class BackupAndUploadWorker @AssistedInject constructor(
 
         val result = try {
             while (true) {
-                val entry = uploadQueueDao.getNextPending() ?: break
-                val pending = uploadQueueDao.getPendingCountFlow().first()
+                val entry = photoUploadRepository.getNextPending() ?: break
+                val pending = photoUploadRepository.getPendingCountFlow().first()
                 val total = successCount + pending
 
                 val localPhoto = photosRepository.getLocalPhotoFlow(entry.localPhotoId).first()
                 if (localPhoto == null || localPhoto.isSavedToCloud) {
-                    uploadQueueDao.deleteById(entry.id)
+                    photoUploadRepository.removeFromQueue(entry.id)
                     continue
                 }
 
                 setForeground(
                     createForegroundInfo(
-                        "Uploaded $successCount/$total files",
+                        ctx.getString(R.string.notification_backup_progress, successCount, total),
                         successCount,
                         total
                     )
                 )
 
                 val success = try {
-                    serverRepository.uploadFile(localPhoto, entry.makePublic, entry.uploadFolder)
-                } catch (e: ConnectException) {
+                    photoUploadRepository.uploadFile(localPhoto, entry.makePublic, entry.uploadFolder)
+                } catch (_: ConnectException) {
                     return Result.retry()
                 } catch (e: Exception) {
                     Log.e(TAG, "Caught exception while uploading ${entry.localPhotoId}", e)
@@ -97,10 +95,10 @@ class BackupAndUploadWorker @AssistedInject constructor(
                 }
 
                 if (success) {
-                    uploadQueueDao.deleteById(entry.id)
+                    photoUploadRepository.removeFromQueue(entry.id)
                     successCount++
                 } else {
-                    uploadQueueDao.incrementRetryCount(entry.id)
+                    photoUploadRepository.incrementRetryCount(entry.id)
                     failCount++
                 }
             }
@@ -108,6 +106,7 @@ class BackupAndUploadWorker @AssistedInject constructor(
             createSuccessNotification(successCount, failCount)
             Result.success()
         } catch (_: CancellationException) {
+            photoUploadRepository.clearManualUploads()
             createFailNotification(FailReason.Cancelled)
             Result.failure()
         } catch (e: Exception) {
@@ -151,7 +150,7 @@ class BackupAndUploadWorker @AssistedInject constructor(
 
         if (entries.isNotEmpty()) {
             Log.i(TAG, "Queuing ${entries.size} photos for upload")
-            uploadQueueDao.insertAll(entries)
+            photoUploadRepository.enqueueUploads(entries)
         }
     }
 

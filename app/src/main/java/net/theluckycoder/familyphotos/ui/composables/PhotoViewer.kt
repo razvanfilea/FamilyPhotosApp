@@ -105,7 +105,7 @@ fun <T : Photo> PhotosViewer(
                 }
             }
 
-            PagerContent(photo, localUri.value, showUi, paddingValues)
+            PagerContent(photo, localUri.value, showUi, paddingValues, photoViewerViewModel)
         }
     }
 }
@@ -154,7 +154,7 @@ fun <T : Photo> PhotosViewer(
                 null
             }
 
-            PagerContent(updatedPhoto ?: photo, localUri?.value, showUi, paddingValues)
+            PagerContent(updatedPhoto ?: photo, localUri?.value, showUi, paddingValues, photoViewerViewModel)
         }
     }
 }
@@ -204,6 +204,7 @@ private fun PagerContent(
     localUri: Uri?,
     showUi: MutableState<Boolean>,
     paddingValues: PaddingValues,
+    photoViewerViewModel: PhotoViewerViewModel,
 ) {
     val isVideo = remember(photo) { photo.isVideo }
     val sharedBoundsModifier = Modifier.photoSharedBounds(photo.id)
@@ -217,6 +218,7 @@ private fun PagerContent(
     } else {
         VideoPlayer(
             sourceUri = localUri ?: photo.getUri(),
+            dataSourceFactory = photoViewerViewModel.dataSourceFactory,
             showControls = showUi,
             modifier = sharedBoundsModifier,
             controlsPadding = paddingValues,

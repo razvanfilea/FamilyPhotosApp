@@ -33,7 +33,9 @@
     <string name="notification_backup_fail_io">Eroare la fișiere</string>
     <string name="notification_backup_fail_unknown">Motiv necunoscut</string>
     <string name="notification_missing_permission">Lipsă permisiune notificări</string>
+    <string name="notification_channel_backup">Backup</string>
     <string name="notification_backup_title">Se încarcă fișierele</string>
+    <string name="notification_backup_progress">S-au încărcat %1$d/%2$d poze</string>
     <string name="notification_backup_finished">S-au încărcat pozele</string>
     <string name="notification_backup_finished_desc">%1$d poze au fost încărcate cu succes și %2$d au eșuat</string>
     <string name="notification_backup_finished_desc_only_success">%d au fost încărcate</string>
@@ -83,4 +85,5 @@
     <string name="photo_detail_open_maps">Dechide in Maps</string>
     <string name="photo_detail_title_details">Detalii</string>
     <string name="photo_detail_no_folder">Niciun folder</string>
+    <string name="notification_backup_starting">Începe procesul de backup</string>
 </resources>

@@ -2,9 +2,9 @@ package net.theluckycoder.familyphotos.domain
 
 import android.util.Log
 import dagger.hilt.android.scopes.ViewModelScoped
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import net.theluckycoder.familyphotos.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.data.repository.ServerRepository
@@ -17,8 +17,8 @@ class RefreshPhotosUseCase @Inject constructor(
 ) {
     val isOnlineState = MutableStateFlow(true)
 
-    suspend operator fun invoke(): Result {
-        val localPhotosJob = CoroutineScope(Dispatchers.IO).async {
+    suspend operator fun invoke(): Result = coroutineScope {
+        val localPhotosJob = async(Dispatchers.IO) {
             foldersRepository.updatePhoneAlbums()
         }
 
@@ -31,7 +31,7 @@ class RefreshPhotosUseCase @Inject constructor(
 
         if (response == ServerRepository.DownloadResponse.NOT_LOGGED_IN) {
             localPhotosJob.await()
-            return Result.NotLoggedIn
+            return@coroutineScope Result.NotLoggedIn
         }
 
         if (response == ServerRepository.DownloadResponse.FULL_DOWNLOAD_NEEDED || response == ServerRepository.DownloadResponse.UNSUCCESSFUL) {
@@ -40,7 +40,7 @@ class RefreshPhotosUseCase @Inject constructor(
             } catch (e: Exception) {
                 Log.e("RefreshPhotosUseCase", "Failed to download photos", e)
                 localPhotosJob.await()
-                return Result.Error(e)
+                return@coroutineScope Result.Error(e)
             }
         }
 
@@ -48,7 +48,7 @@ class RefreshPhotosUseCase @Inject constructor(
 
         localPhotosJob.await()
 
-        return Result.Success
+        Result.Success
     }
 
     sealed class Result {

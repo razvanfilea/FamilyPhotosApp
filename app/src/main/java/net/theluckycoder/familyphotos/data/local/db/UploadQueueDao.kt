@@ -25,6 +25,9 @@ interface UploadQueueDao {
     @Query("DELETE FROM upload_queue WHERE uploadFolder = :folderName AND isManualUpload = 0")
     suspend fun deleteByFolder(folderName: String)
 
+    @Query("DELETE FROM upload_queue WHERE isManualUpload = 1")
+    suspend fun deleteManualUploads()
+
     @Query("SELECT COUNT(*) FROM upload_queue WHERE retryCount < maxRetries")
     fun getPendingCountFlow(): Flow<Int>
 

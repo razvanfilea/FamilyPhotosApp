@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
+import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.ui.preferences.EmptyPreferenceItem
 import net.theluckycoder.familyphotos.ui.preferences.PreferenceGroupItem
 import net.theluckycoder.familyphotos.ui.preferences.PreferenceScreen
@@ -47,10 +48,11 @@ fun SettingsScreen() = Scaffold(
     }
 ) { padding ->
     val mainViewModel: MainViewModel = viewModel()
+    val settingsDataStore = LocalSettingsDataStore.current
 
     Box(modifier = Modifier.padding(padding)) {
         PreferenceScreen(
-            dataStore = mainViewModel.settingsStore.dataStore(),
+            dataStore = settingsDataStore.dataStore(),
             items = getPreferenceItems(mainViewModel),
         )
     }
