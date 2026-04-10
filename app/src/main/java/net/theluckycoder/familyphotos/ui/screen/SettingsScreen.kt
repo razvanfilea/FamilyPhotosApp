@@ -22,6 +22,7 @@ import net.theluckycoder.familyphotos.ui.preferences.EmptyPreferenceItem
 import net.theluckycoder.familyphotos.ui.preferences.PreferenceGroupItem
 import net.theluckycoder.familyphotos.ui.preferences.PreferenceScreen
 import net.theluckycoder.familyphotos.ui.preferences.SeekbarIntPreferenceItem
+import net.theluckycoder.familyphotos.ui.preferences.SwitchPreferenceItem
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,6 +70,17 @@ private fun getPreferenceItems(
                 prefKey = SettingsDataStore.CACHE_SIZE,
                 defaultValue = SettingsDataStore.DEFAULT_CACHE_SIZE,
                 valueRange = 1024..4096
+            ),
+        ),
+    ),
+    PreferenceGroupItem(
+        title = "Backup",
+        items = listOf(
+            SwitchPreferenceItem(
+                title = "Backup over mobile data",
+                summary = "Allow backup when not connected to WiFi",
+                prefKey = SettingsDataStore.BACKUP_OVER_MOBILE_DATA,
+                defaultValue = false,
             ),
         ),
     ),

@@ -18,7 +18,7 @@ import net.theluckycoder.familyphotos.data.model.db.UploadQueueEntry
 
 @Database(
     entities = [LocalPhoto::class, NetworkPhoto::class, LocalFolderToBackup::class, FavoriteNetworkPhoto::class, ServerState::class, UploadQueueEntry::class],
-    version = 12,
+    version = 13,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -86,6 +86,12 @@ abstract class PhotosDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE upload_queue ADD COLUMN isManualUpload INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         fun getDatabase(context: Context): PhotosDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE?.let { return it }
@@ -99,7 +105,8 @@ abstract class PhotosDatabase : RoomDatabase() {
                     MIGRATION_9,
                     MIGRATION_10,
                     MIGRATION_11,
-                    MIGRATION_12
+                    MIGRATION_12,
+                    MIGRATION_13
                 ).addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)

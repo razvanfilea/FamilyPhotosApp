@@ -41,6 +41,13 @@ class SettingsDataStore @Inject constructor(@ApplicationContext context: Context
     val zoomLevel: Flow<Int?> =
         settingsDataStore.data.map { it[PHOTOS_ZOOM_LEVEL] }.distinctUntilChanged()
 
+    val backupOverMobileData: Flow<Boolean> =
+        settingsDataStore.data.map { it[BACKUP_OVER_MOBILE_DATA] == true }.distinctUntilChanged()
+
+    suspend fun setBackupOverMobileData(value: Boolean) = settingsDataStore.edit { preferences ->
+        preferences[BACKUP_OVER_MOBILE_DATA] = value
+    }
+
     suspend fun setShowFoldersAscending(value: Boolean) = settingsDataStore.edit { preferences ->
         preferences[SHOW_FOLDERS_ASCENDING] = value
     }
@@ -65,6 +72,7 @@ class SettingsDataStore @Inject constructor(@ApplicationContext context: Context
         val SHOW_FOLDERS_AS_GRID = booleanPreferencesKey("show_folders_as_grid")
         val FOLDERS_FILTER_TYPE = intPreferencesKey("folders_filter_type")
         val PHOTOS_ZOOM_LEVEL = intPreferencesKey("photos_zoom_level")
+        val BACKUP_OVER_MOBILE_DATA = booleanPreferencesKey("backup_over_mobile_data")
 
         const val DEFAULT_CACHE_SIZE = 1024
     }

@@ -22,7 +22,7 @@ import net.theluckycoder.familyphotos.data.model.db.UploadQueueEntry
 import net.theluckycoder.familyphotos.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.data.repository.ServerRepository
-import net.theluckycoder.familyphotos.workers.enqueueUploadWorker
+import net.theluckycoder.familyphotos.workers.enqueueBackupAndUploadWorker
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -63,10 +63,11 @@ class UploadPhotosViewModel @Inject constructor(
                     localPhotoId = localPhotoId,
                     makePublic = makePublic,
                     uploadFolder = uploadFolder,
+                    isManualUpload = true,
                 )
             }
             uploadQueueDao.insertAll(entries)
-            workManager.enqueueUploadWorker()
+            workManager.enqueueBackupAndUploadWorker(skipFolderScan = true)
         }
     }
 

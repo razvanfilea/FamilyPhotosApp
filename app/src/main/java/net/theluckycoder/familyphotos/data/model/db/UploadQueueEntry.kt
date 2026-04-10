@@ -13,4 +13,5 @@ data class UploadQueueEntry(
     val retryCount: Int = 0,
     val maxRetries: Int = 3,
     val createdAt: Long = System.currentTimeMillis(),
+    val isManualUpload: Boolean = false,
 )

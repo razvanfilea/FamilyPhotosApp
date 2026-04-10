@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
+import net.theluckycoder.familyphotos.data.local.db.UploadQueueDao
 import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.db.LocalFolderToBackup
 import net.theluckycoder.familyphotos.data.model.db.MonthSummary
@@ -31,7 +32,7 @@ import net.theluckycoder.familyphotos.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel.Companion.PAGING_CONFIG
 import net.theluckycoder.familyphotos.utils.mapPagingPhotos
-import net.theluckycoder.familyphotos.workers.enqueueBackupWorkerOnce
+import net.theluckycoder.familyphotos.workers.enqueueBackupAndUploadWorker
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -40,6 +41,7 @@ class FoldersViewModel @Inject constructor(
     private val photosRepository: PhotosRepository,
     private val foldersRepository: FoldersRepository,
     private val foldersToBackupDao: LocalFolderBackupDao,
+    private val uploadQueueDao: UploadQueueDao,
     private val settingsStore: SettingsDataStore,
     private val workManager: WorkManager,
 ) : ViewModel() {
@@ -171,9 +173,10 @@ class FoldersViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             if (add) {
                 foldersToBackupDao.insert(LocalFolderToBackup(folder))
-                workManager.enqueueBackupWorkerOnce()
+                workManager.enqueueBackupAndUploadWorker(skipFolderScan = false)
             } else {
                 foldersToBackupDao.delete(LocalFolderToBackup(folder))
+                uploadQueueDao.deleteByFolder(folder)
             }
         }
     }

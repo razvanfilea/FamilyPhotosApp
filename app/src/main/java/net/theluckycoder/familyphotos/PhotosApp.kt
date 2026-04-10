@@ -15,8 +15,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
+import kotlinx.coroutines.flow.first
+import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.di.DefaultCoroutineScope
-import net.theluckycoder.familyphotos.workers.BackupWorker
+import net.theluckycoder.familyphotos.workers.BackupAndUploadWorker
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -31,6 +33,9 @@ class PhotosApp : Application(), Configuration.Provider {
 
     @Inject
     lateinit var networkPhotosDao: NetworkPhotosDao
+
+    @Inject
+    lateinit var settingsDataStore: SettingsDataStore
 
     override fun onCreate() {
         /*if (BuildConfig.DEBUG) {
@@ -58,13 +63,16 @@ class PhotosApp : Application(), Configuration.Provider {
             .build()
 
     private fun createUploadWorker() = coroutineScope.launch {
+        val useMobileData = settingsDataStore.backupOverMobileData.first()
+        val networkType = if (useMobileData) NetworkType.NOT_ROAMING else NetworkType.UNMETERED
+
         val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.UNMETERED)
+            .setRequiredNetworkType(networkType)
             .setRequiresBatteryNotLow(true)
             .build()
 
         val periodicUpload =
-            PeriodicWorkRequestBuilder<BackupWorker>(4, TimeUnit.HOURS)
+            PeriodicWorkRequestBuilder<BackupAndUploadWorker>(4, TimeUnit.HOURS)
                 .setConstraints(constraints)
                 .build()
 
@@ -76,9 +84,9 @@ class PhotosApp : Application(), Configuration.Provider {
                     periodicUpload
                 )
                 .await()
-            Log.i(BackupWorker::class.simpleName, "Backup has been enabled")
+            Log.i(BackupAndUploadWorker::class.simpleName, "Backup has been enabled")
         } catch (e: Throwable) {
-            Log.e(BackupWorker::class.simpleName, "Backup failed to be enabled", e)
+            Log.e(BackupAndUploadWorker::class.simpleName, "Backup failed to be enabled", e)
         }
     }
 
