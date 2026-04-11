@@ -251,6 +251,16 @@ fun <T : Photo> PhotosList(
             onDismiss = { showMonthOverlay = false },
         )
     }
+
+    MonthScrollIndicator(
+        gridState = gridState,
+        monthSummaries = monthSummaries,
+        onScrollToMonth = { idx ->
+            monthSummaries.getOrNull(idx)?.let { summary ->
+                scrollToMonth(monthSummaries, summary, coroutineScope, gridState, photos)
+            }
+        }
+    )
 }
 
 @Composable

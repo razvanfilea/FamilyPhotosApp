@@ -21,9 +21,9 @@ import net.theluckycoder.familyphotos.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
 import net.theluckycoder.familyphotos.data.repository.LoginRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
+import net.theluckycoder.familyphotos.data.repository.ServerRepository
 import net.theluckycoder.familyphotos.domain.GetPhotoUrisUseCase
 import net.theluckycoder.familyphotos.domain.RefreshPhotosUseCase
-import net.theluckycoder.familyphotos.domain.TrashNetworkPhotosUseCase
 import net.theluckycoder.familyphotos.ui.TopLevelTab
 import javax.inject.Inject
 
@@ -33,7 +33,7 @@ class MainViewModel @Inject constructor(
     private val userDataStore: UserDataStore,
     private val refreshPhotosUseCase: RefreshPhotosUseCase,
     private val getPhotoUrisUseCase: GetPhotoUrisUseCase,
-    private val trashNetworkPhotosUseCase: TrashNetworkPhotosUseCase,
+    private val serverRepository: ServerRepository,
     val loginRepository: LoginRepository,
 ) : ViewModel() {
 
@@ -89,7 +89,7 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun trashNetworkPhotos(photoIds: LongArray) = withContext(Dispatchers.IO) {
-        trashNetworkPhotosUseCase.trash(photoIds)
+        serverRepository.trashNetworkPhoto(photoIds, true)
     }
 
     fun deleteLocalPhotos(photoIds: LongArray) {

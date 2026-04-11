@@ -95,16 +95,16 @@ class ServerRepository @Inject constructor(
         DownloadResponse.UNSUCCESSFUL
     }
 
-    suspend fun trashNetworkPhoto(photoId: Long, trash: Boolean): Boolean {
+    suspend fun trashNetworkPhoto(photoIds: LongArray, trash: Boolean): Boolean {
         val service = photosService.get()
-        val response = if (trash) service.trashPhoto(photoId) else service.unTrashPhoto(photoId)
+        val response = if (trash) service.trashPhotos(photoIds.toList()) else service.restorePhotos(photoIds.toList())
         val successful = response.isSuccessful
 
         if (successful) {
-            Log.d("PhotosListRepository", "Trashed photo ($trash): $photoId")
+            Log.d("PhotosListRepository", "Trashed photo ($trash): $photoIds")
             networkPhotosDao.insert(response.body()!!)
         } else {
-            Log.e("PhotosListRepository", "Failed to trash photo ($trash): $photoId, code=${response.code()}, error=${response.errorBody()?.string()}")
+            Log.e("PhotosListRepository", "Failed to trash photo ($trash): $photoIds, code=${response.code()}, error=${response.errorBody()?.string()}")
         }
 
         return successful

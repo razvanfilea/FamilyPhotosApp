@@ -48,15 +48,15 @@ interface PhotosService {
         @Part file: MultipartBody.Part,
     ): Response<NetworkPhoto>
 
-    @POST("/photos/trash/{photo_id}")
-    suspend fun trashPhoto(
-        @Path("photo_id") photoId: Long,
-    ): Response<NetworkPhoto>
+    @POST("/trash/")
+    suspend fun trashPhotos(
+        @Body photoIds: List<Long>,
+    ): Response<List<NetworkPhoto>>
 
-    @DELETE("/photos/trash/{photo_id}")
-    suspend fun unTrashPhoto(
-        @Path("photo_id") photoId: Long,
-    ): Response<NetworkPhoto>
+    @DELETE("/trash/restore")
+    suspend fun restorePhotos(
+        @Body photoIds: List<Long>,
+    ): Response<List<NetworkPhoto>>
 
     @DELETE("/photos/delete/{photo_id}")
     suspend fun deletePhoto(

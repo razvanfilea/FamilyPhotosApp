@@ -9,14 +9,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.data.repository.ServerRepository
-import net.theluckycoder.familyphotos.domain.TrashNetworkPhotosUseCase
 import javax.inject.Inject
 
 @HiltViewModel
 class TrashViewModel @Inject constructor(
     private val photosRepository: PhotosRepository,
     private val serverRepository: ServerRepository,
-    private val trashNetworkPhotosUseCase: TrashNetworkPhotosUseCase,
 ) : ViewModel() {
 
     val trashedPhotos = photosRepository.getTrashedPhotos()
@@ -33,6 +31,6 @@ class TrashViewModel @Inject constructor(
     }.toList().map { it.await() }
 
     fun restorePhotos(photoIds: LongArray) = viewModelScope.launch(Dispatchers.IO) {
-        trashNetworkPhotosUseCase.restore(photoIds)
+        serverRepository.trashNetworkPhoto(photoIds, false)
     }
 }

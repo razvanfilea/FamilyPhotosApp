@@ -50,7 +50,7 @@ androidx_exif = { module = "androidx.exifinterface:exifinterface", version = "1.
 androidx_work = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx_work" }
 
 compose_bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose_bom" }
-compose_foundation = { group = "androidx.compose.foundation", name = "foundation" }
+compose_foundation = { group = "androidx.compose.foundation", name = "foundation", version = "1.11.0-rc01" }
 compose_ui = { group = "androidx.compose.ui", name = "ui" }
 compose_material3 = { group = "androidx.compose.material3", name = "material3" }
 compose_material3Adaptive = { group = "androidx.compose.material3", name = "material3-adaptive-navigation-suite" }
