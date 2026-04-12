@@ -42,6 +42,9 @@ class BaselineProfileGenerator {
 
             waitForGalleryContent()
             scrollGalleryGrid()
+            scrollWithMonthIndicator()
+            viewAndScrollPhotos()
+            selectMonth()
         }
     }
 }

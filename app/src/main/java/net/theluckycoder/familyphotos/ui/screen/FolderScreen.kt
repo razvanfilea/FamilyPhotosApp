@@ -25,9 +25,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.LazyPagingData
-import net.theluckycoder.familyphotos.data.model.db.MonthSummary
+import net.theluckycoder.familyphotos.data.model.TimelineLayout
 import net.theluckycoder.familyphotos.data.model.db.Photo
+import androidx.paging.compose.LazyPagingItems
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
@@ -39,14 +39,14 @@ import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingData<Photo>) {
+fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<Photo>) {
     val foldersViewModel: FoldersViewModel = viewModel()
     val gridState by foldersViewModel.photoListState.collectAsState()
     val backStack = LocalNavBackStack.current
-    val monthSummaries by when (source) {
-        FolderNav.Source.Favorites -> remember { mutableStateOf(emptyList<MonthSummary>()) }
-        is FolderNav.Source.Local -> foldersViewModel.localFolderMonthSummaries.collectAsState()
-        is FolderNav.Source.Network -> foldersViewModel.networkFolderMonthSummaries.collectAsState()
+    val timelineLayout by when (source) {
+        FolderNav.Source.Favorites -> remember { mutableStateOf(TimelineLayout.EMPTY) }
+        is FolderNav.Source.Local -> foldersViewModel.localFolderTimelineLayout.collectAsState()
+        is FolderNav.Source.Network -> foldersViewModel.networkFolderTimelineLayout.collectAsState()
     }
 
     Scaffold(
@@ -55,7 +55,7 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingData<Photo
         PhotosList(
             gridState = gridState,
             photos = lazyPagingItems,
-            monthSummaries = monthSummaries,
+            timelineLayout = timelineLayout,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(bottom = paddingValues.calculateBottomPadding()),
@@ -67,7 +67,7 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingData<Photo
                 }
                 backStack.add(PhotoViewerFlowNav(it, viewerSource))
             },
-            topBarContent = {
+            headerContent = {
                 NavBackTopAppBar(
                     navIconOnClick = backStack::removeLastOrNull,
                     title = when (source) {
@@ -90,8 +90,7 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingData<Photo
                         }
                     }
                 )
-            },
-            listHeaderContent = {
+
                 if (source is FolderNav.Source.Local) {
                     val backupEnabled by foldersViewModel.isLocalFolderBackupUp(source.name)
                         .collectAsState(false)

@@ -2,9 +2,11 @@ package net.theluckycoder.familyphotos.ui.composables
 
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,15 +42,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
-import androidx.paging.compose.itemContentType
-import androidx.paging.compose.itemKey
+import androidx.compose.ui.graphics.Color
+import androidx.paging.compose.LazyPagingItems
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.DataOrSeparator
-import net.theluckycoder.familyphotos.data.model.LazyPagingData
+import net.theluckycoder.familyphotos.data.model.TimelineLayout
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.data.model.db.Photo
@@ -71,20 +73,22 @@ private fun getZoomColumnCount(zoomIndex: Int): Int {
     return levels[zoomIndex.coerceIn(0, MAX_ZOOM_LEVEL_INDEX)]
 }
 
-private const val CONTENT_TYPE_TITLE = "title"
 private const val CONTENT_TYPE_HEADER = "header"
+private const val CONTENT_TYPE_TITLE = "title"
 
 @Composable
 fun <T : Photo> PhotosList(
-    photos: LazyPagingData<T>,
+    photos: LazyPagingItems<T>,
     modifier: Modifier = Modifier,
     gridState: LazyGridState = rememberLazyGridState(),
-    monthSummaries: List<MonthSummary> = emptyList(),
-    topBarContent: @Composable () -> Unit = {},
-    listHeaderContent: @Composable () -> Unit = {},
+    timelineLayout: TimelineLayout = TimelineLayout.EMPTY,
+    headerContent: @Composable ColumnScope.() -> Unit = {},
     openPhoto: (index: Int) -> Unit,
 ) = Box(Modifier.fillMaxSize()) {
     val coroutineScope = rememberCoroutineScope()
+
+    // Apply offset to timeline layout to account for header at index 0
+    val layout = timelineLayout.withOffset(1)
     var showMonthOverlay by remember { mutableStateOf(false) }
     val selectedPhotoIds = remember { mutableStateSetOf<Long>() }
 
@@ -113,7 +117,8 @@ fun <T : Photo> PhotosList(
         .photoGridDrag(
             lazyGridState = gridState,
             selectedIds = selectedPhotoIds,
-            items = photos.itemSnapshotList,
+            items = photos.itemSnapshotList.items,
+            timelineLayout = layout,
         ) else Modifier
 
     // Debounced scroll state to prevent mass recomposition during scroll-pause-scroll sequences
@@ -145,79 +150,80 @@ fun <T : Photo> PhotosList(
             .testTag("photos_list"),
         columns = GridCells.Fixed(columnCount),
     ) {
-        item(
-            key = "header", span = { GridItemSpan(columnCount) }, contentType = CONTENT_TYPE_HEADER
-        ) {
-            Column {
-                topBarContent()
-                listHeaderContent()
-            }
-        }
-
         items(
-            count = photos.itemCount,
-            key = photos.itemKey {
-                when (it) {
-                    is DataOrSeparator.Data<T> -> it.data.id
-                    is DataOrSeparator.Separator<T> -> it.text
+            count = layout.totalItemCount,
+            key = { gridIndex ->
+                if (gridIndex == 0) "header"
+                else layout.getHeaderAt(gridIndex)?.timeCreated
+                    ?: run {
+                        val pagingIndex = layout.pagingIndexOf(gridIndex)
+                        if (pagingIndex in 0 until photos.itemCount) photos.peek(pagingIndex)?.id else null
+                    }
+                    ?: gridIndex
+            },
+            contentType = { gridIndex ->
+                when {
+                    gridIndex == 0 -> CONTENT_TYPE_HEADER
+                    layout.isHeader(gridIndex) -> CONTENT_TYPE_TITLE
+                    else -> null
                 }
             },
-            contentType = photos.itemContentType {
-                when (it) {
-                    is DataOrSeparator.Data<T> -> null
-                    is DataOrSeparator.Separator<T> -> CONTENT_TYPE_TITLE
-                }
-            },
-            span = { index ->
-                val span = if (photos.peek(index) is DataOrSeparator.Separator) columnCount else 1
-                GridItemSpan(span)
-            }) { index ->
-            when (val item = photos[index]) {
-                is DataOrSeparator.Data<T> -> {
-                    val photo = item.data
-                    // If scrolling, use an empty Modifier. If idle, use the expensive shared bounds.
-                    val sharedBoundsModifier = if (!sharedBoundsEnabled && !hasSelection.value) {
-                        Modifier
-                    } else {
-                        Modifier.photoSharedBounds(photo.id)
-                    }
+            span = { gridIndex ->
+                GridItemSpan(if (gridIndex == 0 || layout.isHeader(gridIndex)) columnCount else 1)
+            }
+        ) { gridIndex ->
+            if (gridIndex == 0) {
+                // Header content at index 0
+                Column(content = headerContent)
+            } else {
+                val headerSummary = layout.getHeaderAt(gridIndex)
 
-                    val modifier = Modifier
-                        .then(sharedBoundsModifier)
-                        .animateItem(fadeInSpec = null, fadeOutSpec = null)
-                        .then(photosModifier)
-
-                    if (highZoomLevel) {
-                        CoilPhoto(
-                            modifier = modifier.clickable(onClick = { openPhoto(index) }),
-                            photo = photo,
-                            preview = true,
-                            contentScale = ContentScale.Crop,
-                        )
-                    } else {
-                        PhotoListItem(
-                            modifier = modifier,
-                            photo = photo,
-                            selectedPhotoIds = selectedPhotoIds,
-                            openPhoto = { openPhoto(index) },
-                        )
-                    }
-                }
-
-                is DataOrSeparator.Separator<T> -> {
+                if (headerSummary != null) {
                     MonthSeparatorHeader(
-                        text = item.text,
+                        summary = headerSummary,
                         highZoomLevel = highZoomLevel,
                         selectedPhotoIds = selectedPhotoIds,
                         photos = photos,
-                        separatorIndex = index,
+                        timelineLayout = layout,
+                        gridIndex = gridIndex,
                         onShowMonthPicker = { showMonthOverlay = true }
                     )
-                }
+                } else {
+                    val pagingIndex = layout.pagingIndexOf(gridIndex)
+                    val photo = if (pagingIndex in 0 until photos.itemCount) photos[pagingIndex] else null
 
-                null -> {
-                    // Draw on empty rectangle
-                    Box(photosModifier)
+                    if (photo != null) {
+                        // If scrolling, use an empty Modifier. If idle, use the expensive shared bounds.
+                        val sharedBoundsModifier = if (!sharedBoundsEnabled && !hasSelection.value) {
+                            Modifier
+                        } else {
+                            Modifier.photoSharedBounds(photo.id)
+                        }
+
+                        val itemModifier = Modifier
+                            .then(sharedBoundsModifier)
+                            .animateItem(fadeInSpec = null, fadeOutSpec = null)
+                            .then(photosModifier)
+
+                        if (highZoomLevel) {
+                            CoilPhoto(
+                                modifier = itemModifier.clickable(onClick = { openPhoto(pagingIndex) }),
+                                photo = photo,
+                                preview = true,
+                                contentScale = ContentScale.Crop,
+                            )
+                        } else {
+                            PhotoListItem(
+                                modifier = itemModifier,
+                                photo = photo,
+                                selectedPhotoIds = selectedPhotoIds,
+                                openPhoto = { openPhoto(pagingIndex) },
+                            )
+                        }
+                    } else {
+                        // Gray placeholder box - Paging will auto-fetch
+                        Box(photosModifier.background(Color.DarkGray))
+                    }
                 }
             }
         }
@@ -227,10 +233,10 @@ fun <T : Photo> PhotosList(
     LaunchedEffect(photos.itemSnapshotList.items) {
         if (containsLocalPhotos.value == null) {
             val photo = photos.itemSnapshotList.items.asSequence()
-                .take(10).firstNotNullOfOrNull { it as? DataOrSeparator.Data<*> }
+                .take(10).firstNotNullOfOrNull { it }
 
             if (photo != null) {
-                containsLocalPhotos.value = photo.data is LocalPhoto
+                containsLocalPhotos.value = photo is LocalPhoto
             }
         }
     }
@@ -241,12 +247,15 @@ fun <T : Photo> PhotosList(
         }
     }
 
-    if (showMonthOverlay && monthSummaries.isNotEmpty()) {
+    if (showMonthOverlay && layout.isNotEmpty()) {
         MonthPickerBottomSheet(
-            monthSummaries = monthSummaries,
+            timelineLayout = layout,
             onMonthSelected = { summary ->
                 showMonthOverlay = false
-                scrollToMonth(monthSummaries, summary, coroutineScope, gridState, photos)
+                val gridIndex = layout.gridIndexOf(summary)
+                if (gridIndex >= 0) {
+                    scrollToGridIndex(coroutineScope, gridState, gridIndex)
+                }
             },
             onDismiss = { showMonthOverlay = false },
         )
@@ -254,35 +263,33 @@ fun <T : Photo> PhotosList(
 
     MonthScrollIndicator(
         gridState = gridState,
-        monthSummaries = monthSummaries,
-        onScrollToMonth = { idx ->
-            monthSummaries.getOrNull(idx)?.let { summary ->
-                scrollToMonth(monthSummaries, summary, coroutineScope, gridState, photos)
-            }
+        timelineLayout = layout,
+        onScrollToGridIndex = { gridIndex ->
+            scrollToGridIndex(coroutineScope, gridState, gridIndex)
         }
     )
 }
 
 @Composable
 private fun <T : Photo> MonthSeparatorHeader(
-    text: String,
+    summary: MonthSummary,
     highZoomLevel: Boolean,
     selectedPhotoIds: SnapshotStateSet<Long>,
-    photos: LazyPagingData<T>,
-    separatorIndex: Int,
+    photos: LazyPagingItems<T>,
+    timelineLayout: TimelineLayout,
+    gridIndex: Int,
     onShowMonthPicker: () -> Unit
 ) {
-    // Cache photo IDs - only recompute when paging snapshot changes
-    val monthPhotoIds = remember(photos.itemSnapshotList) {
+    val text = remember(summary.timeCreated) { buildDateString(summary.timeCreated) }
+
+    // Cache photo IDs for this month - use summary.photoCount to know how many photos
+    val monthPhotoIds = remember(photos.itemSnapshotList, summary) {
         buildList {
-            var i = separatorIndex + 1
-            while (i < photos.itemCount) {
-                when (val item = photos.peek(i)) {
-                    is DataOrSeparator.Data<*> -> add(item.data.id)
-                    is DataOrSeparator.Separator<*> -> break
-                    null -> {}
-                }
-                i++
+            val startPagingIndex = timelineLayout.pagingIndexOf(gridIndex + 1)
+            for (i in 0 until summary.photoCount) {
+                val idx = startPagingIndex + i
+                if (idx >= photos.itemCount) break
+                photos.peek(idx)?.id?.let { add(it) }
             }
         }
     }
@@ -304,17 +311,20 @@ private fun <T : Photo> MonthSeparatorHeader(
             modifier = Modifier.weight(1f),
             text = text,
             style = if (highZoomLevel) MaterialTheme.typography.headlineSmall
-                    else MaterialTheme.typography.headlineMedium,
+            else MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Medium
         )
 
-        IconButton(onClick = {
-            if (allSelected) {
-                selectedPhotoIds.removeAll(monthPhotoIds.toSet())
-            } else {
-                selectedPhotoIds.addAll(monthPhotoIds)
+        IconButton(
+            modifier = Modifier.testTag("month_select_button"),
+            onClick = {
+                if (allSelected) {
+                    selectedPhotoIds.removeAll(monthPhotoIds.toSet())
+                } else {
+                    selectedPhotoIds.addAll(monthPhotoIds)
+                }
             }
-        }) {
+        ) {
             Icon(
                 painter = painterResource(
                     if (allSelected) R.drawable.radio_button_checked
@@ -343,7 +353,7 @@ fun PhotoListItem(
     val isVideo = remember(photo.id) { photo.isVideo }
 
     SelectablePhoto(
-        modifier = modifier,
+        modifier = modifier.testTag("photo_item"),
         inSelectionMode = selectedPhotoIds.isNotEmpty(),
         selected = selectedPhotoIds.contains(photo.id),
         onClick = { openPhoto(photo.id) },
@@ -380,48 +390,23 @@ fun PhotoListItem(
     }
 }
 
-private fun <T : Photo> scrollToMonth(
-    monthSummaries: List<MonthSummary>,
-    summary: MonthSummary,
+private var scrollJob: Job? = null
+
+private const val SCROLL_TARGET_POSITION = 0.2f // Position separator at 20% from top
+
+private fun scrollToGridIndex(
     coroutineScope: CoroutineScope,
     gridState: LazyGridState,
-    photos: LazyPagingData<T>
+    gridIndex: Int
 ) {
-    val monthIndex = monthSummaries.indexOf(summary)
-    if (monthIndex < 0) return
+    scrollJob?.cancel()
+    scrollJob = coroutineScope.launch {
+        val viewportHeight = gridState.layoutInfo.viewportSize.height
 
-    // Count only photos (no separators) to get an approximate position
-    var photosBeforeTarget = 0
-    for (i in 0 until monthIndex) {
-        photosBeforeTarget += monthSummaries[i].photoCount
-    }
+        // A negative offset moves the item DOWN from the top of the viewport
+        val offset = -(viewportHeight * SCROLL_TARGET_POSITION).toInt()
 
-    val targetText = buildDateString(summary.timeCreated)
-    coroutineScope.launch {
-        // Undershoot by scrolling without counting separators
-        gridState.scrollToItem(1 + photosBeforeTarget)
-
-        // Search forward in visible items for the separator
-        val visibleItems = gridState.layoutInfo.visibleItemsInfo
-        for (itemInfo in visibleItems) {
-            val pagingIdx = itemInfo.index - 1
-            if (pagingIdx >= 0) {
-                val item = photos.peek(pagingIdx)
-                if (item is DataOrSeparator.Separator && item.text == targetText) {
-                    gridState.scrollToItem(itemInfo.index)
-                    return@launch
-                }
-            }
-        }
-
-        // If not found in visible items, search forward in paging data
-        val searchEnd = minOf(photos.itemCount - 1, photosBeforeTarget + monthIndex + 20)
-        for (pagingIdx in (gridState.firstVisibleItemIndex - 1)..searchEnd) {
-            val item = photos.peek(pagingIdx)
-            if (item is DataOrSeparator.Separator && item.text == targetText) {
-                gridState.scrollToItem(pagingIdx + 1)
-                return@launch
-            }
-        }
+        // Single operation scroll ensures perfect layout precision
+        gridState.scrollToItem(gridIndex, offset)
     }
 }

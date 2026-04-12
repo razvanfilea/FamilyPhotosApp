@@ -1,10 +1,12 @@
 package net.theluckycoder.familyphotos.ui.composables
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -13,17 +15,17 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,207 +38,145 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import net.theluckycoder.familyphotos.R
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import net.theluckycoder.familyphotos.data.model.db.MonthSummary
-import net.theluckycoder.familyphotos.utils.buildDateString
-
-private const val THUMB_WIDTH_DP = 36
-private const val THUMB_HEIGHT_DP = 56
-private const val TRACK_WIDTH_DP = 48
+import net.theluckycoder.familyphotos.data.model.TimelineLayout
 
 @Composable
 fun BoxScope.MonthScrollIndicator(
     gridState: LazyGridState,
-    monthSummaries: List<MonthSummary>,
-    onScrollToMonth: (monthIndex: Int) -> Unit,
+    timelineLayout: TimelineLayout,
+    onScrollToGridIndex: (gridIndex: Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    if (monthSummaries.size < 2) return
+    if (timelineLayout.monthSummaries.size < 2) return
+
+    val monthSummaries = timelineLayout.monthSummaries
+    val totalItems = timelineLayout.totalGridItemCount
 
     val hapticFeedback = LocalHapticFeedback.current
     val density = LocalDensity.current
 
     var isDragging by remember { mutableStateOf(false) }
-    var trackHeight by remember { mutableIntStateOf(0) }
-    var dragOffsetY by remember { mutableIntStateOf(0) }
-    var currentMonthIndex by remember { mutableIntStateOf(0) }
-
-    val thumbSizePx = with(density) { THUMB_HEIGHT_DP.dp.toPx().toInt() }
-
-    // Build cumulative item counts for month position mapping
-    val monthCumulativeCounts = remember(monthSummaries) {
-        buildList {
-            var cumulative = 0
-            monthSummaries.forEach { summary ->
-                add(cumulative)
-                cumulative += summary.photoCount + 1 // +1 for separator
-            }
-            add(cumulative) // Total count at end
-        }
-    }
-
-    val totalItems = monthCumulativeCounts.lastOrNull() ?: 0
-
-    // Convert grid scroll position to thumb offset
-    val thumbOffsetFromGrid by remember(gridState, totalItems) {
-        derivedStateOf {
-            if (trackHeight <= thumbSizePx || totalItems <= 0) return@derivedStateOf 0
-
-            val firstVisibleIndex = gridState.firstVisibleItemIndex
-            val scrollableHeight = trackHeight - thumbSizePx
-            val progress = (firstVisibleIndex.toFloat() / totalItems).coerceIn(0f, 1f)
-            (progress * scrollableHeight).toInt()
-        }
-    }
-
-    // Convert thumb position to month index
-    fun thumbOffsetToMonthIndex(offsetY: Int): Int {
-        if (trackHeight <= thumbSizePx || totalItems <= 0) return 0
-
-        val scrollableHeight = trackHeight - thumbSizePx
-        val progress = (offsetY.toFloat() / scrollableHeight).coerceIn(0f, 1f)
-        val targetItemIndex = (progress * totalItems).toInt()
-
-        // Find which month this item belongs to
-        return monthCumulativeCounts.indexOfLast { it <= targetItemIndex }
-            .coerceIn(0, monthSummaries.lastIndex)
-    }
-
-    // Update current month index when dragging
-    LaunchedEffect(isDragging, dragOffsetY) {
-        if (isDragging) {
-            val newMonthIndex = thumbOffsetToMonthIndex(dragOffsetY)
-            if (newMonthIndex != currentMonthIndex) {
-                currentMonthIndex = newMonthIndex
-                hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-            }
-        }
-    }
-
-    // Track visibility based on scroll activity
     var isVisible by remember { mutableStateOf(false) }
+    val trackHeight = remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(gridState) {
-        snapshotFlow { gridState.isScrollInProgress || isDragging }
-            .distinctUntilChanged()
-            .collect { scrolling ->
-                if (scrolling) {
-                    isVisible = true
-                }
-            }
-    }
+    var dragOffsetY by remember { mutableFloatStateOf(0f) }
+    var lastScrolledMonthIndex by remember { mutableIntStateOf(-1) }
 
-    @OptIn(FlowPreview::class)
+    val thumbHeightPx = with(density) { 56.dp.toPx() }
+    val maxScrollPx = maxOf(0f, trackHeight.intValue.toFloat() - thumbHeightPx)
+
     LaunchedEffect(gridState, isDragging) {
-        snapshotFlow { gridState.isScrollInProgress || isDragging }
-            .debounce(1500)
-            .collect { stillActive ->
-                if (!stillActive) {
-                    isVisible = false
+        if (isDragging) {
+            isVisible = true
+        } else {
+            snapshotFlow { gridState.isScrollInProgress }
+                .collectLatest { isScrolling ->
+                    if (isScrolling) {
+                        isVisible = true
+                    } else {
+                        // Wait 2.5 seconds after scrolling stops before hiding
+                        delay(2500)
+                        isVisible = false
+                    }
                 }
-            }
+        }
     }
 
-    // Month label bubble (rendered separately to avoid clipping)
-    val thumbY = if (isDragging) dragOffsetY else thumbOffsetFromGrid
+    val gridProgress by remember(gridState, totalItems) {
+        derivedStateOf {
+            if (totalItems <= 0) 0f else {
+                (gridState.firstVisibleItemIndex.toFloat() / totalItems).coerceIn(0f, 1f)
+            }
+        }
+    }
 
-    // Animate thumb position when not dragging
-    val animatedThumbY by animateIntAsState(
-        targetValue = thumbY,
-        animationSpec = if (isDragging) tween(durationMillis = 0) else tween(durationMillis = 150),
+    val thumbY by animateFloatAsState(
+        targetValue = if (isDragging) dragOffsetY else (gridProgress * maxScrollPx),
+        animationSpec = if (isDragging) tween(0) else tween(150),
         label = "thumbPosition"
     )
 
-    if (isDragging && currentMonthIndex in monthSummaries.indices) {
-        val monthLabel = remember(currentMonthIndex) {
-            buildDateString(monthSummaries[currentMonthIndex].timeCreated)
-        }
-
-        Surface(
-            modifier = modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 80.dp, end = (TRACK_WIDTH_DP + 8).dp)
-                .offset { IntOffset(x = 0, y = thumbY) },
-            shape = RoundedCornerShape(24.dp),
-            color = MaterialTheme.colorScheme.primaryContainer,
-            tonalElevation = 3.dp,
-            shadowElevation = 6.dp
-        ) {
-            Text(
-                text = monthLabel,
-                modifier = Modifier
-                    .widthIn(min = 100.dp)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                maxLines = 1
-            )
-        }
-    }
-
-    // Thumb and drag track
     AnimatedVisibility(
-        visible = isVisible,
-        enter = fadeIn(),
-        exit = fadeOut(),
+        visible = isVisible || isDragging,
+        enter = slideInHorizontally { it } + fadeIn(),
+        exit = slideOutHorizontally { it } + fadeOut(),
         modifier = modifier
             .align(Alignment.TopEnd)
-            .fillMaxHeight()
-            .width(TRACK_WIDTH_DP.dp)
             .padding(vertical = 72.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxHeight()
-                .onSizeChanged { trackHeight = it.height },
+                .width(48.dp)
+                .onSizeChanged { trackHeight.intValue = it.height },
             contentAlignment = Alignment.TopEnd
         ) {
-            // Thumb pill
             Surface(
                 modifier = Modifier
-                    .offset { IntOffset(x = 0, y = animatedThumbY) }
-                    .padding(end = 4.dp)
-                    .size(width = THUMB_WIDTH_DP.dp, height = THUMB_HEIGHT_DP.dp)
-                    .pointerInput(monthSummaries) {
+                    .testTag("month_scroll_indicator")
+                    .offset { IntOffset(x = 0, y = thumbY.toInt()) }
+                    .size(width = 44.dp, height = 56.dp)
+                    .pointerInput(monthSummaries, maxScrollPx) {
                         detectVerticalDragGestures(
                             onDragStart = {
                                 isDragging = true
-                                dragOffsetY = thumbOffsetFromGrid
+                                // Snap initial drag to current visual position
+                                dragOffsetY = gridProgress * maxScrollPx
+                                lastScrolledMonthIndex = -1
                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                             },
-                            onDragEnd = {
-                                val monthIndex = thumbOffsetToMonthIndex(dragOffsetY)
-                                isDragging = false
-                                onScrollToMonth(monthIndex)
-                            },
-                            onDragCancel = {
-                                isDragging = false
-                            },
-                            onVerticalDrag = { _, dragAmount ->
-                                dragOffsetY = (dragOffsetY + dragAmount.toInt())
-                                    .coerceIn(0, (trackHeight - thumbSizePx).coerceAtLeast(0))
+                            onDragEnd = { isDragging = false },
+                            onDragCancel = { isDragging = false },
+                            onVerticalDrag = { change, dragAmount ->
+                                change.consume()
+                                dragOffsetY = (dragOffsetY + dragAmount).coerceIn(0f, maxScrollPx)
+
+                                // Convert offset back to list index
+                                val progress =
+                                    if (maxScrollPx > 0) dragOffsetY / maxScrollPx else 0f
+                                val targetItemIndex = (progress * totalItems).toInt()
+
+                                val searchResult =
+                                    timelineLayout.monthCumulativeCounts.binarySearch(
+                                        targetItemIndex
+                                    )
+                                val monthIndex =
+                                    (if (searchResult >= 0) searchResult else -(searchResult + 1) - 1)
+                                        .coerceIn(0, monthSummaries.lastIndex)
+
+                                if (monthIndex != lastScrolledMonthIndex) {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    val gridIndex =
+                                        timelineLayout.monthCumulativeCounts.getOrNull(monthIndex)
+                                            ?: 0
+                                    onScrollToGridIndex(gridIndex)
+                                    lastScrolledMonthIndex = monthIndex
+                                }
                             }
                         )
                     },
-                shape = RoundedCornerShape(THUMB_WIDTH_DP.dp / 2),
-                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                tonalElevation = 2.dp,
-                shadowElevation = 4.dp
+                shape = RoundedCornerShape(topStartPercent = 75, bottomStartPercent = 75),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                tonalElevation = 6.dp,
+                shadowElevation = 6.dp
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_arrows_vertical),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Icon(
+                    painter = painterResource(R.drawable.ic_arrows_vertical),
+                    contentDescription = "Scroll Timeline",
+                    modifier = Modifier
+                        .size(22.dp)
+                        // Pad slightly to center the icon visually within the half-circle
+                        .padding(start = 4.dp)
+                        .wrapContentSize(Alignment.Center),
+                )
             }
         }
     }

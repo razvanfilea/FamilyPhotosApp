@@ -12,9 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
@@ -92,11 +90,7 @@ private fun getPreferenceItems(
             EmptyPreferenceItem(
                 title = "Sign out",
                 summary = "Log out of the current user session",
-                onClick = {
-                    mainViewModel.viewModelScope.launch {
-                        mainViewModel.loginRepository.logout()
-                    }
-                }
+                onClick = mainViewModel::signOut
             )
         )
     )

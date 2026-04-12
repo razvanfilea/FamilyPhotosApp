@@ -4,7 +4,6 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -41,8 +40,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.LazyPagingData
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
+import androidx.paging.compose.LazyPagingItems
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
 import net.theluckycoder.familyphotos.ui.PhotoViewerListNav
@@ -55,22 +54,25 @@ import net.theluckycoder.familyphotos.ui.viewmodel.TimelineViewModel
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun TimelineTab(photos: LazyPagingData<NetworkPhoto>) {
+fun TimelineTab(photos: LazyPagingItems<NetworkPhoto>) {
     val mainViewModel: MainViewModel = viewModel()
     val timelineViewModel: TimelineViewModel = viewModel()
     val memories = timelineViewModel.memories.collectAsState()
-    val monthSummaries by timelineViewModel.monthSummaries.collectAsState()
+    val timelineLayout by timelineViewModel.timelineLayout.collectAsState()
     val selectedPhotoType by timelineViewModel.selectedPhotoType.collectAsState()
     val backStack = LocalNavBackStack.current
+
+    val isOnline by mainViewModel.isOnline.collectAsState()
+    val isRefreshing by mainViewModel.isRefreshing.collectAsState()
 
     PhotosList(
         gridState = timelineViewModel.timelineGridState,
         photos = photos,
-        monthSummaries = monthSummaries,
+        timelineLayout = timelineLayout,
         openPhoto = {
             backStack.add(PhotoViewerFlowNav(it, PhotoViewerFlowNav.Source.Timeline))
         },
-        topBarContent = {
+        headerContent = {
             PhotoTypeSegmentedButtons(
                 selectedPhotoType = selectedPhotoType,
                 onChangePhotoType = { type ->
@@ -81,17 +83,11 @@ fun TimelineTab(photos: LazyPagingData<NetworkPhoto>) {
                     .windowInsetsPadding(TopAppBarDefaults.windowInsets)
                     .padding(8.dp),
             )
-        },
-        listHeaderContent = {
-            Column {
-                val isOnline by mainViewModel.isOnline.collectAsState()
-                val isRefreshing by mainViewModel.isRefreshing.collectAsState()
 
-                MemoriesList(memories.value, timelineViewModel.memoriesListState)
+            MemoriesList(memories.value, timelineViewModel.memoriesListState)
 
-                if (!isOnline && !isRefreshing) {
-                    FailedConnectionCard(mainViewModel)
-                }
+            if (!isOnline && !isRefreshing) {
+                FailedConnectionCard(mainViewModel)
             }
         },
     )

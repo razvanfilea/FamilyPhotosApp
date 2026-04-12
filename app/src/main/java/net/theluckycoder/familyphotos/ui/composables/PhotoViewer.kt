@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -47,8 +48,6 @@ import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.DataOrSeparator
-import net.theluckycoder.familyphotos.data.model.LazyPagingData
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.db.Photo
@@ -71,14 +70,15 @@ import net.theluckycoder.familyphotos.utils.ThumbHashCache
 
 @Composable
 fun <T : Photo> PhotosViewer(
-    lazyPagingItems: LazyPagingData<T>,
+    lazyPagingItems: LazyPagingItems<T>,
     initialPhotoIndex: Int,
     photoViewerViewModel: PhotoViewerViewModel = viewModel()
 ) {
     val showUi = remember { mutableStateOf(true) }
+    // Now paging items are plain photos, not DataOrSeparator
     val items = remember(lazyPagingItems.itemSnapshotList) {
         lazyPagingItems.itemSnapshotList.withIndex()
-            .mapNotNull { (index, data) -> (data as? DataOrSeparator.Data)?.data?.let { index to it } }
+            .mapNotNull { (index, photo) -> photo?.let { index to it } }
     }
     val actualInitialIndex = items.indexOfFirst { it.first == initialPhotoIndex }.coerceAtLeast(0)
 
@@ -91,6 +91,7 @@ fun <T : Photo> PhotosViewer(
 
     PhotoViewerScaffold(currentPhoto, showUi.value, photoViewerViewModel) { paddingValues ->
         HorizontalPager(
+            modifier = Modifier.testTag("photo_viewer_pager"),
             state = pagerState,
             key = { index -> items[index].second.id },
         ) { page ->

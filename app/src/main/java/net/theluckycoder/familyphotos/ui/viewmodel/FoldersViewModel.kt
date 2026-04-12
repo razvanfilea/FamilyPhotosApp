@@ -23,13 +23,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.data.model.PhotoType
-import net.theluckycoder.familyphotos.data.model.db.MonthSummary
+import net.theluckycoder.familyphotos.data.model.TimelineLayout
 import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import net.theluckycoder.familyphotos.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.data.repository.PhotoUploadRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel.Companion.PAGING_CONFIG
-import net.theluckycoder.familyphotos.utils.mapPagingPhotos
 import net.theluckycoder.familyphotos.workers.enqueueBackupAndUploadWorker
 import javax.inject.Inject
 
@@ -58,7 +57,7 @@ class FoldersViewModel @Inject constructor(
 
     val favoritePhotosPager = Pager(PAGING_CONFIG) {
         photosRepository.getFavoritePhotosPaged()
-    }.flow.mapPagingPhotos().cachedIn(viewModelScope)
+    }.flow.cachedIn(viewModelScope)
 
     val localFolders = showFoldersAscending
         .flatMapLatest { foldersRepository.localFoldersFlow(it) }
@@ -84,7 +83,6 @@ class FoldersViewModel @Inject constructor(
                 emptyFlow()
             }
         }
-        .mapPagingPhotos()
         .cachedIn(viewModelScope)
 
     private val _selectedLocalFolder = MutableStateFlow<String?>(null)
@@ -98,10 +96,9 @@ class FoldersViewModel @Inject constructor(
                 emptyFlow()
             }
         }
-        .mapPagingPhotos()
         .cachedIn(viewModelScope)
 
-    val networkFolderMonthSummaries: StateFlow<List<MonthSummary>> = _selectedNetworkFolder
+    val networkFolderTimelineLayout: StateFlow<TimelineLayout> = _selectedNetworkFolder
         .combine(selectedPhotoType) { folderName, photoType -> folderName to photoType }
         .flatMapLatest { (folderName, photoType) ->
             if (folderName != null) {
@@ -110,10 +107,11 @@ class FoldersViewModel @Inject constructor(
                 flowOf(emptyList())
             }
         }
+        .map { summaries -> TimelineLayout.build(summaries) }
         .flowOn(Dispatchers.Default)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), TimelineLayout.EMPTY)
 
-    val localFolderMonthSummaries: StateFlow<List<MonthSummary>> = _selectedLocalFolder
+    val localFolderTimelineLayout: StateFlow<TimelineLayout> = _selectedLocalFolder
         .flatMapLatest { folderName ->
             if (folderName != null) {
                 foldersRepository.localMonthSummariesForFolder(folderName)
@@ -121,8 +119,9 @@ class FoldersViewModel @Inject constructor(
                 flowOf(emptyList())
             }
         }
+        .map { summaries -> TimelineLayout.build(summaries) }
         .flowOn(Dispatchers.Default)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), TimelineLayout.EMPTY)
 
     fun refreshLocalPhotos() {
         viewModelScope.launch(Dispatchers.IO) {

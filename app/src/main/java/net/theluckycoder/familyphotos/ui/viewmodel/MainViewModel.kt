@@ -7,13 +7,14 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -41,6 +42,9 @@ class MainViewModel @Inject constructor(
     val localPhotosToDelete = _localPhotosToDelete.consumeAsFlow()
 
     val selectedTabState = mutableStateOf(TopLevelTab.Timeline)
+
+    val isLoggedIn = loginRepository.isLoggedIn
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     val isRefreshing = MutableStateFlow(false)
     val isOnline = refreshPhotosUseCase.isOnlineState.asStateFlow()
@@ -96,6 +100,12 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.Default) {
             val photos = photoIds.map { photosRepository.getLocalPhoto(it) }.filterNotNull()
             _localPhotosToDelete.send(photos)
+        }
+    }
+
+    fun signOut() {
+        viewModelScope.launch(Dispatchers.IO) {
+            loginRepository.logout()
         }
     }
 

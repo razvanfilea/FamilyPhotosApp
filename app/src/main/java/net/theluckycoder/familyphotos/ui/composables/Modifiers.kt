@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.toIntRect
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import net.theluckycoder.familyphotos.data.model.DataOrSeparator
+import net.theluckycoder.familyphotos.data.model.TimelineLayout
 import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
 import kotlin.math.abs
@@ -80,11 +80,13 @@ fun Modifier.selectableClickable(
 fun <T : Photo> Modifier.photoGridDrag(
     lazyGridState: LazyGridState,
     selectedIds: SnapshotStateSet<Long>,
-    items: List<DataOrSeparator<T>?>,
+    items: List<T?>,
+    timelineLayout: TimelineLayout,
 ): Modifier {
     val autoScrollSpeed = remember { mutableFloatStateOf(0f) }
     val scrollGestureActive = remember { mutableStateOf(false) }
     val currentItems = rememberUpdatedState(items)
+    val currentLayout = rememberUpdatedState(timelineLayout)
 
     // Only run auto-scroll loop when drag gesture is active
     if (scrollGestureActive.value) {
@@ -106,7 +108,8 @@ fun <T : Photo> Modifier.photoGridDrag(
         autoScrollSpeed = autoScrollSpeed,
         autoScrollThreshold = with(LocalDensity.current) { 40.dp.toPx() },
         scrollGestureActive = scrollGestureActive,
-        getItems = { currentItems.value }
+        getItems = { currentItems.value },
+        getLayout = { currentLayout.value }
     )
 }
 
@@ -120,7 +123,8 @@ private fun <T : Photo> Modifier.photoGridDrag(
     autoScrollSpeed: MutableState<Float>,
     autoScrollThreshold: Float,
     scrollGestureActive: MutableState<Boolean>,
-    getItems: () -> List<DataOrSeparator<T>?>,
+    getItems: () -> List<T?>,
+    getLayout: () -> TimelineLayout,
 ) = pointerInput(Unit) {
     fun LazyGridState.hitKeyAt(rawOffset: Offset): Long? {
         return layoutInfo.visibleItemsInfo
@@ -133,7 +137,7 @@ private fun <T : Photo> Modifier.photoGridDrag(
 
     fun IntRange.mapIndexToId(): List<Long> {
         val items = getItems()
-        return this.mapNotNull { (items.getOrNull(it) as? DataOrSeparator.Data)?.data?.id }
+        return this.mapNotNull { items.getOrNull(it)?.id }
     }
 
     var initialMediaIndex: Int? = null
@@ -144,12 +148,18 @@ private fun <T : Photo> Modifier.photoGridDrag(
         val items = getItems()
         return buildMap(items.size) {
             items.forEachIndexed { index, item ->
-                (item as? DataOrSeparator.Data)?.data?.id?.let { put(it, index) }
+                item?.id?.let { put(it, index) }
             }
         }
     }
 
     fun resolveIndex(key: Long): Int? {
+        // Check if this key is a header (month timestamp) - headers can't be selected
+        val layout = getLayout()
+        if (layout.monthSummaries.any { it.timeCreated == key }) {
+            return null
+        }
+
         idToIndexMap[key]?.let { return it }
         // Map is stale (paging loaded/discarded pages), rebuild
         idToIndexMap = buildIdToIndexMap()

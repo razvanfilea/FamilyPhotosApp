@@ -7,13 +7,12 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
-import kotlinx.serialization.json.Json
-import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
-import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
-import net.theluckycoder.familyphotos.data.model.db.NetworkPhotoWithYearOffset
 import net.theluckycoder.familyphotos.data.model.PhotoEventLog
 import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.db.MonthSummary
+import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
+import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.db.NetworkPhotoWithYearOffset
 
 @Dao
 interface NetworkPhotosDao {
@@ -147,9 +146,8 @@ interface NetworkPhotosDao {
     @Transaction
     suspend fun updatePartials(events: Collection<PhotoEventLog>, eventLogId: Long) {
         for (event in events) {
-            if (event.data != null) {
-                val photo: NetworkPhoto =
-                    Json.decodeFromString(event.data.toByteArray().toString(Charsets.UTF_8))
+            val photo = event.decodePhoto()
+            if (photo != null) {
                 insert(photo)
             } else {
                 delete(event.photoId)

@@ -32,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.data.model.TimelineLayout
 import net.theluckycoder.familyphotos.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.utils.buildDateString
@@ -39,7 +40,7 @@ import net.theluckycoder.familyphotos.utils.buildDateString
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MonthPickerBottomSheet(
-    monthSummaries: List<MonthSummary>,
+    timelineLayout: TimelineLayout,
     onMonthSelected: (MonthSummary) -> Unit,
     onDismiss: () -> Unit,
 ) = ModalBottomSheet(
@@ -67,7 +68,7 @@ fun MonthPickerBottomSheet(
             ),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            items(monthSummaries, key = { it.timeCreated }) { summary ->
+            items(timelineLayout.monthSummaries, key = { it.timeCreated }) { summary ->
                 MonthSummaryItem(
                     summary = summary,
                     onClick = {
