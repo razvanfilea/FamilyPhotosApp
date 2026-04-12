@@ -57,6 +57,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -78,7 +79,6 @@ import net.theluckycoder.familyphotos.data.model.db.PhotoFolder
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 import net.theluckycoder.familyphotos.utils.normalize
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T : PhotoFolder> FoldersGridList(
     folders: List<T>,
@@ -87,6 +87,7 @@ fun <T : PhotoFolder> FoldersGridList(
     folderNameFilter: String,
     onSearch: (String) -> Unit = {},
     foldersViewModel: FoldersViewModel = viewModel(),
+    isBackupEnabled: (T) -> Boolean = { false },
     extraHeader: @Composable ColumnScope.() -> Unit = {},
 ) {
     val gridState = rememberLazyGridState()
@@ -142,6 +143,7 @@ fun <T : PhotoFolder> FoldersGridList(
                 .padding(horizontal = 16.dp)
                 .animateItem()
             val detailsText = folderDetailsText(folder)
+            val backupEnabled = isBackupEnabled(folder)
 
             if (showAsGrid) {
                 GridFolderPreviewItem(
@@ -149,25 +151,15 @@ fun <T : PhotoFolder> FoldersGridList(
                     photo = photo,
                     detailsText = detailsText,
                     onClick = { onFolderClick(folder) },
-                ) {
-                    /*if (folder.isPublic) {
-                        Icon(
-                            modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .size(42.dp)
-                                .padding(8.dp),
-                            painter = painterResource(R.drawable.ic_family_filled),
-                            tint = Color.White,
-                            contentDescription = null
-                        )
-                    }*/
-                }
+                    showBackupIndicator = backupEnabled,
+                )
             } else {
                 ListFolderPreviewItem(
                     modifier = modifier,
                     photo = photo,
                     detailsText = detailsText,
                     onClick = { onFolderClick(folder) },
+                    showBackupIndicator = backupEnabled,
                 )
             }
 
@@ -286,7 +278,7 @@ private fun GridFolderPreviewItem(
     photo: Photo,
     detailsText: String?,
     onClick: () -> Unit,
-    content: @Composable (BoxScope.() -> Unit)? = null
+    showBackupIndicator: Boolean = false,
 ) = Column(modifier = modifier) {
     Box(
         Modifier
@@ -303,8 +295,17 @@ private fun GridFolderPreviewItem(
             contentScale = ContentScale.Crop,
         )
 
-        if (content != null)
-            content()
+        if (showBackupIndicator) {
+            Icon(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(36.dp)
+                    .padding(8.dp),
+                painter = painterResource(R.drawable.ic_cloud_done_filled),
+                tint = Color.White,
+                contentDescription = null
+            )
+        }
     }
 
     Text(
@@ -331,19 +332,34 @@ private fun ListFolderPreviewItem(
     photo: Photo,
     detailsText: String?,
     onClick: () -> Unit,
+    showBackupIndicator: Boolean = false,
 ) = Row(
     modifier = modifier.clickable(onClick = onClick),
     verticalAlignment = Alignment.CenterVertically,
 ) {
-    CoilPhoto(
-        photo = photo,
-        modifier = Modifier
-            .photoSharedBounds(photo.id)
-            .size(82.dp)
-            .clip(RoundedCornerShape(18.dp)),
-        preview = true,
-        contentScale = ContentScale.Crop,
-    )
+    Box {
+        CoilPhoto(
+            photo = photo,
+            modifier = Modifier
+                .photoSharedBounds(photo.id)
+                .size(82.dp)
+                .clip(RoundedCornerShape(18.dp)),
+            preview = true,
+            contentScale = ContentScale.Crop,
+        )
+
+        if (showBackupIndicator) {
+            Icon(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(36.dp)
+                    .padding(8.dp),
+                painter = painterResource(R.drawable.ic_cloud_done_filled),
+                tint = Color.White,
+                contentDescription = null
+            )
+        }
+    }
 
     Column(
         Modifier

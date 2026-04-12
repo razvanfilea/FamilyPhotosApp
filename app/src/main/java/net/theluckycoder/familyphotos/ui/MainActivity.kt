@@ -212,6 +212,10 @@ private fun Content(
     val localFolderPagingItems = foldersViewModel.localFolderPhotosPager.collectAsLazyPagingItems()
     val favoritesFolderPagingItems = foldersViewModel.favoritePhotosPager.collectAsLazyPagingItems()
 
+    if (backStack.isEmpty()) {
+        backStack.add(TopLevelNav)
+    }
+
     NavDisplay(
         backStack = backStack,
         transitionSpec = { transitionSpec },
@@ -227,13 +231,12 @@ private fun Content(
                 }
 
                 is PhotoViewerFlowNav -> NavEntry(key) {
-                    @Suppress("UNCHECKED_CAST")
                     val lazyPagingItems = when (key.source) {
                         PhotoViewerFlowNav.Source.Timeline -> timelinePagingItems
                         PhotoViewerFlowNav.Source.Network -> networkFolderPagingItems
                         PhotoViewerFlowNav.Source.Local -> localFolderPagingItems
                         PhotoViewerFlowNav.Source.Favorites -> favoritesFolderPagingItems
-                    } as LazyPagingItems<Photo>
+                    }
 
                     PhotosViewer(
                         lazyPagingItems = lazyPagingItems,
@@ -257,12 +260,11 @@ private fun Content(
                         }
                     }
 
-                    @Suppress("UNCHECKED_CAST")
                     val lazyPagingItems = when (source) {
                         FolderNav.Source.Favorites -> favoritesFolderPagingItems
                         is FolderNav.Source.Network -> networkFolderPagingItems
                         is FolderNav.Source.Local -> localFolderPagingItems
-                    } as LazyPagingItems<Photo>
+                    }
 
                     FolderScreen(key.source, lazyPagingItems)
                 }

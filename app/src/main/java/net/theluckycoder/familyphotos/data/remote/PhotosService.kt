@@ -48,12 +48,12 @@ interface PhotosService {
         @Part file: MultipartBody.Part,
     ): Response<NetworkPhoto>
 
-    @POST("/trash/")
+    @POST("/photos/trash")
     suspend fun trashPhotos(
         @Body photoIds: List<Long>,
     ): Response<List<NetworkPhoto>>
 
-    @DELETE("/trash/restore")
+    @DELETE("/photos/trash/restore")
     suspend fun restorePhotos(
         @Body photoIds: List<Long>,
     ): Response<List<NetworkPhoto>>
@@ -63,7 +63,7 @@ interface PhotosService {
         @Path("photo_id") photoId: Long,
     ): Response<Void>
 
-    @POST("/photos/move")
+    @POST("/photos/move/photos")
     suspend fun movePhotos(
         @Query("make_public") makePublic: Boolean,
         @Query("target_folder_name") newFolderName: String?,

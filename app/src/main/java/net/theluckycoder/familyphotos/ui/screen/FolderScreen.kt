@@ -39,7 +39,7 @@ import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<Photo>) {
+fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out Photo>) {
     val foldersViewModel: FoldersViewModel = viewModel()
     val gridState by foldersViewModel.photoListState.collectAsState()
     val backStack = LocalNavBackStack.current

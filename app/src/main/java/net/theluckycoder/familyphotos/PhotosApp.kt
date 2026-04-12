@@ -1,25 +1,17 @@
 package net.theluckycoder.familyphotos
 
 import android.app.Application
-import android.util.Log
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import androidx.work.await
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
-import kotlinx.coroutines.launch
-import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.di.DefaultCoroutineScope
-import net.theluckycoder.familyphotos.workers.BackupAndUploadWorker
-import java.util.concurrent.TimeUnit
+import net.theluckycoder.familyphotos.workers.enqueuePeriodBackupWorker
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -30,9 +22,6 @@ class PhotosApp : Application(), Configuration.Provider {
 
     @Inject
     lateinit var coroutineScope: DefaultCoroutineScope
-
-    @Inject
-    lateinit var networkPhotosDao: NetworkPhotosDao
 
     @Inject
     lateinit var settingsDataStore: SettingsDataStore
@@ -63,34 +52,12 @@ class PhotosApp : Application(), Configuration.Provider {
             .build()
 
     private fun createUploadWorker() = coroutineScope.launch {
+        val workManager = WorkManager.getInstance(this@PhotosApp)
+
+        // TODO: Remove after a few releases - cleans up old worker with wrong name
+        workManager.cancelUniqueWork("periodic_upload")
+
         val useMobileData = settingsDataStore.backupOverMobileData.first()
-        val networkType = if (useMobileData) NetworkType.NOT_ROAMING else NetworkType.UNMETERED
-
-        val constraints = Constraints.Builder()
-            .setRequiredNetworkType(networkType)
-            .setRequiresBatteryNotLow(true)
-            .build()
-
-        val periodicUpload =
-            PeriodicWorkRequestBuilder<BackupAndUploadWorker>(4, TimeUnit.HOURS)
-                .setConstraints(constraints)
-                .build()
-
-        try {
-            WorkManager.getInstance(this@PhotosApp)
-                .enqueueUniquePeriodicWork(
-                    UNIQUE_PERIODIC_UPLOAD,
-                    ExistingPeriodicWorkPolicy.UPDATE,
-                    periodicUpload
-                )
-                .await()
-            Log.i(BackupAndUploadWorker::class.simpleName, "Backup has been enabled")
-        } catch (e: Throwable) {
-            Log.e(BackupAndUploadWorker::class.simpleName, "Backup failed to be enabled", e)
-        }
-    }
-
-    companion object {
-        private const val UNIQUE_PERIODIC_UPLOAD = "periodic_upload"
+        workManager.enqueuePeriodBackupWorker(useMobileData)
     }
 }

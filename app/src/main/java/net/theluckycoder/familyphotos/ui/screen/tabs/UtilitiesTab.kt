@@ -58,6 +58,8 @@ fun UtilitiesTab(
 
     PhotoStatisticsCard(statistics)
 
+    Spacer(Modifier.height(16.dp))
+
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(horizontal = 16.dp),

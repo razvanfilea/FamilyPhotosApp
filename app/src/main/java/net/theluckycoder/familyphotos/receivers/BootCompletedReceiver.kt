@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.workers.BackupAndUploadWorker
+import net.theluckycoder.familyphotos.workers.enqueuePeriodBackupWorker
 import java.util.concurrent.TimeUnit
 
 class BootCompletedReceiver : BroadcastReceiver() {
@@ -25,23 +26,7 @@ class BootCompletedReceiver : BroadcastReceiver() {
             try {
                 val settingsStore = SettingsDataStore(context)
                 val useMobileData = settingsStore.backupOverMobileData.first()
-                val networkType = if (useMobileData) NetworkType.NOT_ROAMING else NetworkType.UNMETERED
-
-                val constraints = Constraints.Builder()
-                    .setRequiredNetworkType(networkType)
-                    .setRequiresBatteryNotLow(true)
-                    .build()
-
-                val periodicWork = PeriodicWorkRequestBuilder<BackupAndUploadWorker>(4, TimeUnit.HOURS)
-                    .setConstraints(constraints)
-                    .build()
-
-                WorkManager.getInstance(context)
-                    .enqueueUniquePeriodicWork(
-                        "periodic_upload",
-                        ExistingPeriodicWorkPolicy.KEEP,
-                        periodicWork
-                    )
+                WorkManager.getInstance(context).enqueuePeriodBackupWorker(useMobileData)
             } finally {
                 pendingResult.finish()
             }

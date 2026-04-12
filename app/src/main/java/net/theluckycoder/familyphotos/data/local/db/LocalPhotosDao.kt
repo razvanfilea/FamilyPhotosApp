@@ -88,4 +88,13 @@ interface LocalPhotosDao {
     fun deleteAll()
 
     // endregion replaceAll
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM local_photo
+        WHERE folder IN (SELECT name FROM backup_local_folders)
+        AND networkPhotoId = 0
+        """
+    )
+    fun getPendingBackupCount(): Flow<Int>
 }

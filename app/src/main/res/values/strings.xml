@@ -109,4 +109,16 @@
     <!-- Statistics -->
     <string name="statistics_title">Photo Statistics</string>
     <string name="statistics_total">Total</string>
+
+    <!-- Backup -->
+    <string name="backup_title">Backup</string>
+    <string name="backup_now">Backup Now</string>
+    <plurals name="backup_photos_pending">
+        <item quantity="one">%d photo pending backup</item>
+        <item quantity="other">%d photos pending backup</item>
+    </plurals>
+    <plurals name="backup_folders_selected">
+        <item quantity="one">%d folder selected</item>
+        <item quantity="other">%d folders selected</item>
+    </plurals>
 </resources>

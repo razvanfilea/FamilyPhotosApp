@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.Data
 import androidx.work.ForegroundInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -41,7 +42,6 @@ class BackupAndUploadWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, workerParams) {
 
     private val notificationId = id.hashCode()
-    private val backupFolder = File(applicationContext.cacheDir, "backup_temp")
 
     override suspend fun doWork(): Result {
         val ctx = applicationContext
@@ -84,6 +84,12 @@ class BackupAndUploadWorker @AssistedInject constructor(
                         total
                     )
                 )
+                setProgress(
+                    Data.Builder()
+                        .putInt(KEY_PROGRESS_CURRENT, successCount)
+                        .putInt(KEY_PROGRESS_TOTAL, total)
+                        .build()
+                )
 
                 val success = try {
                     photoUploadRepository.uploadFile(localPhoto, entry.makePublic, entry.uploadFolder)
@@ -114,11 +120,6 @@ class BackupAndUploadWorker @AssistedInject constructor(
             Log.e(TAG, e.stackTraceToString())
             createFailNotification(FailReason.Other, e.stackTraceToString())
             Result.failure()
-        }
-
-        try {
-            backupFolder.deleteRecursively()
-        } catch (_: Exception) {
         }
 
         return result
@@ -266,7 +267,10 @@ class BackupAndUploadWorker @AssistedInject constructor(
         private const val NOTIFICATION_FAIL_ID = -100
         private const val NOTIFICATION_CHANNEL = "backup"
         const val TAG = "backup_upload"
-        const val UNIQUE_WORK_NAME = "backup_upload_work"
+        const val UNIQUE_WORK_NAME_AUTOMATIC = "backup_upload_work"
+        const val UNIQUE_WORK_NAME_MANUAL = "backup_upload_work_manual"
         const val KEY_SKIP_FOLDER_SCAN = "skip_folder_scan"
+        const val KEY_PROGRESS_CURRENT = "progress_current"
+        const val KEY_PROGRESS_TOTAL = "progress_total"
     }
 }

@@ -78,6 +78,8 @@ class FoldersRepository @Inject constructor(
     suspend fun removeBackupFolder(folderName: String) =
         localFolderBackupDao.delete(LocalFolderToBackup(folderName))
 
+    fun getPendingBackupCount(): Flow<Int> = localPhotosDao.getPendingBackupCount()
+
     private fun queryLocalPhotos(): List<LocalPhoto> {
         val photos = mutableListOf<LocalPhoto>()
 

@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.cachedIn
+import androidx.work.NetworkType
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +31,7 @@ import net.theluckycoder.familyphotos.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.data.repository.PhotoUploadRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel.Companion.PAGING_CONFIG
+import net.theluckycoder.familyphotos.workers.BackupAndUploadWorker
 import net.theluckycoder.familyphotos.workers.enqueueBackupAndUploadWorker
 import javax.inject.Inject
 
@@ -41,6 +44,11 @@ class FoldersViewModel @Inject constructor(
     private val settingsStore: SettingsDataStore,
     private val workManager: WorkManager,
 ) : ViewModel() {
+
+    data class BackupProgress(
+        val current: Int,
+        val total: Int
+    )
 
     val selectedPhotoType = settingsStore.photoType.stateIn(
         viewModelScope, SharingStarted.Lazily, PhotoType.All
@@ -123,6 +131,24 @@ class FoldersViewModel @Inject constructor(
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), TimelineLayout.EMPTY)
 
+    val backupFolders: StateFlow<Set<String>> = foldersRepository.getBackupFolders()
+        .map { it.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptySet())
+
+    val pendingBackupCount: StateFlow<Int> = foldersRepository.getPendingBackupCount()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0)
+
+    val backupProgress: StateFlow<BackupProgress?> = workManager.getWorkInfosByTagFlow(BackupAndUploadWorker.TAG)
+        .map { workInfos ->
+            workInfos.firstOrNull { it.state == WorkInfo.State.RUNNING }?.let { info ->
+                BackupProgress(
+                    current = info.progress.getInt(BackupAndUploadWorker.KEY_PROGRESS_CURRENT, 0),
+                    total = info.progress.getInt(BackupAndUploadWorker.KEY_PROGRESS_TOTAL, 0)
+                )
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+
     fun refreshLocalPhotos() {
         viewModelScope.launch(Dispatchers.IO) {
             foldersRepository.updatePhoneAlbums()
@@ -169,11 +195,17 @@ class FoldersViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             if (add) {
                 foldersRepository.addBackupFolder(folder)
-                workManager.enqueueBackupAndUploadWorker(skipFolderScan = false)
             } else {
                 foldersRepository.removeBackupFolder(folder)
                 photoUploadRepository.removeFromQueueByFolder(folder)
             }
         }
+    }
+
+    fun triggerBackup() {
+        workManager.enqueueBackupAndUploadWorker(
+            skipFolderScan = false,
+            networkType = NetworkType.CONNECTED
+        )
     }
 }

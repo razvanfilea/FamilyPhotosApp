@@ -91,6 +91,7 @@ fun <T : Photo> PhotosList(
     val layout = timelineLayout.withOffset(1)
     var showMonthOverlay by remember { mutableStateOf(false) }
     val selectedPhotoIds = remember { mutableStateSetOf<Long>() }
+    val isThumbDragging = remember { mutableStateOf(false) }
 
     val hasSelection = remember { derivedStateOf { selectedPhotoIds.isNotEmpty() } }
 
@@ -123,17 +124,21 @@ fun <T : Photo> PhotosList(
 
     // Debounced scroll state to prevent mass recomposition during scroll-pause-scroll sequences
     var sharedBoundsEnabled by remember { mutableStateOf(true) }
-    LaunchedEffect(gridState) {
-        snapshotFlow { gridState.isScrollInProgress }
-            .distinctUntilChanged()
-            .collect { isScrolling ->
-                if (isScrolling) {
-                    sharedBoundsEnabled = false
-                } else {
-                    delay(150) // Only re-enable after 150ms idle
-                    sharedBoundsEnabled = true
+    LaunchedEffect(gridState, isThumbDragging.value) {
+        if (isThumbDragging.value) {
+            sharedBoundsEnabled = false
+        } else {
+            snapshotFlow { gridState.isScrollInProgress }
+                .distinctUntilChanged()
+                .collect { isScrolling ->
+                    if (isScrolling) {
+                        sharedBoundsEnabled = false
+                    } else {
+                        delay(150) // Only re-enable after 150ms idle
+                        sharedBoundsEnabled = true
+                    }
                 }
-            }
+        }
     }
 
     LazyVerticalGrid(
@@ -230,8 +235,8 @@ fun <T : Photo> PhotosList(
     }
 
     val containsLocalPhotos = remember { mutableStateOf<Boolean?>(null) }
-    LaunchedEffect(photos.itemSnapshotList.items) {
-        if (containsLocalPhotos.value == null) {
+    LaunchedEffect(photos.itemCount > 0) {
+        if (containsLocalPhotos.value == null && photos.itemCount > 0) {
             val photo = photos.itemSnapshotList.items.asSequence()
                 .take(10).firstNotNullOfOrNull { it }
 
@@ -254,7 +259,7 @@ fun <T : Photo> PhotosList(
                 showMonthOverlay = false
                 val gridIndex = layout.gridIndexOf(summary)
                 if (gridIndex >= 0) {
-                    scrollToGridIndex(coroutineScope, gridState, gridIndex)
+                    scrollToGridIndex(gridState, gridIndex)
                 }
             },
             onDismiss = { showMonthOverlay = false },
@@ -262,10 +267,11 @@ fun <T : Photo> PhotosList(
     }
 
     MonthScrollIndicator(
+        isDragging = isThumbDragging,
         gridState = gridState,
         timelineLayout = layout,
         onScrollToGridIndex = { gridIndex ->
-            scrollToGridIndex(coroutineScope, gridState, gridIndex)
+            scrollToGridIndex(gridState, gridIndex)
         }
     )
 }
@@ -282,22 +288,23 @@ private fun <T : Photo> MonthSeparatorHeader(
 ) {
     val text = remember(summary.timeCreated) { buildDateString(summary.timeCreated) }
 
-    // Cache photo IDs for this month - use summary.photoCount to know how many photos
-    val monthPhotoIds = remember(photos.itemSnapshotList, summary) {
-        buildList {
-            val startPagingIndex = timelineLayout.pagingIndexOf(gridIndex + 1)
-            for (i in 0 until summary.photoCount) {
-                val idx = startPagingIndex + i
-                if (idx >= photos.itemCount) break
-                photos.peek(idx)?.id?.let { add(it) }
-            }
-        }
-    }
-
-    // Derive "all selected" reactively - only recomputes when selectedPhotoIds changes
-    val allSelected by remember(monthPhotoIds) {
+    val allSelected by remember(summary, gridIndex) {
         derivedStateOf {
-            monthPhotoIds.isNotEmpty() && monthPhotoIds.all { it in selectedPhotoIds }
+            if (selectedPhotoIds.isEmpty()) return@derivedStateOf false
+
+            val startPagingIndex = timelineLayout.pagingIndexOf(gridIndex + 1)
+            val end = minOf(startPagingIndex + summary.photoCount, photos.itemCount)
+
+            var hasValidPhotos = false
+
+            for (i in startPagingIndex until end) {
+                val id = photos.peek(i)?.id ?: continue
+                hasValidPhotos = true
+
+                if (!selectedPhotoIds.contains(id)) return@derivedStateOf false
+            }
+
+            hasValidPhotos
         }
     }
 
@@ -318,10 +325,17 @@ private fun <T : Photo> MonthSeparatorHeader(
         IconButton(
             modifier = Modifier.testTag("month_select_button"),
             onClick = {
+                val startPagingIndex = timelineLayout.pagingIndexOf(gridIndex + 1)
+                val end = minOf(startPagingIndex + summary.photoCount, photos.itemCount)
+
                 if (allSelected) {
-                    selectedPhotoIds.removeAll(monthPhotoIds.toSet())
+                    for (i in startPagingIndex until end) {
+                        photos.peek(i)?.id?.let { selectedPhotoIds.remove(it) }
+                    }
                 } else {
-                    selectedPhotoIds.addAll(monthPhotoIds)
+                    for (i in startPagingIndex until end) {
+                        photos.peek(i)?.id?.let { selectedPhotoIds.add(it) }
+                    }
                 }
             }
         ) {
@@ -390,23 +404,17 @@ fun PhotoListItem(
     }
 }
 
-private var scrollJob: Job? = null
-
 private const val SCROLL_TARGET_POSITION = 0.2f // Position separator at 20% from top
 
 private fun scrollToGridIndex(
-    coroutineScope: CoroutineScope,
     gridState: LazyGridState,
     gridIndex: Int
 ) {
-    scrollJob?.cancel()
-    scrollJob = coroutineScope.launch {
-        val viewportHeight = gridState.layoutInfo.viewportSize.height
+    val viewportHeight = gridState.layoutInfo.viewportSize.height
 
-        // A negative offset moves the item DOWN from the top of the viewport
-        val offset = -(viewportHeight * SCROLL_TARGET_POSITION).toInt()
+    // A negative offset moves the item DOWN from the top of the viewport
+    val offset = -(viewportHeight * SCROLL_TARGET_POSITION).toInt()
 
-        // Single operation scroll ensures perfect layout precision
-        gridState.scrollToItem(gridIndex, offset)
-    }
+    // Single operation scroll ensures perfect layout precision
+    gridState.requestScrollToItem(gridIndex, offset)
 }
