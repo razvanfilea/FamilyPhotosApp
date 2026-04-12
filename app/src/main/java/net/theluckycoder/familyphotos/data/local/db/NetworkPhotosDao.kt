@@ -12,6 +12,7 @@ import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
+import net.theluckycoder.familyphotos.data.model.db.PhotoStatistics
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhotoWithYearOffset
 
 @Dao
@@ -127,6 +128,21 @@ interface NetworkPhotosDao {
 
     @Query("SELECT * FROM network_photo WHERE trashedOn IS NOT NULL ORDER BY trashedOn DESC")
     fun getTrashedPhotos(): Flow<List<NetworkPhoto>>
+
+    @Query(
+        """
+        SELECT
+            COUNT(*) as totalCount,
+            COUNT(CASE WHEN userId IS NULL THEN 1 END) as familyCount,
+            COUNT(CASE WHEN userId IS NOT NULL THEN 1 END) as personalCount,
+            COALESCE(SUM(fileSize), 0) as totalSize,
+            COALESCE(SUM(CASE WHEN userId IS NULL THEN fileSize ELSE 0 END), 0) as familySize,
+            COALESCE(SUM(CASE WHEN userId IS NOT NULL THEN fileSize ELSE 0 END), 0) as personalSize
+        FROM network_photo
+        WHERE trashedOn IS NULL
+        """
+    )
+    fun getPhotoStatistics(): Flow<PhotoStatistics>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(photo: NetworkPhoto)

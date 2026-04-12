@@ -105,4 +105,8 @@
     <string name="photo_type_all">All</string>
     <string name="photo_type_personal">Personal</string>
     <string name="photo_type_family">Family</string>
+
+    <!-- Statistics -->
+    <string name="statistics_title">Photo Statistics</string>
+    <string name="statistics_total">Total</string>
 </resources>

@@ -48,4 +48,6 @@ class PhotosRepository @Inject constructor(
     fun getTrashedPhotos() = networkPhotosDao.getTrashedPhotos()
 
     fun getMonthSummaries(photoType: PhotoType) = networkPhotosDao.getMonthSummaries(photoType)
+
+    fun getPhotoStatistics() = networkPhotosDao.getPhotoStatistics()
 }
