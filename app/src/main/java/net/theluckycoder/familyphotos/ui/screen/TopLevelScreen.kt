@@ -1,7 +1,6 @@
 package net.theluckycoder.familyphotos.ui.screen
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
@@ -15,9 +14,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.paging.compose.LazyPagingItems
 import androidx.window.core.layout.WindowWidthSizeClass
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
-import androidx.paging.compose.LazyPagingItems
 import net.theluckycoder.familyphotos.ui.TopLevelTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.DeviceTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.NetworkFoldersTab
@@ -25,7 +24,6 @@ import net.theluckycoder.familyphotos.ui.screen.tabs.TimelineTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.UtilitiesTab
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopLevelScreen(
     timelinePagingItems: LazyPagingItems<NetworkPhoto>,

@@ -27,6 +27,7 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.animation)
     implementation(libs.compose.activity)
+    implementation(libs.compose.runtimeLivedata)
 
     // CameraX
     implementation(libs.camerax.lifecycle)

@@ -17,7 +17,7 @@ android {
     defaultConfig {
         applicationId = "net.theluckycoder.familyphotos"
         minSdk = 30
-        targetSdk = 35
+        targetSdk = 36
 
         versionCode = 29
         versionName = "2.9.9"

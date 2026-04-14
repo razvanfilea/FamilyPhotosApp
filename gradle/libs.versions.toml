@@ -59,6 +59,7 @@ compose_tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 compose_toolingPreview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 compose_activity = { module = "androidx.activity:activity-compose", version.ref = "compose_activity" }
 compose_lifecycleViewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "compose_lifecycleViewmodel" }
+compose_runtimeLivedata = { group = "androidx.compose.runtime", name = "runtime-livedata" }
 
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "androidx_nav3" }
 androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "androidx_nav3" }
