@@ -43,6 +43,7 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import androidx.paging.compose.LazyPagingItems
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
+import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
 import net.theluckycoder.familyphotos.ui.PhotoViewerListNav
 import net.theluckycoder.familyphotos.ui.composables.CoilPhoto
@@ -57,9 +58,9 @@ import net.theluckycoder.familyphotos.ui.viewmodel.TimelineViewModel
 fun TimelineTab(photos: LazyPagingItems<NetworkPhoto>) {
     val mainViewModel: MainViewModel = viewModel()
     val timelineViewModel: TimelineViewModel = viewModel()
-    val memories = timelineViewModel.memories.collectAsState()
+    val settingsDataStore = LocalSettingsDataStore.current
     val timelineLayout by timelineViewModel.timelineLayout.collectAsState()
-    val selectedPhotoType by timelineViewModel.selectedPhotoType.collectAsState()
+    val selectedPhotoType by settingsDataStore.photoType.collectAsState()
     val backStack = LocalNavBackStack.current
 
     val isOnline by mainViewModel.isOnline.collectAsState()
@@ -75,16 +76,15 @@ fun TimelineTab(photos: LazyPagingItems<NetworkPhoto>) {
         headerContent = {
             PhotoTypeSegmentedButtons(
                 selectedPhotoType = selectedPhotoType,
-                onChangePhotoType = { type ->
-                    timelineViewModel.setSelectedPhotoType(type)
-                },
+                onChangePhotoType = settingsDataStore::setSelectedPhotoType,
                 modifier = Modifier
                     .fillMaxWidth()
                     .windowInsetsPadding(TopAppBarDefaults.windowInsets)
                     .padding(8.dp),
             )
 
-            MemoriesList(memories.value, timelineViewModel.memoriesListState)
+            val memories by timelineViewModel.memories.collectAsState()
+            MemoriesList(memories, timelineViewModel.memoriesListState)
 
             if (!isOnline && !isRefreshing) {
                 FailedConnectionCard(mainViewModel)
@@ -93,7 +93,6 @@ fun TimelineTab(photos: LazyPagingItems<NetworkPhoto>) {
     )
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun MemoriesList(
     memories: Map<Int, List<NetworkPhoto>>?,

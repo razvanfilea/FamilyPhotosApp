@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.cachedIn
-import androidx.work.NetworkType
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -50,29 +49,16 @@ class FoldersViewModel @Inject constructor(
         val total: Int
     )
 
-    val selectedPhotoType = settingsStore.photoType.stateIn(
-        viewModelScope, SharingStarted.Lazily, PhotoType.All
-    )
-
-    val showFoldersAscending = settingsStore.showFoldersAscending.stateIn(
-        viewModelScope,
-        SharingStarted.Lazily, true
-    )
-    val showFoldersAsGrid = settingsStore.showFoldersAsGrid.stateIn(
-        viewModelScope,
-        SharingStarted.Lazily, true
-    )
-
     val favoritePhotosPager = Pager(PAGING_CONFIG) {
         photosRepository.getFavoritePhotosPaged()
     }.flow.cachedIn(viewModelScope)
 
-    val localFolders = showFoldersAscending
+    val localFolders = settingsStore.showFoldersAscending
         .flatMapLatest { foldersRepository.localFoldersFlow(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
-    val networkFolders: StateFlow<List<NetworkFolder>> = selectedPhotoType
-        .combine(showFoldersAscending) { type, ascending -> type to ascending }
+    val networkFolders: StateFlow<List<NetworkFolder>> = settingsStore.photoType
+        .combine(settingsStore.showFoldersAscending) { type, ascending -> type to ascending }
         .flatMapLatest { (type, ascending) ->
             foldersRepository.networkFoldersFlow(type, ascending)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
@@ -81,7 +67,7 @@ class FoldersViewModel @Inject constructor(
 
     private val _selectedNetworkFolder = MutableStateFlow<String?>(null)
     val networkFolderPhotosPager = _selectedNetworkFolder
-        .combine(selectedPhotoType) { folderName, photoType -> folderName to photoType }
+        .combine(settingsStore.photoType) { folderName, photoType -> folderName to photoType }
         .flatMapLatest { (folderName, photoType) ->
             if (folderName != null) {
                 Pager(PAGING_CONFIG) {
@@ -107,7 +93,7 @@ class FoldersViewModel @Inject constructor(
         .cachedIn(viewModelScope)
 
     val networkFolderTimelineLayout: StateFlow<TimelineLayout> = _selectedNetworkFolder
-        .combine(selectedPhotoType) { folderName, photoType -> folderName to photoType }
+        .combine(settingsStore.photoType) { folderName, photoType -> folderName to photoType }
         .flatMapLatest { (folderName, photoType) ->
             if (folderName != null) {
                 foldersRepository.networkMonthSummariesForFolder(folderName, photoType)
@@ -155,24 +141,6 @@ class FoldersViewModel @Inject constructor(
         }
     }
 
-    fun setSelectedPhotoType(photoType: PhotoType) {
-        viewModelScope.launch(Dispatchers.Default) {
-            settingsStore.setSelectedPhotoType(photoType)
-        }
-    }
-
-    fun setShowFoldersAscending(ascending: Boolean) {
-        viewModelScope.launch(Dispatchers.IO) {
-            settingsStore.setShowFoldersAscending(ascending)
-        }
-    }
-
-    fun setShowAsGrid(asGrid: Boolean) {
-        viewModelScope.launch(Dispatchers.IO) {
-            settingsStore.setShowFoldersAsGrid(asGrid)
-        }
-    }
-
     fun loadNetworkFolderPhotos(folderName: String) {
         if (_selectedNetworkFolder.value != folderName) {
             photoListState.value = LazyGridState()
@@ -204,8 +172,7 @@ class FoldersViewModel @Inject constructor(
 
     fun triggerBackup() {
         workManager.enqueueBackupAndUploadWorker(
-            skipFolderScan = false,
-            networkType = NetworkType.CONNECTED
+            skipFolderScan = false
         )
     }
 }

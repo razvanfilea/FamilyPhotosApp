@@ -12,11 +12,10 @@ import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
 
 fun WorkManager.enqueueBackupAndUploadWorker(
-    networkType: NetworkType,
     skipFolderScan: Boolean,
 ) {
     val constraints = Constraints.Builder()
-        .setRequiredNetworkType(networkType)
+        .setRequiredNetworkType(NetworkType.CONNECTED)
         .build()
 
     val inputData = Data.Builder()
@@ -32,7 +31,7 @@ fun WorkManager.enqueueBackupAndUploadWorker(
 
     enqueueUniqueWork(
         BackupAndUploadWorker.UNIQUE_WORK_NAME_MANUAL,
-        ExistingWorkPolicy.REPLACE,
+        ExistingWorkPolicy.KEEP,
         request
     )
 }

@@ -37,7 +37,6 @@ import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
 import net.theluckycoder.familyphotos.ui.composables.PhotosList
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out Photo>) {
     val foldersViewModel: FoldersViewModel = viewModel()

@@ -13,7 +13,7 @@ interface UploadQueueDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(entries: List<UploadQueueEntry>)
 
-    @Query("SELECT * FROM upload_queue WHERE retryCount < maxRetries ORDER BY isManualUpload DESC, createdAt ASC LIMIT 1")
+    @Query("SELECT * FROM upload_queue WHERE retryCount < maxRetries ORDER BY isManualUpload DESC, retryCount DESC, createdAt ASC LIMIT 1")
     suspend fun getNextPending(): UploadQueueEntry?
 
     @Query("UPDATE upload_queue SET retryCount = retryCount + 1 WHERE id = :entryId")

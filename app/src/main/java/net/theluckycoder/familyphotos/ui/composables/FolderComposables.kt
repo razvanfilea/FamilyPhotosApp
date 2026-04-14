@@ -74,6 +74,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.data.model.db.PhotoFolder
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
@@ -91,8 +92,9 @@ fun <T : PhotoFolder> FoldersGridList(
     extraHeader: @Composable ColumnScope.() -> Unit = {},
 ) {
     val gridState = rememberLazyGridState()
-    val sortAscending by foldersViewModel.showFoldersAscending.collectAsState()
-    val showAsGrid by foldersViewModel.showFoldersAsGrid.collectAsState()
+    val settingsDataStore = LocalSettingsDataStore.current
+    val sortAscending by settingsDataStore.showFoldersAscending.collectAsState()
+    val showAsGrid by settingsDataStore.showFoldersAsGrid.collectAsState()
 
     val filteredFolders = remember(folders, folderNameFilter) {
         val filterName = folderNameFilter.normalize()
@@ -123,12 +125,10 @@ fun <T : PhotoFolder> FoldersGridList(
                 SortButton(
                     sortAscending = sortAscending,
                     onChangeSort = {
-                        foldersViewModel.setShowFoldersAscending(!sortAscending)
+                        settingsDataStore.setShowFoldersAscending(!sortAscending)
                     },
                     showAsGrid = showAsGrid,
-                    onShowAsGrid = {
-                        foldersViewModel.setShowAsGrid(it)
-                    },
+                    onShowAsGrid = settingsDataStore::setShowFoldersAsGrid,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)

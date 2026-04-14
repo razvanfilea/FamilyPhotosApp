@@ -113,7 +113,7 @@ fun CoilPhoto(
             val context = LocalContext.current
             // Round to 64px buckets for better memory cache hits across similar-sized cells
             val bucketSize = ((targetSizePx + 63) / 64) * 64
-            val model = remember(preview, bucketSize) {
+            val model = remember(preview, bucketSize, photo.id) {
                 ImageRequest.Builder(context)
                     .data(if (!preview) photo.getUri() else photo.getPreviewUri())
                     .size(Size(bucketSize, bucketSize))

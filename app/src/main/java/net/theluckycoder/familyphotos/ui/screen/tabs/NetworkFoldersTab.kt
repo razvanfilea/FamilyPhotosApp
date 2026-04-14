@@ -16,6 +16,7 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.db.isPublic
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
+import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.ui.composables.FoldersGridList
 import net.theluckycoder.familyphotos.ui.composables.PhotoTypeSegmentedButtons
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
@@ -45,13 +46,12 @@ fun NetworkFoldersTab() {
         onSearch = { folderNameFilter.value = it },
         foldersViewModel = foldersViewModel,
         extraHeader = {
-            val selectedPhotoType by foldersViewModel.selectedPhotoType.collectAsState()
+            val settingsDataStore = LocalSettingsDataStore.current
+            val selectedPhotoType by settingsDataStore.photoType.collectAsState()
 
             PhotoTypeSegmentedButtons(
                 selectedPhotoType = selectedPhotoType,
-                onChangePhotoType = { type ->
-                    foldersViewModel.setSelectedPhotoType(type)
-                },
+                onChangePhotoType = settingsDataStore::setSelectedPhotoType,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp),

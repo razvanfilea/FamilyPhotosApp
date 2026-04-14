@@ -100,7 +100,7 @@ fun <T : Photo> PhotosList(
     }
 
     val settingsDataStore = LocalSettingsDataStore.current
-    val zoomIndex by settingsDataStore.zoomLevelState.collectAsState()
+    val zoomIndex by settingsDataStore.zoomLevel.collectAsState()
     val highZoomLevel = zoomIndex >= HIGH_ZOOM_LEVEL
     val columnCount = getZoomColumnCount(zoomIndex)
     LaunchedEffect(zoomIndex) {
@@ -415,6 +415,5 @@ private fun scrollToGridIndex(
     // A negative offset moves the item DOWN from the top of the viewport
     val offset = -(viewportHeight * SCROLL_TARGET_POSITION).toInt()
 
-    // Single operation scroll ensures perfect layout precision
     gridState.requestScrollToItem(gridIndex, offset)
 }

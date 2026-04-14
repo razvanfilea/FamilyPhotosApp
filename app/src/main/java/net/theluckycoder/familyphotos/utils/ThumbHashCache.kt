@@ -5,6 +5,7 @@ import android.util.LruCache
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlin.io.encoding.Base64
 
@@ -29,6 +30,10 @@ object ThumbHashCache {
         return withContext(Dispatchers.Default) {
             try {
                 val bytes = Base64.decode(thumbHash)
+                if (!isActive) {
+                    return@withContext null
+                }
+
                 val bitmap = ThumbHash.thumbHashToRGBA(bytes)
                 val imageBitmap = bitmap.asImageBitmap()
 

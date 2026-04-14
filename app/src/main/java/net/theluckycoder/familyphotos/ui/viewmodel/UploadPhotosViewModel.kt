@@ -3,7 +3,6 @@ package net.theluckycoder.familyphotos.ui.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.work.NetworkType
 import androidx.work.WorkManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Deferred
@@ -69,7 +68,6 @@ class UploadPhotosViewModel @Inject constructor(
             }
             photoUploadRepository.enqueueUploads(entries)
             workManager.enqueueBackupAndUploadWorker(
-                networkType = NetworkType.NOT_ROAMING,
                 skipFolderScan = true
             )
         }
