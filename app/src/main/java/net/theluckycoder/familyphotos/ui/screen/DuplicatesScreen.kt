@@ -41,17 +41,17 @@ import net.theluckycoder.familyphotos.ui.composables.ZoomableImage
 import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialogCaller
 import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
-import net.theluckycoder.familyphotos.ui.viewmodel.DuplicatesViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.UtilitiesViewModel
 
 @Composable
 fun DuplicatesScreen() {
-    val duplicatesViewModel: DuplicatesViewModel = viewModel()
+    val utilitiesViewModel: UtilitiesViewModel = viewModel()
     val backStack = LocalNavBackStack.current
     val duplicates = remember { mutableStateListOf<List<NetworkPhoto>>() }
     var error by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        val value = duplicatesViewModel.getDuplicatesAsync().await()
+        val value = utilitiesViewModel.getDuplicatesAsync().await()
         error = value == null
         duplicates.addAll(value.orEmpty())
     }

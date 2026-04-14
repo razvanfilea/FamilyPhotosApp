@@ -131,15 +131,34 @@ interface NetworkPhotosDao {
 
     @Query(
         """
+        SELECT * FROM network_photo
+        WHERE trashedOn IS NULL AND fileSize > :minSizeBytes
+        ORDER BY fileSize DESC
+        """
+    )
+    fun getLargePhotos(minSizeBytes: Long): Flow<List<NetworkPhoto>>
+
+    @Query(
+        """
+        WITH photos AS (
+            SELECT userId, fileSize,
+                CASE WHEN LOWER(name) LIKE '%.mp4' OR LOWER(name) LIKE '%.mov'
+                     OR LOWER(name) LIKE '%.mkv' OR LOWER(name) LIKE '%.webm'
+                     OR LOWER(name) LIKE '%.avi' OR LOWER(name) LIKE '%.3gp'
+                THEN 1 ELSE 0 END as isVideo
+            FROM network_photo
+            WHERE trashedOn IS NULL
+        )
         SELECT
-            COUNT(*) as totalCount,
             COUNT(CASE WHEN userId IS NULL THEN 1 END) as familyCount,
             COUNT(CASE WHEN userId IS NOT NULL THEN 1 END) as personalCount,
-            COALESCE(SUM(fileSize), 0) as totalSize,
             COALESCE(SUM(CASE WHEN userId IS NULL THEN fileSize ELSE 0 END), 0) as familySize,
-            COALESCE(SUM(CASE WHEN userId IS NOT NULL THEN fileSize ELSE 0 END), 0) as personalSize
-        FROM network_photo
-        WHERE trashedOn IS NULL
+            COALESCE(SUM(CASE WHEN userId IS NOT NULL THEN fileSize ELSE 0 END), 0) as personalSize,
+            COUNT(CASE WHEN isVideo = 0 THEN 1 END) as imageCount,
+            COUNT(CASE WHEN isVideo = 1 THEN 1 END) as videoCount,
+            COALESCE(SUM(CASE WHEN isVideo = 0 THEN fileSize ELSE 0 END), 0) as imageSize,
+            COALESCE(SUM(CASE WHEN isVideo = 1 THEN fileSize ELSE 0 END), 0) as videoSize
+        FROM photos
         """
     )
     fun getPhotoStatistics(): Flow<PhotoStatistics>

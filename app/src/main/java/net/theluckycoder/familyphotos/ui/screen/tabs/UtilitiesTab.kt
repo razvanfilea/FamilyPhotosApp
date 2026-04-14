@@ -19,10 +19,12 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -40,6 +42,7 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.db.PhotoStatistics
 import net.theluckycoder.familyphotos.ui.DuplicatesNav
 import net.theluckycoder.familyphotos.ui.FolderNav
+import net.theluckycoder.familyphotos.ui.LargeFilesNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.SettingsNav
 import net.theluckycoder.familyphotos.ui.TrashNav
@@ -67,18 +70,15 @@ fun UtilitiesTab(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item {
+            val ctx = LocalContext.current
             UtilityButton(
-                iconId = R.drawable.ic_star_outline,
-                text = stringResource(R.string.title_favorites),
-                onClick = { backStack.add(FolderNav(FolderNav.Source.Favorites)) },
-            )
-        }
-
-        item {
-            UtilityButton(
-                iconId = R.drawable.ic_duplicates_outlined,
-                text = stringResource(R.string.title_duplicates),
-                onClick = { backStack.add(DuplicatesNav) },
+                iconId = R.drawable.ic_exif_camera,
+                text = stringResource(R.string.camera_name),
+                iconTint = Color(0xFF26A69A), // Teal
+                onClick = {
+                    val intent = Intent(ctx, CameraActivity::class.java)
+                    ctx.startActivity(intent)
+                },
             )
         }
 
@@ -87,6 +87,34 @@ fun UtilitiesTab(
                 iconId = R.drawable.ic_settings_outline,
                 text = stringResource(R.string.title_settings),
                 onClick = { backStack.add(SettingsNav) },
+                iconTint = Color(0xFF78909C), // Blue Grey
+            )
+        }
+
+        item {
+            UtilityButton(
+                iconId = R.drawable.ic_star_outline,
+                text = stringResource(R.string.title_favorites),
+                onClick = { backStack.add(FolderNav(FolderNav.Source.Favorites)) },
+                iconTint = Color(0xFFFFB300), // Amber
+            )
+        }
+
+        item {
+            UtilityButton(
+                iconId = R.drawable.ic_duplicates_outlined,
+                text = stringResource(R.string.title_duplicates),
+                onClick = { backStack.add(DuplicatesNav) },
+                iconTint = Color(0xFFFF7043), // Deep Orange
+            )
+        }
+
+        item {
+            UtilityButton(
+                iconId = R.drawable.ic_large_photos,
+                text = stringResource(R.string.title_large_files),
+                onClick = { backStack.add(LargeFilesNav) },
+                iconTint = Color(0xFF42A5F5), // Blue
             )
         }
 
@@ -95,21 +123,9 @@ fun UtilitiesTab(
                 iconId = R.drawable.ic_action_delete,
                 text = stringResource(R.string.title_trash),
                 onClick = { backStack.add(TrashNav) },
+                iconTint = Color(0xFFEF5350), // Red
             )
         }
-
-        item {
-            val ctx = LocalContext.current
-            UtilityButton(
-                iconId = R.drawable.ic_exif_camera,
-                text = stringResource(R.string.camera_name),
-                onClick = {
-                    val intent = Intent(ctx, CameraActivity::class.java)
-                    ctx.startActivity(intent)
-                },
-            )
-        }
-
     }
 }
 
@@ -148,6 +164,26 @@ private fun PhotoStatisticsCard(
                     label = stringResource(R.string.photo_type_personal),
                     count = statistics.personalCount,
                     size = formatFileSize(statistics.personalSize)
+                )
+            }
+
+            HorizontalDivider()
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                StatisticItem(
+                    iconId = R.drawable.ic_exif_image,
+                    label = stringResource(R.string.photo_type_images),
+                    count = statistics.imageCount,
+                    size = formatFileSize(statistics.imageSize)
+                )
+                StatisticItem(
+                    iconId = R.drawable.ic_video_play,
+                    label = stringResource(R.string.photo_type_videos),
+                    count = statistics.videoCount,
+                    size = formatFileSize(statistics.videoSize)
                 )
             }
 
@@ -210,6 +246,7 @@ private fun UtilityButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    iconTint: Color = LocalContentColor.current,
 ) {
     OutlinedButton(
         modifier = modifier.height(52.dp),
@@ -217,7 +254,8 @@ private fun UtilityButton(
     ) {
         Icon(
             painterResource(iconId),
-            contentDescription = null
+            contentDescription = null,
+            tint = iconTint
         )
 
         Spacer(Modifier.width(12.dp))

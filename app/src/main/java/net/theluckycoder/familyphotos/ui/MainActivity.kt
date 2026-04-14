@@ -51,6 +51,7 @@ import androidx.paging.compose.LazyPagingItems
 import net.theluckycoder.familyphotos.ui.composables.PhotosViewer
 import net.theluckycoder.familyphotos.ui.screen.DuplicatesScreen
 import net.theluckycoder.familyphotos.ui.screen.FolderScreen
+import net.theluckycoder.familyphotos.ui.screen.LargeFilesScreen
 import net.theluckycoder.familyphotos.ui.screen.LoginScreen
 import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
 import net.theluckycoder.familyphotos.ui.screen.RenameFolderScreen
@@ -287,6 +288,10 @@ private fun Content(
 
                 is DuplicatesNav -> NavEntry(key) {
                     DuplicatesScreen()
+                }
+
+                is LargeFilesNav -> NavEntry(key) {
+                    LargeFilesScreen()
                 }
 
                 is SettingsNav -> NavEntry(key) {

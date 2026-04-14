@@ -82,6 +82,9 @@ data class RenameFolderNav(
 object DuplicatesNav : NavKey
 
 @Serializable
+object LargeFilesNav : NavKey
+
+@Serializable
 object SettingsNav : NavKey
 
 @Serializable

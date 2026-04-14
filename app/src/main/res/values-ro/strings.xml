@@ -77,6 +77,7 @@
         <item quantity="other">%d poze</item>
     </plurals>
     <string name="title_trash">Coș de gunoi</string>
+    <string name="large_files_empty">Nu sunt fișiere mai mari de 50MB</string>
     <string name="section_utilities">Utilități</string>
     <string name="duplicates_which_to_keep">Pe care îl păstrezi</string>
     <string name="duplicates_none">Nu s-au găsit dubluri</string>
@@ -86,4 +87,9 @@
     <string name="photo_detail_title_details">Detalii</string>
     <string name="photo_detail_no_folder">Niciun folder</string>
     <string name="notification_backup_starting">Începe procesul de backup</string>
+    <string name="title_large_files">Fișiere mari</string>
+    <string name="photo_type_videos">Videoclipuri</string>
+    <string name="statistics_title">Statistici poze</string>
+    <string name="statistics_total">Total</string>
+    <string name="photo_type_images">Imagini</string>
 </resources>

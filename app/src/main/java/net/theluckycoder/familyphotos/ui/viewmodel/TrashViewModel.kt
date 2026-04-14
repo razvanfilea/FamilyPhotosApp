@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
@@ -28,7 +29,7 @@ class TrashViewModel @Inject constructor(
                 }
             }
         }
-    }.toList().map { it.await() }
+    }.toList().awaitAll()
 
     fun restorePhotos(photoIds: LongArray) = viewModelScope.launch(Dispatchers.IO) {
         serverRepository.trashNetworkPhoto(photoIds, false)

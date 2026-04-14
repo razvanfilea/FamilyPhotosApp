@@ -10,6 +10,8 @@
     <string name="section_folders">Folders</string>
     <string name="section_device">Device</string>
     <string name="title_trash">Trash</string>
+    <string name="title_large_files">Large Files</string>
+    <string name="large_files_empty">No files larger than 50 MB</string>
     <string name="section_utilities">Utilities</string>
 
     <!-- Duplicates -->
@@ -105,6 +107,8 @@
     <string name="photo_type_all">All</string>
     <string name="photo_type_personal">Personal</string>
     <string name="photo_type_family">Family</string>
+    <string name="photo_type_images">Images</string>
+    <string name="photo_type_videos">Videos</string>
 
     <!-- Statistics -->
     <string name="statistics_title">Photo Statistics</string>
