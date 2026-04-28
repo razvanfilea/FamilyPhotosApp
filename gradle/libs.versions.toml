@@ -1,12 +1,12 @@
 [versions]
-agp = "9.1.0"
-kotlin_base = "2.3.20"
-kotlin_ksp = "2.3.6"
+agp = "9.2.0"
+kotlin_base = "2.3.21"
+kotlin_ksp = "2.3.7"
 kotlin_coroutines = "1.10.2"
 kotlin_serialization = "1.11.0"
-kotlin_datetime = "0.7.1"
+kotlin_datetime = "0.7.1-0.6.x-compat"
 kotlin_collections = "0.4.0"
-compose_bom = "2026.03.01"
+compose_bom = "2026.04.01"
 compose_activity = "1.13.0"
 compose_lifecycleViewmodel = "2.10.0"
 androidx_core = "1.18.0"
@@ -15,7 +15,7 @@ androidx_media = "1.10.0"
 androidx_paging = "3.4.2"
 androidx_camerax = "1.6.0"
 androidx_work = "2.11.2"
-androidx_nav3 = "1.1.0"
+androidx_nav3 = "1.1.1"
 coil = "3.4.0"
 dagger = "2.59.2"
 retrofit = "3.0.0"
@@ -50,7 +50,7 @@ androidx_exif = { module = "androidx.exifinterface:exifinterface", version = "1.
 androidx_work = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx_work" }
 
 compose_bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose_bom" }
-compose_foundation = { group = "androidx.compose.foundation", name = "foundation", version = "1.11.0-rc01" }
+compose_foundation = { group = "androidx.compose.foundation", name = "foundation", version = "1.11.0" }
 compose_ui = { group = "androidx.compose.ui", name = "ui" }
 compose_material3 = { group = "androidx.compose.material3", name = "material3" }
 compose_material3Adaptive = { group = "androidx.compose.material3", name = "material3-adaptive-navigation-suite" }
