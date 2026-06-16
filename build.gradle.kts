@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.kotlin.parcelize) apply false
-    id("com.github.ben-manes.versions") version "0.53.0"
+    id("com.github.ben-manes.versions") version "0.54.0"
     alias(libs.plugins.android.test) apply false
     alias(libs.plugins.android.baselineprofile) apply false
 }
@@ -23,6 +23,7 @@ tasks.named(
     "dependencyUpdates",
     com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask::class.java
 ).configure {
+    notCompatibleWithConfigurationCache("The gradle-versions-plugin is not compatible with the configuration cache.")
     rejectVersionIf {
         (candidate.version.contains("alpha", true) && !currentVersion.contains("alpha", true)) ||
                 (candidate.version.contains("beta", true) && !currentVersion.contains("beta", true))

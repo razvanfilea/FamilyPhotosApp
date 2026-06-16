@@ -1,7 +1,6 @@
 package net.theluckycoder.familyphotos.ui.composables
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
@@ -32,7 +31,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -49,10 +47,10 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.data.model.TimelineLayout
 import kotlin.ranges.coerceIn
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun BoxScope.MonthScrollIndicator(
@@ -87,7 +85,7 @@ fun BoxScope.MonthScrollIndicator(
                     if (isScrolling) {
                         isVisible = true
                     } else {
-                        delay(2500)
+                        delay(2500.milliseconds)
                         isVisible = false
                     }
                 }

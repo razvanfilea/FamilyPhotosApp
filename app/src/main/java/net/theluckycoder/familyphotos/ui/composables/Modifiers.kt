@@ -230,7 +230,8 @@ private const val LOWER_THRESHOLD = 0.6f
 fun Modifier.detectZoomIn(
     zoomIndex: Int,
     maxZoomIndex: Int,
-    onZoomChange: (Int) -> Unit
+    onZoomChange: (Int) -> Unit,
+    onGestureEnd: () -> Unit = {}
 ): Modifier = this.pointerInput(zoomIndex) {
     var accumulatedZoom = 1f
 
@@ -249,7 +250,10 @@ fun Modifier.detectZoomIn(
                 accumulatedZoom /= LOWER_THRESHOLD
             }
         },
-        onGestureEnd = { accumulatedZoom = 1f }
+        onGestureEnd = {
+            accumulatedZoom = 1f
+            onGestureEnd()
+        }
     )
 }
 

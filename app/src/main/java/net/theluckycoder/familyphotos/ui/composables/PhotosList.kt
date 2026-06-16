@@ -44,8 +44,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.paging.compose.LazyPagingItems
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -57,12 +55,11 @@ import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.data.model.db.isVideo
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.utils.buildDateString
+import kotlin.time.Duration.Companion.milliseconds
 
-private val PORTRAIT_ZOOM_LEVELS = intArrayOf(4, 5, 7, 9)
-private val LANDSCAPE_ZOOM_LEVELS = intArrayOf(8, 10, 13, 17)
+private val PORTRAIT_ZOOM_LEVELS = intArrayOf(4, 5, 7)
+private val LANDSCAPE_ZOOM_LEVELS = intArrayOf(8, 10, 13)
 private val MAX_ZOOM_LEVEL_INDEX = PORTRAIT_ZOOM_LEVELS.size - 1
-
-private const val HIGH_ZOOM_LEVEL = 3
 
 @Composable
 private fun getZoomColumnCount(zoomIndex: Int): Int {
@@ -101,40 +98,42 @@ fun <T : Photo> PhotosList(
 
     val settingsDataStore = LocalSettingsDataStore.current
     val zoomIndex by settingsDataStore.zoomLevel.collectAsState()
-    val highZoomLevel = zoomIndex >= HIGH_ZOOM_LEVEL
-    val columnCount = getZoomColumnCount(zoomIndex)
+    var appliedZoomIndex by remember { mutableStateOf(zoomIndex) }
+    val isZoomTransitioning = appliedZoomIndex != zoomIndex
+
     LaunchedEffect(zoomIndex) {
-        if (zoomIndex >= HIGH_ZOOM_LEVEL) {
-            selectedPhotoIds.clear()
+        if (zoomIndex != appliedZoomIndex) {
+            delay(150)
+            appliedZoomIndex = zoomIndex
         }
     }
+
+    val columnCount = getZoomColumnCount(appliedZoomIndex)
 
     val photosModifier = Modifier
         .fillMaxWidth()
         .aspectRatio(1f)
         .padding(0.5.dp)
 
-    val photoDragModifier = if (!highZoomLevel) Modifier
-        .photoGridDrag(
-            lazyGridState = gridState,
-            selectedIds = selectedPhotoIds,
-            items = photos.itemSnapshotList.items,
-            timelineLayout = layout,
-        ) else Modifier
+    val photoDragModifier = Modifier.photoGridDrag(
+        lazyGridState = gridState,
+        selectedIds = selectedPhotoIds,
+        items = photos.itemSnapshotList.items,
+        timelineLayout = layout,
+    )
 
     // Debounced scroll state to prevent mass recomposition during scroll-pause-scroll sequences
     var sharedBoundsEnabled by remember { mutableStateOf(true) }
-    LaunchedEffect(gridState, isThumbDragging.value) {
-        if (isThumbDragging.value) {
+    LaunchedEffect(gridState, isThumbDragging.value, isZoomTransitioning) {
+        if (isThumbDragging.value || isZoomTransitioning) {
             sharedBoundsEnabled = false
         } else {
-            snapshotFlow { gridState.isScrollInProgress }
-                .distinctUntilChanged()
+            snapshotFlow { gridState.isScrollInProgress }.distinctUntilChanged()
                 .collect { isScrolling ->
                     if (isScrolling) {
                         sharedBoundsEnabled = false
                     } else {
-                        delay(150) // Only re-enable after 150ms idle
+                        delay(150.milliseconds) // Only re-enable after 150ms idle
                         sharedBoundsEnabled = true
                     }
                 }
@@ -148,35 +147,28 @@ fun <T : Photo> PhotosList(
             .detectZoomIn(
                 zoomIndex = zoomIndex,
                 maxZoomIndex = MAX_ZOOM_LEVEL_INDEX,
-                onZoomChange = { coroutineScope.launch { settingsDataStore.setPhotosZoomLevel(it) } }
-            )
+                onZoomChange = { coroutineScope.launch { settingsDataStore.setPhotosZoomLevel(it) } },
+                onGestureEnd = { appliedZoomIndex = zoomIndex })
             .then(photoDragModifier)
             .then(modifier)
             .testTag("photos_list"),
         columns = GridCells.Fixed(columnCount),
     ) {
-        items(
-            count = layout.totalItemCount,
-            key = { gridIndex ->
-                if (gridIndex == 0) "header"
-                else layout.getHeaderAt(gridIndex)?.timeCreated
-                    ?: run {
-                        val pagingIndex = layout.pagingIndexOf(gridIndex)
-                        if (pagingIndex in 0 until photos.itemCount) photos.peek(pagingIndex)?.id else null
-                    }
-                    ?: gridIndex
-            },
-            contentType = { gridIndex ->
-                when {
-                    gridIndex == 0 -> CONTENT_TYPE_HEADER
-                    layout.isHeader(gridIndex) -> CONTENT_TYPE_TITLE
-                    else -> null
-                }
-            },
-            span = { gridIndex ->
-                GridItemSpan(if (gridIndex == 0 || layout.isHeader(gridIndex)) columnCount else 1)
+        items(count = layout.totalItemCount, key = { gridIndex ->
+            if (gridIndex == 0) "header"
+            else layout.getHeaderAt(gridIndex)?.timeCreated ?: run {
+                val pagingIndex = layout.pagingIndexOf(gridIndex)
+                if (pagingIndex in 0 until photos.itemCount) photos.peek(pagingIndex)?.id else null
+            } ?: gridIndex
+        }, contentType = { gridIndex ->
+            when {
+                gridIndex == 0 -> CONTENT_TYPE_HEADER
+                layout.isHeader(gridIndex) -> CONTENT_TYPE_TITLE
+                else -> null
             }
-        ) { gridIndex ->
+        }, span = { gridIndex ->
+            GridItemSpan(if (gridIndex == 0 || layout.isHeader(gridIndex)) columnCount else 1)
+        }) { gridIndex ->
             if (gridIndex == 0) {
                 // Header content at index 0
                 Column(content = headerContent)
@@ -186,45 +178,37 @@ fun <T : Photo> PhotosList(
                 if (headerSummary != null) {
                     MonthSeparatorHeader(
                         summary = headerSummary,
-                        highZoomLevel = highZoomLevel,
                         selectedPhotoIds = selectedPhotoIds,
                         photos = photos,
                         timelineLayout = layout,
                         gridIndex = gridIndex,
-                        onShowMonthPicker = { showMonthOverlay = true }
-                    )
+                        onShowMonthPicker = { showMonthOverlay = true })
                 } else {
                     val pagingIndex = layout.pagingIndexOf(gridIndex)
-                    val photo = if (pagingIndex in 0 until photos.itemCount) photos[pagingIndex] else null
+                    val photo =
+                        if (pagingIndex in 0 until photos.itemCount) photos[pagingIndex] else null
 
                     if (photo != null) {
                         // If scrolling, use an empty Modifier. If idle, use the expensive shared bounds.
-                        val sharedBoundsModifier = if (!sharedBoundsEnabled && !hasSelection.value) {
-                            Modifier
-                        } else {
-                            Modifier.photoSharedBounds(photo.id)
-                        }
+                        val sharedBoundsModifier =
+                            if (!sharedBoundsEnabled && !hasSelection.value) {
+                                Modifier
+                            } else {
+                                Modifier.photoSharedBounds(photo.id)
+                            }
 
                         val itemModifier = Modifier
                             .then(sharedBoundsModifier)
                             .animateItem(fadeInSpec = null, fadeOutSpec = null)
                             .then(photosModifier)
 
-                        if (highZoomLevel) {
-                            CoilPhoto(
-                                modifier = itemModifier.clickable(onClick = { openPhoto(pagingIndex) }),
-                                photo = photo,
-                                preview = true,
-                                contentScale = ContentScale.Crop,
-                            )
-                        } else {
-                            PhotoListItem(
-                                modifier = itemModifier,
-                                photo = photo,
-                                selectedPhotoIds = selectedPhotoIds,
-                                openPhoto = { openPhoto(pagingIndex) },
-                            )
-                        }
+                        PhotoListItem(
+                            modifier = itemModifier,
+                            photo = photo,
+                            inSelectionMode = hasSelection.value,
+                            selectedPhotoIds = selectedPhotoIds,
+                            openPhoto = { openPhoto(pagingIndex) },
+                        )
                     } else {
                         // Gray placeholder box - Paging will auto-fetch
                         Box(photosModifier.background(Color.DarkGray))
@@ -237,8 +221,8 @@ fun <T : Photo> PhotosList(
     val containsLocalPhotos = remember { mutableStateOf<Boolean?>(null) }
     LaunchedEffect(photos.itemCount > 0) {
         if (containsLocalPhotos.value == null && photos.itemCount > 0) {
-            val photo = photos.itemSnapshotList.items.asSequence()
-                .take(10).firstNotNullOfOrNull { it }
+            val photo =
+                photos.itemSnapshotList.items.asSequence().take(10).firstNotNullOfOrNull { it }
 
             if (photo != null) {
                 containsLocalPhotos.value = photo is LocalPhoto
@@ -266,20 +250,21 @@ fun <T : Photo> PhotosList(
         )
     }
 
-    MonthScrollIndicator(
-        isDragging = isThumbDragging,
-        gridState = gridState,
-        timelineLayout = layout,
-        onScrollToGridIndex = { gridIndex ->
-            scrollToGridIndex(gridState, gridIndex)
-        }
-    )
+    if (!hasSelection.value) {
+        MonthScrollIndicator(
+            isDragging = isThumbDragging,
+            gridState = gridState,
+            timelineLayout = layout,
+            onScrollToGridIndex = { gridIndex ->
+                scrollToGridIndex(gridState, gridIndex)
+            }
+        )
+    }
 }
 
 @Composable
 private fun <T : Photo> MonthSeparatorHeader(
     summary: MonthSummary,
-    highZoomLevel: Boolean,
     selectedPhotoIds: SnapshotStateSet<Long>,
     photos: LazyPagingItems<T>,
     timelineLayout: TimelineLayout,
@@ -317,14 +302,12 @@ private fun <T : Photo> MonthSeparatorHeader(
         Text(
             modifier = Modifier.weight(1f),
             text = text,
-            style = if (highZoomLevel) MaterialTheme.typography.headlineSmall
-            else MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Medium
         )
 
         IconButton(
-            modifier = Modifier.testTag("month_select_button"),
-            onClick = {
+            modifier = Modifier.testTag("month_select_button"), onClick = {
                 val startPagingIndex = timelineLayout.pagingIndexOf(gridIndex + 1)
                 val end = minOf(startPagingIndex + summary.photoCount, photos.itemCount)
 
@@ -337,14 +320,12 @@ private fun <T : Photo> MonthSeparatorHeader(
                         photos.peek(i)?.id?.let { selectedPhotoIds.add(it) }
                     }
                 }
-            }
-        ) {
+            }) {
             Icon(
                 painter = painterResource(
                     if (allSelected) R.drawable.radio_button_checked
                     else R.drawable.radio_button_checked_outline
-                ),
-                contentDescription = "Select all"
+                ), contentDescription = "Select all"
             )
         }
 
@@ -361,19 +342,20 @@ private fun <T : Photo> MonthSeparatorHeader(
 fun PhotoListItem(
     modifier: Modifier,
     photo: Photo,
+    inSelectionMode: Boolean,
     selectedPhotoIds: SnapshotStateSet<Long>,
     openPhoto: (id: Long) -> Unit
 ) {
     val isVideo = remember(photo.id) { photo.isVideo }
+    val selected by remember(photo.id) { derivedStateOf { selectedPhotoIds.contains(photo.id) } }
 
     SelectablePhoto(
         modifier = modifier.testTag("photo_item"),
-        inSelectionMode = selectedPhotoIds.isNotEmpty(),
-        selected = selectedPhotoIds.contains(photo.id),
+        inSelectionMode = inSelectionMode,
+        selected = selected,
         onClick = { openPhoto(photo.id) },
         onSelect = { selectedPhotoIds += photo.id },
-        onDeselect = { selectedPhotoIds -= photo.id }
-    ) {
+        onDeselect = { selectedPhotoIds -= photo.id }) {
         CoilPhoto(
             photo = photo,
             preview = true,
@@ -407,8 +389,7 @@ fun PhotoListItem(
 private const val SCROLL_TARGET_POSITION = 0.2f // Position separator at 20% from top
 
 private fun scrollToGridIndex(
-    gridState: LazyGridState,
-    gridIndex: Int
+    gridState: LazyGridState, gridIndex: Int
 ) {
     val viewportHeight = gridState.layoutInfo.viewportSize.height
 

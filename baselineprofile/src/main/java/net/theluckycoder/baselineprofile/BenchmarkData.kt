@@ -55,23 +55,26 @@ fun MacrobenchmarkScope.scrollGalleryGrid() {
 }
 
 fun MacrobenchmarkScope.scrollWithMonthIndicator() {
-    // Scroll the grid to trigger the indicator to appear
+    // Scroll the grid enough so the indicator thumb appears away from the status bar
     val grid = device.findObject(By.res("photos_list"))
         ?: return
-    grid.scroll(Direction.DOWN, 0.5f)
+    grid.scroll(Direction.DOWN, 2f)
 
     // Wait for indicator thumb to appear
     device.wait(Until.hasObject(By.res("month_scroll_indicator")), 500)
     val thumb = device.findObject(By.res("month_scroll_indicator"))
         ?: return // Exit if indicator not found (e.g., not enough months)
 
-    // Use drag on the thumb element directly
-    thumb.drag(Point(thumb.visibleCenter.x, device.displayHeight / 2), 60)
-    Thread.sleep(500)
+    // Drag upward to avoid triggering the notification shade
+    val targetY = device.displayHeight / 4
+    thumb.drag(Point(thumb.visibleCenter.x, targetY), 60)
+    device.wait(Until.gone(By.res("month_scroll_indicator")), 2_000)
+    device.waitForIdle()
 }
 
 fun MacrobenchmarkScope.viewAndScrollPhotos() {
-    // Find and click a photo
+    device.waitForIdle()
+
     val photo = device.findObject(By.res("photo_item"))
         ?: return
     photo.click()
@@ -80,6 +83,8 @@ fun MacrobenchmarkScope.viewAndScrollPhotos() {
     device.wait(Until.hasObject(By.res("photo_viewer_pager")), 2_000)
     val pager = device.findObject(By.res("photo_viewer_pager"))
         ?: return
+
+    pager.setGestureMargin(device.displayWidth / 10)
 
     // Swipe through photos
     repeat(5) {

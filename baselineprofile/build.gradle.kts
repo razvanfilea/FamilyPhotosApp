@@ -14,11 +14,11 @@ val benchmarkUsername: String? = localProperties.getProperty("benchmark.username
 
 android {
     namespace = "net.theluckycoder.baselineprofile"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 30
-        targetSdk = 36
+        targetSdk = 37
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Allow running on emulator for development (results won't be production-accurate)
@@ -35,9 +35,9 @@ android {
     // To use GMD please invoke generation through the command line:
     // ./gradlew :app:generateBaselineProfile
     testOptions.managedDevices.localDevices {
-        create("pixel6Api36") {
-            device = "Pixel 6"
-            apiLevel = 36
+        create("pixel10Api37") {
+            device = "Pixel 10"
+            apiLevel = 37
             systemImageSource = "google"
         }
     }
@@ -46,7 +46,7 @@ android {
 // This is the configuration block for the Baseline Profile plugin.
 // You can specify to run the generators on a managed devices or connected devices.
 baselineProfile {
-    managedDevices += "pixel6Api36"
+    managedDevices += "pixel10Api37"
     useConnectedDevices = false
 }
 

@@ -14,7 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class UtilitiesViewModel @Inject constructor(
-    private val photosRepository: PhotosRepository,
+    photosRepository: PhotosRepository,
     private val serverRepository: ServerRepository,
 ) : ViewModel() {
 

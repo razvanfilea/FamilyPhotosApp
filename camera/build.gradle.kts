@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "net.theluckycoder.camera"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 30

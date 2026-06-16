@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.paging.compose.LazyPagingItems
-import androidx.window.core.layout.WindowWidthSizeClass
+import androidx.window.core.layout.WindowSizeClass
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.TopLevelTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.DeviceTab
@@ -35,7 +35,9 @@ fun TopLevelScreen(
 
     val adaptiveInfo = currentWindowAdaptiveInfo()
     val customNavSuiteType = with(adaptiveInfo) {
-        if (windowSizeClass.windowWidthSizeClass == WindowWidthSizeClass.MEDIUM) {
+        if (windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
+            && !windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
+        ) {
             NavigationSuiteType.NavigationRail
         } else {
             NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(adaptiveInfo)

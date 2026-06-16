@@ -121,6 +121,7 @@ fun TrashScreen() {
                         .aspectRatio(1f)
                         .padding(0.5.dp),
                     photo = photo,
+                    inSelectionMode = selectedPhotoIds.isNotEmpty(),
                     selectedPhotoIds = selectedPhotoIds,
                     openPhoto = {}
                 )

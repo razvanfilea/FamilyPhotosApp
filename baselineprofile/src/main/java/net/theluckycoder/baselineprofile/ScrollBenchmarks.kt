@@ -67,6 +67,7 @@ class ScrollBenchmarks {
             },
             measureBlock = {
                 scrollWithMonthIndicator()
+                selectMonth()
             }
         )
     }

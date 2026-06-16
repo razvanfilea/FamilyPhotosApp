@@ -9,7 +9,6 @@ import android.graphics.Paint
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
-import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
@@ -17,6 +16,7 @@ import androidx.camera.view.CameraController
 import androidx.core.graphics.toColorInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -25,7 +25,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 
 private const val BITMAP_DATE_FORMAT = "dd.MM.yyyy"
@@ -56,9 +55,8 @@ private data class CapturedImage(
  * Phase 1: Quick capture - captures image and returns immediately with bitmap data.
  * This is the fast part that happens when user taps the shutter.
  */
-@OptIn(ExperimentalGetImage::class)
 private suspend fun CameraController.captureImage(): CapturedImage {
-    return suspendCoroutine { continuation ->
+    return suspendCancellableCoroutine { continuation ->
         val callback = object : ImageCapture.OnImageCapturedCallback() {
             override fun onCaptureSuccess(image: ImageProxy) {
                 try {
@@ -167,15 +165,6 @@ internal suspend fun CameraController.takePictureAsync(
         onStateChange(CaptureState.Error(e))
         null
     }
-}
-
-/**
- * Legacy synchronous capture - kept for compatibility.
- * Prefer takePictureAsync for better UX.
- */
-internal suspend fun CameraController.takePicture(context: Context): Uri {
-    val capturedImage = captureImage()
-    return processAndSave(context, capturedImage)
 }
 
 private fun saveBitmapToMediaStore(context: Context, bitmap: Bitmap): Uri {

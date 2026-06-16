@@ -11,13 +11,13 @@ plugins {
 }
 
 android {
-    compileSdk = 36
+    compileSdk = 37
     namespace = "net.theluckycoder.familyphotos"
 
     defaultConfig {
         applicationId = "net.theluckycoder.familyphotos"
         minSdk = 30
-        targetSdk = 36
+        targetSdk = 37
 
         versionCode = 29
         versionName = "2.9.9"
@@ -136,6 +136,7 @@ dependencies {
 
     // Hilt
     implementation(libs.dagger.android)
+    ksp(libs.kotlin.metadataJvm)
     ksp(libs.dagger.compiler)
     ksp(libs.dagger.hilt.compiler)
     implementation(libs.dagger.hilt.work)
