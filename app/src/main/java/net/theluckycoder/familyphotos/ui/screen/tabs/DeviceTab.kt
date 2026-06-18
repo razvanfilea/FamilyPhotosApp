@@ -47,7 +47,6 @@ fun DeviceTab() {
         },
         folderNameFilter = folderNameFilter.value,
         onSearch = { folderNameFilter.value = it },
-        foldersViewModel = foldersViewModel,
         folderDetailsText = { folder ->
             pluralStringResource(R.plurals.items_photos, folder.count, folder.count)
         },

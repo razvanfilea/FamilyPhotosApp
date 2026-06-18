@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.data.repository.LoginRepository
 import net.theluckycoder.familyphotos.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.data.repository.ServerRepository
@@ -32,6 +33,7 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val photosRepository: PhotosRepository,
     private val userDataStore: UserDataStore,
+    private val foldersRepository: FoldersRepository,
     private val refreshPhotosUseCase: RefreshPhotosUseCase,
     private val getPhotoUrisUseCase: GetPhotoUrisUseCase,
     private val serverRepository: ServerRepository,
@@ -57,6 +59,10 @@ class MainViewModel @Inject constructor(
                     refreshPhotos()
                 }
             }
+        }
+
+        viewModelScope.launch {
+            foldersRepository.observeMediaStoreChanges().collect {}
         }
     }
 

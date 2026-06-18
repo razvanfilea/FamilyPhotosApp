@@ -8,27 +8,19 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -72,12 +64,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.data.model.db.Photo
 import net.theluckycoder.familyphotos.data.model.db.PhotoFolder
-import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
+import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.utils.normalize
 
 @Composable
@@ -87,7 +77,6 @@ fun <T : PhotoFolder> FoldersGridList(
     folderDetailsText: @Composable (T) -> String?,
     folderNameFilter: String,
     onSearch: (String) -> Unit = {},
-    foldersViewModel: FoldersViewModel = viewModel(),
     isBackupEnabled: (T) -> Boolean = { false },
     extraHeader: @Composable ColumnScope.() -> Unit = {},
 ) {

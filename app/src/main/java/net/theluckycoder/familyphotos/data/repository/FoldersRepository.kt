@@ -1,16 +1,26 @@
 package net.theluckycoder.familyphotos.data.repository
 
+import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
+import android.database.ContentObserver
 import android.database.Cursor
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
 import androidx.core.database.getLongOrNull
 import androidx.core.database.getStringOrNull
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
 import net.theluckycoder.familyphotos.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
@@ -33,6 +43,10 @@ class FoldersRepository @Inject constructor(
     private val networkPhotosDao: NetworkPhotosDao,
     private val localFolderBackupDao: LocalFolderBackupDao,
 ) {
+
+    companion object {
+        private const val TAG = "MediaStoreObserver"
+    }
 
     fun localFoldersFlow(ascending: Boolean): Flow<List<LocalFolder>> =
         localPhotosDao.getFolders(ascending)
@@ -79,6 +93,140 @@ class FoldersRepository @Inject constructor(
         localFolderBackupDao.delete(LocalFolderToBackup(folderName))
 
     fun getPendingBackupCount(): Flow<Int> = localPhotosDao.getPendingBackupCount()
+
+    @OptIn(ExperimentalTime::class, FlowPreview::class)
+    fun observeMediaStoreChanges(): Flow<Unit> = callbackFlow {
+        Log.d(TAG, "Registering MediaStore ContentObserver")
+
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean, uris: Collection<Uri>, flags: Int) {
+                Log.d(TAG, "onChange: uris=${uris.size}, flags=$flags")
+                launch(Dispatchers.IO) {
+                    handleMediaStoreChange(uris, flags)
+                }
+                trySend(Unit)
+            }
+        }
+
+        val imagesUri = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
+        val videosUri = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
+
+        context.contentResolver.registerContentObserver(imagesUri, true, observer)
+        context.contentResolver.registerContentObserver(videosUri, true, observer)
+
+        awaitClose {
+            Log.d(TAG, "Unregistering MediaStore ContentObserver")
+            context.contentResolver.unregisterContentObserver(observer)
+        }
+    }.debounce(500L)
+
+    private suspend fun handleMediaStoreChange(uris: Collection<Uri>, flags: Int) {
+        if (uris.isEmpty() || flags == 0) {
+            Log.d(TAG, "Fallback to full scan: uris empty=${uris.isEmpty()}, flags=$flags")
+            updatePhoneAlbums()
+            return
+        }
+
+        val ids = uris.mapNotNull { uri ->
+            try {
+                ContentUris.parseId(uri)
+            } catch (_: Exception) {
+                null
+            }
+        }
+
+        if (ids.isEmpty()) {
+            Log.d(TAG, "Fallback to full scan: no parseable IDs from URIs")
+            updatePhoneAlbums()
+            return
+        }
+
+        when {
+            flags and ContentResolver.NOTIFY_DELETE != 0 -> {
+                Log.d(TAG, "DELETE: ids=$ids")
+                localPhotosDao.deleteByIds(ids)
+            }
+            flags and (ContentResolver.NOTIFY_INSERT or ContentResolver.NOTIFY_UPDATE) != 0 -> {
+                Log.d(TAG, "INSERT/UPDATE: ids=$ids")
+                val existingRefs = localPhotosDao.getNetworkReferencesForIds(ids)
+                    .associateBy({ it.id }, { it.networkPhotoId })
+
+                val photos = queryLocalPhotosByIds(ids)
+                Log.d(TAG, "Queried ${photos.size} photos from MediaStore")
+
+                val foundIds = photos.map { it.id }.toSet()
+                val deletedIds = ids.filter { it !in foundIds && localPhotosDao.findById(it) != null }
+                if (deletedIds.isNotEmpty()) {
+                    Log.d(TAG, "IDs no longer in MediaStore (trashed/deleted): $deletedIds")
+                    localPhotosDao.deleteByIds(deletedIds)
+                }
+
+                for (photo in photos) {
+                    val withRef = existingRefs[photo.id]?.let {
+                        photo.copy(networkPhotoId = it)
+                    } ?: photo
+                    localPhotosDao.insertOrReplace(withRef)
+                }
+            }
+            else -> {
+                Log.d(TAG, "Fallback to full scan: unknown flags=$flags")
+                updatePhoneAlbums()
+            }
+        }
+    }
+
+    private fun queryLocalPhotosByIds(ids: List<Long>): List<LocalPhoto> {
+        val photos = mutableListOf<LocalPhoto>()
+
+        val projection = arrayOf(
+            MediaStore.MediaColumns._ID,
+            MediaStore.MediaColumns.BUCKET_DISPLAY_NAME,
+            MediaStore.MediaColumns.DISPLAY_NAME,
+            MediaStore.MediaColumns.MIME_TYPE,
+            MediaStore.MediaColumns.DATE_ADDED,
+            MediaStore.MediaColumns.DATE_TAKEN,
+        )
+
+        val selection = MediaStore.MediaColumns._ID + " IN (" + ids.joinToString(",") + ")"
+        val images = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
+        val videos = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
+
+        fun query(contentUri: Uri) {
+            context.contentResolver.query(
+                contentUri,
+                projection,
+                selection,
+                null,
+                null
+            )?.use { cursor ->
+                if (cursor.count == 0) return
+
+                val idColumn = cursor.getColumnIndex(MediaStore.MediaColumns._ID)
+                val bucketColumn = cursor.getColumnIndex(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
+                val displayNameColumn = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME)
+                val mimeTypeColumn = cursor.getColumnIndex(MediaStore.MediaColumns.MIME_TYPE)
+                val dateAddedColumn = cursor.getColumnIndex(MediaStore.MediaColumns.DATE_ADDED)
+                val dateTakenColumn = cursor.getColumnIndex(MediaStore.MediaColumns.DATE_TAKEN)
+
+                while (cursor.moveToNext()) {
+                    photos += cursor.parseUriToLocalImage(
+                        contentUri,
+                        idColumn,
+                        bucketColumn,
+                        displayNameColumn,
+                        mimeTypeColumn,
+                        dateAddedColumn,
+                        dateTakenColumn
+                    )
+                }
+            }
+        }
+
+        query(images)
+        query(videos)
+
+        return photos
+    }
 
     private fun queryLocalPhotos(): List<LocalPhoto> {
         val photos = mutableListOf<LocalPhoto>()

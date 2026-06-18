@@ -57,6 +57,20 @@ val NetworkFolder.isPublic
     get() = this.userId == null
 
 @Immutable
+@Serializable
+data class SharedNetworkFolder(
+    val id: Long,
+    val owner_id: String,
+    val folder_name: String,
+    val grantee_id: String,
+    val token: String?,
+    val can_upload: Boolean,
+    val can_delete: Boolean,
+    val created_at: Long,
+    val expires_at: Long,
+)
+
+@Immutable
 data class LocalFolder(
     @ColumnInfo(name = "folder")
     override val name: String,
