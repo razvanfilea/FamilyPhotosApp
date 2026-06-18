@@ -87,6 +87,12 @@ interface LocalPhotosDao {
     @Query("DELETE FROM local_photo")
     fun deleteAll()
 
+    @Query("DELETE FROM local_photo WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: Collection<Long>)
+
+    @Query("SELECT id, networkPhotoId FROM local_photo WHERE id IN (:ids) AND networkPhotoId <> 0")
+    suspend fun getNetworkReferencesForIds(ids: Collection<Long>): List<LocalNetworkReference>
+
     // endregion replaceAll
 
     @Query(

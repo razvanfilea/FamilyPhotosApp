@@ -44,7 +44,6 @@ fun NetworkFoldersTab() {
         },
         folderNameFilter = folderNameFilter.value,
         onSearch = { folderNameFilter.value = it },
-        foldersViewModel = foldersViewModel,
         extraHeader = {
             val settingsDataStore = LocalSettingsDataStore.current
             val selectedPhotoType by settingsDataStore.photoType.collectAsState()
