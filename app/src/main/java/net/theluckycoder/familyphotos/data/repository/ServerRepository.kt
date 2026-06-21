@@ -5,6 +5,7 @@ import dagger.Lazy
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import net.theluckycoder.familyphotos.data.local.db.FavoritePhotosDao
+import net.theluckycoder.familyphotos.data.local.db.NetworkFoldersDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.data.model.ExifData
 import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
@@ -23,6 +24,7 @@ import javax.inject.Singleton
 class ServerRepository @Inject constructor(
     private val photosService: Lazy<PhotosService>,
     private val networkPhotosDao: NetworkPhotosDao,
+    private val networkFoldersDao: NetworkFoldersDao,
     private val favoritePhotosDao: FavoritePhotosDao,
 ) {
 
@@ -95,6 +97,15 @@ class ServerRepository @Inject constructor(
         DownloadResponse.UNSUCCESSFUL
     }
 
+    suspend fun syncFolders(): Boolean {
+        val response = photosService.get().getFolders()
+        if (response.isSuccessful) {
+            networkFoldersDao.replaceAll(response.body()!!)
+            return true
+        }
+        return false
+    }
+
     suspend fun trashNetworkPhoto(photoIds: LongArray, trash: Boolean): Boolean {
         val service = photosService.get()
         val response = if (trash) service.trashPhotos(photoIds.toList()) else service.restorePhotos(photoIds.toList())
@@ -145,6 +156,7 @@ class ServerRepository @Inject constructor(
             return false
 
         networkPhotosDao.insert(changedPhotos)
+        syncFolders()
         return true
     }
 
@@ -188,9 +200,13 @@ class ServerRepository @Inject constructor(
         }
 
         networkPhotosDao.insert(changedPhotos)
+        syncFolders()
         Log.d("ServerRepository", "Updated moved folder photos (${changedPhotos.size})")
         return true
     }
+
+    suspend fun getFolderName(folderId: Long): String? =
+        networkFoldersDao.getFolderName(folderId)
 
     suspend fun getDuplicates(): List<List<NetworkPhoto>>? {
         val response = photosService.get().getDuplicates()

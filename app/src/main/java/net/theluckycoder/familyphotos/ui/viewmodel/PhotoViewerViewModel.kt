@@ -58,4 +58,8 @@ class PhotoViewerViewModel @Inject constructor(
     suspend fun getExifData(photo: NetworkPhoto): ExifData? = withContext(Dispatchers.IO) {
         serverRepository.getExifData(photo)
     }
+
+    suspend fun getFolderName(folderId: Long): String? = withContext(Dispatchers.IO) {
+        serverRepository.getFolderName(folderId)
+    }
 }

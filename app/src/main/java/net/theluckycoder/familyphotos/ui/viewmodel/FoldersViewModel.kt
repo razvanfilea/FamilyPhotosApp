@@ -65,13 +65,13 @@ class FoldersViewModel @Inject constructor(
 
     val photoListState = MutableStateFlow(LazyGridState())
 
-    private val _selectedNetworkFolder = MutableStateFlow<String?>(null)
+    private val _selectedNetworkFolder = MutableStateFlow<Long?>(null)
     val networkFolderPhotosPager = _selectedNetworkFolder
-        .combine(settingsStore.photoType) { folderName, photoType -> folderName to photoType }
-        .flatMapLatest { (folderName, photoType) ->
-            if (folderName != null) {
+        .combine(settingsStore.photoType) { folderId, photoType -> folderId to photoType }
+        .flatMapLatest { (folderId, photoType) ->
+            if (folderId != null) {
                 Pager(PAGING_CONFIG) {
-                    foldersRepository.networkPhotosFromFolderPaged(folderName, photoType)
+                    foldersRepository.networkPhotosFromFolderPaged(folderId, photoType)
                 }.flow
             } else {
                 emptyFlow()
@@ -93,10 +93,10 @@ class FoldersViewModel @Inject constructor(
         .cachedIn(viewModelScope)
 
     val networkFolderTimelineLayout: StateFlow<TimelineLayout> = _selectedNetworkFolder
-        .combine(settingsStore.photoType) { folderName, photoType -> folderName to photoType }
-        .flatMapLatest { (folderName, photoType) ->
-            if (folderName != null) {
-                foldersRepository.networkMonthSummariesForFolder(folderName, photoType)
+        .combine(settingsStore.photoType) { folderId, photoType -> folderId to photoType }
+        .flatMapLatest { (folderId, photoType) ->
+            if (folderId != null) {
+                foldersRepository.networkMonthSummariesForFolder(folderId, photoType)
             } else {
                 flowOf(emptyList())
             }
@@ -141,10 +141,10 @@ class FoldersViewModel @Inject constructor(
         }
     }
 
-    fun loadNetworkFolderPhotos(folderName: String) {
-        if (_selectedNetworkFolder.value != folderName) {
+    fun loadNetworkFolderPhotos(folderId: Long) {
+        if (_selectedNetworkFolder.value != folderId) {
             photoListState.value = LazyGridState()
-            _selectedNetworkFolder.value = folderName
+            _selectedNetworkFolder.value = folderId
         }
     }
 

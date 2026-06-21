@@ -16,9 +16,11 @@ abstract class PhotoFolder {
 @Immutable
 @Serializable
 data class NetworkFolder(
-    @ColumnInfo(name = "folder")
+    @ColumnInfo(name = "folderId")
+    val id: Long,
+    @ColumnInfo(name = "folderName")
     override val name: String,
-    @ColumnInfo(name = "id")
+    @ColumnInfo(name = "coverPhotoId")
     override val coverPhotoId: Long,
     @ColumnInfo(name = "userId")
     val userId: String?,
@@ -32,24 +34,17 @@ data class NetworkFolder(
 
         other as NetworkFolder
 
-        if (name != other.name) return false
-        if (userId != other.userId) return false
-
-        return true
+        return id == other.id
     }
 
-    override fun hashCode(): Int {
-        var result = name.hashCode()
-        result = 31 * result + userId.hashCode()
-        return result
-    }
+    override fun hashCode(): Int = id.hashCode()
 
     override fun getCoverPhoto(): Photo = NetworkPhoto(
         id = coverPhotoId,
         name = "",
         userId = userId,
         timeCreated = 0L,
-        folder = name
+        folderId = id,
     )
 }
 

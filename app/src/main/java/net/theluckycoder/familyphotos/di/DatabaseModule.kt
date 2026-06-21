@@ -9,6 +9,7 @@ import dagger.hilt.components.SingletonComponent
 import net.theluckycoder.familyphotos.data.local.db.FavoritePhotosDao
 import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
 import net.theluckycoder.familyphotos.data.local.db.LocalPhotosDao
+import net.theluckycoder.familyphotos.data.local.db.NetworkFoldersDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.data.local.db.PhotosDatabase
 import net.theluckycoder.familyphotos.data.local.db.UploadQueueDao
@@ -40,4 +41,8 @@ class DatabaseModule {
     @Provides
     fun provideUploadQueueDao(photosDatabase: PhotosDatabase): UploadQueueDao =
         photosDatabase.uploadQueueDao()
+
+    @Provides
+    fun provideNetworkFoldersDao(photosDatabase: PhotosDatabase): NetworkFoldersDao =
+        photosDatabase.networkFoldersDao()
 }

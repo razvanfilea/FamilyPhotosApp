@@ -46,6 +46,10 @@ class RefreshPhotosUseCase @Inject constructor(
 
         isOnlineState.value = response == ServerRepository.DownloadResponse.SUCCESSFUL
 
+        if (response == ServerRepository.DownloadResponse.SUCCESSFUL) {
+            serverRepository.syncFolders()
+        }
+
         localPhotosJob.await()
 
         Result.Success
