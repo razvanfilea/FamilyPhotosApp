@@ -250,7 +250,7 @@ private fun Content(
                     LaunchedEffect(source) {
                         when (source) {
                             is FolderNav.Source.Network -> foldersViewModel.loadNetworkFolderPhotos(
-                                source.folder.name
+                                source.folder.id
                             )
 
                             is FolderNav.Source.Local -> foldersViewModel.loadLocalFolderPhotos(

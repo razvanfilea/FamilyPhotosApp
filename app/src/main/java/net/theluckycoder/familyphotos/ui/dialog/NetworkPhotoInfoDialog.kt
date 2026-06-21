@@ -90,9 +90,11 @@ fun NetworkPhotoInfoDialogContent(photo: NetworkPhoto) = Column(
 ) {
     val viewModel: PhotoViewerViewModel = viewModel()
     var exif by remember { mutableStateOf(ExifData()) }
+    var folderName by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         exif = viewModel.getExifData(photo) ?: ExifData()
+        folderName = photo.folderId?.let { viewModel.getFolderName(it) }
     }
 
     Text(photo.photoDateText(), fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
@@ -126,7 +128,7 @@ fun NetworkPhotoInfoDialogContent(photo: NetworkPhoto) = Column(
     }
 
     DetailItem(
-        photo.folder ?: stringResource(R.string.photo_detail_no_folder),
+        folderName ?: stringResource(R.string.photo_detail_no_folder),
         if (photo.fileSize != 0L) getStringSizeLengthFile(photo.fileSize) else null,
         R.drawable.ic_folder_outlined
     )

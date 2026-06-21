@@ -19,10 +19,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -48,12 +50,18 @@ fun DuplicatesScreen() {
     val utilitiesViewModel: UtilitiesViewModel = viewModel()
     val backStack = LocalNavBackStack.current
     val duplicates = remember { mutableStateListOf<List<NetworkPhoto>>() }
+    val folderNames = remember { mutableStateMapOf<Long, String>() }
     var error by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         val value = utilitiesViewModel.getDuplicatesAsync().await()
         error = value == null
         duplicates.addAll(value.orEmpty())
+
+        val allFolderIds = value.orEmpty().flatten().mapNotNull { it.folderId }.distinct()
+        for (id in allFolderIds) {
+            utilitiesViewModel.getFolderName(id)?.let { folderNames[id] = it }
+        }
     }
 
     val pagerState = rememberPagerState { duplicates.size }
@@ -114,7 +122,7 @@ fun DuplicatesScreen() {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) { page ->
-            PagerContent(duplicates, page, deletePhotosDialog)
+            PagerContent(duplicates, page, folderNames, deletePhotosDialog)
         }
     }
 
@@ -124,6 +132,7 @@ fun DuplicatesScreen() {
 private fun PagerContent(
     duplicates: SnapshotStateList<List<NetworkPhoto>>,
     page: Int,
+    folderNames: SnapshotStateMap<Long, String>,
     deletePhotosDialog: DeletePhotosDialogCaller
 ) = Box(Modifier.fillMaxSize()) {
     val duplicate = duplicates[page]
@@ -170,8 +179,9 @@ private fun PagerContent(
                     modifier = Modifier.padding(end = 16.dp)
                 )
 
-                if (!photo.folder.isNullOrEmpty()) {
-                    Text(photo.folder)
+                val folderName = photo.folderId?.let { folderNames[it] }
+                if (!folderName.isNullOrEmpty()) {
+                    Text(folderName)
                 } else {
                     Text(
                         stringResource(R.string.photo_detail_no_folder),

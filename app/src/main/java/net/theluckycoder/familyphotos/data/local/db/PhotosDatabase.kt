@@ -12,13 +12,14 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import net.theluckycoder.familyphotos.data.model.db.FavoriteNetworkPhoto
 import net.theluckycoder.familyphotos.data.model.db.LocalFolderToBackup
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.data.model.db.NetworkFolderEntity
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.db.ServerState
 import net.theluckycoder.familyphotos.data.model.db.UploadQueueEntry
 
 @Database(
-    entities = [LocalPhoto::class, NetworkPhoto::class, LocalFolderToBackup::class, FavoriteNetworkPhoto::class, ServerState::class, UploadQueueEntry::class],
-    version = 13,
+    entities = [LocalPhoto::class, NetworkPhoto::class, NetworkFolderEntity::class, LocalFolderToBackup::class, FavoriteNetworkPhoto::class, ServerState::class, UploadQueueEntry::class],
+    version = 14,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -33,6 +34,8 @@ abstract class PhotosDatabase : RoomDatabase() {
     abstract fun favoritePhotosDao(): FavoritePhotosDao
 
     abstract fun uploadQueueDao(): UploadQueueDao
+
+    abstract fun networkFoldersDao(): NetworkFoldersDao
 
     companion object {
         @Volatile
@@ -92,6 +95,20 @@ abstract class PhotosDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE network_folder (id INTEGER NOT NULL PRIMARY KEY, ownerId TEXT, name TEXT NOT NULL, createdAt INTEGER NOT NULL)")
+
+                db.execSQL("CREATE TABLE network_photo_new (id INTEGER NOT NULL PRIMARY KEY, userId TEXT, name TEXT NOT NULL, timeCreated INTEGER NOT NULL, fileSize INTEGER NOT NULL, folderId INTEGER, trashedOn INTEGER, thumbHash TEXT)")
+                db.execSQL("INSERT INTO network_photo_new (id, userId, name, timeCreated, fileSize, trashedOn, thumbHash) SELECT id, userId, name, timeCreated, fileSize, trashedOn, thumbHash FROM network_photo")
+                db.execSQL("DROP TABLE network_photo")
+                db.execSQL("ALTER TABLE network_photo_new RENAME TO network_photo")
+                db.execSQL("CREATE INDEX index_network_photo_timeCreated ON network_photo(timeCreated DESC)")
+
+                db.execSQL("UPDATE server_state SET eventLogId = 0")
+            }
+        }
+
         fun getDatabase(context: Context): PhotosDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE?.let { return it }
@@ -106,7 +123,8 @@ abstract class PhotosDatabase : RoomDatabase() {
                     MIGRATION_10,
                     MIGRATION_11,
                     MIGRATION_12,
-                    MIGRATION_13
+                    MIGRATION_13,
+                    MIGRATION_14
                 ).addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)

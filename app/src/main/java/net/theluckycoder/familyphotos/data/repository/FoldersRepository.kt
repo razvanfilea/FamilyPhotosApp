@@ -60,14 +60,14 @@ class FoldersRepository @Inject constructor(
     fun localPhotosFromFolderPaged(folder: String) =
         localPhotosDao.getFolderPhotosPaged(folder)
 
-    fun networkPhotosFromFolderPaged(folder: String, photoType: PhotoType) =
-        networkPhotosDao.getFolderPhotos(folder, photoType)
+    fun networkPhotosFromFolderPaged(folderId: Long, photoType: PhotoType) =
+        networkPhotosDao.getFolderPhotos(folderId, photoType)
 
     fun localMonthSummariesForFolder(folder: String): Flow<List<MonthSummary>> =
         localPhotosDao.getMonthSummariesForFolder(folder)
 
-    fun networkMonthSummariesForFolder(folder: String, photoType: PhotoType): Flow<List<MonthSummary>> =
-        networkPhotosDao.getMonthSummariesForFolder(folder, photoType)
+    fun networkMonthSummariesForFolder(folderId: Long, photoType: PhotoType): Flow<List<MonthSummary>> =
+        networkPhotosDao.getMonthSummariesForFolder(folderId, photoType)
 
     suspend fun updatePhoneAlbums() {
         val photos = try {

@@ -138,6 +138,7 @@ fun <T : PhotoFolder> FoldersGridList(
                 GridFolderPreviewItem(
                     modifier = modifier,
                     photo = photo,
+                    folderName = folder.name,
                     detailsText = detailsText,
                     onClick = { onFolderClick(folder) },
                     showBackupIndicator = backupEnabled,
@@ -146,6 +147,7 @@ fun <T : PhotoFolder> FoldersGridList(
                 ListFolderPreviewItem(
                     modifier = modifier,
                     photo = photo,
+                    folderName = folder.name,
                     detailsText = detailsText,
                     onClick = { onFolderClick(folder) },
                     showBackupIndicator = backupEnabled,
@@ -265,6 +267,7 @@ private fun SortButton(
 private fun GridFolderPreviewItem(
     modifier: Modifier = Modifier,
     photo: Photo,
+    folderName: String,
     detailsText: String?,
     onClick: () -> Unit,
     showBackupIndicator: Boolean = false,
@@ -301,7 +304,7 @@ private fun GridFolderPreviewItem(
         modifier = Modifier.padding(start = 8.dp, top = 4.dp),
         softWrap = false,
         overflow = TextOverflow.Ellipsis,
-        text = photo.folder ?: photo.name,
+        text = folderName,
         fontWeight = FontWeight.SemiBold
     )
 
@@ -319,6 +322,7 @@ private fun GridFolderPreviewItem(
 private fun ListFolderPreviewItem(
     modifier: Modifier = Modifier,
     photo: Photo,
+    folderName: String,
     detailsText: String?,
     onClick: () -> Unit,
     showBackupIndicator: Boolean = false,
@@ -359,7 +363,7 @@ private fun ListFolderPreviewItem(
             modifier = Modifier.padding(top = 4.dp),
             softWrap = false,
             overflow = TextOverflow.Ellipsis,
-            text = photo.folder ?: photo.name,
+            text = folderName,
             fontWeight = FontWeight.SemiBold
         )
 

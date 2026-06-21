@@ -38,7 +38,7 @@ interface NetworkPhotosDao {
 
     @Query(
         """SELECT * FROM network_photo
-        WHERE network_photo.folder = :folder
+        WHERE network_photo.folderId = :folderId
         AND CASE
             WHEN :photoType = 1 THEN (userId IS NOT NULL)
             WHEN :photoType = 2 THEN (userId IS NULL)
@@ -47,21 +47,25 @@ interface NetworkPhotosDao {
         AND trashedOn IS NULL
         ORDER BY network_photo.timeCreated DESC"""
     )
-    fun getFolderPhotos(folder: String, photoType: PhotoType): PagingSource<Int, NetworkPhoto>
+    fun getFolderPhotos(folderId: Long, photoType: PhotoType): PagingSource<Int, NetworkPhoto>
 
     @Query(
         """
-        SELECT folder, id, userId, COUNT(id) as photoCount FROM network_photo
-        WHERE folder <> '' AND trashedOn is null AND
-        CASE 
-            WHEN :photoType = 1 THEN (userId IS NOT NULL)
-            WHEN :photoType = 2 THEN (userId IS NULL)
+        SELECT nf.id AS folderId, nf.name AS folderName, np.userId,
+               np.id AS coverPhotoId, COUNT(np.id) AS photoCount
+        FROM network_photo np
+        INNER JOIN network_folder nf ON np.folderId = nf.id
+        WHERE np.trashedOn IS NULL
+        AND CASE
+            WHEN :photoType = 1 THEN (np.userId IS NOT NULL)
+            WHEN :photoType = 2 THEN (np.userId IS NULL)
             ELSE 1
         END
-        GROUP BY folder HAVING timeCreated = MAX(timeCreated)
+        GROUP BY np.folderId
+        HAVING np.timeCreated = MAX(np.timeCreated)
         ORDER BY
-            CASE WHEN :ascending <> 0 THEN folder END ASC,
-            CASE WHEN :ascending = 0 THEN folder END DESC
+            CASE WHEN :ascending <> 0 THEN nf.name END ASC,
+            CASE WHEN :ascending = 0 THEN nf.name END DESC
         """
     )
     fun getFolders(photoType: PhotoType, ascending: Boolean): Flow<List<NetworkFolder>>
@@ -113,7 +117,7 @@ interface NetworkPhotosDao {
                id as coverPhotoId,
                COUNT(*) as photoCount
         FROM network_photo
-        WHERE folder = :folder
+        WHERE folderId = :folderId
         AND trashedOn IS NULL
         AND CASE
             WHEN :photoType = 1 THEN (userId IS NOT NULL)
@@ -124,7 +128,7 @@ interface NetworkPhotosDao {
         ORDER BY timeCreated DESC
         """
     )
-    fun getMonthSummariesForFolder(folder: String, photoType: PhotoType): Flow<List<MonthSummary>>
+    fun getMonthSummariesForFolder(folderId: Long, photoType: PhotoType): Flow<List<MonthSummary>>
 
     @Query("SELECT * FROM network_photo WHERE trashedOn IS NOT NULL ORDER BY trashedOn DESC")
     fun getTrashedPhotos(): Flow<List<NetworkPhoto>>
