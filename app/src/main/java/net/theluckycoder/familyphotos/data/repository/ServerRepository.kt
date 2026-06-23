@@ -8,9 +8,7 @@ import net.theluckycoder.familyphotos.data.local.db.FavoritePhotosDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkFoldersDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.data.model.ExifData
-import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
-import net.theluckycoder.familyphotos.data.model.db.isPublic
 import net.theluckycoder.familyphotos.data.remote.PhotosService
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -181,17 +179,16 @@ class ServerRepository @Inject constructor(
     }
 
     suspend fun renameNetworkFolder(
-        folder: NetworkFolder,
+        folderId: Long,
         makePublic: Boolean,
         newName: String?
     ): Boolean {
         val response = photosService.get().renameFolder(
-            isPublic = folder.isPublic,
-            folderName = folder.name,
+            sourceFolderId = folderId,
             targetMakePublic = makePublic,
             targetFolderName = newName
         )
-        Log.d("ServerRepository", "Renamed folder ${folder.name}")
+        Log.d("ServerRepository", "Renamed folder $folderId")
 
         val changedPhotos = response.body()
         if (!response.isSuccessful || changedPhotos == null) {

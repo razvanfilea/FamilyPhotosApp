@@ -250,7 +250,7 @@ private fun Content(
                     LaunchedEffect(source) {
                         when (source) {
                             is FolderNav.Source.Network -> foldersViewModel.loadNetworkFolderPhotos(
-                                source.folder.id
+                                source.folderId
                             )
 
                             is FolderNav.Source.Local -> foldersViewModel.loadLocalFolderPhotos(
@@ -283,7 +283,7 @@ private fun Content(
                 }
 
                 is RenameFolderNav -> NavEntry(key) {
-                    RenameFolderScreen(key.folder)
+                    RenameFolderScreen(key.folderId, key.folderName)
                 }
 
                 is DuplicatesNav -> NavEntry(key) {

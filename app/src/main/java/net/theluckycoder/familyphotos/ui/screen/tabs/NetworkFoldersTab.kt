@@ -35,7 +35,7 @@ fun NetworkFoldersTab() {
     FoldersGridList(
         folders = folders,
         onFolderClick = { folder ->
-            backStack.add(FolderNav(FolderNav.Source.Network(folder)))
+            backStack.add(FolderNav(FolderNav.Source.Network(folder.id, folder.name)))
         },
         folderDetailsText = { folder ->
             val owner = if (folder.isPublic) familyString else personalString

@@ -91,7 +91,7 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out 
                     navIconOnClick = backStack::removeLastOrNull,
                     title = when (source) {
                         FolderNav.Source.Favorites -> stringResource(R.string.title_favorites)
-                        is FolderNav.Source.Network -> source.folder.name
+                        is FolderNav.Source.Network -> source.folderName
                         is FolderNav.Source.Local -> source.name
                     },
                     subtitle = timelineLayout.totalItemCount.takeIf { it != 0 }?.toString(),
@@ -107,7 +107,7 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out 
                             }
 
                             IconButton(onClick = {
-                                backStack.add(RenameFolderNav(source.folder))
+                                backStack.add(RenameFolderNav(source.folderId, source.folderName))
                             }) {
                                 Icon(
                                     painterResource(R.drawable.ic_action_edit),

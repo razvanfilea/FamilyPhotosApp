@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
-import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.db.UploadQueueEntry
 import net.theluckycoder.familyphotos.data.repository.FoldersRepository
@@ -99,13 +98,13 @@ class UploadPhotosViewModel @Inject constructor(
     }
 
     fun renameNetworkFolder(
-        folder: NetworkFolder,
+        folderId: Long,
         makePublic: Boolean,
         newName: String
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             serverRepository.renameNetworkFolder(
-                folder,
+                folderId,
                 makePublic,
                 newName.trim().takeIf { it.isNotEmpty() }
             )
