@@ -76,8 +76,7 @@ interface PhotosService {
 
     @POST("/photos/move/folder")
     suspend fun renameFolder(
-        @Query("source_is_public") isPublic: Boolean,
-        @Query("source_folder_name") folderName: String,
+        @Query("source_folder_id") sourceFolderId: Long,
         @Query("target_make_public") targetMakePublic: Boolean,
         @Query("target_folder_name") targetFolderName: String?,
     ): Response<List<NetworkPhoto>>

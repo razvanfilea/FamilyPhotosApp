@@ -40,7 +40,7 @@ class FoldersViewModel @Inject constructor(
     private val photosRepository: PhotosRepository,
     private val foldersRepository: FoldersRepository,
     private val photoUploadRepository: PhotoUploadRepository,
-    private val settingsStore: SettingsDataStore,
+    settingsStore: SettingsDataStore,
     private val workManager: WorkManager,
 ) : ViewModel() {
 

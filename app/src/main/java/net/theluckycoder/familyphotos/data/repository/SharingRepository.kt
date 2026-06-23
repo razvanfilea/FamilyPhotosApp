@@ -42,7 +42,7 @@ class SharingRepository @Inject constructor(
     }
 
     suspend fun createShare(
-        folderName: String,
+        folderId: Long,
         granteeId: String,
         canUpload: Boolean = false,
         canDelete: Boolean = false,
@@ -50,7 +50,7 @@ class SharingRepository @Inject constructor(
     ): SharedNetworkFolder? {
         val response = sharingService.get().createShare(
             CreateShareRequest(
-                folder_name = folderName,
+                folder_id = folderId,
                 grantee_id = granteeId,
                 can_upload = canUpload,
                 can_delete = canDelete,

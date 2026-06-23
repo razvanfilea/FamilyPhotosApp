@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 14,
-    "identityHash": "bf2a6075a44bae4287d185833f8ef369",
+    "identityHash": "6ba303e850b05e881ff76ffcdf4888f5",
     "entities": [
       {
         "tableName": "local_photo",
@@ -122,6 +122,15 @@
               "DESC"
             ],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_network_photo_timeCreated` ON `${TABLE_NAME}` (`timeCreated` DESC)"
+          },
+          {
+            "name": "index_network_photo_folderId",
+            "unique": false,
+            "columnNames": [
+              "folderId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_network_photo_folderId` ON `${TABLE_NAME}` (`folderId`)"
           }
         ]
       },
@@ -306,7 +315,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'bf2a6075a44bae4287d185833f8ef369')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6ba303e850b05e881ff76ffcdf4888f5')"
     ]
   }
 }

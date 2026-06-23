@@ -63,7 +63,8 @@ data class LocalPhoto(
 @Entity(
     tableName = "network_photo",
     indices = [
-        Index(value = ["timeCreated"], orders = [Index.Order.DESC])
+        Index(value = ["timeCreated"], orders = [Index.Order.DESC]),
+        Index(value = ["folderId"])
     ]
 )
 data class NetworkPhoto(

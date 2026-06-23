@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CreateShareRequest(
-    val folder_name: String,
+    val folder_id: Long,
     val grantee_id: String,
     val can_upload: Boolean = false,
     val can_delete: Boolean = false,

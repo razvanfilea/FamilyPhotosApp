@@ -23,6 +23,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
 import net.theluckycoder.familyphotos.data.local.db.LocalPhotosDao
+import net.theluckycoder.familyphotos.data.local.db.NetworkFoldersDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.data.model.db.LocalFolderToBackup
 import net.theluckycoder.familyphotos.data.model.PhotoType
@@ -41,6 +42,7 @@ class FoldersRepository @Inject constructor(
     private val context: Context,
     private val localPhotosDao: LocalPhotosDao,
     private val networkPhotosDao: NetworkPhotosDao,
+    private val networkFoldersDao: NetworkFoldersDao,
     private val localFolderBackupDao: LocalFolderBackupDao,
 ) {
 
@@ -52,7 +54,7 @@ class FoldersRepository @Inject constructor(
         localPhotosDao.getFolders(ascending)
 
     fun networkFoldersFlow(photoType: PhotoType, ascending: Boolean): Flow<List<NetworkFolder>> =
-        networkPhotosDao.getFolders(photoType, ascending)
+        networkFoldersDao.getFolders(photoType, ascending)
 
     fun localPhotosFromFolder(folder: String, count: Int) =
         localPhotosDao.getFolderPhotos(folder, count)

@@ -104,6 +104,7 @@ abstract class PhotosDatabase : RoomDatabase() {
                 db.execSQL("DROP TABLE network_photo")
                 db.execSQL("ALTER TABLE network_photo_new RENAME TO network_photo")
                 db.execSQL("CREATE INDEX index_network_photo_timeCreated ON network_photo(timeCreated DESC)")
+                db.execSQL("CREATE INDEX index_network_photo_folderId ON network_photo(folderId)")
 
                 db.execSQL("UPDATE server_state SET eventLogId = 0")
             }

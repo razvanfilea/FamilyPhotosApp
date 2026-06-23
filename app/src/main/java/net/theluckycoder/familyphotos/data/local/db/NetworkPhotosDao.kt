@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.data.model.PhotoEventLog
 import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.db.MonthSummary
-import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.db.PhotoStatistics
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhotoWithYearOffset
@@ -49,26 +48,6 @@ interface NetworkPhotosDao {
     )
     fun getFolderPhotos(folderId: Long, photoType: PhotoType): PagingSource<Int, NetworkPhoto>
 
-    @Query(
-        """
-        SELECT nf.id AS folderId, nf.name AS folderName, np.userId,
-               np.id AS coverPhotoId, COUNT(np.id) AS photoCount
-        FROM network_photo np
-        INNER JOIN network_folder nf ON np.folderId = nf.id
-        WHERE np.trashedOn IS NULL
-        AND CASE
-            WHEN :photoType = 1 THEN (np.userId IS NOT NULL)
-            WHEN :photoType = 2 THEN (np.userId IS NULL)
-            ELSE 1
-        END
-        GROUP BY np.folderId
-        HAVING np.timeCreated = MAX(np.timeCreated)
-        ORDER BY
-            CASE WHEN :ascending <> 0 THEN nf.name END ASC,
-            CASE WHEN :ascending = 0 THEN nf.name END DESC
-        """
-    )
-    fun getFolders(photoType: PhotoType, ascending: Boolean): Flow<List<NetworkFolder>>
 
     @Query(
         """SELECT *,

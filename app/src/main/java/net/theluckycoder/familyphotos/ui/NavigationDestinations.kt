@@ -5,7 +5,6 @@ import androidx.annotation.StringRes
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import net.theluckycoder.familyphotos.data.model.db.Photo
 
 @Serializable
@@ -37,7 +36,7 @@ data class FolderNav(
         data object Favorites : Source()
 
         @Serializable
-        data class Network(val folder: NetworkFolder) : Source()
+        data class Network(val folderId: Long, val folderName: String) : Source()
 
         @Serializable
         data class Local(val name: String) : Source()
@@ -75,7 +74,8 @@ class UploadPhotosNav(
 
 @Serializable
 data class RenameFolderNav(
-    val folder: NetworkFolder
+    val folderId: Long,
+    val folderName: String,
 ) : NavKey
 
 @Serializable
