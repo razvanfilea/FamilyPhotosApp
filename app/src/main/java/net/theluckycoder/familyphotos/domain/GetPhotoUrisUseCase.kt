@@ -2,8 +2,8 @@ package net.theluckycoder.familyphotos.domain
 
 import android.net.Uri
 import dagger.hilt.android.scopes.ViewModelScoped
-import net.theluckycoder.familyphotos.data.repository.MediaStoreRepository
-import net.theluckycoder.familyphotos.data.repository.PhotosRepository
+import net.theluckycoder.familyphotos.core.data.repository.MediaStoreRepository
+import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
 import javax.inject.Inject
 
 /**

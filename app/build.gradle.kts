@@ -76,6 +76,7 @@ ksp {
 }
 
 dependencies {
+    implementation(project(":core:data"))
     implementation(project(":camera"))
 
     implementation(libs.androidx.profileinstaller)

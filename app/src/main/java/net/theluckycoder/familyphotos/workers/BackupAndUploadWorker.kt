@@ -23,12 +23,10 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
-import net.theluckycoder.familyphotos.data.model.db.UploadQueueEntry
-import net.theluckycoder.familyphotos.data.repository.FoldersRepository
-import net.theluckycoder.familyphotos.data.repository.PhotoUploadRepository
-import net.theluckycoder.familyphotos.data.repository.PhotosRepository
-import java.io.File
+import net.theluckycoder.familyphotos.core.data.model.db.UploadQueueEntry
+import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
+import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
+import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
 import java.net.ConnectException
 
 @HiltWorker
@@ -38,7 +36,6 @@ class BackupAndUploadWorker @AssistedInject constructor(
     private val foldersRepository: FoldersRepository,
     private val photosRepository: PhotosRepository,
     private val photoUploadRepository: PhotoUploadRepository,
-    private val localFolderBackupDao: LocalFolderBackupDao,
 ) : CoroutineWorker(context, workerParams) {
 
     private val notificationId = id.hashCode()
@@ -129,7 +126,7 @@ class BackupAndUploadWorker @AssistedInject constructor(
         Log.i(TAG, "Scanning folders for backup")
         foldersRepository.updatePhoneAlbums()
 
-        val folderNames = localFolderBackupDao.getAll().first()
+        val folderNames = foldersRepository.getBackupFolders().first()
         Log.i(TAG, "Folders to backup: $folderNames")
 
         val entries = mutableListOf<UploadQueueEntry>()

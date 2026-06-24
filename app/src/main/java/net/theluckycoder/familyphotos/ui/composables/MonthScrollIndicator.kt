@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.TimelineLayout
+import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
 import kotlin.ranges.coerceIn
 import kotlin.time.Duration.Companion.milliseconds
 

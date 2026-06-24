@@ -12,15 +12,15 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
-import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
-import net.theluckycoder.familyphotos.data.model.PhotoType
-import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
-import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
-import net.theluckycoder.familyphotos.data.model.db.UploadQueueEntry
-import net.theluckycoder.familyphotos.data.repository.FoldersRepository
-import net.theluckycoder.familyphotos.data.repository.PhotoUploadRepository
-import net.theluckycoder.familyphotos.data.repository.PhotosRepository
-import net.theluckycoder.familyphotos.data.repository.ServerRepository
+import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
+import net.theluckycoder.familyphotos.core.data.model.PhotoType
+import net.theluckycoder.familyphotos.core.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.core.data.model.db.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.db.UploadQueueEntry
+import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
+import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
+import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
+import net.theluckycoder.familyphotos.core.data.repository.ServerRepository
 import net.theluckycoder.familyphotos.workers.enqueueBackupAndUploadWorker
 import javax.inject.Inject
 

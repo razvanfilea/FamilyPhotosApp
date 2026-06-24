@@ -34,8 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
-import net.theluckycoder.familyphotos.data.model.db.isPublic
+import net.theluckycoder.familyphotos.core.data.model.db.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.db.isPublic
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar

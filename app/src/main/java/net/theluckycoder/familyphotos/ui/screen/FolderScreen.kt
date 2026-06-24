@@ -43,8 +43,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.TimelineLayout
-import net.theluckycoder.familyphotos.data.model.db.Photo
+import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
+import net.theluckycoder.familyphotos.core.data.model.db.Photo
 import androidx.paging.compose.LazyPagingItems
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack

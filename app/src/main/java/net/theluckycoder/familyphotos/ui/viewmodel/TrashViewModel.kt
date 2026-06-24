@@ -8,8 +8,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import net.theluckycoder.familyphotos.data.repository.PhotosRepository
-import net.theluckycoder.familyphotos.data.repository.ServerRepository
+import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
+import net.theluckycoder.familyphotos.core.data.repository.ServerRepository
 import javax.inject.Inject
 
 @HiltViewModel

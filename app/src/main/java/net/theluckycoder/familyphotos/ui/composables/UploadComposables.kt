@@ -35,9 +35,9 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
-import net.theluckycoder.familyphotos.data.model.db.Photo
-import net.theluckycoder.familyphotos.data.model.db.isPublic
+import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolder
+import net.theluckycoder.familyphotos.core.data.model.db.Photo
+import net.theluckycoder.familyphotos.core.data.model.db.isPublic
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 
 @Immutable

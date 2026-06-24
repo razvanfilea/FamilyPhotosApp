@@ -32,9 +32,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.TimelineLayout
-import net.theluckycoder.familyphotos.data.model.db.MonthSummary
-import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
+import net.theluckycoder.familyphotos.core.data.model.db.MonthSummary
+import net.theluckycoder.familyphotos.core.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.utils.buildDateString
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.camera.CameraActivity
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.db.PhotoStatistics
+import net.theluckycoder.familyphotos.core.data.model.db.PhotoStatistics
 import net.theluckycoder.familyphotos.ui.DuplicatesNav
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LargeFilesNav

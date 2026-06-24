@@ -9,7 +9,7 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import coil3.ImageLoader
 import dagger.Lazy
-import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
+import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
 
 val LocalImageLoader = staticCompositionLocalOf<Lazy<ImageLoader>> { error("No ImageLoader found!") }
 
