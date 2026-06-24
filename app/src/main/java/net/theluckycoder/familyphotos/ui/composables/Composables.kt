@@ -45,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -82,19 +83,7 @@ fun CoilPhoto(
 ) {
     val isImageLoaded = remember { mutableStateOf(false) }
     var targetSizePx by remember { mutableIntStateOf(0) }
-
-    // Check synchronous cache first to avoid coroutine overhead for cached items
-    var thumbHashPainter by remember(photo.thumbHash) {
-        mutableStateOf(ThumbHashCache.get(photo.thumbHash)?.let { ScaledBitmapPainter(it) })
-    }
-    // Only launch coroutine for cache misses
-    if (thumbHashPainter == null && photo.thumbHash != null) {
-        LaunchedEffect(photo.thumbHash) {
-            ThumbHashCache.getOrCompute(photo.thumbHash)?.let {
-                thumbHashPainter = ScaledBitmapPainter(it)
-            }
-        }
-    }
+    val thumbHashPainter = thumbHashPainter(photo.thumbHash)
 
     Box(modifier = modifier.onSizeChanged { size ->
         targetSizePx = maxOf(size.width, size.height)
@@ -136,6 +125,24 @@ fun CoilPhoto(
             )
         }
     }
+}
+
+@Composable
+fun thumbHashPainter(thumbHash: String?): ScaledBitmapPainter? {
+    // Check synchronous cache first to avoid coroutine overhead for cached items
+    var thumbHashPainter: ScaledBitmapPainter? by remember(thumbHash) {
+        mutableStateOf(ThumbHashCache.get(thumbHash)?.let { ScaledBitmapPainter(it) })
+    }
+    // Only launch coroutine for cache misses
+    if (thumbHashPainter == null && thumbHash != null) {
+        LaunchedEffect(thumbHash) {
+            ThumbHashCache.getOrCompute(thumbHash)?.let {
+                thumbHashPainter = ScaledBitmapPainter(it)
+            }
+        }
+    }
+
+    return thumbHashPainter
 }
 
 @Composable

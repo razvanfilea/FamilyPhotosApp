@@ -9,6 +9,8 @@ import androidx.compose.ui.graphics.painter.Painter
 
 class ScaledBitmapPainter(private val imageBitmap: ImageBitmap) : Painter() {
 
+    val aspectRatio: Float = imageBitmap.width.toFloat() / imageBitmap.height.toFloat()
+
     override val intrinsicSize: Size = Size.Unspecified
 
     override fun DrawScope.onDraw() {
