@@ -97,7 +97,7 @@ abstract class PhotosDatabase : RoomDatabase() {
 
         private val MIGRATION_14 = object : Migration(13, 14) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE network_folder (id INTEGER NOT NULL PRIMARY KEY, ownerId TEXT, name TEXT NOT NULL, createdAt INTEGER NOT NULL)")
+                db.execSQL("CREATE TABLE network_folder (id INTEGER NOT NULL PRIMARY KEY, ownerId TEXT, name TEXT NOT NULL, createdAt INTEGER NOT NULL, latestEventId INTEGER NOT NULL DEFAULT 0)")
 
                 db.execSQL("CREATE TABLE network_photo_new (id INTEGER NOT NULL PRIMARY KEY, userId TEXT, name TEXT NOT NULL, timeCreated INTEGER NOT NULL, fileSize INTEGER NOT NULL, folderId INTEGER, trashedOn INTEGER, thumbHash TEXT)")
                 db.execSQL("INSERT INTO network_photo_new (id, userId, name, timeCreated, fileSize, trashedOn, thumbHash) SELECT id, userId, name, timeCreated, fileSize, trashedOn, thumbHash FROM network_photo")

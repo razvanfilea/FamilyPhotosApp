@@ -2,6 +2,7 @@ package net.theluckycoder.familyphotos.data.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import net.theluckycoder.familyphotos.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.data.local.db.FavoritePhotosDao
 import net.theluckycoder.familyphotos.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
@@ -15,7 +16,10 @@ class PhotosRepository @Inject constructor(
     private val localPhotosDao: LocalPhotosDao,
     private val networkPhotosDao: NetworkPhotosDao,
     private val favoritePhotosDao: FavoritePhotosDao,
+    private val userDataStore: UserDataStore,
 ) {
+    private val currentUserId: String get() = userDataStore.userId.value ?: ""
+
     fun getLocalPhoto(photoId: Long) = localPhotosDao.findById(photoId)
 
     fun getLocalPhotoFlow(photoId: Long) = localPhotosDao.findByIdFlow(photoId)
@@ -28,7 +32,7 @@ class PhotosRepository @Inject constructor(
         localPhotosDao.findByNetworkId(networkPhotoId)
 
     fun getMemories(photoType: PhotoType): Flow<Map<Int, List<NetworkPhoto>>> =
-        networkPhotosDao.getPhotosGroupedByYearsAgo(photoType).map { photosWithOffset ->
+        networkPhotosDao.getPhotosGroupedByYearsAgo(photoType, currentUserId).map { photosWithOffset ->
             photosWithOffset.groupBy { it.yearOffset }
                 .mapValues { entry -> entry.value.map { it.photo } }
         }
@@ -39,7 +43,7 @@ class PhotosRepository @Inject constructor(
         }
     }
 
-    fun getAllPhotosPaged(photoType: PhotoType) = networkPhotosDao.getPhotosPaged(photoType)
+    fun getAllPhotosPaged(photoType: PhotoType) = networkPhotosDao.getPhotosPaged(photoType, currentUserId)
 
     fun getFavoritePhotosPaged() = favoritePhotosDao.getFavoritePhotosPaged()
 
@@ -47,9 +51,9 @@ class PhotosRepository @Inject constructor(
 
     fun getTrashedPhotos() = networkPhotosDao.getTrashedPhotos()
 
-    fun getMonthSummaries(photoType: PhotoType) = networkPhotosDao.getMonthSummaries(photoType)
+    fun getMonthSummaries(photoType: PhotoType) = networkPhotosDao.getMonthSummaries(photoType, currentUserId)
 
-    fun getPhotoStatistics() = networkPhotosDao.getPhotoStatistics()
+    fun getPhotoStatistics() = networkPhotosDao.getPhotoStatistics(currentUserId)
 
     fun getLargePhotos(minSizeBytes: Long = 52_428_800L) = networkPhotosDao.getLargePhotos(minSizeBytes)
 }

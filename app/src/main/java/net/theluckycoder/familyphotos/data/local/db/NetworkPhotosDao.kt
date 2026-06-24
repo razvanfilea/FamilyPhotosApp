@@ -7,7 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
-import net.theluckycoder.familyphotos.data.model.PhotoEventLog
+import net.theluckycoder.familyphotos.data.model.network.PhotoEventLog
 import net.theluckycoder.familyphotos.data.model.PhotoType
 import net.theluckycoder.familyphotos.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
@@ -25,28 +25,28 @@ interface NetworkPhotosDao {
 
     @Query(
         """SELECT * FROM network_photo
-            WHERE CASE 
-                WHEN :photoType = 1 THEN (userId IS NOT NULL)
+            WHERE CASE
+                WHEN :photoType = 1 THEN (userId = :currentUserId)
                 WHEN :photoType = 2 THEN (userId IS NULL)
                 ELSE 1
             END
             AND trashedOn IS NULL
             ORDER BY network_photo.timeCreated DESC"""
     )
-    fun getPhotosPaged(photoType: PhotoType): PagingSource<Int, NetworkPhoto>
+    fun getPhotosPaged(photoType: PhotoType, currentUserId: String): PagingSource<Int, NetworkPhoto>
 
     @Query(
         """SELECT * FROM network_photo
         WHERE network_photo.folderId = :folderId
         AND CASE
-            WHEN :photoType = 1 THEN (userId IS NOT NULL)
+            WHEN :photoType = 1 THEN (userId = :currentUserId)
             WHEN :photoType = 2 THEN (userId IS NULL)
             ELSE 1
         END
         AND trashedOn IS NULL
         ORDER BY network_photo.timeCreated DESC"""
     )
-    fun getFolderPhotos(folderId: Long, photoType: PhotoType): PagingSource<Int, NetworkPhoto>
+    fun getFolderPhotos(folderId: Long, photoType: PhotoType, currentUserId: String): PagingSource<Int, NetworkPhoto>
 
 
     @Query(
@@ -54,7 +54,7 @@ interface NetworkPhotosDao {
               CAST(strftime('%Y', 'now') AS INTEGER) - CAST(strftime('%Y', datetime(network_photo.timeCreated, 'unixepoch')) AS INTEGER) AS yearOffset
         FROM network_photo
         WHERE CASE
-            WHEN :photoType = 1 THEN (userId IS NOT NULL)
+            WHEN :photoType = 1 THEN (userId = :currentUserId)
             WHEN :photoType = 2 THEN (userId IS NULL)
             ELSE 1
         END
@@ -68,6 +68,7 @@ interface NetworkPhotosDao {
     )
     fun getPhotosGroupedByYearsAgo(
         photoType: PhotoType,
+        currentUserId: String,
         minYearsAgo: Int = 1,
         maxYearsAgo: Int = 10
     ): Flow<List<NetworkPhotoWithYearOffset>>
@@ -75,12 +76,12 @@ interface NetworkPhotosDao {
     @Query(
         """
         SELECT MAX(timeCreated) as timeCreated,
-               id as coverPhotoId, 
+               id as coverPhotoId,
                COUNT(*) as photoCount
         FROM network_photo
         WHERE trashedOn IS NULL
         AND CASE
-            WHEN :photoType = 1 THEN (userId IS NOT NULL)
+            WHEN :photoType = 1 THEN (userId = :currentUserId)
             WHEN :photoType = 2 THEN (userId IS NULL)
             ELSE 1
         END
@@ -88,7 +89,7 @@ interface NetworkPhotosDao {
         ORDER BY timeCreated DESC
         """
     )
-    fun getMonthSummaries(photoType: PhotoType): Flow<List<MonthSummary>>
+    fun getMonthSummaries(photoType: PhotoType, currentUserId: String): Flow<List<MonthSummary>>
 
     @Query(
         """
@@ -99,7 +100,7 @@ interface NetworkPhotosDao {
         WHERE folderId = :folderId
         AND trashedOn IS NULL
         AND CASE
-            WHEN :photoType = 1 THEN (userId IS NOT NULL)
+            WHEN :photoType = 1 THEN (userId = :currentUserId)
             WHEN :photoType = 2 THEN (userId IS NULL)
             ELSE 1
         END
@@ -107,7 +108,7 @@ interface NetworkPhotosDao {
         ORDER BY timeCreated DESC
         """
     )
-    fun getMonthSummariesForFolder(folderId: Long, photoType: PhotoType): Flow<List<MonthSummary>>
+    fun getMonthSummariesForFolder(folderId: Long, photoType: PhotoType, currentUserId: String): Flow<List<MonthSummary>>
 
     @Query("SELECT * FROM network_photo WHERE trashedOn IS NOT NULL ORDER BY trashedOn DESC")
     fun getTrashedPhotos(): Flow<List<NetworkPhoto>>
@@ -131,12 +132,13 @@ interface NetworkPhotosDao {
                 THEN 1 ELSE 0 END as isVideo
             FROM network_photo
             WHERE trashedOn IS NULL
+            AND (userId = :currentUserId OR userId IS NULL)
         )
         SELECT
             COUNT(CASE WHEN userId IS NULL THEN 1 END) as familyCount,
-            COUNT(CASE WHEN userId IS NOT NULL THEN 1 END) as personalCount,
+            COUNT(CASE WHEN userId = :currentUserId THEN 1 END) as personalCount,
             COALESCE(SUM(CASE WHEN userId IS NULL THEN fileSize ELSE 0 END), 0) as familySize,
-            COALESCE(SUM(CASE WHEN userId IS NOT NULL THEN fileSize ELSE 0 END), 0) as personalSize,
+            COALESCE(SUM(CASE WHEN userId = :currentUserId THEN fileSize ELSE 0 END), 0) as personalSize,
             COUNT(CASE WHEN isVideo = 0 THEN 1 END) as imageCount,
             COUNT(CASE WHEN isVideo = 1 THEN 1 END) as videoCount,
             COALESCE(SUM(CASE WHEN isVideo = 0 THEN fileSize ELSE 0 END), 0) as imageSize,
@@ -144,7 +146,7 @@ interface NetworkPhotosDao {
         FROM photos
         """
     )
-    fun getPhotoStatistics(): Flow<PhotoStatistics>
+    fun getPhotoStatistics(currentUserId: String): Flow<PhotoStatistics>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(photo: NetworkPhoto)
@@ -162,7 +164,7 @@ interface NetworkPhotosDao {
     suspend fun updateEventLogId(eventLogId: Long)
 
     @Transaction
-    suspend fun updatePartials(events: Collection<PhotoEventLog>, eventLogId: Long) {
+    suspend fun updatePartialSync(events: Collection<PhotoEventLog>, eventLogId: Long) {
         for (event in events) {
             val photo = event.decodePhoto()
             if (photo != null) {
@@ -176,15 +178,37 @@ interface NetworkPhotosDao {
     }
 
     @Transaction
-    suspend fun replaceAll(
+    suspend fun updateFullSync(
         list: Collection<NetworkPhoto>,
-        eventLogId: Long
+        eventLogId: Long,
+        userId: String,
     ) {
-        deleteAll()
+        deletePersonalAndPublicPhotos(userId)
         insert(list)
         updateEventLogId(eventLogId)
     }
 
-    @Query("DELETE FROM network_photo")
-    suspend fun deleteAll()
+    @Query("DELETE FROM network_photo WHERE userId = :userId OR userId IS NULL")
+    suspend fun deletePersonalAndPublicPhotos(userId: String)
+
+    @Query("DELETE FROM network_photo WHERE folderId = :folderId")
+    suspend fun deletePhotosByFolderId(folderId: Long)
+
+    @Transaction
+    suspend fun replaceSharedFolderPhotos(folderId: Long, photos: List<NetworkPhoto>) {
+        deletePhotosByFolderId(folderId)
+        insert(photos)
+    }
+
+    @Transaction
+    suspend fun applySharedFolderEvents(events: List<PhotoEventLog>) {
+        for (event in events) {
+            val photo = event.decodePhoto()
+            if (photo != null) {
+                insert(photo)
+            } else {
+                delete(event.photoId)
+            }
+        }
+    }
 }

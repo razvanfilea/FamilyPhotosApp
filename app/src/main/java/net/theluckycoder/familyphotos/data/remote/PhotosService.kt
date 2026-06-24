@@ -1,10 +1,10 @@
 package net.theluckycoder.familyphotos.data.remote
 
-import net.theluckycoder.familyphotos.data.model.ExifField
-import net.theluckycoder.familyphotos.data.model.FullPhotoList
-import net.theluckycoder.familyphotos.data.model.db.NetworkFolderEntity
+import net.theluckycoder.familyphotos.data.model.network.ExifField
+import net.theluckycoder.familyphotos.data.model.network.FullPhotoList
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
-import net.theluckycoder.familyphotos.data.model.PartialPhotoList
+import net.theluckycoder.familyphotos.data.model.network.PartialPhotoList
+import net.theluckycoder.familyphotos.data.model.network.SharedSyncFolder
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -26,8 +26,8 @@ interface PhotosService {
     @GET("/photos/sync/partial")
     suspend fun getEventLogsList(@Query("last_synced_event_id") lastSyncedEventLogId: Long): Response<PartialPhotoList>
 
-    @GET("/photos/sync/folders")
-    suspend fun getFolders(): Response<List<NetworkFolderEntity>>
+    @POST("/photos/sync/folders")
+    suspend fun syncFolders(@Body cursors: Map<Long, Long>): Response<List<SharedSyncFolder>>
 
     @Streaming
     @GET("photos/download/{id}")

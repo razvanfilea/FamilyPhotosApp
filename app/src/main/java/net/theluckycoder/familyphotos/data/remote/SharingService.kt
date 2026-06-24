@@ -1,6 +1,6 @@
 package net.theluckycoder.familyphotos.data.remote
 
-import net.theluckycoder.familyphotos.data.model.CreateShareRequest
+import net.theluckycoder.familyphotos.data.model.network.CreateShareRequest
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.db.SharedNetworkFolder
 import retrofit2.Response

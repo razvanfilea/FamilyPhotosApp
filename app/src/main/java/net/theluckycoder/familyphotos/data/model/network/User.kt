@@ -1,4 +1,4 @@
-package net.theluckycoder.familyphotos.data.model
+package net.theluckycoder.familyphotos.data.model.network
 
 import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
@@ -14,4 +14,3 @@ data class User(
     @SerialName("display_name")
     val displayName: String,
 )
-

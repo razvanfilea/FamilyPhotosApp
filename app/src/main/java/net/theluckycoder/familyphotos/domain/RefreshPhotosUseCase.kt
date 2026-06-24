@@ -22,6 +22,14 @@ class RefreshPhotosUseCase @Inject constructor(
             foldersRepository.updatePhoneAlbums()
         }
 
+        try {
+            serverRepository.syncFolders()
+        } catch (e: Exception) {
+            Log.e("RefreshPhotosUseCase", "Failed to sync folders: ${e.message}", e)
+            localPhotosJob.await()
+            return@coroutineScope Result.Error(e)
+        }
+
         var response = try {
             serverRepository.downloadPartialPhotos()
         } catch (e: Exception) {
@@ -36,7 +44,7 @@ class RefreshPhotosUseCase @Inject constructor(
 
         if (response == ServerRepository.DownloadResponse.FULL_DOWNLOAD_NEEDED || response == ServerRepository.DownloadResponse.UNSUCCESSFUL) {
             try {
-                response = serverRepository.downloadAllPhotos()
+                response = serverRepository.downloadUserPhotos()
             } catch (e: Exception) {
                 Log.e("RefreshPhotosUseCase", "Failed to download photos", e)
                 localPhotosJob.await()
@@ -45,10 +53,6 @@ class RefreshPhotosUseCase @Inject constructor(
         }
 
         isOnlineState.value = response == ServerRepository.DownloadResponse.SUCCESSFUL
-
-        if (response == ServerRepository.DownloadResponse.SUCCESSFUL) {
-            serverRepository.syncFolders()
-        }
 
         localPhotosJob.await()
 

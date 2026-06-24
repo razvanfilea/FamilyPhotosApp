@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.data.model.PhotoType
+import net.theluckycoder.familyphotos.data.model.db.FolderCursor
 import net.theluckycoder.familyphotos.data.model.db.NetworkFolder
 import net.theluckycoder.familyphotos.data.model.db.NetworkFolderEntity
 
@@ -19,43 +20,40 @@ interface NetworkFoldersDao {
     @Query("DELETE FROM network_folder")
     suspend fun deleteAll()
 
-    @Transaction
-    suspend fun replaceAll(folders: List<NetworkFolderEntity>) {
-        deleteAll()
-        insertAll(folders)
-    }
-
     @Query("SELECT * FROM network_folder")
     fun getAll(): Flow<List<NetworkFolderEntity>>
 
     @Query("SELECT name FROM network_folder WHERE id = :folderId")
     suspend fun getFolderName(folderId: Long): String?
 
+    @Query("SELECT id, latestEventId FROM network_folder WHERE ownerId IS NOT NULL AND ownerId != :currentUserId")
+    suspend fun getSharedFolderCursors(currentUserId: String): List<FolderCursor>
+
     @Query(
         """
-        SELECT nf.id AS folderId, nf.name AS folderName, latest.userId,
-               latest.id AS coverPhotoId,
-               (SELECT COUNT(*) FROM network_photo sub
-                WHERE sub.folderId = nf.id AND sub.trashedOn IS NULL
-                AND CASE WHEN :photoType = 1 THEN (sub.userId IS NOT NULL)
-                         WHEN :photoType = 2 THEN (sub.userId IS NULL)
-                         ELSE 1 END) AS photoCount
+        SELECT nf.id AS folderId, nf.name AS folderName, agg.userId,
+               agg.coverPhotoId, agg.photoCount
         FROM network_folder nf
-        INNER JOIN network_photo latest ON latest.folderId = nf.id
-            AND latest.trashedOn IS NULL
-            AND CASE WHEN :photoType = 1 THEN (latest.userId IS NOT NULL)
-                     WHEN :photoType = 2 THEN (latest.userId IS NULL)
+        INNER JOIN (
+            SELECT folderId, COUNT(*) AS photoCount, MAX(timeCreated),
+                   id AS coverPhotoId, userId
+            FROM network_photo
+            WHERE trashedOn IS NULL
+            AND CASE WHEN :photoType = 1 THEN (userId = :currentUserId)
+                     WHEN :photoType = 2 THEN (userId IS NULL)
                      ELSE 1 END
-            AND latest.timeCreated = (
-                SELECT MAX(np2.timeCreated) FROM network_photo np2
-                WHERE np2.folderId = nf.id AND np2.trashedOn IS NULL
-                AND CASE WHEN :photoType = 1 THEN (np2.userId IS NOT NULL)
-                         WHEN :photoType = 2 THEN (np2.userId IS NULL)
-                         ELSE 1 END)
+            GROUP BY folderId
+        ) agg ON agg.folderId = nf.id
         ORDER BY
             CASE WHEN :ascending <> 0 THEN nf.name END ASC,
             CASE WHEN :ascending = 0 THEN nf.name END DESC
         """
     )
-    fun getFolders(photoType: PhotoType, ascending: Boolean): Flow<List<NetworkFolder>>
+    fun getFolders(photoType: PhotoType, ascending: Boolean, currentUserId: String): Flow<List<NetworkFolder>>
+
+    @Transaction
+    suspend fun replaceAll(folders: List<NetworkFolderEntity>) {
+        deleteAll()
+        insertAll(folders)
+    }
 }
