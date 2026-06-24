@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
-import net.theluckycoder.familyphotos.core.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.LoginRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository

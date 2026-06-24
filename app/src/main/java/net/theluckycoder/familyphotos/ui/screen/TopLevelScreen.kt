@@ -16,7 +16,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.paging.compose.LazyPagingItems
 import androidx.window.core.layout.WindowSizeClass
-import net.theluckycoder.familyphotos.core.data.model.db.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.ui.TopLevelTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.DeviceTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.NetworkFoldersTab

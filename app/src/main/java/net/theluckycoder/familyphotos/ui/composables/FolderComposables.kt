@@ -65,8 +65,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.core.data.model.db.Photo
-import net.theluckycoder.familyphotos.core.data.model.db.PhotoFolder
+import net.theluckycoder.familyphotos.core.data.model.Photo
+import net.theluckycoder.familyphotos.core.data.model.PhotoFolder
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.utils.normalize
 

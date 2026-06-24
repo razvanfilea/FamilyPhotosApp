@@ -19,10 +19,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import net.theluckycoder.familyphotos.core.data.model.network.UserLogin
+import net.theluckycoder.familyphotos.core.data.model.network.UserLoginDto
 
 @Composable
-fun LoginScreen(loginAction: (UserLogin) -> Unit) = Scaffold {
+fun LoginScreen(loginAction: (UserLoginDto) -> Unit) = Scaffold {
     Box(Modifier.padding(it)) {
         Column(
             modifier = Modifier
@@ -64,7 +64,7 @@ fun LoginScreen(loginAction: (UserLogin) -> Unit) = Scaffold {
                     .padding(top = 32.dp)
                     .align(Alignment.CenterHorizontally),
                 onClick = {
-                    val userLogin = UserLogin(userName.lowercase().trim(), password.trim())
+                    val userLogin = UserLoginDto(userName.lowercase().trim(), password.trim())
                     loginAction(userLogin)
                 }
             ) {

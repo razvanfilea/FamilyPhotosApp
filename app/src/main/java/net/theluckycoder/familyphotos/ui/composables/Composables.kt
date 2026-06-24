@@ -60,10 +60,10 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.core.data.model.db.Photo
-import net.theluckycoder.familyphotos.core.data.model.db.getPreviewUri
-import net.theluckycoder.familyphotos.core.data.model.db.getUri
-import net.theluckycoder.familyphotos.core.data.model.db.thumbHash
+import net.theluckycoder.familyphotos.core.data.model.Photo
+import net.theluckycoder.familyphotos.core.data.model.getPreviewUri
+import net.theluckycoder.familyphotos.core.data.model.getUri
+import net.theluckycoder.familyphotos.core.data.model.thumbHash
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.utils.ScaledBitmapPainter
 import net.theluckycoder.familyphotos.utils.ThumbHashCache

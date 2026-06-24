@@ -5,15 +5,14 @@ import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.RoomMasterTable.TABLE_NAME
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import net.theluckycoder.familyphotos.core.data.model.db.FavoriteNetworkPhoto
 import net.theluckycoder.familyphotos.core.data.model.db.LocalFolderToBackup
-import net.theluckycoder.familyphotos.core.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolderEntity
-import net.theluckycoder.familyphotos.core.data.model.db.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.core.data.model.db.ServerState
 import net.theluckycoder.familyphotos.core.data.model.db.UploadQueueEntry
 
@@ -40,12 +39,6 @@ internal abstract class PhotosDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: PhotosDatabase? = null
-
-        private val MIGRATION_8 = object : Migration(7, 8) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE backup_local_folders(name TEXT NOT NULL PRIMARY KEY)")
-            }
-        }
 
         private val MIGRATION_9 = object : Migration(8, 9) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -97,7 +90,7 @@ internal abstract class PhotosDatabase : RoomDatabase() {
 
         private val MIGRATION_14 = object : Migration(13, 14) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE network_folder (id INTEGER NOT NULL PRIMARY KEY, ownerId TEXT, name TEXT NOT NULL, createdAt INTEGER NOT NULL, latestEventId INTEGER NOT NULL DEFAULT 0)")
+                db.execSQL("CREATE TABLE network_folder (id INTEGER NOT NULL PRIMARY KEY, ownerId TEXT, name TEXT NOT NULL, createdAt INTEGER NOT NULL, latestEventId INTEGER NOT NULL DEFAULT 0, canUpload INTEGER NOT NULL DEFAULT 1, canDelete INTEGER NOT NULL DEFAULT 1)")
 
                 db.execSQL("CREATE TABLE network_photo_new (id INTEGER NOT NULL PRIMARY KEY, userId TEXT, name TEXT NOT NULL, timeCreated INTEGER NOT NULL, fileSize INTEGER NOT NULL, folderId INTEGER, trashedOn INTEGER, thumbHash TEXT)")
                 db.execSQL("INSERT INTO network_photo_new (id, userId, name, timeCreated, fileSize, trashedOn, thumbHash) SELECT id, userId, name, timeCreated, fileSize, trashedOn, thumbHash FROM network_photo")
@@ -119,7 +112,6 @@ internal abstract class PhotosDatabase : RoomDatabase() {
                     PhotosDatabase::class.java,
                     "photos_database"
                 ).addMigrations(
-                    MIGRATION_8,
                     MIGRATION_9,
                     MIGRATION_10,
                     MIGRATION_11,

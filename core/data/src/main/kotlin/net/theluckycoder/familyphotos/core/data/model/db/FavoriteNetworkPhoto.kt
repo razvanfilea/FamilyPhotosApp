@@ -3,6 +3,7 @@ package net.theluckycoder.familyphotos.core.data.model.db
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 
 @Entity(
     tableName = "favorite_network_photo",

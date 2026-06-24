@@ -6,7 +6,8 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "upload_queue", indices = [Index(value = ["localPhotoId"], unique = true)])
 data class UploadQueueEntry(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0L,
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0L,
     val localPhotoId: Long,
     val makePublic: Boolean,
     val uploadFolder: String?,

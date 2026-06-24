@@ -7,9 +7,9 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
-import net.theluckycoder.familyphotos.core.data.model.db.LocalFolder
+import net.theluckycoder.familyphotos.core.data.model.LocalFolder
 import net.theluckycoder.familyphotos.core.data.model.LocalNetworkReference
-import net.theluckycoder.familyphotos.core.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.core.data.model.db.MonthSummary
 
 @Dao

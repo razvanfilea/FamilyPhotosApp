@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 14,
-    "identityHash": "01acea0c87f654871b929f19a98c8b4e",
+    "identityHash": "7c686f31b4f39c1e181059870f3695e0",
     "entities": [
       {
         "tableName": "local_photo",
@@ -136,7 +136,7 @@
       },
       {
         "tableName": "network_folder",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `ownerId` TEXT, `name` TEXT NOT NULL, `latestEventId` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `ownerId` TEXT, `name` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `latestEventId` INTEGER NOT NULL, `canUpload` INTEGER NOT NULL, `canDelete` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -156,14 +156,26 @@
             "notNull": true
           },
           {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
             "fieldPath": "latestEventId",
             "columnName": "latestEventId",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "createdAt",
-            "columnName": "createdAt",
+            "fieldPath": "canUpload",
+            "columnName": "canUpload",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "canDelete",
+            "columnName": "canDelete",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -321,7 +333,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '01acea0c87f654871b929f19a98c8b4e')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7c686f31b4f39c1e181059870f3695e0')"
     ]
   }
 }

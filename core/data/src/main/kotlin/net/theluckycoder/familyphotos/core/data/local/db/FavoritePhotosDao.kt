@@ -7,7 +7,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.core.data.model.db.FavoriteNetworkPhoto
-import net.theluckycoder.familyphotos.core.data.model.db.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 
 @Dao
 internal interface FavoritePhotosDao {

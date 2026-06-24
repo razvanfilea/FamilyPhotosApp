@@ -1,5 +1,8 @@
 package net.theluckycoder.familyphotos.core.data.model.db
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 data class PhotoStatistics(
     val familyCount: Int,
     val personalCount: Int,

@@ -30,7 +30,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
@@ -40,14 +39,12 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.ImageLoader
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
-import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.BuildConfig
-import net.theluckycoder.familyphotos.core.data.model.db.Photo
-import androidx.paging.compose.LazyPagingItems
+import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.ui.composables.PhotosViewer
 import net.theluckycoder.familyphotos.ui.screen.DuplicatesScreen
 import net.theluckycoder.familyphotos.ui.screen.FolderScreen
