@@ -4,10 +4,12 @@ import android.util.Log
 import dagger.Lazy
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import net.theluckycoder.familyphotos.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.data.local.db.FavoritePhotosDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkFoldersDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkPhotosDao
-import net.theluckycoder.familyphotos.data.model.ExifData
+import net.theluckycoder.familyphotos.data.model.db.NetworkFolderEntity
+import net.theluckycoder.familyphotos.data.model.network.ExifData
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.remote.PhotosService
 import javax.inject.Inject
@@ -24,6 +26,7 @@ class ServerRepository @Inject constructor(
     private val networkPhotosDao: NetworkPhotosDao,
     private val networkFoldersDao: NetworkFoldersDao,
     private val favoritePhotosDao: FavoritePhotosDao,
+    private val userDataStore: UserDataStore,
 ) {
 
     enum class DownloadResponse {
@@ -48,7 +51,7 @@ class ServerRepository @Inject constructor(
         } else {
             val partialPhotos = response.body()!!
             if (partialPhotos.events.isNotEmpty()) {
-                networkPhotosDao.updatePartials(partialPhotos.events, partialPhotos.eventLogId)
+                networkPhotosDao.updatePartialSync(partialPhotos.events, partialPhotos.eventLogId)
             }
 
             Log.i(
@@ -60,7 +63,10 @@ class ServerRepository @Inject constructor(
         }
     }
 
-    suspend fun downloadAllPhotos(): DownloadResponse = coroutineScope {
+    suspend fun downloadUserPhotos(): DownloadResponse = coroutineScope {
+        val userId = userDataStore.userId.value
+            ?: return@coroutineScope DownloadResponse.NOT_LOGGED_IN
+
         val service = photosService.get()
         val photosAsync = async { service.getFullPhotosList() }
 
@@ -74,13 +80,12 @@ class ServerRepository @Inject constructor(
             val fullPhotos = photosResponse.body()!!
 
             if (fullPhotos.photos.isNotEmpty()) {
-                networkPhotosDao.replaceAll(fullPhotos.photos, fullPhotos.eventLogId)
+                networkPhotosDao.updateFullSync(fullPhotos.photos, fullPhotos.eventLogId, userId)
                 Log.i(
                     "ServerRepository",
-                    "Downloaded all server photos. EventLogId: ${fullPhotos.eventLogId}"
+                    "Downloaded all user photos. EventLogId: ${fullPhotos.eventLogId}"
                 )
 
-                // Only insert favorite photos after downloading all photos
                 favoritePhotosResponse.body()?.let { favoritePhotos ->
                     favoritePhotosDao.replaceAll(favoritePhotos)
                 }
@@ -96,12 +101,45 @@ class ServerRepository @Inject constructor(
     }
 
     suspend fun syncFolders(): Boolean {
-        val response = photosService.get().getFolders()
-        if (response.isSuccessful) {
-            networkFoldersDao.replaceAll(response.body()!!)
-            return true
+        val currentUserId = userDataStore.userId.value ?: return false
+
+        val localCursors = networkFoldersDao.getSharedFolderCursors(currentUserId)
+        val requestBody = localCursors.associate { it.id to it.latestEventId }
+
+        val response = photosService.get().syncFolders(requestBody)
+        if (!response.isSuccessful) {
+            Log.e("ServerRepository", "Folder sync failed: ${response.code()}")
+            return false
         }
-        return false
+
+        val responseFolders = response.body()!!
+
+        val responseFolderIds = responseFolders.map { it.id }.toSet()
+        val localSharedFolderIds = localCursors.map { it.id }.toSet()
+        for (folderId in (localSharedFolderIds - responseFolderIds)) {
+            networkPhotosDao.deletePhotosByFolderId(folderId)
+        }
+
+        for (folder in responseFolders) {
+            when {
+                folder.photos != null -> networkPhotosDao.replaceSharedFolderPhotos(folder.id, folder.photos)
+                folder.events != null -> networkPhotosDao.applySharedFolderEvents(folder.events)
+            }
+        }
+
+        val existingCursors = localCursors.associate { it.id to it.latestEventId }
+        val folderEntities = responseFolders.map { folder ->
+            NetworkFolderEntity(
+                id = folder.id,
+                ownerId = folder.ownerId,
+                name = folder.name,
+                latestEventId = folder.latestEventId ?: existingCursors[folder.id] ?: 0L,
+                createdAt = 0L,
+            )
+        }
+        networkFoldersDao.replaceAll(folderEntities)
+
+        return true
     }
 
     suspend fun trashNetworkPhoto(photoIds: LongArray, trash: Boolean): Boolean {

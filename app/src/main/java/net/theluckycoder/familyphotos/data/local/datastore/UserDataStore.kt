@@ -6,13 +6,20 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import net.theluckycoder.familyphotos.di.DefaultCoroutineScope
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class UserDataStore @Inject constructor(@ApplicationContext context: Context) {
+class UserDataStore @Inject constructor(
+    @ApplicationContext context: Context,
+    scope: DefaultCoroutineScope,
+) {
 
     private val userDataStore = context.userDataStore
 
@@ -23,8 +30,9 @@ class UserDataStore @Inject constructor(@ApplicationContext context: Context) {
         preferences[SESSION_COOKIE] = value
     }
 
-    val userIdFlow: Flow<String?> =
-        userDataStore.data.map { it[USER_ID] }.distinctUntilChanged()
+    val userId: StateFlow<String?> = userDataStore.data
+        .map { it[USER_ID] }
+        .stateIn(scope, SharingStarted.Eagerly, null)
 
     suspend fun setUserName(value: String) = userDataStore.edit { preferences ->
         preferences[USER_ID] = value

@@ -10,6 +10,7 @@ import kotlinx.serialization.Serializable
 data class NetworkFolderEntity(
     @PrimaryKey val id: Long,
     @SerialName("owner_id") val ownerId: String?,
-    val name: String,
+    @SerialName("name") val name: String,
+    @SerialName("latest_event_id") val latestEventId: Long = 0,
     @SerialName("created_at") val createdAt: Long,
 )

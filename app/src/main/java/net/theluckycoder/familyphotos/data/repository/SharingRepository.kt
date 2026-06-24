@@ -2,7 +2,7 @@ package net.theluckycoder.familyphotos.data.repository
 
 import android.util.Log
 import dagger.Lazy
-import net.theluckycoder.familyphotos.data.model.CreateShareRequest
+import net.theluckycoder.familyphotos.data.model.network.CreateShareRequest
 import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
 import net.theluckycoder.familyphotos.data.model.db.SharedNetworkFolder
 import net.theluckycoder.familyphotos.data.remote.SharingService

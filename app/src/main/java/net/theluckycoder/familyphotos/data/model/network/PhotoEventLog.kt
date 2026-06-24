@@ -1,4 +1,4 @@
-package net.theluckycoder.familyphotos.data.model
+package net.theluckycoder.familyphotos.data.model.network
 
 import android.util.Base64
 import kotlinx.serialization.SerialName

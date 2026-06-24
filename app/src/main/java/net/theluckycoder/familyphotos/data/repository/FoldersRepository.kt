@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.launch
+import net.theluckycoder.familyphotos.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.data.local.db.LocalFolderBackupDao
 import net.theluckycoder.familyphotos.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.data.local.db.NetworkFoldersDao
@@ -44,7 +45,9 @@ class FoldersRepository @Inject constructor(
     private val networkPhotosDao: NetworkPhotosDao,
     private val networkFoldersDao: NetworkFoldersDao,
     private val localFolderBackupDao: LocalFolderBackupDao,
+    private val userDataStore: UserDataStore,
 ) {
+    private val currentUserId: String get() = userDataStore.userId.value ?: ""
 
     companion object {
         private const val TAG = "MediaStoreObserver"
@@ -54,7 +57,7 @@ class FoldersRepository @Inject constructor(
         localPhotosDao.getFolders(ascending)
 
     fun networkFoldersFlow(photoType: PhotoType, ascending: Boolean): Flow<List<NetworkFolder>> =
-        networkFoldersDao.getFolders(photoType, ascending)
+        networkFoldersDao.getFolders(photoType, ascending, currentUserId)
 
     fun localPhotosFromFolder(folder: String, count: Int) =
         localPhotosDao.getFolderPhotos(folder, count)
@@ -63,13 +66,13 @@ class FoldersRepository @Inject constructor(
         localPhotosDao.getFolderPhotosPaged(folder)
 
     fun networkPhotosFromFolderPaged(folderId: Long, photoType: PhotoType) =
-        networkPhotosDao.getFolderPhotos(folderId, photoType)
+        networkPhotosDao.getFolderPhotos(folderId, photoType, currentUserId)
 
     fun localMonthSummariesForFolder(folder: String): Flow<List<MonthSummary>> =
         localPhotosDao.getMonthSummariesForFolder(folder)
 
     fun networkMonthSummariesForFolder(folderId: Long, photoType: PhotoType): Flow<List<MonthSummary>> =
-        networkPhotosDao.getMonthSummariesForFolder(folderId, photoType)
+        networkPhotosDao.getMonthSummariesForFolder(folderId, photoType, currentUserId)
 
     suspend fun updatePhoneAlbums() {
         val photos = try {

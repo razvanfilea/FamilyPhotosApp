@@ -7,7 +7,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.data.local.datastore.UserDataStore
-import net.theluckycoder.familyphotos.data.model.UserLogin
+import net.theluckycoder.familyphotos.data.model.network.UserLogin
 import net.theluckycoder.familyphotos.data.remote.UserService
 import javax.inject.Inject
 
@@ -17,7 +17,7 @@ class LoginRepository @Inject constructor(
     private val userService: Lazy<UserService>,
 ) {
     val isLoggedIn =
-        userDataStore.sessionCookie.combine(userDataStore.userIdFlow) { sessionCookie, userName ->
+        userDataStore.sessionCookie.combine(userDataStore.userId) { sessionCookie, userName ->
             sessionCookie != null && userName != null
         }
 

@@ -1,6 +1,6 @@
 package net.theluckycoder.familyphotos.data.remote
 
-import net.theluckycoder.familyphotos.data.model.User
+import net.theluckycoder.familyphotos.data.model.network.User
 import retrofit2.Response
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
