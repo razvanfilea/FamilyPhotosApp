@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import net.theluckycoder.familyphotos.data.model.network.UserLogin
+import net.theluckycoder.familyphotos.core.data.model.network.UserLogin
 
 @Composable
 fun LoginScreen(loginAction: (UserLogin) -> Unit) = Scaffold {

@@ -15,9 +15,9 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
-import net.theluckycoder.familyphotos.data.model.TimelineLayout
-import net.theluckycoder.familyphotos.data.repository.PhotosRepository
+import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
+import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
+import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel.Companion.PAGING_CONFIG
 import javax.inject.Inject
 

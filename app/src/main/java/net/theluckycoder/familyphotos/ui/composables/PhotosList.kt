@@ -48,11 +48,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.TimelineLayout
-import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
-import net.theluckycoder.familyphotos.data.model.db.MonthSummary
-import net.theluckycoder.familyphotos.data.model.db.Photo
-import net.theluckycoder.familyphotos.data.model.db.isVideo
+import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
+import net.theluckycoder.familyphotos.core.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.core.data.model.db.MonthSummary
+import net.theluckycoder.familyphotos.core.data.model.db.Photo
+import net.theluckycoder.familyphotos.core.data.model.db.isVideo
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.utils.buildDateString
 import kotlin.time.Duration.Companion.milliseconds

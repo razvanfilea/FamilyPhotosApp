@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.PhotoType
+import net.theluckycoder.familyphotos.core.data.model.PhotoType
 
 @Composable
 fun PhotoTypeSegmentedButtons(

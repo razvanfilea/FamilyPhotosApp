@@ -7,17 +7,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
-import net.theluckycoder.familyphotos.data.local.db.NetworkFoldersDao
-import net.theluckycoder.familyphotos.data.model.db.PhotoStatistics
-import net.theluckycoder.familyphotos.data.repository.PhotosRepository
-import net.theluckycoder.familyphotos.data.repository.ServerRepository
+import net.theluckycoder.familyphotos.core.data.model.db.PhotoStatistics
+import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
+import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
+import net.theluckycoder.familyphotos.core.data.repository.ServerRepository
 import javax.inject.Inject
 
 @HiltViewModel
 class UtilitiesViewModel @Inject constructor(
     photosRepository: PhotosRepository,
     private val serverRepository: ServerRepository,
-    private val networkFoldersDao: NetworkFoldersDao,
+    private val foldersRepository: FoldersRepository,
 ) : ViewModel() {
 
     val photoStatistics = photosRepository.getPhotoStatistics()
@@ -31,5 +31,5 @@ class UtilitiesViewModel @Inject constructor(
     }
 
     suspend fun getFolderName(folderId: Long): String? =
-        networkFoldersDao.getFolderName(folderId)
+        foldersRepository.getFolderName(folderId)
 }

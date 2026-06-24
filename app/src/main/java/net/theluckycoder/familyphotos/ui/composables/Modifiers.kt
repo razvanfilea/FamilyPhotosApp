@@ -36,8 +36,8 @@ import androidx.compose.ui.unit.toIntRect
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import net.theluckycoder.familyphotos.data.model.TimelineLayout
-import net.theluckycoder.familyphotos.data.model.db.Photo
+import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
+import net.theluckycoder.familyphotos.core.data.model.db.Photo
 import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
 import kotlin.math.abs
 

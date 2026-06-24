@@ -9,8 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
-import net.theluckycoder.familyphotos.di.DefaultCoroutineScope
+import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
+import net.theluckycoder.familyphotos.core.data.di.DefaultCoroutineScope
 import net.theluckycoder.familyphotos.workers.enqueuePeriodBackupWorker
 import javax.inject.Inject
 

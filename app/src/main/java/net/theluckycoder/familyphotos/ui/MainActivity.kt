@@ -40,13 +40,13 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.ImageLoader
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
-import net.theluckycoder.familyphotos.data.local.datastore.SettingsDataStore
+import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.BuildConfig
-import net.theluckycoder.familyphotos.data.model.db.Photo
+import net.theluckycoder.familyphotos.core.data.model.db.Photo
 import androidx.paging.compose.LazyPagingItems
 import net.theluckycoder.familyphotos.ui.composables.PhotosViewer
 import net.theluckycoder.familyphotos.ui.screen.DuplicatesScreen

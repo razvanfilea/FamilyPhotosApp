@@ -5,7 +5,7 @@ import androidx.annotation.StringRes
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.data.model.db.Photo
+import net.theluckycoder.familyphotos.core.data.model.db.Photo
 
 @Serializable
 object TopLevelNav : NavKey

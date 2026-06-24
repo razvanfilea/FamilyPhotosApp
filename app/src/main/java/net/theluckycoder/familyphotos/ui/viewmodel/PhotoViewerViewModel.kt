@@ -13,11 +13,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import net.theluckycoder.familyphotos.data.model.network.ExifData
-import net.theluckycoder.familyphotos.data.model.db.LocalPhoto
-import net.theluckycoder.familyphotos.data.model.db.NetworkPhoto
-import net.theluckycoder.familyphotos.data.repository.PhotosRepository
-import net.theluckycoder.familyphotos.data.repository.ServerRepository
+import net.theluckycoder.familyphotos.core.data.model.network.ExifData
+import net.theluckycoder.familyphotos.core.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.core.data.model.db.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
+import net.theluckycoder.familyphotos.core.data.repository.ServerRepository
 import okhttp3.OkHttpClient
 import javax.inject.Inject
 
