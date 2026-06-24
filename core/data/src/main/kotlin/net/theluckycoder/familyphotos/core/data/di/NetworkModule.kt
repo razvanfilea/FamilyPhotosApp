@@ -13,6 +13,7 @@ import kotlinx.serialization.json.Json
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.core.data.remote.PhotosService
 import net.theluckycoder.familyphotos.core.data.remote.SharingService
+import net.theluckycoder.familyphotos.core.data.remote.SyncService
 import net.theluckycoder.familyphotos.core.data.remote.UserService
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
@@ -117,6 +118,11 @@ object NetworkModule {
     @Provides
     internal fun providePhotosService(retrofit: Retrofit): PhotosService =
         retrofit.create(PhotosService::class.java)
+
+    @Singleton
+    @Provides
+    internal fun provideSyncService(retrofit: Retrofit): SyncService =
+        retrofit.create(SyncService::class.java)
 
     @Singleton
     @Provides

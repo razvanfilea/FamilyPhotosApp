@@ -1,6 +1,8 @@
 package net.theluckycoder.familyphotos.core.data.model
 
+import android.net.Uri
 import androidx.compose.runtime.Immutable
+import androidx.room.ColumnInfo
 import net.theluckycoder.familyphotos.core.data.model.db.MonthSummary
 import java.util.TreeMap
 

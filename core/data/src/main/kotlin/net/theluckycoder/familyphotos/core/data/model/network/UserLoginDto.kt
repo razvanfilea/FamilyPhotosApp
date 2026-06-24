@@ -6,7 +6,7 @@ import androidx.compose.runtime.Immutable
 
 @Immutable
 @Keep
-data class UserLogin(
+data class UserLoginDto(
     val userId: String,
     val password: String,
 ) {

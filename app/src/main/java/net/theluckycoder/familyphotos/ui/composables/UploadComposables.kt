@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -35,9 +34,9 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolder
-import net.theluckycoder.familyphotos.core.data.model.db.Photo
-import net.theluckycoder.familyphotos.core.data.model.db.isPublic
+import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
+import net.theluckycoder.familyphotos.core.data.model.Photo
+import net.theluckycoder.familyphotos.core.data.model.isPublic
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 
 @Immutable

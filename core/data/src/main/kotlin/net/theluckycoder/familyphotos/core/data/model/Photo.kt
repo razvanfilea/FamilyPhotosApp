@@ -1,7 +1,6 @@
-package net.theluckycoder.familyphotos.core.data.model.db
+package net.theluckycoder.familyphotos.core.data.model
 
 import android.net.Uri
-import android.os.Parcelable
 import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
 import androidx.core.net.toUri
@@ -9,15 +8,13 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import kotlinx.parcelize.Parcelize
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.theluckycoder.familyphotos.core.data.di.NetworkModule
 import net.theluckycoder.familyphotos.core.data.utils.UriAsStringSerializer
 
 @Immutable
 @Serializable
-sealed class Photo : Parcelable {
+sealed class Photo {
 
     abstract val id: Long
     abstract val name: String
@@ -33,9 +30,7 @@ sealed class Photo : Parcelable {
 }
 
 @Immutable
-@Keep
 @Serializable
-@Parcelize
 @Entity(tableName = "local_photo")
 data class LocalPhoto(
     @PrimaryKey
@@ -44,10 +39,10 @@ data class LocalPhoto(
     override val name: String,
     override val timeCreated: Long,
     val folder: String?,
-    @Serializable(UriAsStringSerializer::class)
+    @kotlinx.serialization.Serializable(UriAsStringSerializer::class)
     val uri: Uri,
     val mimeType: String? = null,
-) : Photo(), Parcelable {
+) : Photo() {
 
     val isSavedToCloud: Boolean
         @Ignore
@@ -56,7 +51,6 @@ data class LocalPhoto(
 
 @Immutable
 @Keep
-@Parcelize
 @Serializable
 @Entity(
     tableName = "network_photo",
@@ -68,20 +62,14 @@ data class LocalPhoto(
 data class NetworkPhoto(
     @PrimaryKey
     override val id: Long,
-    @SerialName("user_id")
     val userId: String?,
     override val name: String,
-    @SerialName("created_at")
     override val timeCreated: Long,
-    @SerialName("file_size")
     val fileSize: Long = 0,
-    @SerialName("folder_id")
     val folderId: Long? = null,
-    @SerialName("trashed_on")
     val trashedOn: Long? = null,
-    @SerialName("thumb_hash")
     val thumbHash: String? = null,
-) : Photo(), Parcelable
+) : Photo()
 
 val Photo.isVideo
     get() = when (this) {

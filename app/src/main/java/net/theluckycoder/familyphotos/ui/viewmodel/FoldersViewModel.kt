@@ -23,9 +23,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
-import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
-import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolder
+import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository

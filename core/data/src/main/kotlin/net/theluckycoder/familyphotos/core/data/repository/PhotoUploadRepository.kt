@@ -9,8 +9,9 @@ import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.core.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.core.data.local.db.UploadQueueDao
-import net.theluckycoder.familyphotos.core.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.core.data.model.db.UploadQueueEntry
+import net.theluckycoder.familyphotos.core.data.model.network.toEntity
 import net.theluckycoder.familyphotos.core.data.remote.PhotosService
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -114,7 +115,8 @@ class PhotoUploadRepository @Inject internal constructor(
             folderName = uploadFolder,
         )
 
-        response.body()?.let { networkPhoto ->
+        response.body()?.let { dto ->
+            val networkPhoto = dto.toEntity()
             networkPhotosDao.insert(networkPhoto)
             localPhotosDao.insertOrReplace(localPhoto.copy(networkPhotoId = networkPhoto.id))
             return true

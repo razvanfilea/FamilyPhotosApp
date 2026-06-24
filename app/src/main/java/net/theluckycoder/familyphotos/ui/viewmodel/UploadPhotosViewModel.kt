@@ -14,8 +14,8 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
-import net.theluckycoder.familyphotos.core.data.model.db.LocalPhoto
-import net.theluckycoder.familyphotos.core.data.model.db.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
+import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.core.data.model.db.UploadQueueEntry
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository

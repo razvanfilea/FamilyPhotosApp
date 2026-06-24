@@ -1,8 +1,7 @@
 package net.theluckycoder.familyphotos.core.data.remote
 
 import net.theluckycoder.familyphotos.core.data.model.network.CreateShareRequest
-import net.theluckycoder.familyphotos.core.data.model.db.NetworkPhoto
-import net.theluckycoder.familyphotos.core.data.model.db.SharedNetworkFolder
+import net.theluckycoder.familyphotos.core.data.model.network.SharedNetworkFolderDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -12,17 +11,11 @@ import retrofit2.http.Path
 
 internal interface SharingService {
 
-    @GET("/photos/sharing/with-me")
-    suspend fun getSharesWithMe(): Response<List<SharedNetworkFolder>>
-
-    @GET("/photos/sharing/{share_id}/photos")
-    suspend fun getSharedFolderPhotos(@Path("share_id") shareId: Long): Response<List<NetworkPhoto>>
-
     @GET("/photos/sharing/")
-    suspend fun getMyShares(): Response<List<SharedNetworkFolder>>
+    suspend fun getMyShares(): Response<List<SharedNetworkFolderDto>>
 
     @POST("/photos/sharing/")
-    suspend fun createShare(@Body body: CreateShareRequest): Response<SharedNetworkFolder>
+    suspend fun createShare(@Body body: CreateShareRequest): Response<SharedNetworkFolderDto>
 
     @DELETE("/photos/sharing/{share_id}")
     suspend fun revokeShare(@Path("share_id") shareId: Long): Response<Void>

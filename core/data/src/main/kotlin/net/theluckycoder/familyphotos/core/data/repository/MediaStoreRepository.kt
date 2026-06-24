@@ -10,9 +10,9 @@ import android.webkit.MimeTypeMap
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import net.theluckycoder.familyphotos.core.data.local.db.LocalPhotosDao
-import net.theluckycoder.familyphotos.core.data.model.db.LocalPhoto
-import net.theluckycoder.familyphotos.core.data.model.db.NetworkPhoto
-import net.theluckycoder.familyphotos.core.data.model.db.isVideo
+import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
+import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.isVideo
 import net.theluckycoder.familyphotos.core.data.remote.PhotosService
 import java.io.File
 import java.io.IOException

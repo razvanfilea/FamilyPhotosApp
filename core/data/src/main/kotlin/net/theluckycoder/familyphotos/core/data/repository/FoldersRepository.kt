@@ -28,10 +28,10 @@ import net.theluckycoder.familyphotos.core.data.local.db.NetworkFoldersDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.core.data.model.db.LocalFolderToBackup
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
-import net.theluckycoder.familyphotos.core.data.model.db.LocalFolder
-import net.theluckycoder.familyphotos.core.data.model.db.LocalPhoto
+import net.theluckycoder.familyphotos.core.data.model.LocalFolder
+import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.core.data.model.db.MonthSummary
-import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolder
+import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.ExperimentalTime

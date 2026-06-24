@@ -9,9 +9,11 @@ import net.theluckycoder.familyphotos.core.data.local.db.FavoritePhotosDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkFoldersDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolderEntity
-import net.theluckycoder.familyphotos.core.data.model.network.ExifData
-import net.theluckycoder.familyphotos.core.data.model.db.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.ExifData
+import net.theluckycoder.familyphotos.core.data.model.network.toEntity
 import net.theluckycoder.familyphotos.core.data.remote.PhotosService
+import net.theluckycoder.familyphotos.core.data.remote.SyncService
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -22,6 +24,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class ServerRepository @Inject internal constructor(
+    private val syncService: Lazy<SyncService>,
     private val photosService: Lazy<PhotosService>,
     private val networkPhotosDao: NetworkPhotosDao,
     private val networkFoldersDao: NetworkFoldersDao,
@@ -40,7 +43,7 @@ class ServerRepository @Inject internal constructor(
         val lastSyncedEventLogId = networkPhotosDao.getEventLogId()
         Log.i("ServerRepository", "Last synced event id: $lastSyncedEventLogId")
 
-        val response = photosService.get().getEventLogsList(lastSyncedEventLogId)
+        val response = syncService.get().getEventLogsList(lastSyncedEventLogId)
 
         if (!response.isSuccessful) {
             return when (response.code()) {
@@ -67,10 +70,10 @@ class ServerRepository @Inject internal constructor(
         val userId = userDataStore.userId.value
             ?: return@coroutineScope DownloadResponse.NOT_LOGGED_IN
 
-        val service = photosService.get()
+        val service = syncService.get()
         val photosAsync = async { service.getFullPhotosList() }
 
-        val favoritePhotosResponse = service.getFavorites()
+        val favoritePhotosResponse = photosService.get().getFavorites()
         favoritePhotosResponse.errorBody()
             ?.let { Log.e("ServerRepository", "Failed to getOrCompute favorites ${it.string()}") }
 
@@ -80,7 +83,7 @@ class ServerRepository @Inject internal constructor(
             val fullPhotos = photosResponse.body()!!
 
             if (fullPhotos.photos.isNotEmpty()) {
-                networkPhotosDao.updateFullSync(fullPhotos.photos, fullPhotos.eventLogId, userId)
+                networkPhotosDao.updateFullSync(fullPhotos.photos.map { it.toEntity() }, fullPhotos.eventLogId, userId)
                 Log.i(
                     "ServerRepository",
                     "Downloaded all user photos. EventLogId: ${fullPhotos.eventLogId}"
@@ -106,7 +109,7 @@ class ServerRepository @Inject internal constructor(
         val localCursors = networkFoldersDao.getSharedFolderCursors(currentUserId)
         val requestBody = localCursors.associate { it.id to it.latestEventId }
 
-        val response = photosService.get().syncFolders(requestBody)
+        val response = syncService.get().syncFolders(requestBody)
         if (!response.isSuccessful) {
             Log.e("ServerRepository", "Folder sync failed: ${response.code()}")
             return false
@@ -122,7 +125,7 @@ class ServerRepository @Inject internal constructor(
 
         for (folder in responseFolders) {
             when {
-                folder.photos != null -> networkPhotosDao.replaceSharedFolderPhotos(folder.id, folder.photos)
+                folder.photos != null -> networkPhotosDao.replaceSharedFolderPhotos(folder.id, folder.photos.map { it.toEntity() })
                 folder.events != null -> networkPhotosDao.applySharedFolderEvents(folder.events)
             }
         }
@@ -149,7 +152,7 @@ class ServerRepository @Inject internal constructor(
 
         if (successful) {
             Log.d("PhotosListRepository", "Trashed photo ($trash): $photoIds")
-            networkPhotosDao.insert(response.body()!!)
+            networkPhotosDao.insert(response.body()!!.map { it.toEntity() })
         } else {
             Log.e("PhotosListRepository", "Failed to trash photo ($trash): $photoIds, code=${response.code()}, error=${response.errorBody()?.string()}")
         }
@@ -191,7 +194,7 @@ class ServerRepository @Inject internal constructor(
         if (!response.isSuccessful || changedPhotos == null)
             return false
 
-        networkPhotosDao.insert(changedPhotos)
+        networkPhotosDao.insert(changedPhotos.map { it.toEntity() })
         syncFolders()
         return true
     }
@@ -234,7 +237,7 @@ class ServerRepository @Inject internal constructor(
             return false
         }
 
-        networkPhotosDao.insert(changedPhotos)
+        networkPhotosDao.insert(changedPhotos.map { it.toEntity() })
         syncFolders()
         Log.d("ServerRepository", "Updated moved folder photos (${changedPhotos.size})")
         return true

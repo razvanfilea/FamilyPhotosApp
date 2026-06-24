@@ -1,12 +1,13 @@
 package net.theluckycoder.familyphotos.core.data.model.network
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class CreateShareRequest(
-    val folder_id: Long,
-    val grantee_id: String,
-    val can_upload: Boolean = false,
-    val can_delete: Boolean = false,
-    val expires_at: Long? = null,
+    @SerialName("folder_id") val folderId: Long,
+    @SerialName("grantee_id") val granteeId: String,
+    @SerialName("can_upload") val canUpload: Boolean = false,
+    @SerialName("can_delete") val canDelete: Boolean = false,
+    @SerialName("expires_at") val expiresAt: Long? = null,
 )

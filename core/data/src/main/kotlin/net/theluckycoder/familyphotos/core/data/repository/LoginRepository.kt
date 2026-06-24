@@ -7,7 +7,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
-import net.theluckycoder.familyphotos.core.data.model.network.UserLogin
+import net.theluckycoder.familyphotos.core.data.model.network.UserLoginDto
 import net.theluckycoder.familyphotos.core.data.remote.UserService
 import javax.inject.Inject
 
@@ -21,7 +21,7 @@ class LoginRepository @Inject internal constructor(
             sessionCookie != null && userName != null
         }
 
-    suspend fun login(userLogin: UserLogin) {
+    suspend fun login(userLogin: UserLoginDto) {
         try {
             val user = userService.get().login(userLogin.userId, userLogin.password).body()
             user?.let {

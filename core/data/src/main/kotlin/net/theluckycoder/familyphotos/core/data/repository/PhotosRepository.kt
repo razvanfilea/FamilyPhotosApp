@@ -7,7 +7,7 @@ import net.theluckycoder.familyphotos.core.data.local.db.FavoritePhotosDao
 import net.theluckycoder.familyphotos.core.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
-import net.theluckycoder.familyphotos.core.data.model.db.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import javax.inject.Inject
 import javax.inject.Singleton
 

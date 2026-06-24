@@ -1,9 +1,8 @@
-package net.theluckycoder.familyphotos.core.data.model.db
+package net.theluckycoder.familyphotos.core.data.model
 
 import android.net.Uri
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
-import kotlinx.serialization.Serializable
 
 abstract class PhotoFolder {
     abstract val name: String
@@ -14,7 +13,6 @@ abstract class PhotoFolder {
 }
 
 @Immutable
-@Serializable
 data class NetworkFolder(
     @ColumnInfo(name = "folderId")
     val id: Long,
@@ -50,20 +48,6 @@ data class NetworkFolder(
 
 val NetworkFolder.isPublic
     get() = this.userId == null
-
-@Immutable
-@Serializable
-data class SharedNetworkFolder(
-    val id: Long,
-    val owner_id: String,
-    val folder_name: String,
-    val grantee_id: String,
-    val token: String?,
-    val can_upload: Boolean,
-    val can_delete: Boolean,
-    val created_at: Long,
-    val expires_at: Long,
-)
 
 @Immutable
 data class LocalFolder(
