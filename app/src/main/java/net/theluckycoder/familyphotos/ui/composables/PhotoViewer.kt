@@ -5,10 +5,13 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -29,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asAndroidBitmap
@@ -65,6 +69,7 @@ import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewerViewModel
+import net.theluckycoder.familyphotos.utils.ScaledBitmapPainter
 import net.theluckycoder.familyphotos.utils.ThumbHashCache
 
 
@@ -261,7 +266,7 @@ private fun TopBar(
                     Icon(painterResource(icon), null)
                 }
 
-                Spacer(Modifier.Companion.width(12.dp))
+                Spacer(Modifier.width(12.dp))
             }
         }
     )
@@ -277,7 +282,7 @@ private fun BottomBar(
     val mainViewModel: MainViewModel = viewModel()
 
     Row(
-        modifier = Modifier.Companion
+        modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp)
             .windowInsetsPadding(BottomAppBarDefaults.windowInsets),
@@ -384,13 +389,15 @@ fun ZoomableImage(
     showUI: (Boolean) -> Unit,
 ) {
     val ctx = LocalContext.current
+    val isImageLoaded = remember {mutableStateOf(false)}
 
     val zoomableState = rememberZoomableState()
-
     val zoomFraction = zoomableState.zoomFraction ?: 0.0f
     LaunchedEffect(zoomFraction < 0.1f) {
         showUI(zoomFraction < 0.1f)
     }
+
+    val thumbHashPainter = thumbHashPainter(photo.thumbHash)
 
     val uri = localUri ?: photo.getUri()
     val model = remember(photo.id, uri) {
@@ -399,19 +406,27 @@ fun ZoomableImage(
             .data(uri)
             .crossfade(true)
             .placeholderMemoryCacheKey(cacheKey)
-            // TODO Better ThumbHash
-            .placeholder { ThumbHashCache.get(photo.thumbHash)?.asAndroidBitmap()?.asImage() }
+            .listener { _, _ -> isImageLoaded.value = true }
             .size(Size.ORIGINAL)
-//            .maxBitmapSize(Size.Companion.ORIGINAL)
             .build()
     }
 
-    ZoomableAsyncImage(
-        modifier = modifier,
-        model = model,
-        imageLoader = LocalImageLoader.current.get(),
-        state = rememberZoomableImageState(zoomableState),
-        contentDescription = photo.name,
-        onDoubleClick = DoubleClickToZoomListener.cycle(0.8f)
-    )
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        if (!isImageLoaded.value && thumbHashPainter != null) {
+            Image(
+                thumbHashPainter,
+                modifier = Modifier.fillMaxWidth().aspectRatio(thumbHashPainter.aspectRatio),
+                contentDescription = null
+            )
+        }
+
+        ZoomableAsyncImage(
+            modifier = modifier,
+            model = model,
+            imageLoader = LocalImageLoader.current.get(),
+            state = rememberZoomableImageState(zoomableState),
+            contentDescription = photo.name,
+            onDoubleClick = DoubleClickToZoomListener.cycle(0.8f)
+        )
+    }
 }

@@ -40,31 +40,6 @@ internal abstract class PhotosDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: PhotosDatabase? = null
 
-        private val MIGRATION_9 = object : Migration(8, 9) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE server_state(id INTEGER NOT NULL PRIMARY KEY CHECK (id = 0), eventLogId INTEGER NOT NULL)")
-                db.execSQL("INSERT INTO server_state VALUES (0, 0)")
-
-                db.execSQL("DROP TABLE network_photo")
-                db.execSQL("CREATE TABLE network_photo (id INTEGER NOT NULL PRIMARY KEY, userId TEXT, name TEXT NOT NULL, timeCreated INTEGER NOT NULL, fileSize INTEGER NOT NULL, folder TEXT)")
-                db.execSQL("CREATE INDEX index_network_photo_timeCreated ON network_photo(timeCreated DESC)")
-
-                db.execSQL("CREATE TABLE favorite_network_photo (photoId INTEGER NOT NULL PRIMARY KEY REFERENCES network_photo(id) ON DELETE CASCADE)")
-            }
-        }
-
-        private val MIGRATION_10 = object : Migration(9, 10) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE network_photo ADD COLUMN trashedOn INTEGER")
-            }
-        }
-
-        private val MIGRATION_11 = object : Migration(10, 11) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE network_photo ADD COLUMN thumbHash TEXT")
-            }
-        }
-
         private val MIGRATION_12 = object : Migration(11, 12) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
@@ -112,9 +87,6 @@ internal abstract class PhotosDatabase : RoomDatabase() {
                     PhotosDatabase::class.java,
                     "photos_database"
                 ).addMigrations(
-                    MIGRATION_9,
-                    MIGRATION_10,
-                    MIGRATION_11,
                     MIGRATION_12,
                     MIGRATION_13,
                     MIGRATION_14
