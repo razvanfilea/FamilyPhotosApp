@@ -125,4 +125,17 @@
         <item quantity="one">%d folder selected</item>
         <item quantity="other">%d folders selected</item>
     </plurals>
+
+    <!-- Sharing -->
+    <string name="sharing_manage">Manage access</string>
+    <string name="sharing_owner">Owner</string>
+    <string name="sharing_owner_everyone">Everyone in Family</string>
+    <string name="sharing_shared_access">Shared access</string>
+    <string name="sharing_members">Members</string>
+    <string name="sharing_links">Links</string>
+    <string name="sharing_add_members">Add members</string>
+    <string name="sharing_permission_view">View only</string>
+    <string name="sharing_permission_upload">Can upload</string>
+    <string name="sharing_permission_upload_delete">Can upload &amp; delete</string>
+    <string name="sharing_remove_member">Delete member</string>
 </resources>

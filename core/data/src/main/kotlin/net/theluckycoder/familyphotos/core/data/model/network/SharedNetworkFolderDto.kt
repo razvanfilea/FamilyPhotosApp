@@ -6,13 +6,12 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class SharedNetworkFolderDto(
     @SerialName("id") val id: Long,
-    @SerialName("owner_id") val ownerId: String,
-    @SerialName("folder_name") val folderName: String,
-    @SerialName("grantee_id") val granteeId: String,
+    @SerialName("folder_id") val folderId: Long,
+    @SerialName("grantee_id") val granteeId: String?,
     @SerialName("token") val token: String?,
     @SerialName("can_upload") val canUpload: Boolean,
     @SerialName("can_delete") val canDelete: Boolean,
     @SerialName("created_at") val createdAt: Long,
-    @SerialName("expires_at") val expiresAt: Long,
+    @SerialName("expires_at") val expiresAt: Long?,
 )
 

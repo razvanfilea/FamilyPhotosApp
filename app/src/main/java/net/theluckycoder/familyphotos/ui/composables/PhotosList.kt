@@ -41,6 +41,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.paging.compose.LazyPagingItems
 import kotlinx.coroutines.delay
@@ -97,12 +98,12 @@ fun <T : Photo> PhotosList(
 
     val settingsDataStore = LocalSettingsDataStore.current
     val zoomIndex by settingsDataStore.zoomLevel.collectAsState()
-    var appliedZoomIndex by remember { mutableStateOf(zoomIndex) }
+    var appliedZoomIndex by remember { mutableIntStateOf(zoomIndex) }
     val isZoomTransitioning = appliedZoomIndex != zoomIndex
 
     LaunchedEffect(zoomIndex) {
         if (zoomIndex != appliedZoomIndex) {
-            delay(150)
+            delay(150.milliseconds)
             appliedZoomIndex = zoomIndex
         }
     }
@@ -132,7 +133,7 @@ fun <T : Photo> PhotosList(
                     if (isScrolling) {
                         sharedBoundsEnabled = false
                     } else {
-                        delay(150.milliseconds) // Only re-enable after 150ms idle
+                        delay(150.milliseconds) // Only re-enable after idle
                         sharedBoundsEnabled = true
                     }
                 }

@@ -38,15 +38,10 @@ internal interface NetworkPhotosDao {
     @Query(
         """SELECT * FROM network_photo
         WHERE network_photo.folderId = :folderId
-        AND CASE
-            WHEN :photoType = 1 THEN (userId = :currentUserId)
-            WHEN :photoType = 2 THEN (userId IS NULL)
-            ELSE 1
-        END
         AND trashedOn IS NULL
         ORDER BY network_photo.timeCreated DESC"""
     )
-    fun getFolderPhotos(folderId: Long, photoType: PhotoType, currentUserId: String): PagingSource<Int, NetworkPhoto>
+    fun getFolderPhotos(folderId: Long): PagingSource<Int, NetworkPhoto>
 
 
     @Query(

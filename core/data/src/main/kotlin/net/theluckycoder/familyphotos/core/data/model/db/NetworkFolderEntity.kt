@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "network_folder")
-internal data class NetworkFolderEntity(
+data class NetworkFolderEntity(
     @PrimaryKey val id: Long,
     val ownerId: String?,
     val name: String,
@@ -13,3 +13,6 @@ internal data class NetworkFolderEntity(
     val canUpload: Boolean = true,
     val canDelete: Boolean = true,
 )
+
+val NetworkFolderEntity.isPublic
+    get() = this.ownerId == null

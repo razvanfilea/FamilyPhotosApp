@@ -38,8 +38,9 @@ class UserDataStore @Inject constructor(
         preferences[USER_ID] = value
     }
 
-    val displayNameFlow: Flow<String> =
-        userDataStore.data.map { it[DISPLAY_NAME] ?: "" }.distinctUntilChanged()
+    val displayName: StateFlow<String> = userDataStore.data
+        .map { it[DISPLAY_NAME] ?: "" }
+        .stateIn(scope, SharingStarted.Eagerly, "")
 
     suspend fun setDisplayName(value: String) = userDataStore.edit { preferences ->
         preferences[DISPLAY_NAME] = value
