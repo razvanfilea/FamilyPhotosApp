@@ -17,17 +17,23 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
+import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
 import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
+import net.theluckycoder.familyphotos.core.data.model.SharedFolderAccess
+import net.theluckycoder.familyphotos.core.data.model.network.UserDto
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
+import net.theluckycoder.familyphotos.core.data.repository.SharingRepository
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel.Companion.PAGING_CONFIG
 import net.theluckycoder.familyphotos.workers.BackupAndUploadWorker
 import net.theluckycoder.familyphotos.workers.enqueueBackupAndUploadWorker
@@ -39,6 +45,8 @@ class FoldersViewModel @Inject constructor(
     private val photosRepository: PhotosRepository,
     private val foldersRepository: FoldersRepository,
     private val photoUploadRepository: PhotoUploadRepository,
+    private val sharingRepository: SharingRepository,
+    userDataStore: UserDataStore,
     settingsStore: SettingsDataStore,
     private val workManager: WorkManager,
 ) : ViewModel() {
@@ -64,13 +72,23 @@ class FoldersViewModel @Inject constructor(
 
     val photoListState = MutableStateFlow(LazyGridState())
 
+    val currentUser =
+        userDataStore.userId.combine(userDataStore.displayName) { userId, displayName ->
+            UserDto(
+                userId ?: "",
+                displayName
+            )
+        }
+
     private val _selectedNetworkFolder = MutableStateFlow<Long?>(null)
+    val networkFolder = _selectedNetworkFolder.flatMapLatest { folderId ->
+        if (folderId == null) flowOf(null) else foldersRepository.getFolderFlow(folderId)
+    }
     val networkFolderPhotosPager = _selectedNetworkFolder
-        .combine(settingsStore.photoType) { folderId, photoType -> folderId to photoType }
-        .flatMapLatest { (folderId, photoType) ->
+        .flatMapLatest { folderId ->
             if (folderId != null) {
                 Pager(PAGING_CONFIG) {
-                    foldersRepository.networkPhotosFromFolderPaged(folderId, photoType)
+                    foldersRepository.networkPhotosFromFolderPaged(folderId)
                 }.flow
             } else {
                 emptyFlow()
@@ -123,16 +141,20 @@ class FoldersViewModel @Inject constructor(
     val pendingBackupCount: StateFlow<Int> = foldersRepository.getPendingBackupCount()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0)
 
-    val backupProgress: StateFlow<BackupProgress?> = workManager.getWorkInfosByTagFlow(BackupAndUploadWorker.TAG)
-        .map { workInfos ->
-            workInfos.firstOrNull { it.state == WorkInfo.State.RUNNING }?.let { info ->
-                BackupProgress(
-                    current = info.progress.getInt(BackupAndUploadWorker.KEY_PROGRESS_CURRENT, 0),
-                    total = info.progress.getInt(BackupAndUploadWorker.KEY_PROGRESS_TOTAL, 0)
-                )
+    val backupProgress: StateFlow<BackupProgress?> =
+        workManager.getWorkInfosByTagFlow(BackupAndUploadWorker.TAG)
+            .map { workInfos ->
+                workInfos.firstOrNull { it.state == WorkInfo.State.RUNNING }?.let { info ->
+                    BackupProgress(
+                        current = info.progress.getInt(
+                            BackupAndUploadWorker.KEY_PROGRESS_CURRENT,
+                            0
+                        ),
+                        total = info.progress.getInt(BackupAndUploadWorker.KEY_PROGRESS_TOTAL, 0)
+                    )
+                }
             }
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
     fun refreshLocalPhotos() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -174,4 +196,43 @@ class FoldersViewModel @Inject constructor(
             skipFolderScan = false
         )
     }
+
+    private val _sharingRefreshTrigger = MutableStateFlow(0)
+
+    fun getFolderShares(folderId: Long): Flow<SharedFolderAccess> =
+        _sharingRefreshTrigger.flatMapLatest {
+            flow { emit(sharingRepository.getFolderShares(folderId)) }
+        }.flowOn(Dispatchers.IO)
+
+    fun addMemberToFolder(folderId: Long, userId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = sharingRepository.createShare(folderId = folderId, granteeId = userId)
+            if (result != null) {
+                _sharingRefreshTrigger.update { it + 1 }
+            }
+        }
+    }
+
+    fun updateMemberFolderPermissions(shareId: Long, canUpload: Boolean, canDelete: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = sharingRepository.updateShare(
+                shareId = shareId,
+                canUpload = canUpload,
+                canDelete = canDelete
+            )
+            if (result != null) {
+                _sharingRefreshTrigger.update { it + 1 }
+            }
+        }
+    }
+
+    fun removeMemberFromFolder(shareId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = sharingRepository.revokeShare(shareId = shareId)
+            if (result) {
+                _sharingRefreshTrigger.update { it + 1 }
+            }
+        }
+    }
+
 }

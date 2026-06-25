@@ -34,6 +34,7 @@ import net.theluckycoder.familyphotos.core.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -65,14 +66,19 @@ class FoldersRepository @Inject internal constructor(
     fun localPhotosFromFolderPaged(folder: String) =
         localPhotosDao.getFolderPhotosPaged(folder)
 
-    fun networkPhotosFromFolderPaged(folderId: Long, photoType: PhotoType) =
-        networkPhotosDao.getFolderPhotos(folderId, photoType, currentUserId)
+    fun networkPhotosFromFolderPaged(folderId: Long) =
+        networkPhotosDao.getFolderPhotos(folderId)
 
     fun localMonthSummariesForFolder(folder: String): Flow<List<MonthSummary>> =
         localPhotosDao.getMonthSummariesForFolder(folder)
 
-    fun networkMonthSummariesForFolder(folderId: Long, photoType: PhotoType): Flow<List<MonthSummary>> =
+    fun networkMonthSummariesForFolder(
+        folderId: Long,
+        photoType: PhotoType
+    ): Flow<List<MonthSummary>> =
         networkPhotosDao.getMonthSummariesForFolder(folderId, photoType, currentUserId)
+
+    fun getFolderFlow(folderId: Long) = networkFoldersDao.getFolderFlow(folderId)
 
     suspend fun updatePhoneAlbums() {
         val photos = try {
@@ -126,7 +132,7 @@ class FoldersRepository @Inject internal constructor(
             Log.d(TAG, "Unregistering MediaStore ContentObserver")
             context.contentResolver.unregisterContentObserver(observer)
         }
-    }.debounce(500L)
+    }.debounce(500L.milliseconds)
 
     private suspend fun handleMediaStoreChange(uris: Collection<Uri>, flags: Int) {
         if (uris.isEmpty() || flags == 0) {
@@ -154,6 +160,7 @@ class FoldersRepository @Inject internal constructor(
                 Log.d(TAG, "DELETE: ids=$ids")
                 localPhotosDao.deleteByIds(ids)
             }
+
             flags and (ContentResolver.NOTIFY_INSERT or ContentResolver.NOTIFY_UPDATE) != 0 -> {
                 Log.d(TAG, "INSERT/UPDATE: ids=$ids")
                 val existingRefs = localPhotosDao.getNetworkReferencesForIds(ids)
@@ -163,7 +170,8 @@ class FoldersRepository @Inject internal constructor(
                 Log.d(TAG, "Queried ${photos.size} photos from MediaStore")
 
                 val foundIds = photos.map { it.id }.toSet()
-                val deletedIds = ids.filter { it !in foundIds && localPhotosDao.findById(it) != null }
+                val deletedIds =
+                    ids.filter { it !in foundIds && localPhotosDao.findById(it) != null }
                 if (deletedIds.isNotEmpty()) {
                     Log.d(TAG, "IDs no longer in MediaStore (trashed/deleted): $deletedIds")
                     localPhotosDao.deleteByIds(deletedIds)
@@ -176,6 +184,7 @@ class FoldersRepository @Inject internal constructor(
                     localPhotosDao.insertOrReplace(withRef)
                 }
             }
+
             else -> {
                 Log.d(TAG, "Fallback to full scan: unknown flags=$flags")
                 updatePhoneAlbums()
@@ -210,7 +219,8 @@ class FoldersRepository @Inject internal constructor(
                 if (cursor.count == 0) return
 
                 val idColumn = cursor.getColumnIndex(MediaStore.MediaColumns._ID)
-                val bucketColumn = cursor.getColumnIndex(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
+                val bucketColumn =
+                    cursor.getColumnIndex(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
                 val displayNameColumn = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME)
                 val mimeTypeColumn = cursor.getColumnIndex(MediaStore.MediaColumns.MIME_TYPE)
                 val dateAddedColumn = cursor.getColumnIndex(MediaStore.MediaColumns.DATE_ADDED)
@@ -292,6 +302,7 @@ class FoldersRepository @Inject internal constructor(
 
         return photos
     }
+
 }
 
 @OptIn(ExperimentalTime::class)

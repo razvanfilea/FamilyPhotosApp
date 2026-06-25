@@ -2,26 +2,64 @@ package net.theluckycoder.familyphotos.core.data.repository
 
 import android.util.Log
 import dagger.Lazy
-import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.SharedFolderAccess
 import net.theluckycoder.familyphotos.core.data.model.network.CreateShareRequest
 import net.theluckycoder.familyphotos.core.data.model.network.SharedNetworkFolderDto
-import net.theluckycoder.familyphotos.core.data.model.network.toEntity
+import net.theluckycoder.familyphotos.core.data.model.network.UpdateShareRequest
+import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.core.data.remote.SharingService
+import net.theluckycoder.familyphotos.core.data.remote.UserService
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
+// TODO: Cache available members list
 class SharingRepository @Inject internal constructor(
     private val sharingService: Lazy<SharingService>,
+    private val userService: Lazy<UserService>,
 ) {
 
-    suspend fun getMyShares(): List<SharedNetworkFolderDto>? {
-        val response = sharingService.get().getMyShares()
-        if (!response.isSuccessful) {
-            Log.e(TAG, "Failed to get my shares: ${response.errorBody()?.string()}")
-            return null
+    suspend fun getFolderShares(folderId: Long): SharedFolderAccess {
+        val availableMembersResponse = userService.get().getMembersList()
+        if (!availableMembersResponse.isSuccessful) {
+            Log.e(TAG, "Failed to get members: ${availableMembersResponse.errorBody()?.string()}")
+            return SharedFolderAccess.EMPTY
         }
-        return response.body()
+        val availableMembers =
+            (availableMembersResponse.body() ?: emptyList())
+
+        val response = sharingService.get().getFolderShares(folderId)
+        if (!response.isSuccessful) {
+            Log.e(TAG, "Failed to get folder shares: ${response.errorBody()?.string()}")
+            return SharedFolderAccess.EMPTY.copy(folderId = folderId)
+        }
+        val folderShares =
+            response.body() ?: return SharedFolderAccess.EMPTY.copy(folderId = folderId)
+
+        return SharedFolderAccess(
+            folderId = folderId,
+            sharedWith = folderShares.mapNotNull {
+                val userId = it.granteeId ?: return@mapNotNull null
+                val name = availableMembers.find { member -> member.userId == userId }?.displayName
+                    ?: userId
+                SharedFolderAccess.Member(
+                    shareId = it.id,
+                    userId = userId,
+                    userDisplayName = name,
+                    canUpload = it.canUpload,
+                    canDelete = it.canDelete,
+                    expiresAt = it.expiresAt,
+                )
+            },
+            links = folderShares.mapNotNull {
+                SharedFolderAccess.Link(
+                    sharedId = it.id,
+                    token = it.token ?: return@mapNotNull null,
+                    canUpload = it.canUpload,
+                    canDelete = it.canDelete,
+                    expiresAt = it.expiresAt
+                )
+            },
+            availableMembers = availableMembers,
+        )
     }
 
     suspend fun createShare(
@@ -47,12 +85,41 @@ class SharingRepository @Inject internal constructor(
         return response.body()
     }
 
+    suspend fun updateShare(
+        shareId: Long,
+        canUpload: Boolean,
+        canDelete: Boolean,
+        expiresAt: Long? = null, // TODO Maybe add in the future
+    ): SharedNetworkFolderDto? {
+        val response = sharingService.get().updateShare(
+            shareId,
+            UpdateShareRequest(
+                canUpload = canUpload,
+                canDelete = canDelete,
+            )
+        )
+        if (!response.isSuccessful) {
+            Log.e(TAG, "Failed to update share: ${response.errorBody()?.string()}")
+            return null
+        }
+        return response.body()
+    }
+
     suspend fun revokeShare(shareId: Long): Boolean {
         val response = sharingService.get().revokeShare(shareId)
         if (!response.isSuccessful) {
             Log.e(TAG, "Failed to revoke share: ${response.errorBody()?.string()}")
         }
         return response.isSuccessful
+    }
+
+    private suspend fun getMyShares(): List<SharedNetworkFolderDto>? {
+        val response = sharingService.get().getMyShares()
+        if (!response.isSuccessful) {
+            Log.e(TAG, "Failed to get my shares: ${response.errorBody()?.string()}")
+            return null
+        }
+        return response.body()
     }
 
     companion object {

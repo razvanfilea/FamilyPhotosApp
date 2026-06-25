@@ -21,7 +21,10 @@ internal interface NetworkFoldersDao {
     suspend fun deleteAll()
 
     @Query("SELECT * FROM network_folder")
-    fun getAll(): Flow<List<NetworkFolderEntity>>
+    fun getAllFlow(): Flow<List<NetworkFolderEntity>>
+
+    @Query("SELECT * FROM network_folder WHERE id = :folderId")
+    fun getFolderFlow(folderId: Long): Flow<NetworkFolderEntity?>
 
     @Query("SELECT name FROM network_folder WHERE id = :folderId")
     suspend fun getFolderName(folderId: Long): String?

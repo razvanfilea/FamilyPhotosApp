@@ -4,6 +4,7 @@ import net.theluckycoder.familyphotos.core.data.model.network.UserDto
 import retrofit2.Response
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
+import retrofit2.http.GET
 import retrofit2.http.POST
 
 internal interface UserService {
@@ -15,6 +16,9 @@ internal interface UserService {
         @Field("password") password: String,
     ): Response<UserDto>
 
-    @POST("logout")
+    @POST("/logout")
     suspend fun logout()
+
+    @GET("/members")
+    suspend fun getMembersList(): Response<List<UserDto>>
 }
