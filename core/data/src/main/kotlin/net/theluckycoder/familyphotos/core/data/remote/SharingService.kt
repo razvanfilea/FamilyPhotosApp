@@ -13,18 +13,18 @@ import retrofit2.http.Path
 
 internal interface SharingService {
 
-    @GET("/photos/sharing")
+    @GET("/api/sharing")
     suspend fun getMyShares(): Response<List<SharedNetworkFolderDto>>
 
-    @GET("/photos/sharing/folder/{folder_id}")
+    @GET("/api/sharing/folder/{folder_id}")
     suspend fun getFolderShares(@Path("folder_id") folderId: Long): Response<List<SharedNetworkFolderDto>>
 
-    @POST("/photos/sharing")
+    @POST("/api/sharing")
     suspend fun createShare(@Body body: CreateShareRequest): Response<SharedNetworkFolderDto>
 
-    @PUT("/photos/sharing/{share_id}")
+    @PUT("/api/sharing/{share_id}")
     suspend fun updateShare(@Path("share_id") shareId: Long, @Body body: UpdateShareRequest): Response<SharedNetworkFolderDto>
 
-    @DELETE("/photos/sharing/{share_id}")
+    @DELETE("/api/sharing/{share_id}")
     suspend fun revokeShare(@Path("share_id") shareId: Long): Response<Void>
 }

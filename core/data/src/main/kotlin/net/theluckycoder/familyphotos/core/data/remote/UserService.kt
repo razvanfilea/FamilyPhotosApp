@@ -10,15 +10,15 @@ import retrofit2.http.POST
 internal interface UserService {
 
     @FormUrlEncoded
-    @POST("/login")
+    @POST("/api/login")
     suspend fun login(
         @Field("user_id") userId: String,
         @Field("password") password: String,
     ): Response<UserDto>
 
-    @POST("/logout")
+    @POST("/api/logout")
     suspend fun logout()
 
-    @GET("/members")
+    @GET("/api/members")
     suspend fun getMembersList(): Response<List<UserDto>>
 }
