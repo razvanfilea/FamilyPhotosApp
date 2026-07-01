@@ -19,6 +19,6 @@ internal interface UserService {
     @POST("/logout")
     suspend fun logout()
 
-    @GET("/members")
+    @GET("/api/members")
     suspend fun getMembersList(): Response<List<UserDto>>
 }
