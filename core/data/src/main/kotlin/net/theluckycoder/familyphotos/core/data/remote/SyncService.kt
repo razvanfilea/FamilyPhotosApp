@@ -10,13 +10,14 @@ import retrofit2.http.POST
 import retrofit2.http.Query
 
 internal interface SyncService {
-    @GET("/photos/sync/full")
+
+    @GET("/api/sync/full")
     suspend fun getFullPhotosList(): Response<FullPhotoListDto>
 
-    @GET("/photos/sync/partial")
+    @GET("/api/sync/partial")
     suspend fun getEventLogsList(@Query("last_synced_event_id") lastSyncedEventLogId: Long): Response<PartialPhotoListDto>
 
-    @POST("/photos/sync/folders")
+    @POST("/api/sync/folders")
     suspend fun syncFolders(@Body cursors: Map<Long, Long>): Response<List<FolderSyncDto>>
 
 }

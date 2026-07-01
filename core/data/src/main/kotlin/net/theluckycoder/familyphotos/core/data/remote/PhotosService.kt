@@ -18,21 +18,21 @@ import retrofit2.http.Streaming
 internal interface PhotosService {
 
     @Streaming
-    @GET("/photos/download/{id}")
+    @GET("/api/download/{id}")
     suspend fun downloadPhoto(
         @Path("id") id: Long
     ): ResponseBody?
 
-    @GET("/photos/exif/{id}")
+    @GET("/api/exif/{id}")
     suspend fun getPhotoExif(
         @Path("id") id: Long
     ): Response<List<ExifFieldDto>>
 
-    @GET("/photos/duplicates")
+    @GET("/api/duplicates")
     suspend fun getDuplicates(): Response<List<List<Long>>>
 
     @Multipart
-    @POST("/photos/upload")
+    @POST("/api/upload")
     suspend fun uploadPhoto(
         @Query("time_created") timeCreated: String,
         @Query("folder_name") folderName: String?,
@@ -40,41 +40,41 @@ internal interface PhotosService {
         @Part file: MultipartBody.Part,
     ): Response<NetworkPhotoDto>
 
-    @POST("/photos/trash")
+    @POST("/api/trash")
     suspend fun trashPhotos(
         @Body photoIds: List<Long>,
     ): Response<List<NetworkPhotoDto>>
 
-    @DELETE("/photos/trash/restore")
+    @DELETE("/api/trash/restore")
     suspend fun restorePhotos(
         @Body photoIds: List<Long>,
     ): Response<List<NetworkPhotoDto>>
 
-    @DELETE("/photos/delete/{photo_id}")
+    @DELETE("/api/delete/{photo_id}")
     suspend fun deletePhoto(
         @Path("photo_id") photoId: Long,
     ): Response<Void>
 
-    @POST("/photos/move/photos")
+    @POST("/api/move/photos")
     suspend fun movePhotos(
         @Query("make_public") makePublic: Boolean,
         @Query("target_folder_name") newFolderName: String?,
         @Body photoId: List<Long>,
     ): Response<List<NetworkPhotoDto>>
 
-    @POST("/photos/move/folder")
+    @POST("/api/move/folder")
     suspend fun renameFolder(
         @Query("source_folder_id") sourceFolderId: Long,
         @Query("target_make_public") targetMakePublic: Boolean,
         @Query("target_folder_name") targetFolderName: String?,
     ): Response<List<NetworkPhotoDto>>
 
-    @GET("/photos/favorite")
+    @GET("/api/favorite")
     suspend fun getFavorites(): Response<List<Long>>
 
-    @POST("/photos/favorite/{photo_id}")
+    @POST("/api/favorite/{photo_id}")
     suspend fun addFavorite(@Path("photo_id") photoId: Long): Response<Void>
 
-    @DELETE("/photos/favorite/{photo_id}")
+    @DELETE("/api/favorite/{photo_id}")
     suspend fun removeFavorite(@Path("photo_id") photoId: Long): Response<Void>
 }
