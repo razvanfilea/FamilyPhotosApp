@@ -23,9 +23,14 @@ fun RenameFolderScreen(folderId: Long, folderName: String) {
         actionName = stringResource(R.string.action_rename_folder),
         photosToShowcase = emptyList(),
         doneAction = { choice, newName ->
+            val makePublic = when (choice) {
+                is UploadChoice.NoFolder -> choice.isPublic
+                is UploadChoice.NewFolder -> choice.isPublic
+                is UploadChoice.Folder -> false // TODO: derive from folder
+            }
             uploadPhotosViewModel.renameNetworkFolder(
                 folderId,
-                choice == UploadChoice.Public,
+                makePublic,
                 newName
             )
 

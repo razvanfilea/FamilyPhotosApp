@@ -9,12 +9,17 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
+import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.core.data.model.db.UploadQueueEntry
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
@@ -35,8 +40,11 @@ class UploadPhotosViewModel @Inject constructor(
     private val workManager: WorkManager,
 ) : ViewModel() {
 
-    val networkFolders = settingsStore.showFoldersAscending
-        .flatMapLatest { foldersRepository.networkFoldersFlow(PhotoType.All, it) }
+    val networkFolders: StateFlow<List<NetworkFolder>> = settingsStore.photoType
+        .combine(settingsStore.showFoldersAscending) { type, ascending -> type to ascending }
+        .flatMapLatest { (type, ascending) ->
+            foldersRepository.networkFoldersFlow(type, ascending)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     fun getLocalPhotos(photoIds: LongArray): Deferred<List<LocalPhoto>> =
         viewModelScope.async(Dispatchers.IO) {

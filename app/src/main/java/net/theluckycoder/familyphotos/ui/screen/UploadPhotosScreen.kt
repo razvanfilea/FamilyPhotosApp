@@ -33,11 +33,17 @@ fun UploadPhotosScreen(photoIds: LongArray) {
         actionName = stringResource(R.string.action_upload_photos),
         photosToShowcase = photosToShowcase.value,
         doneAction = { choice, folderName ->
-            uploadPhotosViewModel.uploadPhotosAsync(
-                photoIds,
-                choice == UploadChoice.Public,
-                folderName.trim().takeIf { it.isNotEmpty() })
-
+            val makePublic = when (choice) {
+                is UploadChoice.NoFolder -> choice.isPublic
+                is UploadChoice.NewFolder -> choice.isPublic
+                is UploadChoice.Folder -> false // TODO: derive from folder
+            }
+            val folder = when (choice) {
+                is UploadChoice.NoFolder -> null
+                is UploadChoice.NewFolder -> choice.name.trim().takeIf { it.isNotEmpty() }
+                is UploadChoice.Folder -> folderName.trim().takeIf { it.isNotEmpty() }
+            }
+            uploadPhotosViewModel.uploadPhotosAsync(photoIds, makePublic, folder)
             backStack.removeLastOrNull()
         }
     )

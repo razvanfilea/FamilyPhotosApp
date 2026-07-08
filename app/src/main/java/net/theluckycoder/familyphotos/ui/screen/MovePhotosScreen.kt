@@ -39,15 +39,24 @@ fun MovePhotosScreen(photoIds: LongArray) {
         actionName = stringResource(R.string.action_move_photos),
         photosToShowcase = photosToShowcase.value,
         doneAction = { choice, folderName ->
+            val makePublic = when (choice) {
+                is UploadChoice.NoFolder -> choice.isPublic
+                is UploadChoice.NewFolder -> choice.isPublic
+                is UploadChoice.Folder -> false // TODO: derive from folder
+            }
+            val newFolderName = when (choice) {
+                is UploadChoice.NoFolder -> null
+                is UploadChoice.NewFolder -> choice.name.trim().takeIf { it.isNotEmpty() }
+                is UploadChoice.Folder -> folderName.trim().takeIf { it.isNotEmpty() }
+            }
             uploadPhotosViewModel.viewModelScope.launch {
                 val result = uploadPhotosViewModel.movePhotos(
                     photoIds,
-                    choice == UploadChoice.Public,
-                    folderName
+                    makePublic,
+                    newFolderName
                 ).await()
 
                 val message = if (result) moveSuccess else moveFailure
-
                 snackbarHostState.showSnackbar(message)
             }
             backStack.removeLastOrNull()
