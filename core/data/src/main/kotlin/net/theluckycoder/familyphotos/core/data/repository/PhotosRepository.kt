@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.core.data.repository
 
+import android.R.attr.value
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
@@ -18,7 +19,7 @@ class PhotosRepository @Inject internal constructor(
     private val favoritePhotosDao: FavoritePhotosDao,
     private val userDataStore: UserDataStore,
 ) {
-    private val currentUserId: String get() = userDataStore.userId.value ?: ""
+    private val currentUserId: String get() = userDataStore.user.value?.userId ?: ""
 
     fun getLocalPhoto(photoId: Long) = localPhotosDao.findById(photoId)
 

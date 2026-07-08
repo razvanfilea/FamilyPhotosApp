@@ -17,11 +17,13 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
-import net.theluckycoder.familyphotos.core.data.model.PhotoType
+import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.UploadChoice
 import net.theluckycoder.familyphotos.core.data.model.db.UploadQueueEntry
+import net.theluckycoder.familyphotos.core.data.model.network.UserDto
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
@@ -37,14 +39,17 @@ class UploadPhotosViewModel @Inject constructor(
     private val serverRepository: ServerRepository,
     private val photoUploadRepository: PhotoUploadRepository,
     settingsStore: SettingsDataStore,
+    userDataStore: UserDataStore,
     private val workManager: WorkManager,
 ) : ViewModel() {
 
-    val networkFolders: StateFlow<List<NetworkFolder>> = settingsStore.photoType
-        .combine(settingsStore.showFoldersAscending) { type, ascending -> type to ascending }
-        .flatMapLatest { (type, ascending) ->
-            foldersRepository.networkFoldersFlow(type, ascending)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+    val currentUser: StateFlow<UserDto?> = userDataStore.user
+
+    val networkFolders: StateFlow<List<NetworkFolder>> =
+        settingsStore.photoType.combine(settingsStore.showFoldersAscending) { type, ascending -> type to ascending }
+            .flatMapLatest { (type, ascending) ->
+                foldersRepository.networkFoldersFlow(type, ascending)
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     fun getLocalPhotos(photoIds: LongArray): Deferred<List<LocalPhoto>> =
         viewModelScope.async(Dispatchers.IO) {
@@ -59,17 +64,14 @@ class UploadPhotosViewModel @Inject constructor(
     /**
      * Receives a list of [LocalPhoto] ids that will be uploaded
      */
-    fun uploadPhotosAsync(
-        localPhotos: LongArray,
-        makePublic: Boolean,
-        uploadFolder: String?
-    ) {
+    fun uploadPhotosAsync(localPhotos: LongArray, uploadChoice: UploadChoice) {
         viewModelScope.launch(Dispatchers.IO) {
             val entries = localPhotos.map { localPhotoId ->
                 UploadQueueEntry(
                     localPhotoId = localPhotoId,
-                    makePublic = makePublic,
-                    uploadFolder = uploadFolder,
+                    makePublic = uploadChoice.isPublic,
+                    folderId = (uploadChoice as? UploadChoice.Folder)?.folderId,
+                    newFolderName = (uploadChoice as? UploadChoice.NewFolder)?.name,
                     isManualUpload = true,
                 )
             }
@@ -86,18 +88,14 @@ class UploadPhotosViewModel @Inject constructor(
      * @returns true if all photos have been successfully moved
      */
     fun movePhotos(
-        networkPhotos: LongArray,
-        makePublic: Boolean,
-        newFolderName: String?
+        networkPhotos: LongArray, uploadChoice: UploadChoice,
     ): Deferred<Boolean> = viewModelScope.async(Dispatchers.IO) {
         val photos = networkPhotos.map { id ->
             photosRepository.getNetworkPhotoFlow(id).firstOrNull()
         }.filterNotNull()
 
         val result = serverRepository.movePhotos(
-            photos = photos,
-            makePublic = makePublic,
-            newFolderName = newFolderName
+            photos = photos, uploadChoice = uploadChoice,
         )
 
         Log.d("Moving Photos", "Moved $photos result=$result")
@@ -105,17 +103,4 @@ class UploadPhotosViewModel @Inject constructor(
         result
     }
 
-    fun renameNetworkFolder(
-        folderId: Long,
-        makePublic: Boolean,
-        newName: String
-    ) {
-        viewModelScope.launch(Dispatchers.IO) {
-            serverRepository.renameNetworkFolder(
-                folderId,
-                makePublic,
-                newName.trim().takeIf { it.isNotEmpty() }
-            )
-        }
-    }
 }

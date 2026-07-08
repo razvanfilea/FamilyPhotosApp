@@ -5,15 +5,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.core.data.model.isPublic
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
@@ -26,17 +20,14 @@ fun NetworkFoldersTab() {
     val foldersViewModel: FoldersViewModel = viewModel()
     val backStack = LocalNavBackStack.current
     val folders by foldersViewModel.networkFolders.collectAsState()
-
-
-    val folderNameFilter = remember { mutableStateOf("") }
+    val currentUser by foldersViewModel.currentUser.collectAsState(null)
 
     FoldersGridList(
         folders = folders,
         onFolderClick = { folder ->
             backStack.add(FolderNav(FolderNav.Source.Network(folder.id, folder.name)))
         },
-        folderNameFilter = folderNameFilter.value,
-        onSearch = { folderNameFilter.value = it },
+        currentUserId = currentUser?.userId,
         extraHeader = {
             val settingsDataStore = LocalSettingsDataStore.current
             val selectedPhotoType by settingsDataStore.photoType.collectAsState()

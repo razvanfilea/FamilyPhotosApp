@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.core.data.repository
 
+import android.R.attr.value
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
@@ -48,7 +49,7 @@ class FoldersRepository @Inject internal constructor(
     private val localFolderBackupDao: LocalFolderBackupDao,
     private val userDataStore: UserDataStore,
 ) {
-    private val currentUserId: String get() = userDataStore.userId.value ?: ""
+    private val currentUserId: String get() = userDataStore.user.value?.userId ?: ""
 
     companion object {
         private const val TAG = "MediaStoreObserver"

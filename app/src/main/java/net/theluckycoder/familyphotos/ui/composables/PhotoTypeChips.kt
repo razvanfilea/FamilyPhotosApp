@@ -20,7 +20,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.google.common.math.LinearTransformation.horizontal
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
 

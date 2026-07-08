@@ -89,7 +89,7 @@ class BackupAndUploadWorker @AssistedInject constructor(
                 )
 
                 val success = try {
-                    photoUploadRepository.uploadFile(localPhoto, entry.makePublic, entry.uploadFolder)
+                    photoUploadRepository.uploadFile(localPhoto, entry.toUploadChoice())
                 } catch (_: ConnectException) {
                     return Result.retry()
                 } catch (e: Exception) {
@@ -140,7 +140,7 @@ class BackupAndUploadWorker @AssistedInject constructor(
                 UploadQueueEntry(
                     localPhotoId = localPhoto.id,
                     makePublic = false,
-                    uploadFolder = folderName,
+                    newFolderName = folderName,
                     isManualUpload = false,
                 )
             }

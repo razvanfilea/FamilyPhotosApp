@@ -33,6 +33,7 @@ import net.theluckycoder.familyphotos.core.data.model.network.UserDto
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
+import net.theluckycoder.familyphotos.core.data.repository.ServerRepository
 import net.theluckycoder.familyphotos.core.data.repository.SharingRepository
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel.Companion.PAGING_CONFIG
 import net.theluckycoder.familyphotos.workers.BackupAndUploadWorker
@@ -45,6 +46,7 @@ class FoldersViewModel @Inject constructor(
     private val photosRepository: PhotosRepository,
     private val foldersRepository: FoldersRepository,
     private val photoUploadRepository: PhotoUploadRepository,
+    private val serverRepository: ServerRepository,
     private val sharingRepository: SharingRepository,
     userDataStore: UserDataStore,
     settingsStore: SettingsDataStore,
@@ -72,13 +74,7 @@ class FoldersViewModel @Inject constructor(
 
     val photoListState = MutableStateFlow(LazyGridState())
 
-    val currentUser =
-        userDataStore.userId.combine(userDataStore.displayName) { userId, displayName ->
-            UserDto(
-                userId ?: "",
-                displayName
-            )
-        }
+    val currentUser = userDataStore.user
 
     private val _selectedNetworkFolder = MutableStateFlow<Long?>(null)
     val networkFolder = _selectedNetworkFolder.flatMapLatest { folderId ->
@@ -231,6 +227,12 @@ class FoldersViewModel @Inject constructor(
             if (result) {
                 _sharingRefreshTrigger.update { it + 1 }
             }
+        }
+    }
+
+    fun renameFolder(folderId: Long, newName: String, isPublic: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            serverRepository.renameFolder(folderId, newName, isPublic)
         }
     }
 

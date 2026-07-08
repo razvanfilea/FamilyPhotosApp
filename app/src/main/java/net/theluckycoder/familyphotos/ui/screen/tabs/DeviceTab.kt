@@ -16,8 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -38,15 +36,11 @@ fun DeviceTab() {
     val folders by foldersViewModel.localFolders.collectAsState()
     val backupFolders by foldersViewModel.backupFolders.collectAsState()
 
-    val folderNameFilter = remember { mutableStateOf("") }
-
     FoldersGridList(
         folders = folders,
         onFolderClick = { folder ->
             backStack.add(FolderNav(FolderNav.Source.Local(folder.name)))
         },
-        folderNameFilter = folderNameFilter.value,
-        onSearch = { folderNameFilter.value = it },
         isBackupEnabled = { folder -> folder.name in backupFolders },
         extraHeader = {
             val pendingBackupCount by foldersViewModel.pendingBackupCount.collectAsState()

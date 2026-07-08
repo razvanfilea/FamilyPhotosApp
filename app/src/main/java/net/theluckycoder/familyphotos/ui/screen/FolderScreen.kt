@@ -64,7 +64,7 @@ import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
-import net.theluckycoder.familyphotos.ui.RenameFolderNav
+import net.theluckycoder.familyphotos.ui.composables.FolderNameDialog
 import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
 import net.theluckycoder.familyphotos.ui.composables.PhotosList
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
@@ -81,6 +81,7 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out 
     }
 
     var showSharingBottomSheet by remember { mutableStateOf(false) }
+    var showRenameFolderDialog by remember { mutableStateOf(false) }
     val networkFolderState =
         remember { if (source is FolderNav.Source.Network) foldersViewModel.networkFolder else emptyFlow() }.collectAsState(
             null
@@ -127,7 +128,7 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out 
                             }
 
                             IconButton(onClick = {
-                                backStack.add(RenameFolderNav(networkFolder.id, networkFolder.name))
+                                showRenameFolderDialog = true
                             }) {
                                 Icon(
                                     painterResource(R.drawable.ic_action_edit),
@@ -175,6 +176,19 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out 
 
     val networkFolder = networkFolderState.value
     if (networkFolder != null) {
+        if (showRenameFolderDialog) {
+            FolderNameDialog(
+                actionLabel = stringResource(R.string.action_rename_folder),
+                initialName = networkFolder.name,
+                initialIsPublic = networkFolder.isPublic,
+                onDismiss = { showRenameFolderDialog = false },
+                onConfirm = { newName, isPublic ->
+                    foldersViewModel.renameFolder(networkFolder.id, newName, isPublic)
+                    showRenameFolderDialog = false
+                },
+            )
+        }
+
         if (showSharingBottomSheet) {
             val folderShares =
                 remember(networkFolder.id) { foldersViewModel.getFolderShares(networkFolder.id) }.collectAsState(
@@ -201,7 +215,7 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out 
 private fun SharingBottomSheet(
     folder: NetworkFolderEntity,
     folderShares: SharedFolderAccess,
-    currentUser: UserDto,
+    currentUser: UserDto?,
     onAddMember: (UserDto) -> Unit,
     onUpdatePermissions: (shareId: Long, canUpload: Boolean, canDelete: Boolean) -> Unit,
     onRemoveMember: (shareId: Long) -> Unit,
@@ -210,7 +224,7 @@ private fun SharingBottomSheet(
     onDismissRequest = onDismiss,
     sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
-    val canModifyMembers = !folder.isPublic && folder.ownerId == currentUser.userId
+    val canModifyMembers = !folder.isPublic && folder.ownerId == currentUser?.userId
     val canAddMembers = folderShares.availableMembers.isNotEmpty() && canModifyMembers
     val viewPermissionString = stringResource(R.string.sharing_permission_view)
     val uploadPermissionString = stringResource(R.string.sharing_permission_upload)
@@ -257,7 +271,7 @@ private fun SharingBottomSheet(
         }
 
         item {
-            val ownerName = folderShares.availableMembers.find { it.userId == folder.ownerId }?.displayName ?: currentUser.displayName
+            val ownerName = folderShares.availableMembers.find { it.userId == folder.ownerId }?.displayName ?: currentUser?.displayName ?: ""
             ListItem(
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 headlineContent = { Text(if (folder.isPublic) stringResource(R.string.sharing_owner_everyone) else ownerName) },

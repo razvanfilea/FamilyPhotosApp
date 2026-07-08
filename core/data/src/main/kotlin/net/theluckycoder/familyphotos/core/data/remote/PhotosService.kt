@@ -35,8 +35,8 @@ internal interface PhotosService {
     @POST("/api/upload")
     suspend fun uploadPhoto(
         @Query("time_created") timeCreated: String,
-        @Query("folder_name") folderName: String?,
-        @Query("make_public") makePublic: Boolean,
+        @Query("folder_id") folderId: Long?,
+        @Query("make_public") makePublic: Boolean?,
         @Part file: MultipartBody.Part,
     ): Response<NetworkPhotoDto>
 
@@ -57,16 +57,9 @@ internal interface PhotosService {
 
     @POST("/api/move/photos")
     suspend fun movePhotos(
-        @Query("make_public") makePublic: Boolean,
-        @Query("target_folder_name") newFolderName: String?,
+        @Query("make_public") makePublic: Boolean?,
+        @Query("target_folder_id") targetFolderId: Long?,
         @Body photoId: List<Long>,
-    ): Response<List<NetworkPhotoDto>>
-
-    @POST("/api/move/folder")
-    suspend fun renameFolder(
-        @Query("source_folder_id") sourceFolderId: Long,
-        @Query("target_make_public") targetMakePublic: Boolean,
-        @Query("target_folder_name") targetFolderName: String?,
     ): Response<List<NetworkPhotoDto>>
 
     @GET("/api/favorite")

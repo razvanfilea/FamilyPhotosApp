@@ -53,9 +53,9 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            userDataStore.userId.collectLatest { newUserName ->
+            userDataStore.user.collectLatest { newUser->
                 ensureActive()
-                if (newUserName != null) {
+                if (newUser!= null) {
                     refreshPhotos()
                 }
             }

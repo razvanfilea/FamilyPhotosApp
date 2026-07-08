@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
+import net.theluckycoder.familyphotos.core.data.remote.FolderService
 import net.theluckycoder.familyphotos.core.data.remote.PhotosService
 import net.theluckycoder.familyphotos.core.data.remote.SharingService
 import net.theluckycoder.familyphotos.core.data.remote.SyncService
@@ -128,6 +129,11 @@ object NetworkModule {
     @Provides
     internal fun provideSharingService(retrofit: Retrofit): SharingService =
         retrofit.create(SharingService::class.java)
+
+    @Singleton
+    @Provides
+    internal fun provideFolderService(retrofit: Retrofit): FolderService =
+        retrofit.create(FolderService::class.java)
 
     const val BASE_URL = "https://faarr.go.ro/"
 }

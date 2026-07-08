@@ -51,15 +51,192 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.core.data.model.Photo
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
+import net.theluckycoder.familyphotos.core.data.model.UploadChoice
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 
-@Immutable
-sealed class UploadChoice {
-    data class NoFolder(val isPublic: Boolean) : UploadChoice()
-    data class NewFolder(val name: String, val isPublic: Boolean) : UploadChoice()
-    data class Folder(val folderId: Long) : UploadChoice()
+@Composable
+fun FolderNameDialog(
+    actionLabel: String,
+    onDismiss: () -> Unit,
+    onConfirm: (name: String, isPublic: Boolean) -> Unit,
+    initialName: String = "",
+    initialIsPublic: Boolean = false,
+) {
+    var name by remember { mutableStateOf(initialName) }
+    var isPublic by remember { mutableStateOf(initialIsPublic) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(actionLabel) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text(stringResource(R.string.folder_name)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                    SegmentedButton(
+                        selected = !isPublic,
+                        onClick = { isPublic = false },
+                        shape = SegmentedButtonDefaults.itemShape(0, 2),
+                    ) {
+                        Text(stringResource(R.string.photo_type_personal))
+                    }
+                    SegmentedButton(
+                        selected = isPublic,
+                        onClick = { isPublic = true },
+                        shape = SegmentedButtonDefaults.itemShape(1, 2),
+                    ) {
+                        Text(stringResource(R.string.photo_type_family))
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(name.trim(), isPublic) },
+                enabled = name.isNotBlank(),
+            ) {
+                Text(actionLabel)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
+    )
 }
+
+@Composable
+fun UploadPhotosLayout(
+    networkFolders: List<NetworkFolder>,
+    actionName: String,
+    photosToShowcase: List<Photo>,
+    currentUserId: String? = null,
+    enabled: Boolean = true,
+    doneAction: (choice: UploadChoice) -> Unit,
+) {
+    val backStack = LocalNavBackStack.current
+
+    var choice by remember { mutableStateOf<UploadChoice>(UploadChoice.NoFolder(isPublic = false)) }
+    var selectedFolderName by remember { mutableStateOf<String?>(null) }
+    var showCreateFolderDialog by remember { mutableStateOf(false) }
+
+    if (showCreateFolderDialog) {
+        FolderNameDialog(
+            actionLabel = stringResource(R.string.action_create_folder),
+            onDismiss = { showCreateFolderDialog = false },
+            onConfirm = { name, folderIsPublic ->
+                choice = UploadChoice.NewFolder(name = name, isPublic = folderIsPublic)
+                showCreateFolderDialog = false
+            },
+        )
+    }
+
+    Scaffold(
+        bottomBar = {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                    .navigationBarsPadding()
+                    .imePadding()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.End)
+            ) {
+                TextButton(onClick = { backStack.removeLastOrNull() }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+
+                Button(
+                    onClick = { doneAction(choice) },
+                    enabled = enabled,
+                ) {
+                    Icon(
+                        painterResource(R.drawable.ic_action_done),
+                        contentDescription = actionName
+                    )
+
+                    Text(actionName)
+                }
+            }
+        }
+    ) { contentPadding ->
+        Box(Modifier.padding(bottom = contentPadding.calculateBottomPadding())) {
+            UploadDialogContent(
+                photosToShowcase = photosToShowcase,
+                selectedChoice = choice,
+                onChoiceChange = { newChoice ->
+                    choice = newChoice
+                    if (newChoice is UploadChoice.Folder) {
+                        selectedFolderName = networkFolders
+                            .find { it.id == newChoice.folderId }?.name
+                    }
+                },
+                currentUserId = currentUserId,
+                foldersList = networkFolders,
+                onCreateFolder = { showCreateFolderDialog = true },
+                selectedFolderName = selectedFolderName,
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun UploadDialogContent(
+    photosToShowcase: List<Photo>,
+    selectedChoice: UploadChoice,
+    onChoiceChange: (UploadChoice) -> Unit,
+    currentUserId: String?,
+    foldersList: List<NetworkFolder>,
+    onCreateFolder: () -> Unit,
+    selectedFolderName: String?,
+) {
+    val settingsDataStore = LocalSettingsDataStore.current
+    val selectedPhotoType by settingsDataStore.photoType.collectAsState()
+
+    val hasFolderSelected =
+        selectedChoice is UploadChoice.Folder || selectedChoice is UploadChoice.NewFolder
+
+    FoldersGridList(
+        folders = if (hasFolderSelected) emptyList() else foldersList,
+        onFolderClick = { onChoiceChange(UploadChoice.Folder(it.id)) },
+        currentUserId = currentUserId,
+        extraHeader = {
+            if (photosToShowcase.isNotEmpty()) {
+                PhotoShowcaseRow(
+                    photos = photosToShowcase,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            }
+
+            PhotoTypeChips(
+                selectedPhotoType = selectedPhotoType,
+                onChangePhotoType = settingsDataStore::setSelectedPhotoType,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+            )
+
+            DestinationSelector(
+                selectedChoice = selectedChoice,
+                onChoiceChange = onChoiceChange,
+                selectedPhotoType = selectedPhotoType,
+                foldersList = foldersList,
+                selectedFolderName = selectedFolderName,
+                onCreateFolder = onCreateFolder,
+            )
+        },
+    )
+}
+
 
 @Composable
 private fun DestinationItem(
@@ -194,61 +371,6 @@ private fun CreateFolderButton(
 }
 
 @Composable
-private fun CreateFolderDialog(
-    onDismiss: () -> Unit,
-    onConfirm: (name: String, isPublic: Boolean) -> Unit,
-) {
-    var name by remember { mutableStateOf("") }
-    var isPublic by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.action_create_folder)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text(stringResource(R.string.folder_name)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
-                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                    SegmentedButton(
-                        selected = !isPublic,
-                        onClick = { isPublic = false },
-                        shape = SegmentedButtonDefaults.itemShape(0, 2),
-                    ) {
-                        Text(stringResource(R.string.photo_type_personal))
-                    }
-                    SegmentedButton(
-                        selected = isPublic,
-                        onClick = { isPublic = true },
-                        shape = SegmentedButtonDefaults.itemShape(1, 2),
-                    ) {
-                        Text(stringResource(R.string.photo_type_family))
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = { onConfirm(name.trim(), isPublic) },
-                enabled = name.isNotBlank(),
-            ) {
-                Text(stringResource(R.string.action_create_folder))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel))
-            }
-        },
-    )
-}
-
-@Composable
 private fun PhotoShowcaseRow(
     photos: List<Photo>,
     modifier: Modifier = Modifier,
@@ -369,123 +491,3 @@ private fun ColumnScope.DestinationSelector(
     }
 }
 
-@Composable
-private fun UploadDialogContent(
-    photosToShowcase: List<Photo>,
-    selectedChoice: UploadChoice,
-    onChoiceChange: (UploadChoice) -> Unit,
-    folderName: String,
-    onFolderNameChange: (String) -> Unit,
-    foldersList: List<NetworkFolder>,
-    onCreateFolder: () -> Unit,
-    selectedFolderName: String?,
-) {
-    val settingsDataStore = LocalSettingsDataStore.current
-    val selectedPhotoType by settingsDataStore.photoType.collectAsState()
-
-    val hasFolderSelected =
-        selectedChoice is UploadChoice.Folder || selectedChoice is UploadChoice.NewFolder
-
-    FoldersGridList(
-        folders = if (hasFolderSelected) emptyList() else foldersList,
-        onFolderClick = { onChoiceChange(UploadChoice.Folder(it.id)) },
-        folderNameFilter = folderName,
-        onSearch = onFolderNameChange,
-        extraHeader = {
-            if (photosToShowcase.isNotEmpty()) {
-                PhotoShowcaseRow(
-                    photos = photosToShowcase,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                )
-            }
-
-            PhotoTypeChips(
-                selectedPhotoType = selectedPhotoType,
-                onChangePhotoType = settingsDataStore::setSelectedPhotoType,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-            )
-
-            DestinationSelector(
-                selectedChoice = selectedChoice,
-                onChoiceChange = onChoiceChange,
-                selectedPhotoType = selectedPhotoType,
-                foldersList = foldersList,
-                selectedFolderName = selectedFolderName,
-                onCreateFolder = onCreateFolder,
-            )
-        },
-    )
-}
-
-@Composable
-fun UploadPhotosLayout(
-    networkFolders: List<NetworkFolder>,
-    actionName: String,
-    photosToShowcase: List<Photo>,
-    doneAction: (choice: UploadChoice, folderName: String) -> Unit,
-) {
-    val backStack = LocalNavBackStack.current
-
-    var choice by remember { mutableStateOf<UploadChoice>(UploadChoice.NoFolder(isPublic = false)) }
-    var folderName by remember { mutableStateOf("") }
-    var selectedFolderName by remember { mutableStateOf<String?>(null) }
-    var showCreateFolderDialog by remember { mutableStateOf(false) }
-
-    if (showCreateFolderDialog) {
-        CreateFolderDialog(
-            onDismiss = { showCreateFolderDialog = false },
-            onConfirm = { name, folderIsPublic ->
-                choice = UploadChoice.NewFolder(name = name, isPublic = folderIsPublic)
-                showCreateFolderDialog = false
-            },
-        )
-    }
-
-    Scaffold(
-        bottomBar = {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceContainer)
-                    .navigationBarsPadding()
-                    .imePadding()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.End)
-            ) {
-                TextButton(onClick = { backStack.removeLastOrNull() }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-
-                Button(onClick = { doneAction(choice, folderName) }) {
-                    Icon(
-                        painterResource(R.drawable.ic_action_done),
-                        contentDescription = actionName
-                    )
-
-                    Text(actionName)
-                }
-            }
-        }
-    ) { contentPadding ->
-        Box(Modifier.padding(bottom = contentPadding.calculateBottomPadding())) {
-            UploadDialogContent(
-                photosToShowcase = photosToShowcase,
-                selectedChoice = choice,
-                onChoiceChange = { newChoice ->
-                    choice = newChoice
-                    if (newChoice is UploadChoice.Folder) {
-                        selectedFolderName = networkFolders
-                            .find { it.id == newChoice.folderId }?.name
-                    }
-                },
-                folderName = folderName,
-                onFolderNameChange = { folderName = it },
-                foldersList = networkFolders,
-                onCreateFolder = { showCreateFolderDialog = true },
-                selectedFolderName = selectedFolderName,
-            )
-        }
-    }
-}

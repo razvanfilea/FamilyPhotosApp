@@ -7,11 +7,16 @@ import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.core.data.local.db.LocalPhotosDao
+import net.theluckycoder.familyphotos.core.data.local.db.NetworkFoldersDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.core.data.local.db.UploadQueueDao
+import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolderEntity
 import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
+import net.theluckycoder.familyphotos.core.data.model.UploadChoice
 import net.theluckycoder.familyphotos.core.data.model.db.UploadQueueEntry
+import net.theluckycoder.familyphotos.core.data.model.network.CreateFolderRequest
 import net.theluckycoder.familyphotos.core.data.model.network.toEntity
+import net.theluckycoder.familyphotos.core.data.remote.FolderService
 import net.theluckycoder.familyphotos.core.data.remote.PhotosService
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -30,7 +35,9 @@ class PhotoUploadRepository @Inject internal constructor(
     @param:ApplicationContext
     private val context: Context,
     private val photosService: Lazy<PhotosService>,
+    private val folderService: Lazy<FolderService>,
     private val networkPhotosDao: NetworkPhotosDao,
+    private val networkFoldersDao: NetworkFoldersDao,
     private val localPhotosDao: LocalPhotosDao,
     private val uploadQueueDao: UploadQueueDao,
 ) {
@@ -58,15 +65,11 @@ class PhotoUploadRepository @Inject internal constructor(
     fun getPendingCountFlow(): Flow<Int> =
         uploadQueueDao.getPendingCountFlow()
 
-    fun getAllQueuedFlow(): Flow<List<UploadQueueEntry>> =
-        uploadQueueDao.getAllFlow()
-
     // Upload Operations
 
     suspend fun uploadFile(
         localPhoto: LocalPhoto,
-        public: Boolean,
-        uploadFolder: String?,
+        uploadChoice: UploadChoice,
     ): Boolean {
         val contentResolver = context.contentResolver
         val mediaType = contentResolver.getType(localPhoto.uri)?.toMediaTypeOrNull()
@@ -90,6 +93,37 @@ class PhotoUploadRepository @Inject internal constructor(
             return false
         }
 
+        val folderId = when (uploadChoice) {
+            is UploadChoice.NoFolder -> null
+            is UploadChoice.Folder -> uploadChoice.folderId
+            is UploadChoice.NewFolder -> {
+                val response = folderService.get()
+                    .createFolder(CreateFolderRequest(uploadChoice.name, uploadChoice.isPublic))
+
+                val folderDto = response.body()
+                if (folderDto == null) {
+                    Log.e(
+                        "Error creating folder",
+                        "Folder with name: `${uploadChoice.name}` public: `${uploadChoice.isPublic}`. ${response.errorBody()}"
+                    )
+                    return false
+                }
+
+                networkFoldersDao.insert(
+                    NetworkFolderEntity(
+                        id = folderDto.id,
+                        ownerId = folderDto.ownerId,
+                        name = folderDto.name,
+                        latestEventId = 0L,
+                        createdAt = 0L,
+                    )
+                )
+                uploadQueueDao.convertNewFolderToExisting(uploadChoice.name, folderDto.id)
+
+                folderDto.id
+            }
+        }
+
         val requestBody = object : RequestBody() {
             override fun contentType() = mediaType
 
@@ -111,8 +145,8 @@ class PhotoUploadRepository @Inject internal constructor(
         val response = photosService.get().uploadPhoto(
             timeCreated = localPhoto.timeCreated.toString(),
             file = fileBody,
-            makePublic = public,
-            folderName = uploadFolder,
+            makePublic = uploadChoice.isPublic,
+            folderId = folderId,
         )
 
         response.body()?.let { dto ->
