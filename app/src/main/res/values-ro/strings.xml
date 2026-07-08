@@ -91,5 +91,13 @@
     <string name="photo_type_videos">Videoclipuri</string>
     <string name="statistics_title">Statistici poze</string>
     <string name="statistics_total">Total</string>
+    <string name="photo_type_shared">Partajate</string>
     <string name="photo_type_images">Imagini</string>
+    <string name="sharing_permission_upload_delete">Poate încărca &amp; șterge</string>
+    <string name="sharing_remove_member">Șterge membru</string>
+    <string name="sharing_members">Membri</string>
+    <string name="sharing_links">Linkuri</string>
+    <string name="sharing_add_members">Adaugă membri</string>
+    <string name="sharing_permission_view">Doar vizualiza</string>
+    <string name="sharing_permission_upload">Poate încărca</string>
 </resources>

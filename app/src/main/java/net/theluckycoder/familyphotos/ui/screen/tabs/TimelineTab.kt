@@ -47,7 +47,7 @@ import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
 import net.theluckycoder.familyphotos.ui.PhotoViewerListNav
 import net.theluckycoder.familyphotos.ui.composables.CoilPhoto
-import net.theluckycoder.familyphotos.ui.composables.PhotoTypeSegmentedButtons
+import net.theluckycoder.familyphotos.ui.composables.PhotoTypeChips
 import net.theluckycoder.familyphotos.ui.composables.PhotosList
 import net.theluckycoder.familyphotos.ui.composables.photoSharedBounds
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
@@ -74,7 +74,7 @@ fun TimelineTab(photos: LazyPagingItems<NetworkPhoto>) {
             backStack.add(PhotoViewerFlowNav(it, PhotoViewerFlowNav.Source.Timeline))
         },
         headerContent = {
-            PhotoTypeSegmentedButtons(
+            PhotoTypeChips(
                 selectedPhotoType = selectedPhotoType,
                 onChangePhotoType = settingsDataStore::setSelectedPhotoType,
                 modifier = Modifier

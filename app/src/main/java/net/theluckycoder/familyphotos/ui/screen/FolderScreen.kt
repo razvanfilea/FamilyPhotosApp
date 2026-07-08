@@ -18,7 +18,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -97,7 +113,7 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out 
                         is FolderNav.Source.Network -> source.folderName
                         is FolderNav.Source.Local -> source.name
                     },
-                    subtitle = timelineLayout.totalGridItemCount.takeIf { it != 0 }?.toString(),
+                    subtitle = timelineLayout.totalPhotoCount.takeIf { it != 0 }?.toString(),
                     actions = {
                         val networkFolder = networkFolderState.value
                         if (source is FolderNav.Source.Network && networkFolder != null) {
@@ -284,7 +300,7 @@ private fun SharingBottomSheet(
         if (canAddMembers && addPeopleExpanded) {
             val existingUsers = folderShares.sharedWith.map { it.userId }.toSet()
             val filteredMembers =
-                folderShares.availableMembers.filter { it.userId !in existingUsers }
+                folderShares.availableMembers.filter { it.userId !in existingUsers && it.userId != folder.ownerId }
 
             items(filteredMembers, key = { it.userId }) { user ->
                 ListItem(
@@ -317,7 +333,7 @@ private fun SharingBottomSheet(
             )
         }
 
-        item {
+        /*item {
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         }
 
@@ -335,7 +351,7 @@ private fun SharingBottomSheet(
         }
 
         items(folderShares.links) {
-        }
+        }*/
     }
 }
 

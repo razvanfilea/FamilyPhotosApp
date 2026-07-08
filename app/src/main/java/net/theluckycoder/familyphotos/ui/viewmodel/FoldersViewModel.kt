@@ -110,10 +110,9 @@ class FoldersViewModel @Inject constructor(
         .cachedIn(viewModelScope)
 
     val networkFolderTimelineLayout: StateFlow<TimelineLayout> = _selectedNetworkFolder
-        .combine(settingsStore.photoType) { folderId, photoType -> folderId to photoType }
-        .flatMapLatest { (folderId, photoType) ->
+        .flatMapLatest { folderId ->
             if (folderId != null) {
-                foldersRepository.networkMonthSummariesForFolder(folderId, photoType)
+                foldersRepository.networkMonthSummariesForFolder(folderId)
             } else {
                 flowOf(emptyList())
             }
