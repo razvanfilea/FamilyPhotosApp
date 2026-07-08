@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
@@ -65,8 +66,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.core.data.model.Photo
 import net.theluckycoder.familyphotos.core.data.model.PhotoFolder
+import net.theluckycoder.familyphotos.core.data.model.isPublic
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.utils.normalize
 
@@ -74,7 +77,6 @@ import net.theluckycoder.familyphotos.utils.normalize
 fun <T : PhotoFolder> FoldersGridList(
     folders: List<T>,
     onFolderClick: (T) -> Unit,
-    folderDetailsText: @Composable (T) -> String?,
     folderNameFilter: String,
     onSearch: (String) -> Unit = {},
     isBackupEnabled: (T) -> Boolean = { false },
@@ -131,7 +133,19 @@ fun <T : PhotoFolder> FoldersGridList(
             val modifier = Modifier
                 .padding(horizontal = 16.dp)
                 .animateItem()
-            val detailsText = folderDetailsText(folder)
+
+            val photosCount =
+                pluralStringResource(R.plurals.items_photos, folder.count, folder.count)
+            val detailsText = if (folder is NetworkFolder) {
+                val personalString = stringResource(R.string.photo_type_personal)
+                val familyString = stringResource(R.string.photo_type_family)
+                val sharedString = stringResource(R.string.photo_type_shared) // TODO
+
+                val owner = if (folder.isPublic) familyString else personalString
+                "$photosCount • $owner"
+            } else {
+                photosCount
+            }
             val backupEnabled = isBackupEnabled(folder)
 
             if (showAsGrid) {

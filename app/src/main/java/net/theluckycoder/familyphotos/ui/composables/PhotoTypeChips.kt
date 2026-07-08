@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.google.common.math.LinearTransformation.horizontal
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
 
@@ -31,7 +32,7 @@ fun PhotoTypeChips(
 ) = Row(
     modifier = modifier
         .horizontalScroll(rememberScrollState())
-        .padding(horizontal = 16.dp),
+        .padding(horizontal = 16.dp, vertical = 8.dp),
     horizontalArrangement = Arrangement.spacedBy(8.dp),
 ) {
     PhotoType.entries.forEach { type ->
@@ -68,7 +69,7 @@ fun PhotoTypeChips(
                     Icon(
                         painter = painterResource(R.drawable.ic_action_done),
                         contentDescription = null,
-                        modifier = modifier.size(FilterChipDefaults.IconSize)
+                        modifier = Modifier.size(FilterChipDefaults.IconSize)
                     )
                 }
             }

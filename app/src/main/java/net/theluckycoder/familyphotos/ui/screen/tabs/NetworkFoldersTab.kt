@@ -27,9 +27,6 @@ fun NetworkFoldersTab() {
     val backStack = LocalNavBackStack.current
     val folders by foldersViewModel.networkFolders.collectAsState()
 
-    val personalString = stringResource(R.string.photo_type_personal)
-    val familyString = stringResource(R.string.photo_type_family)
-    val sharedString = stringResource(R.string.photo_type_shared)
 
     val folderNameFilter = remember { mutableStateOf("") }
 
@@ -37,11 +34,6 @@ fun NetworkFoldersTab() {
         folders = folders,
         onFolderClick = { folder ->
             backStack.add(FolderNav(FolderNav.Source.Network(folder.id, folder.name)))
-        },
-        folderDetailsText = { folder ->
-            val owner = if (folder.isPublic) familyString else personalString // TODO
-            val items = pluralStringResource(R.plurals.items_photos, folder.count, folder.count)
-            "$items • $owner"
         },
         folderNameFilter = folderNameFilter.value,
         onSearch = { folderNameFilter.value = it },

@@ -47,9 +47,6 @@ fun DeviceTab() {
         },
         folderNameFilter = folderNameFilter.value,
         onSearch = { folderNameFilter.value = it },
-        folderDetailsText = { folder ->
-            pluralStringResource(R.plurals.items_photos, folder.count, folder.count)
-        },
         isBackupEnabled = { folder -> folder.name in backupFolders },
         extraHeader = {
             val pendingBackupCount by foldersViewModel.pendingBackupCount.collectAsState()
