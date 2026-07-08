@@ -1,6 +1,7 @@
 package net.theluckycoder.familyphotos.core.data.local.datastore
 
 import android.content.Context
+import android.util.Log.i
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import net.theluckycoder.familyphotos.core.data.di.DefaultCoroutineScope
+import net.theluckycoder.familyphotos.core.data.model.network.UserDto
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,27 +25,20 @@ class UserDataStore @Inject constructor(
 
     private val userDataStore = context.userDataStore
 
-    val sessionCookie: Flow<String?> =
+    internal val sessionCookie: Flow<String?> =
         userDataStore.data.map { it[SESSION_COOKIE] }.distinctUntilChanged()
 
-    suspend fun setSessionCookie(value: String) = userDataStore.edit { preferences ->
+    internal suspend fun setSessionCookie(value: String) = userDataStore.edit { preferences ->
         preferences[SESSION_COOKIE] = value
     }
 
-    val userId: StateFlow<String?> = userDataStore.data
-        .map { it[USER_ID] }
+    val user: StateFlow<UserDto?> = userDataStore.data
+        .map { UserDto(it[USER_ID] ?: return@map null, it[DISPLAY_NAME] ?: return@map null) }
         .stateIn(scope, SharingStarted.Eagerly, null)
 
-    suspend fun setUserName(value: String) = userDataStore.edit { preferences ->
-        preferences[USER_ID] = value
-    }
-
-    val displayName: StateFlow<String> = userDataStore.data
-        .map { it[DISPLAY_NAME] ?: "" }
-        .stateIn(scope, SharingStarted.Eagerly, "")
-
-    suspend fun setDisplayName(value: String) = userDataStore.edit { preferences ->
-        preferences[DISPLAY_NAME] = value
+    suspend fun setUser(value: UserDto) = userDataStore.edit { preferences ->
+        preferences[USER_ID] = value.userId
+        preferences[DISPLAY_NAME] = value.displayName
     }
 
     suspend fun clear() = userDataStore.edit { preferences ->

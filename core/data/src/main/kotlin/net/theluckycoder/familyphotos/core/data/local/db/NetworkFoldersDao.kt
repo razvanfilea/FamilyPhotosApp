@@ -15,6 +15,9 @@ import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolderEntity
 internal interface NetworkFoldersDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(folder: NetworkFolderEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(folders: List<NetworkFolderEntity>)
 
     @Query("DELETE FROM network_folder")

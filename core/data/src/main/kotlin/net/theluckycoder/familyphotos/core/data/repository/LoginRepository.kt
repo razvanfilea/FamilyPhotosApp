@@ -7,6 +7,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
+import net.theluckycoder.familyphotos.core.data.model.network.UserDto
 import net.theluckycoder.familyphotos.core.data.model.network.UserLoginDto
 import net.theluckycoder.familyphotos.core.data.remote.UserService
 import javax.inject.Inject
@@ -17,7 +18,7 @@ class LoginRepository @Inject internal constructor(
     private val userService: Lazy<UserService>,
 ) {
     val isLoggedIn =
-        userDataStore.sessionCookie.combine(userDataStore.userId) { sessionCookie, userName ->
+        userDataStore.sessionCookie.combine(userDataStore.user) { sessionCookie, userName ->
             sessionCookie != null && userName != null
         }
 
@@ -26,10 +27,7 @@ class LoginRepository @Inject internal constructor(
             val user = userService.get().login(userLogin.userId, userLogin.password).body()
             user?.let {
                 Log.v("LoginViewModel", "User logged in: $it")
-                with(userDataStore) {
-                    setUserName(it.userId)
-                    setDisplayName(it.displayName)
-                }
+                userDataStore.setUser(user)
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -51,6 +49,6 @@ class LoginRepository @Inject internal constructor(
      */
     suspend fun setBenchmarkCredentials(sessionCookie: String, username: String) {
         userDataStore.setSessionCookie(sessionCookie)
-        userDataStore.setUserName(username)
+        userDataStore.setUser(UserDto(username, ""))
     }
 }

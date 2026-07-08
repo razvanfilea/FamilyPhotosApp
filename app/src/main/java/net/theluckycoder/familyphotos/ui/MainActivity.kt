@@ -51,7 +51,6 @@ import net.theluckycoder.familyphotos.ui.screen.FolderScreen
 import net.theluckycoder.familyphotos.ui.screen.LargeFilesScreen
 import net.theluckycoder.familyphotos.ui.screen.LoginScreen
 import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
-import net.theluckycoder.familyphotos.ui.screen.RenameFolderScreen
 import net.theluckycoder.familyphotos.ui.screen.SettingsScreen
 import net.theluckycoder.familyphotos.ui.screen.TopLevelScreen
 import net.theluckycoder.familyphotos.ui.screen.TrashScreen
@@ -277,10 +276,6 @@ private fun Content(
 
                 is UploadPhotosNav -> NavEntry(key) {
                     UploadPhotosScreen(key.photoIds)
-                }
-
-                is RenameFolderNav -> NavEntry(key) {
-                    RenameFolderScreen(key.folderId, key.folderName)
                 }
 
                 is DuplicatesNav -> NavEntry(key) {

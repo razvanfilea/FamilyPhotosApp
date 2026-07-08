@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.core.data.repository
 
+import android.R.attr.value
 import android.util.Log
 import dagger.Lazy
 import kotlinx.coroutines.async
@@ -11,7 +12,10 @@ import net.theluckycoder.familyphotos.core.data.local.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolderEntity
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.core.data.model.ExifData
+import net.theluckycoder.familyphotos.core.data.model.UploadChoice
 import net.theluckycoder.familyphotos.core.data.model.network.toEntity
+import net.theluckycoder.familyphotos.core.data.model.network.CreateFolderRequest
+import net.theluckycoder.familyphotos.core.data.remote.FolderService
 import net.theluckycoder.familyphotos.core.data.remote.PhotosService
 import net.theluckycoder.familyphotos.core.data.remote.SyncService
 import javax.inject.Inject
@@ -26,6 +30,7 @@ import javax.inject.Singleton
 class ServerRepository @Inject internal constructor(
     private val syncService: Lazy<SyncService>,
     private val photosService: Lazy<PhotosService>,
+    private val folderService: Lazy<FolderService>,
     private val networkPhotosDao: NetworkPhotosDao,
     private val networkFoldersDao: NetworkFoldersDao,
     private val favoritePhotosDao: FavoritePhotosDao,
@@ -67,7 +72,7 @@ class ServerRepository @Inject internal constructor(
     }
 
     suspend fun downloadUserPhotos(): DownloadResponse = coroutineScope {
-        val userId = userDataStore.userId.value
+        val userId = userDataStore.user.value?.userId
             ?: return@coroutineScope DownloadResponse.NOT_LOGGED_IN
 
         val service = syncService.get()
@@ -83,7 +88,11 @@ class ServerRepository @Inject internal constructor(
             val fullPhotos = photosResponse.body()!!
 
             if (fullPhotos.photos.isNotEmpty()) {
-                networkPhotosDao.updateFullSync(fullPhotos.photos.map { it.toEntity() }, fullPhotos.eventLogId, userId)
+                networkPhotosDao.updateFullSync(
+                    fullPhotos.photos.map { it.toEntity() },
+                    fullPhotos.eventLogId,
+                    userId
+                )
                 Log.i(
                     "ServerRepository",
                     "Downloaded all user photos. EventLogId: ${fullPhotos.eventLogId}"
@@ -104,7 +113,7 @@ class ServerRepository @Inject internal constructor(
     }
 
     suspend fun syncFolders(): Boolean {
-        val currentUserId = userDataStore.userId.value ?: return false
+        val currentUserId = userDataStore.user.value?.userId ?: return false
 
         val localCursors = networkFoldersDao.getSharedFolderCursors(currentUserId)
         val requestBody = localCursors.associate { it.id to it.latestEventId }
@@ -125,7 +134,10 @@ class ServerRepository @Inject internal constructor(
 
         for (folder in responseFolders) {
             when {
-                folder.photos != null -> networkPhotosDao.replaceSharedFolderPhotos(folder.id, folder.photos.map { it.toEntity() })
+                folder.photos != null -> networkPhotosDao.replaceSharedFolderPhotos(
+                    folder.id,
+                    folder.photos.map { it.toEntity() })
+
                 folder.events != null -> networkPhotosDao.applySharedFolderEvents(folder.events)
             }
         }
@@ -147,14 +159,20 @@ class ServerRepository @Inject internal constructor(
 
     suspend fun trashNetworkPhoto(photoIds: LongArray, trash: Boolean): Boolean {
         val service = photosService.get()
-        val response = if (trash) service.trashPhotos(photoIds.toList()) else service.restorePhotos(photoIds.toList())
+        val response =
+            if (trash) service.trashPhotos(photoIds.toList()) else service.restorePhotos(photoIds.toList())
         val successful = response.isSuccessful
 
         if (successful) {
             Log.d("PhotosListRepository", "Trashed photo ($trash): $photoIds")
             networkPhotosDao.insert(response.body()!!.map { it.toEntity() })
         } else {
-            Log.e("PhotosListRepository", "Failed to trash photo ($trash): $photoIds, code=${response.code()}, error=${response.errorBody()?.string()}")
+            Log.e(
+                "PhotosListRepository",
+                "Failed to trash photo ($trash): $photoIds, code=${response.code()}, error=${
+                    response.errorBody()?.string()
+                }"
+            )
         }
 
         return successful
@@ -178,15 +196,37 @@ class ServerRepository @Inject internal constructor(
         }
     }
 
-    suspend fun movePhotos(
-        photos: List<NetworkPhoto>,
-        makePublic: Boolean,
-        newFolderName: String?,
-    ): Boolean {
+    private suspend fun resolveUploadChoiceToFolderId(uploadChoice: UploadChoice): Result<Long?> {
+        return when (uploadChoice) {
+            is UploadChoice.Folder -> Result.success(uploadChoice.folderId)
+            is UploadChoice.NewFolder -> {
+                val response = folderService.get()
+                    .createFolder(CreateFolderRequest(uploadChoice.name, uploadChoice.isPublic))
+                val folderDto = response.body()
+                    ?: return Result.failure(Exception("Failed to create folder"))
+                networkFoldersDao.insert(
+                    NetworkFolderEntity(
+                        id = folderDto.id,
+                        ownerId = folderDto.ownerId,
+                        name = folderDto.name,
+                        latestEventId = 0L,
+                        createdAt = 0L,
+                    )
+                )
+                Result.success(folderDto.id)
+            }
+
+            is UploadChoice.NoFolder -> Result.success(null)
+        }
+    }
+
+    suspend fun movePhotos(photos: List<NetworkPhoto>, uploadChoice: UploadChoice): Boolean {
+        val targetFolderId = resolveUploadChoiceToFolderId(uploadChoice).getOrElse { return false }
+
         val response = photosService.get().movePhotos(
+            makePublic = uploadChoice.isPublic,
+            targetFolderId = targetFolderId,
             photoId = photos.map { it.id },
-            makePublic = makePublic,
-            newFolderName = newFolderName
         )
 
         val changedPhotos = response.body()
@@ -195,7 +235,6 @@ class ServerRepository @Inject internal constructor(
             return false
 
         networkPhotosDao.insert(changedPhotos.map { it.toEntity() })
-        syncFolders()
         return true
     }
 
@@ -219,27 +258,21 @@ class ServerRepository @Inject internal constructor(
         }
     }
 
-    suspend fun renameNetworkFolder(
-        folderId: Long,
-        makePublic: Boolean,
-        newName: String?
-    ): Boolean {
-        val response = photosService.get().renameFolder(
-            sourceFolderId = folderId,
-            targetMakePublic = makePublic,
-            targetFolderName = newName
+    suspend fun renameFolder(folderId: Long, newName: String, isPublic: Boolean): Boolean {
+        val response =
+            folderService.get().updateFolder(folderId, CreateFolderRequest(newName, isPublic))
+        if (!response.isSuccessful) return false
+        val dto = response.body() ?: return false
+        networkFoldersDao.insert(
+            NetworkFolderEntity(
+                id = dto.id,
+                ownerId = dto.ownerId,
+                name = dto.name,
+                latestEventId = 0L,
+                createdAt = 0L,
+            )
         )
-        Log.d("ServerRepository", "Renamed folder $folderId")
-
-        val changedPhotos = response.body()
-        if (!response.isSuccessful || changedPhotos == null) {
-            Log.e("ServerRepository", response.errorBody()?.string().orEmpty())
-            return false
-        }
-
-        networkPhotosDao.insert(changedPhotos.map { it.toEntity() })
         syncFolders()
-        Log.d("ServerRepository", "Updated moved folder photos (${changedPhotos.size})")
         return true
     }
 

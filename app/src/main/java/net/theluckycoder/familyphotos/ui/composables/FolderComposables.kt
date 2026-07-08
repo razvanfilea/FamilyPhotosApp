@@ -43,7 +43,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,7 +71,6 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.core.data.model.Photo
 import net.theluckycoder.familyphotos.core.data.model.PhotoFolder
-import net.theluckycoder.familyphotos.core.data.model.isPublic
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.utils.normalize
 
@@ -77,8 +78,7 @@ import net.theluckycoder.familyphotos.utils.normalize
 fun <T : PhotoFolder> FoldersGridList(
     folders: List<T>,
     onFolderClick: (T) -> Unit,
-    folderNameFilter: String,
-    onSearch: (String) -> Unit = {},
+    currentUserId: String? = null,
     isBackupEnabled: (T) -> Boolean = { false },
     extraHeader: @Composable ColumnScope.() -> Unit = {},
 ) {
@@ -86,6 +86,7 @@ fun <T : PhotoFolder> FoldersGridList(
     val settingsDataStore = LocalSettingsDataStore.current
     val sortAscending by settingsDataStore.showFoldersAscending.collectAsState()
     val showAsGrid by settingsDataStore.showFoldersAsGrid.collectAsState()
+    var folderNameFilter by remember { mutableStateOf("") }
 
     val filteredFolders = remember(folders, folderNameFilter) {
         val filterName = folderNameFilter.normalize()
@@ -109,7 +110,7 @@ fun <T : PhotoFolder> FoldersGridList(
     ) {
         item(span = { GridItemSpan(columnCount) }, key = "header") {
             Column {
-                FolderFilterTextField(folderNameFilter, onSearch = onSearch)
+                FolderFilterTextField(folderNameFilter, onSearch = { folderNameFilter = it })
 
                 extraHeader()
 
@@ -128,7 +129,6 @@ fun <T : PhotoFolder> FoldersGridList(
         }
 
         items(filteredFolders, key = { it.coverPhotoId }) { folder ->
-            // Make a fake photo to load the preview
             val photo = folder.getCoverPhoto()
             val modifier = Modifier
                 .padding(horizontal = 16.dp)
@@ -137,12 +137,12 @@ fun <T : PhotoFolder> FoldersGridList(
             val photosCount =
                 pluralStringResource(R.plurals.items_photos, folder.count, folder.count)
             val detailsText = if (folder is NetworkFolder) {
-                val personalString = stringResource(R.string.photo_type_personal)
-                val familyString = stringResource(R.string.photo_type_family)
-                val sharedString = stringResource(R.string.photo_type_shared) // TODO
-
-                val owner = if (folder.isPublic) familyString else personalString
-                "$photosCount • $owner"
+                val ownerLabel = when {
+                    folder.userId == null -> stringResource(R.string.photo_type_family)
+                    folder.userId == currentUserId -> stringResource(R.string.photo_type_personal)
+                    else -> stringResource(R.string.photo_type_shared)
+                }
+                "$photosCount • $ownerLabel"
             } else {
                 photosCount
             }
@@ -167,7 +167,6 @@ fun <T : PhotoFolder> FoldersGridList(
                     showBackupIndicator = backupEnabled,
                 )
             }
-
         }
     }
 
@@ -175,7 +174,7 @@ fun <T : PhotoFolder> FoldersGridList(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FolderFilterTextField(query: String, onSearch: (String) -> Unit) {
+private fun FolderFilterTextField(query: String, onSearch: (String) -> Unit) {
     val focusRequester = remember { FocusRequester() }
 
     val interactionSource = remember { MutableInteractionSource() }

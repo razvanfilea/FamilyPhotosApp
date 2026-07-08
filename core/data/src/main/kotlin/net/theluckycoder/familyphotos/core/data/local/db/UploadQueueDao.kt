@@ -22,8 +22,11 @@ internal interface UploadQueueDao {
     @Query("DELETE FROM upload_queue WHERE id = :entryId")
     suspend fun deleteById(entryId: Long)
 
-    @Query("DELETE FROM upload_queue WHERE uploadFolder = :folderName AND isManualUpload = 0")
+    @Query("DELETE FROM upload_queue WHERE newFolderName = :folderName AND isManualUpload = 0")
     suspend fun deleteByFolder(folderName: String)
+
+    @Query("UPDATE upload_queue SET folderId = :folderId, newFolderName = NULL WHERE newFolderName = :folderName")
+    suspend fun convertNewFolderToExisting(folderName: String, folderId: Long)
 
     @Query("DELETE FROM upload_queue WHERE isManualUpload = 1")
     suspend fun deleteManualUploads()

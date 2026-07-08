@@ -73,12 +73,6 @@ class UploadPhotosNav(
 ) : NavKey
 
 @Serializable
-data class RenameFolderNav(
-    val folderId: Long,
-    val folderName: String,
-) : NavKey
-
-@Serializable
 object DuplicatesNav : NavKey
 
 @Serializable

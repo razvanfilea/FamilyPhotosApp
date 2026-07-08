@@ -18,7 +18,7 @@ import net.theluckycoder.familyphotos.core.data.model.db.UploadQueueEntry
 
 @Database(
     entities = [LocalPhoto::class, NetworkPhoto::class, NetworkFolderEntity::class, LocalFolderToBackup::class, FavoriteNetworkPhoto::class, ServerState::class, UploadQueueEntry::class],
-    version = 14,
+    version = 15,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -78,6 +78,26 @@ internal abstract class PhotosDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS upload_queue")
+                db.execSQL(
+                    """CREATE TABLE IF NOT EXISTS upload_queue (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        localPhotoId INTEGER NOT NULL,
+                        makePublic INTEGER,
+                        folderId INTEGER,
+                        newFolderName TEXT,
+                        retryCount INTEGER NOT NULL DEFAULT 0,
+                        maxRetries INTEGER NOT NULL DEFAULT 3,
+                        createdAt INTEGER NOT NULL,
+                        isManualUpload INTEGER NOT NULL DEFAULT 0
+                    )"""
+                )
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_upload_queue_localPhotoId ON upload_queue(localPhotoId)")
+            }
+        }
+
         fun getDatabase(context: Context): PhotosDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE?.let { return it }
@@ -89,7 +109,8 @@ internal abstract class PhotosDatabase : RoomDatabase() {
                 ).addMigrations(
                     MIGRATION_12,
                     MIGRATION_13,
-                    MIGRATION_14
+                    MIGRATION_14,
+                    MIGRATION_15
                 ).addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)

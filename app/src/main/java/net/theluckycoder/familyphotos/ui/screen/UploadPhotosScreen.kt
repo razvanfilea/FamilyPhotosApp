@@ -6,12 +6,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.Photo
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
-import net.theluckycoder.familyphotos.ui.composables.UploadChoice
 import net.theluckycoder.familyphotos.ui.composables.UploadPhotosLayout
 import net.theluckycoder.familyphotos.ui.viewmodel.UploadPhotosViewModel
 
@@ -20,30 +20,22 @@ import net.theluckycoder.familyphotos.ui.viewmodel.UploadPhotosViewModel
 fun UploadPhotosScreen(photoIds: LongArray) {
     val uploadPhotosViewModel: UploadPhotosViewModel = viewModel()
 
-    val photosToShowcase = remember { mutableStateOf(emptyList<Photo>()) }
+    var photosToShowcase by remember { mutableStateOf(emptyList<Photo>()) }
     val backStack = LocalNavBackStack.current
     val networkFolders by uploadPhotosViewModel.networkFolders.collectAsState(emptyList())
+    val userId by uploadPhotosViewModel.currentUser.collectAsState()
 
-    LaunchedEffect(photoIds) {
-        photosToShowcase.value = uploadPhotosViewModel.getLocalPhotos(photoIds).await()
+    LaunchedEffect(Unit) {
+        photosToShowcase = uploadPhotosViewModel.getLocalPhotos(photoIds).await()
     }
 
     UploadPhotosLayout(
         networkFolders = networkFolders,
         actionName = stringResource(R.string.action_upload_photos),
-        photosToShowcase = photosToShowcase.value,
-        doneAction = { choice, folderName ->
-            val makePublic = when (choice) {
-                is UploadChoice.NoFolder -> choice.isPublic
-                is UploadChoice.NewFolder -> choice.isPublic
-                is UploadChoice.Folder -> false // TODO: derive from folder
-            }
-            val folder = when (choice) {
-                is UploadChoice.NoFolder -> null
-                is UploadChoice.NewFolder -> choice.name.trim().takeIf { it.isNotEmpty() }
-                is UploadChoice.Folder -> folderName.trim().takeIf { it.isNotEmpty() }
-            }
-            uploadPhotosViewModel.uploadPhotosAsync(photoIds, makePublic, folder)
+        photosToShowcase = photosToShowcase,
+        currentUserId = userId?.userId,
+        doneAction = { choice ->
+            uploadPhotosViewModel.uploadPhotosAsync(photoIds, choice)
             backStack.removeLastOrNull()
         }
     )
