@@ -24,7 +24,7 @@ class PhotosRepository @Inject internal constructor(
 
     fun getLocalPhotoFlow(photoId: Long) = localPhotosDao.findByIdFlow(photoId)
 
-    fun getNetworkPhoto(photoId: Long) = networkPhotosDao.findById(photoId)
+    suspend fun getNetworkPhoto(photoId: Long) = networkPhotosDao.findById(photoId)
 
     fun getNetworkPhotoFlow(photoId: Long) = networkPhotosDao.findByIdFlow(photoId)
 

@@ -44,6 +44,7 @@ internal interface NetworkFoldersDao {
             WHERE trashedOn IS NULL
             AND CASE WHEN :photoType = 1 THEN (userId = :currentUserId)
                      WHEN :photoType = 2 THEN (userId IS NULL)
+                     WHEN :photoType = 3 THEN (userId <> :currentUserId)
                      ELSE 1 END
             GROUP BY folderId
         ) agg ON agg.folderId = nf.id

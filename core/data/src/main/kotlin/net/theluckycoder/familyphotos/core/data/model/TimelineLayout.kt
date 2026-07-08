@@ -90,4 +90,6 @@ data class TimelineLayout(
         }
         result
     }
+
+    val totalPhotoCount = monthSummaries.sumOf { it.photoCount }
 }

@@ -16,14 +16,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.di.DefaultCoroutineScope
+import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class SettingsDataStore @Inject constructor(
-    @ApplicationContext context: Context,
+    @ApplicationContext private val context: Context,
     private val scope: DefaultCoroutineScope,
 ) {
 
@@ -58,6 +58,7 @@ class SettingsDataStore @Inject constructor(
             when (it[FOLDERS_FILTER_TYPE]) {
                 PhotoType.Personal.index -> PhotoType.Personal
                 PhotoType.Family.index -> PhotoType.Family
+                PhotoType.Shared.index -> PhotoType.Shared
                 else -> PhotoType.All
             }
         }

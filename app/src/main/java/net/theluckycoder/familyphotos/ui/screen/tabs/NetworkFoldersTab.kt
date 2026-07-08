@@ -18,7 +18,7 @@ import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.ui.composables.FoldersGridList
-import net.theluckycoder.familyphotos.ui.composables.PhotoTypeSegmentedButtons
+import net.theluckycoder.familyphotos.ui.composables.PhotoTypeChips
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 
 @Composable
@@ -29,6 +29,7 @@ fun NetworkFoldersTab() {
 
     val personalString = stringResource(R.string.photo_type_personal)
     val familyString = stringResource(R.string.photo_type_family)
+    val sharedString = stringResource(R.string.photo_type_shared)
 
     val folderNameFilter = remember { mutableStateOf("") }
 
@@ -38,7 +39,7 @@ fun NetworkFoldersTab() {
             backStack.add(FolderNav(FolderNav.Source.Network(folder.id, folder.name)))
         },
         folderDetailsText = { folder ->
-            val owner = if (folder.isPublic) familyString else personalString
+            val owner = if (folder.isPublic) familyString else personalString // TODO
             val items = pluralStringResource(R.plurals.items_photos, folder.count, folder.count)
             "$items • $owner"
         },
@@ -48,7 +49,7 @@ fun NetworkFoldersTab() {
             val settingsDataStore = LocalSettingsDataStore.current
             val selectedPhotoType by settingsDataStore.photoType.collectAsState()
 
-            PhotoTypeSegmentedButtons(
+            PhotoTypeChips(
                 selectedPhotoType = selectedPhotoType,
                 onChangePhotoType = settingsDataStore::setSelectedPhotoType,
                 modifier = Modifier

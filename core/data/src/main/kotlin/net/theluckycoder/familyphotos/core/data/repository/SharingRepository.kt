@@ -6,25 +6,21 @@ import net.theluckycoder.familyphotos.core.data.model.SharedFolderAccess
 import net.theluckycoder.familyphotos.core.data.model.network.CreateShareRequest
 import net.theluckycoder.familyphotos.core.data.model.network.SharedNetworkFolderDto
 import net.theluckycoder.familyphotos.core.data.model.network.UpdateShareRequest
-import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
+import net.theluckycoder.familyphotos.core.data.model.network.UserDto
 import net.theluckycoder.familyphotos.core.data.remote.SharingService
 import net.theluckycoder.familyphotos.core.data.remote.UserService
 import javax.inject.Inject
 
-// TODO: Cache available members list
 class SharingRepository @Inject internal constructor(
     private val sharingService: Lazy<SharingService>,
     private val userService: Lazy<UserService>,
 ) {
 
+    private var cachedMembers: List<UserDto> = emptyList()
+
     suspend fun getFolderShares(folderId: Long): SharedFolderAccess {
-        val availableMembersResponse = userService.get().getMembersList()
-        if (!availableMembersResponse.isSuccessful) {
-            Log.e(TAG, "Failed to get members: ${availableMembersResponse.errorBody()?.string()}")
-            return SharedFolderAccess.EMPTY
-        }
-        val availableMembers =
-            (availableMembersResponse.body() ?: emptyList())
+        val availableMembers = getAvailableMembers()
+            ?: return SharedFolderAccess.EMPTY
 
         val response = sharingService.get().getFolderShares(folderId)
         if (!response.isSuccessful) {
@@ -111,6 +107,19 @@ class SharingRepository @Inject internal constructor(
             Log.e(TAG, "Failed to revoke share: ${response.errorBody()?.string()}")
         }
         return response.isSuccessful
+    }
+
+    private suspend fun getAvailableMembers(): List<UserDto>? {
+        cachedMembers.ifEmpty { null }?.let { return it }
+
+        val response = userService.get().getMembersList()
+        if (!response.isSuccessful) {
+            Log.e(TAG, "Failed to get members: ${response.errorBody()?.string()}")
+            return null
+        }
+        val members = response.body() ?: emptyList()
+        cachedMembers = members
+        return members
     }
 
     private suspend fun getMyShares(): List<SharedNetworkFolderDto>? {

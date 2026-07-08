@@ -107,6 +107,7 @@
     <string name="photo_type_all">All</string>
     <string name="photo_type_personal">Personal</string>
     <string name="photo_type_family">Family</string>
+    <string name="photo_type_shared">Shared</string>
     <string name="photo_type_images">Images</string>
     <string name="photo_type_videos">Videos</string>
 

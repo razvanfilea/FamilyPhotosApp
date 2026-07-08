@@ -18,7 +18,7 @@ import net.theluckycoder.familyphotos.core.data.model.db.NetworkPhotoWithYearOff
 internal interface NetworkPhotosDao {
 
     @Query("SELECT * FROM network_photo WHERE id = :photoId")
-    fun findById(photoId: Long): NetworkPhoto?
+    suspend fun findById(photoId: Long): NetworkPhoto?
 
     @Query("SELECT * FROM network_photo WHERE id = :photoId")
     fun findByIdFlow(photoId: Long): Flow<NetworkPhoto?>
@@ -28,6 +28,7 @@ internal interface NetworkPhotosDao {
             WHERE CASE
                 WHEN :photoType = 1 THEN (userId = :currentUserId)
                 WHEN :photoType = 2 THEN (userId IS NULL)
+                WHEN :photoType = 3 THEN (userId <> :currentUserId)
                 ELSE 1
             END
             AND trashedOn IS NULL
@@ -51,6 +52,7 @@ internal interface NetworkPhotosDao {
         WHERE CASE
             WHEN :photoType = 1 THEN (userId = :currentUserId)
             WHEN :photoType = 2 THEN (userId IS NULL)
+            WHEN :photoType = 3 THEN (userId <> :currentUserId)
             ELSE 1
         END
         AND yearOffset BETWEEN :minYearsAgo AND :maxYearsAgo
@@ -78,6 +80,7 @@ internal interface NetworkPhotosDao {
         AND CASE
             WHEN :photoType = 1 THEN (userId = :currentUserId)
             WHEN :photoType = 2 THEN (userId IS NULL)
+            WHEN :photoType = 3 THEN (userId <> :currentUserId)
             ELSE 1
         END
         GROUP BY strftime('%Y-%m', datetime(timeCreated, 'unixepoch', 'localtime'))
@@ -94,16 +97,11 @@ internal interface NetworkPhotosDao {
         FROM network_photo
         WHERE folderId = :folderId
         AND trashedOn IS NULL
-        AND CASE
-            WHEN :photoType = 1 THEN (userId = :currentUserId)
-            WHEN :photoType = 2 THEN (userId IS NULL)
-            ELSE 1
-        END
         GROUP BY strftime('%Y-%m', datetime(timeCreated, 'unixepoch', 'localtime'))
         ORDER BY timeCreated DESC
         """
     )
-    fun getMonthSummariesForFolder(folderId: Long, photoType: PhotoType, currentUserId: String): Flow<List<MonthSummary>>
+    fun getMonthSummariesForFolder(folderId: Long): Flow<List<MonthSummary>>
 
     @Query("SELECT * FROM network_photo WHERE trashedOn IS NOT NULL ORDER BY trashedOn DESC")
     fun getTrashedPhotos(): Flow<List<NetworkPhoto>>
