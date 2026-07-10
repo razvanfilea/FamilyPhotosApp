@@ -35,9 +35,7 @@ fun NetworkFoldersTab() {
             PhotoTypeChips(
                 selectedPhotoType = selectedPhotoType,
                 onChangePhotoType = settingsDataStore::setSelectedPhotoType,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
+                modifier = Modifier.padding(horizontal = 8.dp),
             )
         }
     )

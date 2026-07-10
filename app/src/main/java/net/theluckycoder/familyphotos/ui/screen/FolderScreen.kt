@@ -30,7 +30,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -62,7 +61,6 @@ import net.theluckycoder.familyphotos.core.data.model.db.isPublic
 import net.theluckycoder.familyphotos.core.data.model.network.UserDto
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
-import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
 import net.theluckycoder.familyphotos.ui.composables.FolderNameDialog
 import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
@@ -88,9 +86,7 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out 
         )
     val currentUser = foldersViewModel.currentUser.collectAsState(UserDto("", ""))
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
-    ) { paddingValues ->
+    Scaffold { paddingValues ->
         PhotosList(
             gridState = gridState,
             photos = lazyPagingItems,
@@ -111,7 +107,7 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out 
                     navIconOnClick = backStack::removeLastOrNull,
                     title = when (source) {
                         FolderNav.Source.Favorites -> stringResource(R.string.title_favorites)
-                        is FolderNav.Source.Network -> source.folderName
+                        is FolderNav.Source.Network -> networkFolderState.value?.name ?: source.folderName
                         is FolderNav.Source.Local -> source.name
                     },
                     subtitle = timelineLayout.totalPhotoCount.takeIf { it != 0 }?.toString(),

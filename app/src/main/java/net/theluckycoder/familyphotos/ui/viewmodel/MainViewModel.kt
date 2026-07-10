@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
@@ -26,7 +27,9 @@ import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.core.data.repository.ServerRepository
 import net.theluckycoder.familyphotos.domain.GetPhotoUrisUseCase
 import net.theluckycoder.familyphotos.domain.RefreshPhotosUseCase
+import net.theluckycoder.familyphotos.ui.SnackbarManager
 import net.theluckycoder.familyphotos.ui.TopLevelTab
+import net.theluckycoder.familyphotos.ui.UiMessageType
 import javax.inject.Inject
 
 @HiltViewModel
@@ -38,6 +41,7 @@ class MainViewModel @Inject constructor(
     private val getPhotoUrisUseCase: GetPhotoUrisUseCase,
     private val serverRepository: ServerRepository,
     val loginRepository: LoginRepository,
+    private val snackbarManager: SnackbarManager,
 ) : ViewModel() {
 
     private val _localPhotosToDelete = Channel<List<LocalPhoto>>()
@@ -73,11 +77,10 @@ class MainViewModel @Inject constructor(
 
         viewModelScope.launch(Dispatchers.IO) {
             when (val result = refreshPhotosUseCase()) {
-                is RefreshPhotosUseCase.Result.Error -> Log.e(
-                    "MainViewModel",
-                    "Failed to refresh data",
-                    result.throwable
-                )
+                is RefreshPhotosUseCase.Result.Error -> {
+                    Log.e("MainViewModel", "Failed to refresh data", result.throwable)
+                    snackbarManager.showMessage(R.string.error_refresh_failed, UiMessageType.Error)
+                }
 
                 RefreshPhotosUseCase.Result.NotLoggedIn -> {
                     loginRepository.logout()
@@ -98,8 +101,16 @@ class MainViewModel @Inject constructor(
         getPhotoUrisUseCase.getLocalPhotoUris(photoIds)
     }
 
-    suspend fun trashNetworkPhotos(photoIds: LongArray) = withContext(Dispatchers.IO) {
-        serverRepository.trashNetworkPhoto(photoIds, true)
+    suspend fun trashNetworkPhotos(photoIds: LongArray): Boolean {
+        val result = withContext(Dispatchers.IO) {
+            serverRepository.trashNetworkPhoto(photoIds, true)
+        }
+        if (result) {
+            snackbarManager.showPluralMessage(R.plurals.status_photos_trashed, photoIds.size)
+        } else {
+            snackbarManager.showMessage(R.string.error_trash_failed, UiMessageType.Error)
+        }
+        return result
     }
 
     fun deleteLocalPhotos(photoIds: LongArray) {

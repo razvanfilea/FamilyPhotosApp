@@ -19,14 +19,12 @@ import net.theluckycoder.familyphotos.core.data.remote.FolderService
 import net.theluckycoder.familyphotos.core.data.remote.PhotosService
 import net.theluckycoder.familyphotos.core.data.remote.SyncService
 import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Handles network API operations for photos.
  * MediaStore operations are in [MediaStoreRepository].
  * Upload operations are in [PhotoUploadRepository].
  */
-@Singleton
 class ServerRepository @Inject internal constructor(
     private val syncService: Lazy<SyncService>,
     private val photosService: Lazy<PhotosService>,
@@ -164,12 +162,12 @@ class ServerRepository @Inject internal constructor(
         val successful = response.isSuccessful
 
         if (successful) {
-            Log.d("PhotosListRepository", "Trashed photo ($trash): $photoIds")
+            Log.d("PhotosListRepository", "Trashed photo ($trash): ${photoIds.contentToString()}")
             networkPhotosDao.insert(response.body()!!.map { it.toEntity() })
         } else {
             Log.e(
                 "PhotosListRepository",
-                "Failed to trash photo ($trash): $photoIds, code=${response.code()}, error=${
+                "Failed to trash photo ($trash): ${photoIds.contentToString()}, code=${response.code()}, error=${
                     response.errorBody()?.string()
                 }"
             )
@@ -263,6 +261,7 @@ class ServerRepository @Inject internal constructor(
             folderService.get().updateFolder(folderId, CreateFolderRequest(newName, isPublic))
         if (!response.isSuccessful) return false
         val dto = response.body() ?: return false
+
         networkFoldersDao.insert(
             NetworkFolderEntity(
                 id = dto.id,
@@ -272,7 +271,6 @@ class ServerRepository @Inject internal constructor(
                 createdAt = 0L,
             )
         )
-        syncFolders()
         return true
     }
 

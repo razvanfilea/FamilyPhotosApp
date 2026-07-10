@@ -17,12 +17,10 @@ import net.theluckycoder.familyphotos.core.data.remote.PhotosService
 import java.io.File
 import java.io.IOException
 import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Handles Android MediaStore operations (ContentResolver).
  */
-@Singleton
 class MediaStoreRepository @Inject internal constructor(
     @param:ApplicationContext
     private val context: Context,

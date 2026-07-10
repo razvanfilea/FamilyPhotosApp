@@ -9,8 +9,10 @@ import net.theluckycoder.familyphotos.core.data.model.network.UpdateShareRequest
 import net.theluckycoder.familyphotos.core.data.model.network.UserDto
 import net.theluckycoder.familyphotos.core.data.remote.SharingService
 import net.theluckycoder.familyphotos.core.data.remote.UserService
+import dagger.Reusable
 import javax.inject.Inject
 
+@Reusable
 class SharingRepository @Inject internal constructor(
     private val sharingService: Lazy<SharingService>,
     private val userService: Lazy<UserService>,

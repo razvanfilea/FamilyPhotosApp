@@ -23,7 +23,6 @@ import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -61,7 +60,6 @@ import net.theluckycoder.familyphotos.core.data.model.isVideo
 import net.theluckycoder.familyphotos.core.data.model.thumbHash
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
-import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.MovePhotosNav
 import net.theluckycoder.familyphotos.ui.UploadPhotosNav
 import net.theluckycoder.familyphotos.ui.composables.player.VideoPlayer
@@ -177,7 +175,6 @@ private fun PhotoViewerScaffold(
     Scaffold(
         containerColor = Color.Black,
         contentColor = Color.White,
-        snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
         topBar = {
             if (currentPhoto != null) {
                 TopBar(currentPhoto, showUi, { backStack.removeLastOrNull() }, photoViewerViewModel)

@@ -1,7 +1,7 @@
 [versions]
 agp = "9.2.1"
 kotlin_base = "2.4.0"
-kotlin_ksp = "2.3.9"
+kotlin_ksp = "2.3.10"
 kotlin_coroutines = "1.11.0"
 kotlin_serialization = "1.11.0"
 kotlin_datetime = "0.8.0-0.6.x-compat"

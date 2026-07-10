@@ -16,7 +16,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -34,7 +33,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
-import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
 import net.theluckycoder.familyphotos.ui.composables.PhotoListItem
 import net.theluckycoder.familyphotos.ui.composables.PhotosSelectionBar
@@ -55,9 +53,7 @@ fun TrashScreen() {
         selectedPhotoIds.clear()
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
-    ) { paddingValues ->
+    Scaffold { paddingValues ->
         val columnCount =
             if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 4 else 8
 
