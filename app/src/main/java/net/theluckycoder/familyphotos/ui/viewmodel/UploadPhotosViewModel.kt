@@ -1,6 +1,5 @@
 package net.theluckycoder.familyphotos.ui.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
@@ -16,6 +15,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
@@ -28,6 +28,8 @@ import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.core.data.repository.ServerRepository
+import net.theluckycoder.familyphotos.ui.SnackbarManager
+import net.theluckycoder.familyphotos.ui.UiMessageType
 import net.theluckycoder.familyphotos.workers.enqueueBackupAndUploadWorker
 import javax.inject.Inject
 
@@ -41,6 +43,7 @@ class UploadPhotosViewModel @Inject constructor(
     settingsStore: SettingsDataStore,
     userDataStore: UserDataStore,
     private val workManager: WorkManager,
+    private val snackbarManager: SnackbarManager,
 ) : ViewModel() {
 
     val currentUser: StateFlow<UserDto?> = userDataStore.user
@@ -79,28 +82,23 @@ class UploadPhotosViewModel @Inject constructor(
             workManager.enqueueBackupAndUploadWorker(
                 skipFolderScan = true
             )
+            snackbarManager.showMessage(R.string.status_upload_queued)
         }
     }
 
-    /**
-     * Change the folder and the user where these [NetworkPhoto]s belong
-     *
-     * @returns true if all photos have been successfully moved
-     */
-    fun movePhotos(
-        networkPhotos: LongArray, uploadChoice: UploadChoice,
-    ): Deferred<Boolean> = viewModelScope.async(Dispatchers.IO) {
-        val photos = networkPhotos.map { id ->
-            photosRepository.getNetworkPhotoFlow(id).firstOrNull()
-        }.filterNotNull()
+    fun movePhotos(networkPhotos: LongArray, uploadChoice: UploadChoice) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val photos = networkPhotos.map { id ->
+                photosRepository.getNetworkPhotoFlow(id).firstOrNull()
+            }.filterNotNull()
 
-        val result = serverRepository.movePhotos(
-            photos = photos, uploadChoice = uploadChoice,
-        )
-
-        Log.d("Moving Photos", "Moved $photos result=$result")
-
-        result
+            val result = serverRepository.movePhotos(photos = photos, uploadChoice = uploadChoice)
+            if (result) {
+                snackbarManager.showPluralMessage(R.plurals.status_move_success, photos.size, UiMessageType.Success)
+            } else {
+                snackbarManager.showPluralMessage(R.plurals.status_move_failure, photos.size, UiMessageType.Error)
+            }
+        }
     }
 
 }

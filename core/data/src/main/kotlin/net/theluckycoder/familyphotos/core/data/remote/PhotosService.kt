@@ -45,7 +45,7 @@ internal interface PhotosService {
         @Body photoIds: List<Long>,
     ): Response<List<NetworkPhotoDto>>
 
-    @DELETE("/api/trash/restore")
+    @POST("/api/trash/restore")
     suspend fun restorePhotos(
         @Body photoIds: List<Long>,
     ): Response<List<NetworkPhotoDto>>
@@ -55,7 +55,7 @@ internal interface PhotosService {
         @Path("photo_id") photoId: Long,
     ): Response<Void>
 
-    @POST("/api/move/photos")
+    @POST("/api/move")
     suspend fun movePhotos(
         @Query("make_public") makePublic: Boolean?,
         @Query("target_folder_id") targetFolderId: Long?,

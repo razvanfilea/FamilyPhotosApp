@@ -26,17 +26,6 @@ data class NetworkFolder(
     override val count: Int,
 ) : PhotoFolder() {
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as NetworkFolder
-
-        return id == other.id
-    }
-
-    override fun hashCode(): Int = id.hashCode()
-
     override fun getCoverPhoto(): Photo = NetworkPhoto(
         id = coverPhotoId,
         name = "",

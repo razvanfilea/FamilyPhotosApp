@@ -25,12 +25,10 @@ import okio.BufferedSink
 import okio.source
 import java.io.IOException
 import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Handles photo upload operations and upload queue management.
  */
-@Singleton
 class PhotoUploadRepository @Inject internal constructor(
     @param:ApplicationContext
     private val context: Context,

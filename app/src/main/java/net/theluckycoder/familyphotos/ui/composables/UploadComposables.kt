@@ -220,9 +220,7 @@ private fun UploadDialogContent(
             PhotoTypeChips(
                 selectedPhotoType = selectedPhotoType,
                 onChangePhotoType = settingsDataStore::setSelectedPhotoType,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
+                modifier = Modifier.padding(top = 8.dp),
             )
 
             DestinationSelector(

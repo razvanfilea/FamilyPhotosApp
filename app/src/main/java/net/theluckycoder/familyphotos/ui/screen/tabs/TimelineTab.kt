@@ -77,9 +77,7 @@ fun TimelineTab(photos: LazyPagingItems<NetworkPhoto>) {
             PhotoTypeChips(
                 selectedPhotoType = selectedPhotoType,
                 onChangePhotoType = settingsDataStore::setSelectedPhotoType,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                modifier = Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets)
                     .padding(8.dp),
             )
 

@@ -23,9 +23,6 @@ internal interface NetworkFoldersDao {
     @Query("DELETE FROM network_folder")
     suspend fun deleteAll()
 
-    @Query("SELECT * FROM network_folder")
-    fun getAllFlow(): Flow<List<NetworkFolderEntity>>
-
     @Query("SELECT * FROM network_folder WHERE id = :folderId")
     fun getFolderFlow(folderId: Long): Flow<NetworkFolderEntity?>
 
@@ -37,12 +34,12 @@ internal interface NetworkFoldersDao {
 
     @Query(
         """
-        SELECT nf.id AS folderId, nf.name AS folderName, agg.userId,
+        SELECT nf.id AS folderId, nf.name AS folderName, nf.ownerId as userId,
                agg.coverPhotoId, agg.photoCount
         FROM network_folder nf
         INNER JOIN (
             SELECT folderId, COUNT(*) AS photoCount, MAX(timeCreated),
-                   id AS coverPhotoId, userId
+                   id AS coverPhotoId
             FROM network_photo
             WHERE trashedOn IS NULL
             AND CASE WHEN :photoType = 1 THEN (userId = :currentUserId)

@@ -34,12 +34,10 @@ import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.core.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
 import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-@Singleton // Needed for WorkManager
 class FoldersRepository @Inject internal constructor(
     @param:ApplicationContext
     private val context: Context,

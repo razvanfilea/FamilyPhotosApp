@@ -13,7 +13,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,7 +36,6 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.core.data.model.isPublic
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
-import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
 import net.theluckycoder.familyphotos.ui.composables.ZoomableImage
 import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialogCaller
@@ -70,7 +68,6 @@ fun DuplicatesScreen() {
     val networkPhotoInfoDialog = rememberNetworkPhotoInfoDialog(currentPhoto)
 
     Scaffold(
-        snackbarHost = { SnackbarHost(LocalSnackbarHostState.current) },
         topBar = {
             NavBackTopAppBar(
                 title = stringResource(R.string.title_duplicates),

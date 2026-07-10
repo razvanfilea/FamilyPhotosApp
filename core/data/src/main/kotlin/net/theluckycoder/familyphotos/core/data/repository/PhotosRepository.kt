@@ -10,9 +10,7 @@ import net.theluckycoder.familyphotos.core.data.local.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton // Needed for WorkManager
 class PhotosRepository @Inject internal constructor(
     private val localPhotosDao: LocalPhotosDao,
     private val networkPhotosDao: NetworkPhotosDao,

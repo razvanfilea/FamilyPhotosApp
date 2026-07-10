@@ -24,17 +24,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
-import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
 import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.core.data.model.SharedFolderAccess
-import net.theluckycoder.familyphotos.core.data.model.network.UserDto
+import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.core.data.repository.ServerRepository
 import net.theluckycoder.familyphotos.core.data.repository.SharingRepository
+import net.theluckycoder.familyphotos.ui.SnackbarManager
+import net.theluckycoder.familyphotos.ui.UiMessageType
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel.Companion.PAGING_CONFIG
 import net.theluckycoder.familyphotos.workers.BackupAndUploadWorker
 import net.theluckycoder.familyphotos.workers.enqueueBackupAndUploadWorker
@@ -51,6 +53,7 @@ class FoldersViewModel @Inject constructor(
     userDataStore: UserDataStore,
     settingsStore: SettingsDataStore,
     private val workManager: WorkManager,
+    private val snackbarManager: SnackbarManager,
 ) : ViewModel() {
 
     data class BackupProgress(
@@ -70,6 +73,8 @@ class FoldersViewModel @Inject constructor(
         .combine(settingsStore.showFoldersAscending) { type, ascending -> type to ascending }
         .flatMapLatest { (type, ascending) ->
             foldersRepository.networkFoldersFlow(type, ascending)
+        }.map {
+            it
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     val photoListState = MutableStateFlow(LazyGridState())
@@ -204,6 +209,9 @@ class FoldersViewModel @Inject constructor(
             val result = sharingRepository.createShare(folderId = folderId, granteeId = userId)
             if (result != null) {
                 _sharingRefreshTrigger.update { it + 1 }
+                snackbarManager.showMessage(R.string.status_member_added, UiMessageType.Success)
+            } else {
+                snackbarManager.showMessage(R.string.error_member_add_failed, UiMessageType.Error)
             }
         }
     }
@@ -217,6 +225,9 @@ class FoldersViewModel @Inject constructor(
             )
             if (result != null) {
                 _sharingRefreshTrigger.update { it + 1 }
+                snackbarManager.showMessage(R.string.status_permissions_updated, UiMessageType.Success)
+            } else {
+                snackbarManager.showMessage(R.string.error_permissions_update_failed, UiMessageType.Error)
             }
         }
     }
@@ -226,13 +237,21 @@ class FoldersViewModel @Inject constructor(
             val result = sharingRepository.revokeShare(shareId = shareId)
             if (result) {
                 _sharingRefreshTrigger.update { it + 1 }
+                snackbarManager.showMessage(R.string.status_member_removed, UiMessageType.Success)
+            } else {
+                snackbarManager.showMessage(R.string.error_member_remove_failed, UiMessageType.Error)
             }
         }
     }
 
     fun renameFolder(folderId: Long, newName: String, isPublic: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            serverRepository.renameFolder(folderId, newName, isPublic)
+            val result = serverRepository.renameFolder(folderId, newName, isPublic)
+            if (result) {
+                snackbarManager.showMessage(R.string.status_folder_renamed, UiMessageType.Success)
+            } else {
+                snackbarManager.showMessage(R.string.error_folder_rename_failed, UiMessageType.Error)
+            }
         }
     }
 
