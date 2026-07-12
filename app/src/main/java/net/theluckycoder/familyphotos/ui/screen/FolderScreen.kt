@@ -423,7 +423,7 @@ private fun MemberRowItem(
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_more_options_vertical),
-                        contentDescription = "Edit permissions",
+                        contentDescription = stringResource(R.string.cd_edit_permissions),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }

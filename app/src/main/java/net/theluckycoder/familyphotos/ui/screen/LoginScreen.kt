@@ -16,9 +16,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.network.UserLoginDto
 
 @Composable
@@ -36,7 +38,7 @@ fun LoginScreen(loginAction: (UserLoginDto) -> Unit) = Scaffold {
                 modifier = Modifier
                     .padding(top = 32.dp)
                     .align(Alignment.CenterHorizontally),
-                text = "Family Photos",
+                text = stringResource(R.string.app_name),
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -47,7 +49,7 @@ fun LoginScreen(loginAction: (UserLoginDto) -> Unit) = Scaffold {
                     .padding(top = 32.dp),
                 value = userName,
                 onValueChange = { userName = it },
-                label = { Text("User Name") }
+                label = { Text(stringResource(R.string.login_username_label)) }
             )
 
             TextField(
@@ -56,7 +58,7 @@ fun LoginScreen(loginAction: (UserLoginDto) -> Unit) = Scaffold {
                     .padding(top = 16.dp),
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Password") },
+                label = { Text(stringResource(R.string.login_password_label)) },
             )
 
             Button(
@@ -68,7 +70,7 @@ fun LoginScreen(loginAction: (UserLoginDto) -> Unit) = Scaffold {
                     loginAction(userLogin)
                 }
             ) {
-                Text(text = "Login")
+                Text(text = stringResource(R.string.login_button))
             }
         }
     }

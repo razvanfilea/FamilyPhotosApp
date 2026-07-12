@@ -1,23 +1,24 @@
 <resources>
+    <!-- App (non-translatable) -->
     <string name="app_name" translatable="false">Family Photos</string>
     <string name="camera_name" translatable="false">Camera</string>
     <string name="camera_name_long" translatable="false">Family Camera</string>
 
-    <string name="title_settings">Settings</string>
-    <string name="title_duplicates">Duplicates</string>
-    <string name="title_favorites">Favorites</string>
+    <!-- Navigation / Sections -->
     <string name="section_photos">Photos</string>
     <string name="section_folders">Folders</string>
     <string name="section_device">Device</string>
+    <string name="section_utilities">Utilities</string>
+    <string name="title_settings">Settings</string>
+    <string name="title_duplicates">Duplicates</string>
+    <string name="title_favorites">Favorites</string>
     <string name="title_trash">Trash</string>
     <string name="title_large_files">Large Files</string>
-    <string name="large_files_empty">No files larger than 50 MB</string>
-    <string name="section_utilities">Utilities</string>
 
-    <!-- Duplicates -->
-    <string name="duplicates_which_to_keep">Which do you want to keep?</string>
-    <string name="duplicates_none">No duplicates found</string>
-    <string name="duplicates_error">Failed to load duplicates</string>
+    <!-- Login -->
+    <string name="login_username_label">User Name</string>
+    <string name="login_password_label">Password</string>
+    <string name="login_button">Login</string>
 
     <!-- Actions -->
     <string name="action_info">Info</string>
@@ -36,112 +37,11 @@
     <string name="action_into_personal_gallery">Into Personal Gallery</string>
     <string name="action_into_family_gallery">Into Family Gallery</string>
     <string name="action_search_folders">Search Folders…</string>
-
+    <string name="action_create_folder">Create new folder</string>
     <string name="confirm_delete">Delete photos</string>
     <string name="confirm_delete_detail">Are you sure you want to delete these photos?</string>
 
-    <plurals name="items_photos">
-        <item quantity="one">%d photo</item>
-        <item quantity="other">%d photos</item>
-    </plurals>
-
-    <plurals name="items_selected">
-        <item quantity="other">%d selected</item>
-    </plurals>
-
-    <!-- Status Messages -->
-    <string name="error_refresh_failed">Failed to refresh photos</string>
-    <string name="status_upload_queued">Upload queued</string>
-    <string name="status_saved">Saved</string>
-
-    <plurals name="status_photos_trashed">
-        <item quantity="one">%d photo moved to trash</item>
-        <item quantity="other">%d photos moved to trash</item>
-    </plurals>
-    <string name="error_trash_failed">Failed to move photos to trash</string>
-
-    <plurals name="status_photos_deleted">
-        <item quantity="one">%d photo deleted permanently</item>
-        <item quantity="other">%d photos deleted permanently</item>
-    </plurals>
-    <string name="error_delete_failed">Failed to delete photos</string>
-
-    <plurals name="status_photos_restored">
-        <item quantity="one">%d photo restored</item>
-        <item quantity="other">%d photos restored</item>
-    </plurals>
-    <string name="error_restore_failed">Failed to restore photos</string>
-
-    <plurals name="status_move_success">
-        <item quantity="one">%d photo moved successfully</item>
-        <item quantity="other">%d photos moved successfully</item>
-    </plurals>
-    <plurals name="status_move_failure">
-        <item quantity="one">Failed to move %d photo</item>
-        <item quantity="other">Failed to move %d photos</item>
-    </plurals>
-
-    <string name="status_member_added">Member added</string>
-    <string name="error_member_add_failed">Failed to add member</string>
-
-    <string name="status_permissions_updated">Permissions updated</string>
-    <string name="error_permissions_update_failed">Failed to update permissions</string>
-
-    <string name="status_member_removed">Member removed</string>
-    <string name="error_member_remove_failed">Failed to remove member</string>
-
-    <string name="status_folder_renamed">Folder renamed</string>
-    <string name="error_folder_rename_failed">Failed to rename folder</string>
-
-    <string name="send_to">Send to:</string>
-    <string name="failed_download_image">Failed to download image</string>
-    <string name="ascending">Ascending</string>
-    <string name="descending">Descending</string>
-    <plurals name="years_ago">
-        <item quantity="one">%1$d year ago</item>
-        <item quantity="other">%1$d years ago</item>
-    </plurals>
-
-    <!-- Notifications -->
-    <string name="notification_missing_permission">Missing notification permission</string>
-    <string name="notification_channel_backup">Backup</string>
-    <string name="notification_backup_title">Backup up files</string>
-    <string name="notification_backup_starting">Starting backup</string>
-    <string name="notification_backup_progress">Uploaded %1$d/%2$d photos</string>
-    <string name="notification_backup_finished">Finished uploading photos</string>
-    <string name="notification_backup_finished_desc">%1$d photos uploaded successfully and %2$d failed</string>
-    <string name="notification_backup_finished_desc_only_success">%d photos uploaded</string>
-    <string name="notification_backup_finished_desc_only_failure">%d photos failed to upload</string>
-    <string name="notification_backup_fail">Failed to backup up files</string>
-    <string name="notification_backup_fail_cancelled">Upload was cancelled</string>
-    <string name="notification_backup_fail_internet">Missing internet connection</string>
-    <string name="notification_backup_fail_io">Error in the files</string>
-    <string name="notification_backup_fail_unknown">Unknown reason</string>
-
-    <!-- Photo Detail Dialog -->
-    <string name="photo_detail_title_location">Location</string>
-    <string name="photo_detail_open_maps">Open in Maps</string>
-    <string name="photo_detail_title_details">Details</string>
-    <string name="photo_detail_no_folder">No folder</string>
-
-    <!-- Trash -->
-    <string name="trash_is_empty">Trash is empty</string>
-    <string name="trash_auto_delete_info">Photos in trash are automatically deleted after 30 days</string>
-    <plurals name="trash_days_remaining">
-        <item quantity="one">%d day</item>
-        <item quantity="other">%d days</item>
-    </plurals>
-    <string name="confirm_permanent_delete">Delete permanently</string>
-    <string name="confirm_permanent_delete_detail">These photos will be permanently deleted and cannot be recovered.</string>
-
-    <!-- Preferences -->
-    <string name="pref_category_cache">Cache</string>
-    <string name="pref_cache_size">Cache Size (MB)</string>
-    <string name="pref_restart_needed">A restart is needed to apply these changes</string>
-    <string name="pref_clear_cache">Clear all cache</string>
-
-    <string name="folder_name">Folder Name</string>
-    <string name="action_create_folder">Create new folder</string>
+    <!-- Photo Types / Filters -->
     <string name="photo_type_all">All</string>
     <string name="photo_type_personal">Personal</string>
     <string name="photo_type_family">Family</string>
@@ -149,9 +49,50 @@
     <string name="photo_type_images">Images</string>
     <string name="photo_type_videos">Videos</string>
 
+    <!-- Folders -->
+    <string name="folder_name">Folder Name</string>
+    <string name="ascending">Ascending</string>
+    <string name="descending">Descending</string>
+
+    <!-- Duplicates -->
+    <string name="duplicates_which_to_keep">Which do you want to keep?</string>
+    <string name="duplicates_none">No duplicates found</string>
+    <string name="duplicates_error">Failed to load duplicates</string>
+
+    <!-- Trash -->
+    <string name="trash_is_empty">Trash is empty</string>
+    <string name="trash_auto_delete_info">Photos in trash are automatically deleted after 30 days</string>
+    <string name="confirm_permanent_delete">Delete permanently</string>
+    <string name="confirm_permanent_delete_detail">These photos will be permanently deleted and cannot be recovered.</string>
+    <plurals name="trash_days_remaining">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+
+    <!-- Large Files -->
+    <string name="large_files_empty">No files larger than 50 MB</string>
+
+    <!-- Photo Detail -->
+    <string name="photo_detail_title_location">Location</string>
+    <string name="photo_detail_open_maps">Open in Maps</string>
+    <string name="photo_detail_title_details">Details</string>
+    <string name="photo_detail_no_folder">No folder</string>
+    <string name="send_to">Send to:</string>
+
     <!-- Statistics -->
     <string name="statistics_title">Photo Statistics</string>
     <string name="statistics_total">Total</string>
+
+    <!-- Settings / Preferences -->
+    <string name="pref_category_cache">Cache</string>
+    <string name="pref_cache_size">Cache Size (MB)</string>
+    <string name="pref_restart_needed">A restart is needed to apply these changes</string>
+    <string name="pref_clear_cache">Clear all cache</string>
+    <string name="settings_backup_mobile_data">Backup over mobile data</string>
+    <string name="settings_backup_mobile_data_summary">Allow backup when not connected to WiFi</string>
+    <string name="settings_user">User</string>
+    <string name="settings_sign_out">Sign out</string>
+    <string name="settings_sign_out_summary">Log out of the current user session</string>
 
     <!-- Backup -->
     <string name="backup_title">Backup</string>
@@ -177,4 +118,79 @@
     <string name="sharing_permission_upload">Can upload</string>
     <string name="sharing_permission_upload_delete">Can upload &amp; delete</string>
     <string name="sharing_remove_member">Delete member</string>
+
+    <!-- Status Messages -->
+    <string name="status_upload_queued">Upload queued</string>
+    <string name="status_saved">Saved</string>
+    <string name="status_member_added">Member added</string>
+    <string name="status_permissions_updated">Permissions updated</string>
+    <string name="status_member_removed">Member removed</string>
+    <string name="status_folder_renamed">Folder renamed</string>
+    <plurals name="status_photos_trashed">
+        <item quantity="one">%d photo moved to trash</item>
+        <item quantity="other">%d photos moved to trash</item>
+    </plurals>
+    <plurals name="status_photos_deleted">
+        <item quantity="one">%d photo deleted permanently</item>
+        <item quantity="other">%d photos deleted permanently</item>
+    </plurals>
+    <plurals name="status_photos_restored">
+        <item quantity="one">%d photo restored</item>
+        <item quantity="other">%d photos restored</item>
+    </plurals>
+    <plurals name="status_move_success">
+        <item quantity="one">%d photo moved successfully</item>
+        <item quantity="other">%d photos moved successfully</item>
+    </plurals>
+
+    <!-- Errors -->
+    <string name="error_server_connection">Failed to connect to server</string>
+    <string name="error_refresh_failed">Failed to refresh photos</string>
+    <string name="error_trash_failed">Failed to move photos to trash</string>
+    <string name="error_delete_failed">Failed to delete photos</string>
+    <string name="error_restore_failed">Failed to restore photos</string>
+    <string name="error_member_add_failed">Failed to add member</string>
+    <string name="error_permissions_update_failed">Failed to update permissions</string>
+    <string name="error_member_remove_failed">Failed to remove member</string>
+    <string name="error_folder_rename_failed">Failed to rename folder</string>
+    <string name="failed_download_image">Failed to download image</string>
+    <plurals name="status_move_failure">
+        <item quantity="one">Failed to move %d photo</item>
+        <item quantity="other">Failed to move %d photos</item>
+    </plurals>
+
+    <!-- Notifications -->
+    <string name="notification_missing_permission">Missing notification permission</string>
+    <string name="notification_channel_backup">Backup</string>
+    <string name="notification_backup_title">Backup up files</string>
+    <string name="notification_backup_starting">Starting backup</string>
+    <string name="notification_backup_progress">Uploaded %1$d/%2$d photos</string>
+    <string name="notification_backup_finished">Finished uploading photos</string>
+    <string name="notification_backup_finished_desc">%1$d photos uploaded successfully and %2$d failed</string>
+    <string name="notification_backup_finished_desc_only_success">%d photos uploaded</string>
+    <string name="notification_backup_finished_desc_only_failure">%d photos failed to upload</string>
+    <string name="notification_backup_fail">Failed to backup up files</string>
+    <string name="notification_backup_fail_cancelled">Upload was cancelled</string>
+    <string name="notification_backup_fail_internet">Missing internet connection</string>
+    <string name="notification_backup_fail_io">Error in the files</string>
+    <string name="notification_backup_fail_unknown">Unknown reason</string>
+
+    <!-- Plurals (misc) -->
+    <plurals name="items_photos">
+        <item quantity="one">%d photo</item>
+        <item quantity="other">%d photos</item>
+    </plurals>
+    <plurals name="items_selected">
+        <item quantity="other">%d selected</item>
+    </plurals>
+    <plurals name="years_ago">
+        <item quantity="one">%1$d year ago</item>
+        <item quantity="other">%1$d years ago</item>
+    </plurals>
+
+    <!-- Content Descriptions -->
+    <string name="cd_select_all">Select all</string>
+    <string name="cd_open_month_picker">Open month picker</string>
+    <string name="cd_scroll_timeline">Scroll Timeline</string>
+    <string name="cd_edit_permissions">Edit permissions</string>
 </resources>

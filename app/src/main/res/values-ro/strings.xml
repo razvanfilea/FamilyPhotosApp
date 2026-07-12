@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingQuantity">
-    <string name="title_settings">Setări</string>
-    <string name="title_duplicates">Dubluri</string>
-    <string name="title_favorites">Favorite</string>
+
+    <!-- Navigation / Sections -->
     <string name="section_photos">Poze</string>
     <string name="section_folders">Dosare</string>
     <string name="section_device">Telefon</string>
+    <string name="section_utilities">Utilități</string>
+    <string name="title_settings">Setări</string>
+    <string name="title_duplicates">Dubluri</string>
+    <string name="title_favorites">Favorite</string>
     <string name="title_trash">Coș de gunoi</string>
     <string name="title_large_files">Fișiere mari</string>
-    <string name="large_files_empty">Nu sunt fișiere mai mari de 50 MB</string>
-    <string name="section_utilities">Utilități</string>
 
-    <!-- Duplicates -->
-    <string name="duplicates_which_to_keep">Pe care îl păstrezi?</string>
-    <string name="duplicates_none">Nu s-au găsit dubluri</string>
-    <string name="duplicates_error">Nu s-au putut încărca dublurile</string>
+    <!-- Login -->
+    <string name="login_username_label">Nume utilizator</string>
+    <string name="login_password_label">Parolă</string>
+    <string name="login_button">Autentificare</string>
 
     <!-- Actions -->
     <string name="action_info">Info</string>
@@ -33,71 +34,134 @@
     <string name="action_into_personal_gallery">În galeria personală</string>
     <string name="action_into_family_gallery">În galeria familiei</string>
     <string name="action_search_folders">Caută foldere…</string>
-
+    <string name="action_create_folder">Creează folder nou</string>
     <string name="confirm_delete">Șterge pozele?</string>
     <string name="confirm_delete_detail">Ești sigur că vrei să ștergi aceste poze?</string>
 
-    <plurals name="items_photos">
-        <item quantity="one">%d poză</item>
-        <item quantity="other">%d poze</item>
-    </plurals>
+    <!-- Photo Types / Filters -->
+    <string name="photo_type_all">Toate</string>
+    <string name="photo_type_personal">Personale</string>
+    <string name="photo_type_family">Familie</string>
+    <string name="photo_type_shared">Partajate</string>
+    <string name="photo_type_images">Imagini</string>
+    <string name="photo_type_videos">Videoclipuri</string>
 
-    <plurals name="items_selected">
-        <item quantity="one">%d selectat</item>
-        <item quantity="other">%d selectate</item>
-    </plurals>
-
-    <!-- Status Messages -->
-    <string name="error_refresh_failed">Nu s-au putut reîncărca pozele</string>
-    <string name="status_upload_queued">Încărcare programată</string>
-    <string name="status_saved">Salvată</string>
-
-    <plurals name="status_photos_trashed">
-        <item quantity="one">%d poză mutată în coșul de gunoi</item>
-        <item quantity="other">%d poze mutate în coșul de gunoi</item>
-    </plurals>
-    <string name="error_trash_failed">Nu s-au putut muta pozele în coșul de gunoi</string>
-
-    <plurals name="status_photos_deleted">
-        <item quantity="one">%d poză ștearsă permanent</item>
-        <item quantity="other">%d poze șterse permanent</item>
-    </plurals>
-    <string name="error_delete_failed">Nu s-au putut șterge pozele</string>
-
-    <plurals name="status_photos_restored">
-        <item quantity="one">%d poză restaurată</item>
-        <item quantity="other">%d poze restaurate</item>
-    </plurals>
-    <string name="error_restore_failed">Nu s-au putut restaura pozele</string>
-
-    <plurals name="status_move_success">
-        <item quantity="one">%d poză mutată cu succes</item>
-        <item quantity="other">%d poze mutate cu succes</item>
-    </plurals>
-    <plurals name="status_move_failure">
-        <item quantity="one">Nu s-a putut muta %d poză</item>
-        <item quantity="other">Nu s-au putut muta %d poze</item>
-    </plurals>
-
-    <string name="status_member_added">Membru adăugat</string>
-    <string name="error_member_add_failed">Nu s-a putut adăuga membrul</string>
-
-    <string name="status_permissions_updated">Permisiuni actualizate</string>
-    <string name="error_permissions_update_failed">Nu s-au putut actualiza permisiunile</string>
-
-    <string name="status_member_removed">Membru eliminat</string>
-    <string name="error_member_remove_failed">Nu s-a putut elimina membrul</string>
-
-    <string name="status_folder_renamed">Folder redenumit</string>
-    <string name="error_folder_rename_failed">Nu s-a putut redenumi folderul</string>
-
-    <string name="send_to">Trimite la:</string>
-    <string name="failed_download_image">Nu s-a putut descărca imaginea</string>
+    <!-- Folders -->
+    <string name="folder_name">Nume folder</string>
     <string name="ascending">Crescător</string>
     <string name="descending">Descrescător</string>
-    <plurals name="years_ago">
-        <item quantity="one">acum %1$d an</item>
-        <item quantity="other">acum %1$d ani</item>
+
+    <!-- Duplicates -->
+    <string name="duplicates_which_to_keep">Pe care îl păstrezi?</string>
+    <string name="duplicates_none">Nu s-au găsit dubluri</string>
+    <string name="duplicates_error">Nu s-au putut încărca dublurile</string>
+
+    <!-- Trash -->
+    <string name="trash_is_empty">Coșul de gunoi este gol</string>
+    <string name="trash_auto_delete_info">Pozele din coș sunt șterse automat după 30 de zile</string>
+    <string name="confirm_permanent_delete">Șterge permanent</string>
+    <string name="confirm_permanent_delete_detail">Aceste poze vor fi șterse permanent și nu pot fi recuperate.</string>
+    <plurals name="trash_days_remaining">
+        <item quantity="one">%d zi</item>
+        <item quantity="few">%d zile</item>
+        <item quantity="other">%d de zile</item>
+    </plurals>
+
+    <!-- Large Files -->
+    <string name="large_files_empty">Nu sunt fișiere mai mari de 50 MB</string>
+
+    <!-- Photo Detail -->
+    <string name="photo_detail_title_location">Locație</string>
+    <string name="photo_detail_open_maps">Deschide în Maps</string>
+    <string name="photo_detail_title_details">Detalii</string>
+    <string name="photo_detail_no_folder">Niciun folder</string>
+    <string name="send_to">Trimite la:</string>
+
+    <!-- Statistics -->
+    <string name="statistics_title">Statistici poze</string>
+    <string name="statistics_total">Total</string>
+
+    <!-- Settings / Preferences -->
+    <string name="pref_category_cache">Cache</string>
+    <string name="pref_cache_size">Dimensiune cache (MB)</string>
+    <string name="pref_restart_needed">Un restart este necesar pentru a aplica aceste modificări</string>
+    <string name="pref_clear_cache">Șterge tot cache-ul</string>
+    <string name="settings_backup_mobile_data">Backup pe date mobile</string>
+    <string name="settings_backup_mobile_data_summary">Permite backup-ul când nu ești conectat la WiFi</string>
+    <string name="settings_user">Utilizator</string>
+    <string name="settings_sign_out">Deconectare</string>
+    <string name="settings_sign_out_summary">Deconectează-te din sesiunea curentă</string>
+
+    <!-- Backup -->
+    <string name="backup_title">Backup</string>
+    <string name="backup_now">Backup acum</string>
+    <plurals name="backup_photos_pending">
+        <item quantity="one">%d poză în așteptare</item>
+        <item quantity="few">%d poze în așteptare</item>
+        <item quantity="other">%d de poze în așteptare</item>
+    </plurals>
+    <plurals name="backup_folders_selected">
+        <item quantity="one">%d folder selectat</item>
+        <item quantity="few">%d foldere selectate</item>
+        <item quantity="other">%d de foldere selectate</item>
+    </plurals>
+
+    <!-- Sharing -->
+    <string name="sharing_manage">Administrează accesul</string>
+    <string name="sharing_owner">Proprietar</string>
+    <string name="sharing_owner_everyone">Toți din familie</string>
+    <string name="sharing_shared_access">Acces partajat</string>
+    <string name="sharing_members">Membri</string>
+    <string name="sharing_links">Linkuri</string>
+    <string name="sharing_add_members">Adaugă membri</string>
+    <string name="sharing_permission_view">Doar vizualizare</string>
+    <string name="sharing_permission_upload">Poate încărca</string>
+    <string name="sharing_permission_upload_delete">Poate încărca &amp; șterge</string>
+    <string name="sharing_remove_member">Șterge membru</string>
+
+    <!-- Status Messages -->
+    <string name="status_upload_queued">Încărcare programată</string>
+    <string name="status_saved">Salvată</string>
+    <string name="status_member_added">Membru adăugat</string>
+    <string name="status_permissions_updated">Permisiuni actualizate</string>
+    <string name="status_member_removed">Membru eliminat</string>
+    <string name="status_folder_renamed">Folder redenumit</string>
+    <plurals name="status_photos_trashed">
+        <item quantity="one">%d poză mutată în coșul de gunoi</item>
+        <item quantity="few">%d poze mutate în coșul de gunoi</item>
+        <item quantity="other">%d de poze mutate în coșul de gunoi</item>
+    </plurals>
+    <plurals name="status_photos_deleted">
+        <item quantity="one">%d poză ștearsă permanent</item>
+        <item quantity="few">%d poze șterse permanent</item>
+        <item quantity="other">%d de poze șterse permanent</item>
+    </plurals>
+    <plurals name="status_photos_restored">
+        <item quantity="one">%d poză restaurată</item>
+        <item quantity="few">%d poze restaurate</item>
+        <item quantity="other">%d de poze restaurate</item>
+    </plurals>
+    <plurals name="status_move_success">
+        <item quantity="one">%d poză mutată cu succes</item>
+        <item quantity="few">%d poze mutate cu succes</item>
+        <item quantity="other">%d de poze mutate cu succes</item>
+    </plurals>
+
+    <!-- Errors -->
+    <string name="error_server_connection">Nu s-a putut conecta la server</string>
+    <string name="error_refresh_failed">Nu s-au putut reîncărca pozele</string>
+    <string name="error_trash_failed">Nu s-au putut muta pozele în coșul de gunoi</string>
+    <string name="error_delete_failed">Nu s-au putut șterge pozele</string>
+    <string name="error_restore_failed">Nu s-au putut restaura pozele</string>
+    <string name="error_member_add_failed">Nu s-a putut adăuga membrul</string>
+    <string name="error_permissions_update_failed">Nu s-au putut actualiza permisiunile</string>
+    <string name="error_member_remove_failed">Nu s-a putut elimina membrul</string>
+    <string name="error_folder_rename_failed">Nu s-a putut redenumi folderul</string>
+    <string name="failed_download_image">Nu s-a putut descărca imaginea</string>
+    <plurals name="status_move_failure">
+        <item quantity="one">Nu s-a putut muta %d poză</item>
+        <item quantity="few">Nu s-au putut muta %d poze</item>
+        <item quantity="other">Nu s-au putut muta %d de poze</item>
     </plurals>
 
     <!-- Notifications -->
@@ -116,56 +180,26 @@
     <string name="notification_backup_fail_io">Eroare la fișiere</string>
     <string name="notification_backup_fail_unknown">Motiv necunoscut</string>
 
-    <!-- Photo Detail Dialog -->
-    <string name="photo_detail_title_location">Locație</string>
-    <string name="photo_detail_open_maps">Deschide în Maps</string>
-    <string name="photo_detail_title_details">Detalii</string>
-    <string name="photo_detail_no_folder">Niciun folder</string>
-
-    <!-- Trash -->
-    <string name="trash_is_empty">Coșul de gunoi este gol</string>
-
-    <!-- Preferences -->
-    <string name="pref_category_cache">Cache</string>
-    <string name="pref_cache_size">Dimensiune cache (MB)</string>
-    <string name="pref_restart_needed">Un restart este necesar pentru a aplica aceste modificări</string>
-    <string name="pref_clear_cache">Șterge tot cache-ul</string>
-
-    <string name="folder_name">Nume folder</string>
-    <string name="action_create_folder">Creează folder nou</string>
-    <string name="photo_type_all">Toate</string>
-    <string name="photo_type_personal">Personale</string>
-    <string name="photo_type_family">Familie</string>
-    <string name="photo_type_shared">Partajate</string>
-    <string name="photo_type_images">Imagini</string>
-    <string name="photo_type_videos">Videoclipuri</string>
-
-    <!-- Statistics -->
-    <string name="statistics_title">Statistici poze</string>
-    <string name="statistics_total">Total</string>
-
-    <!-- Backup -->
-    <string name="backup_title">Backup</string>
-    <string name="backup_now">Backup acum</string>
-    <plurals name="backup_photos_pending">
-        <item quantity="one">%d poză în așteptare</item>
-        <item quantity="other">%d poze în așteptare</item>
+    <!-- Plurals (misc) -->
+    <plurals name="items_photos">
+        <item quantity="one">%d poză</item>
+        <item quantity="few">%d poze</item>
+        <item quantity="other">%d de poze</item>
     </plurals>
-    <plurals name="backup_folders_selected">
-        <item quantity="one">%d folder selectat</item>
-        <item quantity="other">%d foldere selectate</item>
+    <plurals name="items_selected">
+        <item quantity="one">%d selectat</item>
+        <item quantity="few">%d selectate</item>
+        <item quantity="other">%d selectate</item>
+    </plurals>
+    <plurals name="years_ago">
+        <item quantity="one">acum %1$d an</item>
+        <item quantity="few">acum %1$d ani</item>
+        <item quantity="other">acum %1$d de ani</item>
     </plurals>
 
-    <!-- Sharing -->
-    <string name="sharing_manage">Administrează accesul</string>
-    <string name="sharing_owner">Proprietar</string>
-    <string name="sharing_owner_everyone">Toți din familie</string>
-    <string name="sharing_shared_access">Acces partajat</string>
-    <string name="sharing_members">Membri</string>
-    <string name="sharing_links">Linkuri</string>
-    <string name="sharing_add_members">Adaugă membri</string>
-    <string name="sharing_permission_view">Doar vizualizare</string>
-    <string name="sharing_permission_upload">Poate încărca</string>
-    <string name="sharing_permission_upload_delete">Poate încărca &amp; șterge</string>
-    <string name="sharing_remove_member">Șterge membru</string>
+    <!-- Content Descriptions -->
+    <string name="cd_select_all">Selectează tot</string>
+    <string name="cd_open_month_picker">Deschide selectorul de luni</string>
+    <string name="cd_scroll_timeline">Derulează cronologia</string>
+    <string name="cd_edit_permissions">Editează permisiunile</string>
 </resources>

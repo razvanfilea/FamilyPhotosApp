@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.paging.compose.LazyPagingItems
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -325,7 +326,7 @@ private fun <T : Photo> MonthSeparatorHeader(
                 painter = painterResource(
                     if (allSelected) R.drawable.radio_button_checked
                     else R.drawable.radio_button_checked_outline
-                ), contentDescription = "Select all"
+                ), contentDescription = stringResource(R.string.cd_select_all)
             )
         }
 
@@ -333,7 +334,7 @@ private fun <T : Photo> MonthSeparatorHeader(
             IconButton(onClick = onShowMonthPicker) {
                 Icon(
                     painter = painterResource(R.drawable.ic_month_picker),
-                    contentDescription = "Open month picker"
+                    contentDescription = stringResource(R.string.cd_open_month_picker)
                 )
             }
         }

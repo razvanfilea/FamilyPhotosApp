@@ -74,22 +74,22 @@ private fun getPreferenceItems(
         ),
     ),
     PreferenceGroupItem(
-        title = "Backup",
+        title = stringResource(R.string.backup_title),
         items = listOf(
             SwitchPreferenceItem(
-                title = "Backup over mobile data",
-                summary = "Allow backup when not connected to WiFi",
+                title = stringResource(R.string.settings_backup_mobile_data),
+                summary = stringResource(R.string.settings_backup_mobile_data_summary),
                 prefKey = SettingsDataStore.BACKUP_OVER_MOBILE_DATA,
                 defaultValue = false,
             ),
         ),
     ),
     PreferenceGroupItem(
-        title = "User",
+        title = stringResource(R.string.settings_user),
         items = listOf(
             EmptyPreferenceItem(
-                title = "Sign out",
-                summary = "Log out of the current user session",
+                title = stringResource(R.string.settings_sign_out),
+                summary = stringResource(R.string.settings_sign_out_summary),
                 onClick = mainViewModel::signOut
             )
         )

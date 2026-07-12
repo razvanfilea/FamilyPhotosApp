@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
@@ -187,7 +188,7 @@ fun BoxScope.MonthScrollIndicator(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_arrows_vertical),
-                    contentDescription = "Scroll Timeline",
+                    contentDescription = stringResource(R.string.cd_scroll_timeline),
                     modifier = Modifier
                         .size(22.dp)
                         .padding(start = 4.dp)
