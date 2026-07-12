@@ -10,6 +10,7 @@ import androidx.test.uiautomator.Until
 
 const val EXTRA_BENCHMARK_SESSION_COOKIE = "benchmark_session_cookie"
 const val EXTRA_BENCHMARK_USERNAME = "benchmark_username"
+const val EXTRA_BENCHMARK_SERVER_ADDRESS = "benchmark_server_address"
 
 fun createBenchmarkLaunchIntent(packageName: String): Intent {
     val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -18,6 +19,7 @@ fun createBenchmarkLaunchIntent(packageName: String): Intent {
     return context.packageManager.getLaunchIntentForPackage(packageName)!!.apply {
         args.getString("benchmarkSessionCookie")?.let { putExtra(EXTRA_BENCHMARK_SESSION_COOKIE, it) }
         args.getString("benchmarkUsername")?.let { putExtra(EXTRA_BENCHMARK_USERNAME, it) }
+        args.getString("benchmarkServerAddress")?.let { putExtra(EXTRA_BENCHMARK_SERVER_ADDRESS, it) }
     }
 }
 

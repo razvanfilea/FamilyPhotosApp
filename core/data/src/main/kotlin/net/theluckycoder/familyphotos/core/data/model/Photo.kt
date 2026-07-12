@@ -78,12 +78,12 @@ val Photo.isVideo
     }
 
 fun Photo.getUri(): Uri = when (this) {
-    is NetworkPhoto -> "${NetworkModule.BASE_URL}api/download/$id".toUri()
+    is NetworkPhoto -> "${NetworkModule.PLACEHOLDER_BASE_URL}api/download/$id".toUri()
     is LocalPhoto -> uri
 }
 
 fun Photo.getPreviewUri(): Uri = when (this) {
-    is NetworkPhoto -> "${NetworkModule.BASE_URL}api/preview/$id".toUri()
+    is NetworkPhoto -> "${NetworkModule.PLACEHOLDER_BASE_URL}api/preview/$id".toUri()
     is LocalPhoto -> uri
 }
 

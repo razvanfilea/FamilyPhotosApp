@@ -24,13 +24,14 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.network.UserLoginDto
 
 @Composable
-fun LoginScreen(loginAction: (UserLoginDto) -> Unit) = Scaffold {
+fun LoginScreen(loginAction: (String, UserLoginDto) -> Unit) = Scaffold {
     Box(Modifier.padding(it)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
+            var serverAddress by remember { mutableStateOf("") }
             var userName by remember { mutableStateOf("") }
             var password by remember { mutableStateOf("") }
 
@@ -47,6 +48,15 @@ fun LoginScreen(loginAction: (UserLoginDto) -> Unit) = Scaffold {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 32.dp),
+                value = serverAddress,
+                onValueChange = { serverAddress = it },
+                label = { Text(stringResource(R.string.login_server_address_label)) }
+            )
+
+            TextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
                 value = userName,
                 onValueChange = { userName = it },
                 label = { Text(stringResource(R.string.login_username_label)) }
@@ -67,7 +77,7 @@ fun LoginScreen(loginAction: (UserLoginDto) -> Unit) = Scaffold {
                     .align(Alignment.CenterHorizontally),
                 onClick = {
                     val userLogin = UserLoginDto(userName.lowercase().trim(), password.trim())
-                    loginAction(userLogin)
+                    loginAction(serverAddress.trim(), userLogin)
                 }
             ) {
                 Text(text = stringResource(R.string.login_button))

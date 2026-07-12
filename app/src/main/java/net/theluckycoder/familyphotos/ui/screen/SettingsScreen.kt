@@ -44,6 +44,7 @@ fun SettingsScreen(
 ) {
     val backStack = LocalNavBackStack.current
     var showSignOutDialog by remember { mutableStateOf(false) }
+    val serverAddress by settingsViewModel.serverAddress.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -78,7 +79,7 @@ fun SettingsScreen(
             // About
             SectionHeader(stringResource(R.string.settings_about))
             AppVersionItem(settingsViewModel.appVersion)
-            ServerAddressItem(settingsViewModel.serverAddress)
+            ServerAddressItem(serverAddress)
 
             // Account
             SectionHeader(stringResource(R.string.settings_account))

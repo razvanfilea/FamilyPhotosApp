@@ -11,6 +11,7 @@ val localProperties = Properties().apply {
 }
 val benchmarkSessionCookie: String? = localProperties.getProperty("benchmark.sessionCookie")
 val benchmarkUsername: String? = localProperties.getProperty("benchmark.username")
+val benchmarkServerAddress: String? = localProperties.getProperty("benchmark.serverAddress")
 
 android {
     namespace = "net.theluckycoder.baselineprofile"
@@ -27,6 +28,7 @@ android {
         // Pass benchmark credentials if available
         benchmarkSessionCookie?.let { testInstrumentationRunnerArguments["benchmarkSessionCookie"] = it }
         benchmarkUsername?.let { testInstrumentationRunnerArguments["benchmarkUsername"] = it }
+        benchmarkServerAddress?.let { testInstrumentationRunnerArguments["benchmarkServerAddress"] = it }
     }
 
     targetProjectPath = ":app"

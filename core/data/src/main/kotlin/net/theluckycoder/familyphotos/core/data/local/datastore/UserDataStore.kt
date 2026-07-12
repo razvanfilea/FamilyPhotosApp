@@ -32,6 +32,13 @@ class UserDataStore @Inject constructor(
         preferences[SESSION_COOKIE] = value
     }
 
+    val serverAddress: Flow<String?> =
+        userDataStore.data.map { it[SERVER_ADDRESS] }.distinctUntilChanged()
+
+    suspend fun setServerAddress(value: String) = userDataStore.edit { preferences ->
+        preferences[SERVER_ADDRESS] = value
+    }
+
     val user: StateFlow<UserDto?> = userDataStore.data
         .map { UserDto(it[USER_ID] ?: return@map null, it[DISPLAY_NAME] ?: return@map null) }
         .stateIn(scope, SharingStarted.Eagerly, null)
@@ -51,5 +58,6 @@ class UserDataStore @Inject constructor(
         private val SESSION_COOKIE = stringPreferencesKey("session_cookie")
         private val USER_ID = stringPreferencesKey("user")
         private val DISPLAY_NAME = stringPreferencesKey("display_name")
+        private val SERVER_ADDRESS = stringPreferencesKey("server_address")
     }
 }

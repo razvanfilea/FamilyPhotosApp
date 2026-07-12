@@ -102,6 +102,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val EXTRA_BENCHMARK_SESSION_COOKIE = "benchmark_session_cookie"
         const val EXTRA_BENCHMARK_USERNAME = "benchmark_username"
+        const val EXTRA_BENCHMARK_SERVER_ADDRESS = "benchmark_server_address"
     }
 
     @OptIn(ExperimentalSharedTransitionApi::class)
@@ -117,10 +118,11 @@ class MainActivity : ComponentActivity() {
         if (isBenchmark) {
             val sessionCookie = intent.getStringExtra(EXTRA_BENCHMARK_SESSION_COOKIE)
             val username = intent.getStringExtra(EXTRA_BENCHMARK_USERNAME)
-            if (sessionCookie != null && username != null) {
+            val serverAddress = intent.getStringExtra(EXTRA_BENCHMARK_SERVER_ADDRESS)
+            if (sessionCookie != null && username != null && serverAddress != null) {
                 lifecycleScope.launch(Dispatchers.Main.immediate) {
                     withContext(Dispatchers.IO) {
-                        viewModel.loginRepository.setBenchmarkCredentials(sessionCookie, username)
+                        viewModel.loginRepository.setBenchmarkCredentials(sessionCookie, username, serverAddress)
                     }
                     // Trigger refresh after credentials are set (initial sync ran before credentials existed)
                     viewModel.refreshPhotos()
@@ -135,9 +137,9 @@ class MainActivity : ComponentActivity() {
             AppTheme {
                 val isLoggedIn = mainViewModel.isLoggedIn.collectAsState()
                 if (!isLoggedIn.value && !isBenchmark) {
-                    LoginScreen(loginAction = {
+                    LoginScreen(loginAction = { serverAddress, userLogin ->
                         lifecycleScope.launch(Dispatchers.IO) {
-                            mainViewModel.loginRepository.login(it)
+                            mainViewModel.loginRepository.login(serverAddress, userLogin)
                         }
                     })
                     return@AppTheme
