@@ -16,6 +16,7 @@ import net.theluckycoder.familyphotos.core.data.remote.PhotosService
 import net.theluckycoder.familyphotos.core.data.remote.SharingService
 import net.theluckycoder.familyphotos.core.data.remote.SyncService
 import net.theluckycoder.familyphotos.core.data.remote.UserService
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -30,6 +31,62 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 @Module
 object NetworkModule {
+
+    @Provides
+    @Named("baseUrl")
+    fun providesBaseUrlInterceptor(
+        userDataStore: UserDataStore,
+        scope: IOCoroutineScope
+    ): Interceptor {
+        var serverAddress: String? = null
+
+        scope.launch {
+            userDataStore.serverAddress.collectLatest {
+                ensureActive()
+                serverAddress = it
+            }
+        }
+
+        return Interceptor { chain ->
+            val request = chain.request()
+            val currentAddress = serverAddress
+            if (currentAddress.isNullOrBlank()) {
+                chain.proceed(request)
+            } else {
+                val newBaseUrl = currentAddress.toHttpUrlOrNull()
+                if (newBaseUrl == null) {
+                    chain.proceed(request)
+                } else {
+                    val originalUrl = request.url
+                    val newUrl = originalUrl.newBuilder().apply {
+                        scheme(newBaseUrl.scheme)
+                        host(newBaseUrl.host)
+                        port(newBaseUrl.port)
+
+                        // Clear original path segments
+                        val pathSize = originalUrl.pathSize
+                        for (i in 0 until pathSize) {
+                            removePathSegment(0)
+                        }
+
+                        // Add newBaseUrl's path segments
+                        for (segment in newBaseUrl.pathSegments) {
+                            if (segment.isNotEmpty()) {
+                                addPathSegment(segment)
+                            }
+                        }
+
+                        // Add originalUrl's path segments
+                        for (segment in originalUrl.pathSegments) {
+                            addPathSegment(segment)
+                        }
+                    }.build()
+
+                    chain.proceed(request.newBuilder().url(newUrl).build())
+                }
+            }
+        }
+    }
 
     @Provides
     @Named("setCookie")
@@ -86,12 +143,14 @@ object NetworkModule {
     @Singleton
     @Provides
     fun providesOkHttpClient(
+        @Named("baseUrl") baseUrlInterceptor: Interceptor,
         @Named("setCookie") setCookieInterceptor: Interceptor,
         @Named("receiveCookie") receiveCookieInterceptor: Interceptor,
     ): OkHttpClient = runBlocking {
         OkHttpClient.Builder()
             .writeTimeout(Duration.ofMinutes(2))
             .addInterceptor(BrotliInterceptor)
+            .addInterceptor(baseUrlInterceptor)
             .addInterceptor(setCookieInterceptor)
             .addInterceptor(receiveCookieInterceptor)
 //            .addInterceptor(okhttp3.logging.HttpLoggingInterceptor().apply { level = okhttp3.logging.HttpLoggingInterceptor.Level.BASIC })
@@ -102,10 +161,12 @@ object NetworkModule {
         ignoreUnknownKeys = true
     }
 
+    const val PLACEHOLDER_BASE_URL = "https://placeholder.invalid/"
+
     @Provides
     internal fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit =
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(PLACEHOLDER_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
@@ -134,6 +195,4 @@ object NetworkModule {
     @Provides
     internal fun provideFolderService(retrofit: Retrofit): FolderService =
         retrofit.create(FolderService::class.java)
-
-    const val BASE_URL = "https://faarr.go.ro/"
 }

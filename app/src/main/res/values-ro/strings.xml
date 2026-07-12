@@ -13,6 +13,7 @@
     <string name="title_large_files">Fișiere mari</string>
 
     <!-- Login -->
+    <string name="login_server_address_label">Adresă Server</string>
     <string name="login_username_label">Nume utilizator</string>
     <string name="login_password_label">Parolă</string>
     <string name="login_button">Autentificare</string>
