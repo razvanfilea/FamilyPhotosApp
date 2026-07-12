@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -176,7 +177,7 @@ private fun FailedConnectionCard(mainViewModel: MainViewModel) = Card(
         )
 
         Text(
-            "Failed to connect to server",
+            stringResource(R.string.error_server_connection),
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold,
         )
