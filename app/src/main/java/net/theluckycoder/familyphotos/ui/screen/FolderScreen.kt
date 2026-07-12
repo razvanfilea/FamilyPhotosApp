@@ -55,7 +55,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.Photo
 import net.theluckycoder.familyphotos.core.data.model.SharedFolderAccess
-import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
 import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolderEntity
 import net.theluckycoder.familyphotos.core.data.model.db.isPublic
 import net.theluckycoder.familyphotos.core.data.model.network.UserDto
@@ -73,7 +72,7 @@ fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out 
     val gridState by foldersViewModel.photoListState.collectAsState()
     val backStack = LocalNavBackStack.current
     val timelineLayout by when (source) {
-        FolderNav.Source.Favorites -> remember { mutableStateOf(TimelineLayout.EMPTY) }
+        FolderNav.Source.Favorites -> foldersViewModel.favoriteTimelineLayout.collectAsState()
         is FolderNav.Source.Local -> foldersViewModel.localFolderTimelineLayout.collectAsState()
         is FolderNav.Source.Network -> foldersViewModel.networkFolderTimelineLayout.collectAsState()
     }

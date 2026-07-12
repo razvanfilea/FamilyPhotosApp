@@ -23,7 +23,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -315,13 +318,26 @@ private fun Content(
             }
         )
 
-        SnackbarHost(
-            hostState = LocalSnackbarHostState.current,
+        val snackbarHostState = LocalSnackbarHostState.current
+        val dismissBoxState = rememberSwipeToDismissBoxState()
+
+        LaunchedEffect(dismissBoxState.currentValue) {
+            if (dismissBoxState.currentValue != SwipeToDismissBoxValue.Settled) {
+                snackbarHostState.currentSnackbarData?.dismiss()
+                dismissBoxState.reset()
+            }
+        }
+
+        SwipeToDismissBox(
+            state = dismissBoxState,
+            backgroundContent = {},
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-        ) { snackbarData ->
-            TypedSnackbar(snackbarData)
+        ) {
+            SnackbarHost(hostState = snackbarHostState) { snackbarData ->
+                TypedSnackbar(snackbarData)
+            }
         }
     }
 }

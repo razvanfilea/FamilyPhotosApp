@@ -7,7 +7,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.core.data.repository.ServerRepository
@@ -24,8 +23,8 @@ class TrashViewModel @Inject constructor(
 
     val trashedPhotos = photosRepository.getTrashedPhotos()
 
-    suspend fun deleteNetworkPhotos(photoIds: LongArray) {
-        withContext(Dispatchers.IO) {
+    fun deleteNetworkPhotos(photoIds: LongArray) {
+        viewModelScope.launch(Dispatchers.IO) {
             photoIds.map { photoId ->
                 async {
                     val networkPhoto = photosRepository.getNetworkPhoto(photoId)
@@ -37,8 +36,8 @@ class TrashViewModel @Inject constructor(
                     }
                 }
             }.awaitAll()
+            snackbarManager.showPluralMessage(R.plurals.status_photos_deleted, photoIds.size)
         }
-        snackbarManager.showPluralMessage(R.plurals.status_photos_deleted, photoIds.size)
     }
 
     fun restorePhotos(photoIds: LongArray) {

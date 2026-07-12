@@ -103,7 +103,7 @@ internal interface NetworkPhotosDao {
     )
     fun getMonthSummariesForFolder(folderId: Long): Flow<List<MonthSummary>>
 
-    @Query("SELECT * FROM network_photo WHERE trashedOn IS NOT NULL ORDER BY trashedOn DESC")
+    @Query("SELECT * FROM network_photo WHERE trashedOn IS NOT NULL ORDER BY trashedOn ASC")
     fun getTrashedPhotos(): Flow<List<NetworkPhoto>>
 
     @Query(

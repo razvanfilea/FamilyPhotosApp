@@ -2,6 +2,11 @@ package net.theluckycoder.familyphotos.ui.composables
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,7 +37,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,6 +59,7 @@ import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.model.UploadChoice
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
+import java.lang.System.exit
 
 @Composable
 fun FolderNameDialog(
@@ -119,12 +125,11 @@ fun UploadPhotosLayout(
     actionName: String,
     photosToShowcase: List<Photo>,
     currentUserId: String? = null,
-    enabled: Boolean = true,
     doneAction: (choice: UploadChoice) -> Unit,
 ) {
     val backStack = LocalNavBackStack.current
 
-    var choice by remember { mutableStateOf<UploadChoice>(UploadChoice.NoFolder(isPublic = false)) }
+    var choice by remember { mutableStateOf<UploadChoice?>(UploadChoice.NoFolder(isPublic = false)) }
     var selectedFolderName by remember { mutableStateOf<String?>(null) }
     var showCreateFolderDialog by remember { mutableStateOf(false) }
 
@@ -155,8 +160,8 @@ fun UploadPhotosLayout(
                 }
 
                 Button(
-                    onClick = { doneAction(choice) },
-                    enabled = enabled,
+                    onClick = { choice?.let { doneAction(it) } },
+                    enabled = choice != null,
                 ) {
                     Icon(
                         painterResource(R.drawable.ic_action_done),
@@ -192,8 +197,8 @@ fun UploadPhotosLayout(
 @Composable
 private fun UploadDialogContent(
     photosToShowcase: List<Photo>,
-    selectedChoice: UploadChoice,
-    onChoiceChange: (UploadChoice) -> Unit,
+    selectedChoice: UploadChoice?,
+    onChoiceChange: (UploadChoice?) -> Unit,
     currentUserId: String?,
     foldersList: List<NetworkFolder>,
     onCreateFolder: () -> Unit,
@@ -201,6 +206,15 @@ private fun UploadDialogContent(
 ) {
     val settingsDataStore = LocalSettingsDataStore.current
     val selectedPhotoType by settingsDataStore.photoType.collectAsState()
+
+    LaunchedEffect(selectedPhotoType) {
+        when (selectedPhotoType) {
+            PhotoType.Family -> onChoiceChange(UploadChoice.NoFolder(true))
+            PhotoType.Personal -> onChoiceChange(UploadChoice.NoFolder(false))
+            PhotoType.Shared -> onChoiceChange(null)
+            else -> {}
+        }
+    }
 
     val hasFolderSelected =
         selectedChoice is UploadChoice.Folder || selectedChoice is UploadChoice.NewFolder
@@ -404,26 +418,25 @@ private fun PhotoShowcaseRow(
 
 @Composable
 private fun ColumnScope.DestinationSelector(
-    selectedChoice: UploadChoice,
-    onChoiceChange: (UploadChoice) -> Unit,
+    selectedChoice: UploadChoice?,
+    onChoiceChange: (UploadChoice?) -> Unit,
     selectedPhotoType: PhotoType,
     foldersList: List<NetworkFolder>,
     selectedFolderName: String?,
     onCreateFolder: () -> Unit,
 ) {
-    val noFolderSuffix = stringResource(R.string.photo_detail_no_folder).lowercase()
-    val personalNoFolderLabel = stringResource(R.string.photo_type_personal) + " $noFolderSuffix"
-    val familyNoFolderLabel = stringResource(R.string.photo_type_family) + " $noFolderSuffix"
+    val personalGallery = stringResource(R.string.action_into_personal_gallery)
+    val familyGallery = stringResource(R.string.action_into_family_gallery)
 
     val showPersonal =
-        selectedPhotoType == PhotoType.All || selectedPhotoType == PhotoType.Personal || (selectedChoice as? UploadChoice.NoFolder)?.isPublic == false
+        selectedPhotoType == PhotoType.All || selectedPhotoType == PhotoType.Personal
     val showFamily =
-        selectedPhotoType == PhotoType.All || selectedPhotoType == PhotoType.Family || (selectedChoice as? UploadChoice.NoFolder)?.isPublic == true
+        selectedPhotoType == PhotoType.All || selectedPhotoType == PhotoType.Family
 
     AnimatedVisibility(showPersonal) {
         DestinationItem(
             selected = selectedChoice is UploadChoice.NoFolder && !selectedChoice.isPublic,
-            label = personalNoFolderLabel,
+            label = personalGallery,
             onClick = { onChoiceChange(UploadChoice.NoFolder(isPublic = false)) },
             icon = painterResource(R.drawable.ic_person_outline),
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -433,7 +446,7 @@ private fun ColumnScope.DestinationSelector(
     AnimatedVisibility(showFamily) {
         DestinationItem(
             selected = selectedChoice is UploadChoice.NoFolder && selectedChoice.isPublic,
-            label = familyNoFolderLabel,
+            label = familyGallery,
             onClick = { onChoiceChange(UploadChoice.NoFolder(isPublic = true)) },
             icon = painterResource(R.drawable.ic_family_outline),
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -442,7 +455,10 @@ private fun ColumnScope.DestinationSelector(
 
     AnimatedContent(
         selectedChoice,
-        contentKey = { it::class },
+        transitionSpec = {
+            (fadeIn() + expandVertically()).togetherWith(fadeOut() + shrinkVertically())
+        },
+        contentKey = { it?.let { it::class } },
         contentAlignment = Alignment.TopCenter,
     ) { selectedChoice ->
         when (selectedChoice) {
@@ -477,7 +493,7 @@ private fun ColumnScope.DestinationSelector(
                 )
             }
 
-            is UploadChoice.NoFolder -> {
+            else -> {
                 if (selectedPhotoType != PhotoType.Shared) {
                     CreateFolderButton(
                         onClick = onCreateFolder,

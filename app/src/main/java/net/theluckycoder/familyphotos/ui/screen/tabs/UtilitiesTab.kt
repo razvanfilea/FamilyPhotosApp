@@ -136,7 +136,7 @@ private fun PhotoStatisticsCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(vertical = 8.dp),
     ) {
         Column(
             modifier = Modifier.padding(16.dp),

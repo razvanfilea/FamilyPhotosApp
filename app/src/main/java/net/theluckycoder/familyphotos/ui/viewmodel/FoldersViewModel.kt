@@ -65,6 +65,11 @@ class FoldersViewModel @Inject constructor(
         photosRepository.getFavoritePhotosPaged()
     }.flow.cachedIn(viewModelScope)
 
+    val favoriteTimelineLayout: StateFlow<TimelineLayout> = photosRepository.getFavoriteMonthSummaries()
+        .map { summaries -> TimelineLayout.build(summaries) }
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), TimelineLayout.EMPTY)
+
     val localFolders = settingsStore.showFoldersAscending
         .flatMapLatest { foldersRepository.localFoldersFlow(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())

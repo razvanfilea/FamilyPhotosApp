@@ -27,5 +27,6 @@ fun TypedSnackbar(snackbarData: SnackbarData) {
         snackbarData = snackbarData,
         containerColor = containerColor,
         contentColor = contentColor,
+        dismissActionContentColor = contentColor,
     )
 }

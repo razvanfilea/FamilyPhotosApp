@@ -33,6 +33,9 @@
     <string name="action_next">Next</string>
     <string name="action_previous">Previous</string>
     <string name="action_select_month">Select a Month</string>
+    <string name="action_into_personal_gallery">Into Personal Gallery</string>
+    <string name="action_into_family_gallery">Into Family Gallery</string>
+    <string name="action_search_folders">Search Folders…</string>
 
     <string name="confirm_delete">Delete photos</string>
     <string name="confirm_delete_detail">Are you sure you want to delete these photos?</string>
@@ -123,6 +126,13 @@
 
     <!-- Trash -->
     <string name="trash_is_empty">Trash is empty</string>
+    <string name="trash_auto_delete_info">Photos in trash are automatically deleted after 30 days</string>
+    <plurals name="trash_days_remaining">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <string name="confirm_permanent_delete">Delete permanently</string>
+    <string name="confirm_permanent_delete_detail">These photos will be permanently deleted and cannot be recovered.</string>
 
     <!-- Preferences -->
     <string name="pref_category_cache">Cache</string>
