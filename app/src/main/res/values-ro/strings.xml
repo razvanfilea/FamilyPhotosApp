@@ -30,6 +30,9 @@
     <string name="action_next">Următorul</string>
     <string name="action_previous">Anterior</string>
     <string name="action_select_month">Selectează o lună</string>
+    <string name="action_into_personal_gallery">În galeria personală</string>
+    <string name="action_into_family_gallery">În galeria familiei</string>
+    <string name="action_search_folders">Caută foldere…</string>
 
     <string name="confirm_delete">Șterge pozele?</string>
     <string name="confirm_delete_detail">Ești sigur că vrei să ștergi aceste poze?</string>

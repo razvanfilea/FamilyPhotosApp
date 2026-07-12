@@ -329,11 +329,13 @@ private fun <T : Photo> MonthSeparatorHeader(
             )
         }
 
-        IconButton(onClick = onShowMonthPicker) {
-            Icon(
-                painter = painterResource(R.drawable.ic_month_picker),
-                contentDescription = "Open month picker"
-            )
+        if (timelineLayout.monthSummaries.size > 2) {
+            IconButton(onClick = onShowMonthPicker) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_month_picker),
+                    contentDescription = "Open month picker"
+                )
+            }
         }
     }
 }

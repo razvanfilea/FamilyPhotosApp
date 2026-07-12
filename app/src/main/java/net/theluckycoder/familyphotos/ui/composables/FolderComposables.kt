@@ -35,6 +35,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -64,6 +65,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -95,10 +97,10 @@ fun <T : PhotoFolder> FoldersGridList(
         }
     }
 
-    val columnCount = when {
-        !showAsGrid -> 1
-        LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT -> 2
-        else -> 5
+    val orientation = LocalConfiguration.current.orientation
+    val columnCount = when (showAsGrid) {
+        true -> if (orientation == Configuration.ORIENTATION_PORTRAIT) 3 else 5
+        false -> if (orientation == Configuration.ORIENTATION_PORTRAIT) 1 else 2
     }
 
     LazyVerticalGrid(
@@ -131,7 +133,7 @@ fun <T : PhotoFolder> FoldersGridList(
         items(filteredFolders, key = { it.coverPhotoId }) { folder ->
             val photo = folder.getCoverPhoto()
             val modifier = Modifier
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = if (!showAsGrid) 16.dp else 8.dp)
                 .animateItem()
 
             val photosCount =
@@ -208,7 +210,7 @@ private fun FolderFilterTextField(query: String, onSearch: (String) -> Unit) {
                     singleLine = true,
                     visualTransformation = VisualTransformation.None,
                     interactionSource = interactionSource,
-                    placeholder = { Text(stringResource(R.string.folder_name)) },
+                    placeholder = { Text(stringResource(R.string.action_search_folders)) },
                     leadingIcon = {
                         Box(Modifier.offset(x = 4.dp)) {
                             Icon(
@@ -290,7 +292,7 @@ private fun GridFolderPreviewItem(
             .photoSharedBounds(photo.id)
             .fillMaxWidth()
             .aspectRatio(1f)
-            .clip(RoundedCornerShape(22.dp))
+            .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
     ) {
         CoilPhoto(
@@ -314,19 +316,23 @@ private fun GridFolderPreviewItem(
     }
 
     Text(
-        modifier = Modifier.padding(start = 8.dp, top = 4.dp),
-        softWrap = false,
-        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier
+            .padding(top = 4.dp)
+            .fillMaxWidth(),
         text = folderName,
-        fontWeight = FontWeight.SemiBold
+        textAlign = TextAlign.Center,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Medium
     )
 
     if (detailsText != null) {
         Text(
-            modifier = Modifier.padding(start = 8.dp, bottom = 8.dp),
+            modifier = Modifier.fillMaxWidth(),
             text = detailsText,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Light
+            textAlign = TextAlign.Center,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Light,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -348,7 +354,7 @@ private fun ListFolderPreviewItem(
             photo = photo,
             modifier = Modifier
                 .photoSharedBounds(photo.id)
-                .size(82.dp)
+                .size(72.dp)
                 .clip(RoundedCornerShape(18.dp)),
             preview = true,
             contentScale = ContentScale.Crop,

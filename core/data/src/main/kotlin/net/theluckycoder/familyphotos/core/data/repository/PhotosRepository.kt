@@ -46,6 +46,8 @@ class PhotosRepository @Inject internal constructor(
 
     fun getFavoritePhotosPaged() = favoritePhotosDao.getFavoritePhotosPaged()
 
+    fun getFavoriteMonthSummaries() = favoritePhotosDao.getMonthSummaries()
+
     fun isNetworkPhotoFavorite(photoId: Long) = favoritePhotosDao.isFavorite(photoId)
 
     fun getTrashedPhotos() = networkPhotosDao.getTrashedPhotos()

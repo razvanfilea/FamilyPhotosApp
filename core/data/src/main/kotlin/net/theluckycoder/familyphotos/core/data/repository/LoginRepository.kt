@@ -2,7 +2,6 @@ package net.theluckycoder.familyphotos.core.data.repository
 
 import android.util.Log
 import dagger.Lazy
-import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -12,7 +11,6 @@ import net.theluckycoder.familyphotos.core.data.model.network.UserLoginDto
 import net.theluckycoder.familyphotos.core.data.remote.UserService
 import javax.inject.Inject
 
-@ViewModelScoped
 class LoginRepository @Inject internal constructor(
     private val userDataStore: UserDataStore,
     private val userService: Lazy<UserService>,

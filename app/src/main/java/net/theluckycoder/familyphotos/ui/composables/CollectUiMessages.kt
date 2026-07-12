@@ -15,7 +15,7 @@ class TypedSnackbarVisuals(
     override val message: String,
     val type: UiMessageType,
     override val actionLabel: String? = null,
-    override val withDismissAction: Boolean = false,
+    override val withDismissAction: Boolean = true,
     override val duration: SnackbarDuration = SnackbarDuration.Short,
 ) : SnackbarVisuals
 
