@@ -83,16 +83,20 @@
     <string name="statistics_title">Photo Statistics</string>
     <string name="statistics_total">Total</string>
 
-    <!-- Settings / Preferences -->
-    <string name="pref_category_cache">Cache</string>
-    <string name="pref_cache_size">Cache Size (MB)</string>
-    <string name="pref_restart_needed">A restart is needed to apply these changes</string>
-    <string name="pref_clear_cache">Clear all cache</string>
+    <!-- Settings -->
     <string name="settings_backup_mobile_data">Backup over mobile data</string>
-    <string name="settings_backup_mobile_data_summary">Allow backup when not connected to WiFi</string>
-    <string name="settings_user">User</string>
+    <string name="settings_backup_mobile_data_summary">Upload photos even without Wi-Fi</string>
+    <string name="settings_storage">Storage</string>
+    <string name="settings_cache_size">Cache size (MB)</string>
+    <string name="settings_cache_size_summary">Maximum disk space for cached photos</string>
+    <string name="settings_clear_cache">Clear cache</string>
+    <string name="settings_cache_usage">Currently using %s</string>
+    <string name="settings_about">About</string>
+    <string name="settings_app_version">App version</string>
+    <string name="settings_server_address">Server</string>
+    <string name="settings_account">Account</string>
     <string name="settings_sign_out">Sign out</string>
-    <string name="settings_sign_out_summary">Log out of the current user session</string>
+    <string name="settings_sign_out_confirm">Are you sure you want to sign out?</string>
 
     <!-- Backup -->
     <string name="backup_title">Backup</string>

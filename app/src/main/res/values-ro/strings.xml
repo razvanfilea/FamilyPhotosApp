@@ -81,16 +81,20 @@
     <string name="statistics_title">Statistici poze</string>
     <string name="statistics_total">Total</string>
 
-    <!-- Settings / Preferences -->
-    <string name="pref_category_cache">Cache</string>
-    <string name="pref_cache_size">Dimensiune cache (MB)</string>
-    <string name="pref_restart_needed">Un restart este necesar pentru a aplica aceste modificări</string>
-    <string name="pref_clear_cache">Șterge tot cache-ul</string>
+    <!-- Settings -->
     <string name="settings_backup_mobile_data">Backup pe date mobile</string>
-    <string name="settings_backup_mobile_data_summary">Permite backup-ul când nu ești conectat la WiFi</string>
-    <string name="settings_user">Utilizator</string>
+    <string name="settings_backup_mobile_data_summary">Încarcă pozele chiar și fără Wi-Fi</string>
+    <string name="settings_storage">Stocare</string>
+    <string name="settings_cache_size">Dimensiune cache (MB)</string>
+    <string name="settings_cache_size_summary">Spațiu maxim pe disc pentru pozele din cache</string>
+    <string name="settings_clear_cache">Șterge cache-ul</string>
+    <string name="settings_cache_usage">Se utilizează %s</string>
+    <string name="settings_about">Despre</string>
+    <string name="settings_app_version">Versiune aplicație</string>
+    <string name="settings_server_address">Server</string>
+    <string name="settings_account">Cont</string>
     <string name="settings_sign_out">Deconectare</string>
-    <string name="settings_sign_out_summary">Deconectează-te din sesiunea curentă</string>
+    <string name="settings_sign_out_confirm">Ești sigur că vrei să te deconectezi?</string>
 
     <!-- Backup -->
     <string name="backup_title">Backup</string>
