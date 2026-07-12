@@ -20,28 +20,24 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.ImageLoader
@@ -53,7 +49,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.BuildConfig
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
-import net.theluckycoder.familyphotos.ui.composables.CollectUiMessages
 import net.theluckycoder.familyphotos.ui.composables.PhotosViewer
 import net.theluckycoder.familyphotos.ui.composables.TypedSnackbar
 import net.theluckycoder.familyphotos.ui.screen.DuplicatesScreen
@@ -122,7 +117,11 @@ class MainActivity : ComponentActivity() {
             if (sessionCookie != null && username != null && serverAddress != null) {
                 lifecycleScope.launch(Dispatchers.Main.immediate) {
                     withContext(Dispatchers.IO) {
-                        viewModel.loginRepository.setBenchmarkCredentials(sessionCookie, username, serverAddress)
+                        viewModel.loginRepository.setBenchmarkCredentials(
+                            sessionCookie,
+                            username,
+                            serverAddress
+                        )
                     }
                     // Trigger refresh after credentials are set (initial sync ran before credentials existed)
                     viewModel.refreshPhotos()
@@ -157,12 +156,26 @@ class MainActivity : ComponentActivity() {
                         LocalNavBackStack provides backStack,
                         LocalSettingsDataStore provides settingsDataStore,
                     ) {
-                        Content(backStack, mainViewModel, foldersViewModel, timelineViewModel, snackbarManager)
+                        Content(
+                            backStack,
+                            mainViewModel,
+                            foldersViewModel,
+                            timelineViewModel,
+                            snackbarManager
+                        )
                     }
                 }
             }
         }
 
+        if (!isBenchmark) {
+            requestPermissions()
+        }
+
+        listenToTrashRequests()
+    }
+
+    private fun requestPermissions() {
         val readImagePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
             arrayOf(
                 Manifest.permission.READ_MEDIA_IMAGES,
@@ -179,28 +192,28 @@ class MainActivity : ComponentActivity() {
         if (ContextCompat.checkSelfPermission(
                 this,
                 readImagePermission.first()
-            ) == PackageManager.PERMISSION_DENIED && !isBenchmark
+            ) == PackageManager.PERMISSION_DENIED
         ) {
             permissionLauncher.launch(readImagePermission)
         }
+    }
 
-        lifecycleScope.launch(Dispatchers.IO) {
-            mainViewModel.localPhotosToDelete.collect { photos ->
-                ensureActive()
+    private fun listenToTrashRequests() = lifecycleScope.launch(Dispatchers.IO) {
+        mainViewModel.localPhotosToDelete.collect { photos ->
+            ensureActive()
 
-                val uriList = photos.map { it.uri }
+            val uriList = photos.map { it.uri }
 
-                withContext(Dispatchers.Main) {
-                    val pendingIntent = MediaStore.createTrashRequest(
-                        this@MainActivity.contentResolver,
-                        uriList,
-                        true
-                    )
+            withContext(Dispatchers.Main) {
+                val pendingIntent = MediaStore.createTrashRequest(
+                    this@MainActivity.contentResolver,
+                    uriList,
+                    true
+                )
 
-                    val request = IntentSenderRequest.Builder(pendingIntent.intentSender).build()
+                val request = IntentSenderRequest.Builder(pendingIntent.intentSender).build()
 
-                    deletePhotoLauncher.launch(request)
-                }
+                deletePhotoLauncher.launch(request)
             }
         }
     }
@@ -218,7 +231,8 @@ private fun Content(
     foldersViewModel: FoldersViewModel,
     timelineViewModel: TimelineViewModel,
     snackbarManager: SnackbarManager,
-) {
+) = Box(Modifier.fillMaxSize()) {
+
     val timelinePagingItems = timelineViewModel.timelinePager.collectAsLazyPagingItems()
     val networkFolderPagingItems =
         foldersViewModel.networkFolderPhotosPager.collectAsLazyPagingItems()
@@ -229,117 +243,99 @@ private fun Content(
         backStack.add(TopLevelNav)
     }
 
-    CollectUiMessages(snackbarManager)
+    NavDisplay(
+        backStack = backStack,
+        transitionSpec = { transitionSpec },
+        popTransitionSpec = { transitionSpec },
+        predictivePopTransitionSpec = { transitionSpec },
+        entryDecorators = listOf(
+            rememberSaveableStateHolderNavEntryDecorator(),
+            rememberViewModelStoreNavEntryDecorator()
+        ),
+        entryProvider = { key ->
+            when (key) {
+                is TopLevelNav -> NavEntry(key) {
+                    TopLevelScreen(
+                        timelinePagingItems,
+                        mainViewModel,
+                        timelineViewModel,
+                        foldersViewModel,
+                    )
+                }
 
-    Box(Modifier.fillMaxSize()) {
-        NavDisplay(
-            backStack = backStack,
-            transitionSpec = { transitionSpec },
-            popTransitionSpec = { transitionSpec },
-            predictivePopTransitionSpec = { transitionSpec },
-            entryProvider = { key ->
-                when (key) {
-                    is TopLevelNav -> NavEntry(key) {
-                        TopLevelScreen(
-                            timelinePagingItems,
-                            mainViewModel,
-                        )
+                is PhotoViewerFlowNav -> NavEntry(key) {
+                    val lazyPagingItems = when (key.source) {
+                        PhotoViewerFlowNav.Source.Timeline -> timelinePagingItems
+                        PhotoViewerFlowNav.Source.Network -> networkFolderPagingItems
+                        PhotoViewerFlowNav.Source.Local -> localFolderPagingItems
+                        PhotoViewerFlowNav.Source.Favorites -> favoritesFolderPagingItems
                     }
 
-                    is PhotoViewerFlowNav -> NavEntry(key) {
-                        val lazyPagingItems = when (key.source) {
-                            PhotoViewerFlowNav.Source.Timeline -> timelinePagingItems
-                            PhotoViewerFlowNav.Source.Network -> networkFolderPagingItems
-                            PhotoViewerFlowNav.Source.Local -> localFolderPagingItems
-                            PhotoViewerFlowNav.Source.Favorites -> favoritesFolderPagingItems
+                    PhotosViewer(
+                        lazyPagingItems = lazyPagingItems,
+                        initialPhotoIndex = key.initialPhotoIndex
+                    )
+                }
+
+                is FolderNav -> NavEntry(key) {
+                    val source = key.source
+                    LaunchedEffect(source) {
+                        when (source) {
+                            is FolderNav.Source.Network -> foldersViewModel.loadNetworkFolderPhotos(
+                                source.folderId
+                            )
+
+                            is FolderNav.Source.Local -> foldersViewModel.loadLocalFolderPhotos(
+                                source.name
+                            )
+
+                            else -> Unit
                         }
-
-                        PhotosViewer(
-                            lazyPagingItems = lazyPagingItems,
-                            initialPhotoIndex = key.initialPhotoIndex
-                        )
                     }
 
-                    is FolderNav -> NavEntry(key) {
-                        val source = key.source
-                        LaunchedEffect(source) {
-                            when (source) {
-                                is FolderNav.Source.Network -> foldersViewModel.loadNetworkFolderPhotos(
-                                    source.folderId
-                                )
-
-                                is FolderNav.Source.Local -> foldersViewModel.loadLocalFolderPhotos(
-                                    source.name
-                                )
-
-                                else -> Unit
-                            }
-                        }
-
-                        val lazyPagingItems = when (source) {
-                            FolderNav.Source.Favorites -> favoritesFolderPagingItems
-                            is FolderNav.Source.Network -> networkFolderPagingItems
-                            is FolderNav.Source.Local -> localFolderPagingItems
-                        }
-
-                        FolderScreen(key.source, lazyPagingItems)
+                    val lazyPagingItems = when (source) {
+                        FolderNav.Source.Favorites -> favoritesFolderPagingItems
+                        is FolderNav.Source.Network -> networkFolderPagingItems
+                        is FolderNav.Source.Local -> localFolderPagingItems
                     }
 
-                    is PhotoViewerListNav -> NavEntry(key) {
-                        PhotosViewer(key.photos)
-                    }
+                    FolderScreen(key.source, lazyPagingItems, foldersViewModel)
+                }
 
-                    is MovePhotosNav -> NavEntry(key) {
-                        MovePhotosScreen(key.photoIds)
-                    }
+                is PhotoViewerListNav -> NavEntry(key) {
+                    PhotosViewer(key.photos)
+                }
 
-                    is UploadPhotosNav -> NavEntry(key) {
-                        UploadPhotosScreen(key.photoIds)
-                    }
+                is MovePhotosNav -> NavEntry(key) {
+                    MovePhotosScreen(key.photoIds)
+                }
 
-                    is DuplicatesNav -> NavEntry(key) {
-                        DuplicatesScreen()
-                    }
+                is UploadPhotosNav -> NavEntry(key) {
+                    UploadPhotosScreen(key.photoIds)
+                }
 
-                    is LargeFilesNav -> NavEntry(key) {
-                        LargeFilesScreen()
-                    }
+                is DuplicatesNav -> NavEntry(key) {
+                    DuplicatesScreen()
+                }
 
-                    is SettingsNav -> NavEntry(key) {
-                        SettingsScreen()
-                    }
+                is LargeFilesNav -> NavEntry(key) {
+                    LargeFilesScreen()
+                }
 
-                    is TrashNav -> NavEntry(key) {
-                        TrashScreen()
-                    }
+                is SettingsNav -> NavEntry(key) {
+                    SettingsScreen()
+                }
 
-                    else -> NavEntry(key) {
-                        Text("Invalid route: $key")
-                    }
+                is TrashNav -> NavEntry(key) {
+                    TrashScreen()
+                }
+
+                else -> NavEntry(key) {
+                    Text("Invalid route: $key")
                 }
             }
-        )
-
-        val snackbarHostState = LocalSnackbarHostState.current
-        val dismissBoxState = rememberSwipeToDismissBoxState()
-
-        LaunchedEffect(dismissBoxState.currentValue) {
-            if (dismissBoxState.currentValue != SwipeToDismissBoxValue.Settled) {
-                snackbarHostState.currentSnackbarData?.dismiss()
-                dismissBoxState.reset()
-            }
         }
+    )
 
-        SwipeToDismissBox(
-            state = dismissBoxState,
-            backgroundContent = {},
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-        ) {
-            SnackbarHost(hostState = snackbarHostState) { snackbarData ->
-                TypedSnackbar(snackbarData)
-            }
-        }
-    }
+    TypedSnackbar(snackbarManager)
 }

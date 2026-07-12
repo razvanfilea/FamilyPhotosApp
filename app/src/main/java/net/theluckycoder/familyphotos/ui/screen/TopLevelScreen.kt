@@ -24,10 +24,15 @@ import net.theluckycoder.familyphotos.ui.screen.tabs.TimelineTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.UtilitiesTab
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
+import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.TimelineViewModel
+
 @Composable
 fun TopLevelScreen(
     timelinePagingItems: LazyPagingItems<NetworkPhoto>,
     mainViewModel: MainViewModel,
+    timelineViewModel: TimelineViewModel,
+    foldersViewModel: FoldersViewModel,
 ) {
     val modifier = Modifier.fillMaxSize()
 
@@ -71,9 +76,9 @@ fun TopLevelScreen(
             modifier = modifier
         ) {
             when (selectedTabState.value) {
-                TopLevelTab.Timeline -> TimelineTab(timelinePagingItems)
-                TopLevelTab.NetworkFolders -> NetworkFoldersTab()
-                TopLevelTab.Device -> DeviceTab()
+                TopLevelTab.Timeline -> TimelineTab(timelinePagingItems, mainViewModel, timelineViewModel)
+                TopLevelTab.NetworkFolders -> NetworkFoldersTab(foldersViewModel)
+                TopLevelTab.Device -> DeviceTab(foldersViewModel)
                 TopLevelTab.Utility -> UtilitiesTab()
             }
         }

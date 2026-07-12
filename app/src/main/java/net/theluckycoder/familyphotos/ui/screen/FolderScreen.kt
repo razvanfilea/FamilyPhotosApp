@@ -49,7 +49,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.LazyPagingItems
 import kotlinx.coroutines.flow.emptyFlow
 import net.theluckycoder.familyphotos.R
@@ -67,8 +66,11 @@ import net.theluckycoder.familyphotos.ui.composables.PhotosList
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 
 @Composable
-fun FolderScreen(source: FolderNav.Source, lazyPagingItems: LazyPagingItems<out Photo>) {
-    val foldersViewModel: FoldersViewModel = viewModel()
+fun FolderScreen(
+    source: FolderNav.Source,
+    lazyPagingItems: LazyPagingItems<out Photo>,
+    foldersViewModel: FoldersViewModel
+) {
     val gridState by foldersViewModel.photoListState.collectAsState()
     val backStack = LocalNavBackStack.current
     val timelineLayout by when (source) {

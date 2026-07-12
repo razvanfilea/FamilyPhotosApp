@@ -120,7 +120,7 @@ dependencies {
     // Navigation
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.navigation3.runtime)
-//    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 
     // Paging
     implementation(libs.paging.runtime)

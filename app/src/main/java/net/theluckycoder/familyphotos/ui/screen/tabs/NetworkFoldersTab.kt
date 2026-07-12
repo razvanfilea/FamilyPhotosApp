@@ -6,7 +6,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
@@ -15,8 +14,7 @@ import net.theluckycoder.familyphotos.ui.composables.PhotoTypeChips
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 
 @Composable
-fun NetworkFoldersTab() {
-    val foldersViewModel: FoldersViewModel = viewModel()
+fun NetworkFoldersTab(foldersViewModel: FoldersViewModel) {
     val backStack = LocalNavBackStack.current
     val folders by foldersViewModel.networkFolders.collectAsState()
     val currentUser by foldersViewModel.currentUser.collectAsState(null)

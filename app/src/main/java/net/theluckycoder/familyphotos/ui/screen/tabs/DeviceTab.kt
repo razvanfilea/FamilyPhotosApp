@@ -22,7 +22,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
@@ -30,8 +29,7 @@ import net.theluckycoder.familyphotos.ui.composables.FoldersGridList
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
 
 @Composable
-fun DeviceTab() {
-    val foldersViewModel: FoldersViewModel = viewModel()
+fun DeviceTab(foldersViewModel: FoldersViewModel) {
     val backStack = LocalNavBackStack.current
     val folders by foldersViewModel.localFolders.collectAsState()
     val backupFolders by foldersViewModel.backupFolders.collectAsState()
