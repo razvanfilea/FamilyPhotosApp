@@ -66,11 +66,13 @@ import net.theluckycoder.familyphotos.ui.composables.FolderNameDialog
 import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
 import net.theluckycoder.familyphotos.ui.composables.PhotosList
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersTabViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @Composable
 fun FolderScreen(
     source: FolderNav.Source,
     foldersTabViewModel: FoldersTabViewModel,
+    mainViewModel: MainViewModel,
     folderScreenViewModel: FolderScreenViewModel = viewModel(),
 ) {
     val lazyPagingItems = when (source) {
@@ -107,6 +109,7 @@ fun FolderScreen(
         PhotosList(
             gridState = gridState,
             photos = lazyPagingItems,
+            mainViewModel = mainViewModel,
             timelineLayout = timelineLayout,
             modifier = Modifier
                 .fillMaxSize()

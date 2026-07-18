@@ -1,8 +1,10 @@
 package net.theluckycoder.familyphotos.core.data.repository
 
 import android.content.Context
+import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Log
+import blake.hash.BLAKE3
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -68,6 +70,7 @@ class PhotoUploadRepository @Inject internal constructor(
     suspend fun uploadFile(
         localPhoto: LocalPhoto,
         uploadChoice: UploadChoice,
+        onProgress: ((bytesWritten: Long, totalBytes: Long) -> Unit)? = null,
     ): Boolean {
         val contentResolver = context.contentResolver
         val mediaType = contentResolver.getType(localPhoto.uri)?.toMediaTypeOrNull()
@@ -122,6 +125,8 @@ class PhotoUploadRepository @Inject internal constructor(
             }
         }
 
+        val hash = calculateBlake3Hash(localPhoto.uri)
+
         val requestBody = object : RequestBody() {
             override fun contentType() = mediaType
 
@@ -130,8 +135,20 @@ class PhotoUploadRepository @Inject internal constructor(
             @Throws(IOException::class)
             override fun writeTo(sink: BufferedSink) {
                 contentResolver.openInputStream(localPhoto.uri)?.use { inputStream ->
-                    inputStream.source().use { source ->
-                        sink.writeAll(source)
+                    if (onProgress != null) {
+                        val buffer = ByteArray(8192)
+                        var bytesWritten = 0L
+                        val totalBytes = contentLength
+                        var read: Int
+                        while (inputStream.read(buffer).also { read = it } != -1) {
+                            sink.write(buffer, 0, read)
+                            bytesWritten += read
+                            onProgress(bytesWritten, totalBytes)
+                        }
+                    } else {
+                        inputStream.source().use { source ->
+                            sink.writeAll(source)
+                        }
                     }
                 } ?: throw IOException("Failed to open InputStream for URI: $localPhoto.uri")
             }
@@ -145,6 +162,7 @@ class PhotoUploadRepository @Inject internal constructor(
             file = fileBody,
             makePublic = uploadChoice.isPublic,
             folderId = folderId,
+            hash = hash,
         )
 
         response.body()?.let { dto ->
@@ -157,5 +175,23 @@ class PhotoUploadRepository @Inject internal constructor(
         Log.e("Error uploading ${localPhoto.id}", response.errorBody()?.string().orEmpty())
 
         return false
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    private fun calculateBlake3Hash(uri: Uri): String? {
+        return try {
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                val hasher = BLAKE3.Hasher()
+                val buffer = ByteArray(8192)
+                var bytesRead: Int
+                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                    hasher.update(buffer, 0, bytesRead)
+                }
+                hasher.finalize().toHexString()
+            }
+        } catch (e: Exception) {
+            Log.e("PhotoUploadRepository", "Failed to compute BLAKE3 hash for $uri", e)
+            null
+        }
     }
 }

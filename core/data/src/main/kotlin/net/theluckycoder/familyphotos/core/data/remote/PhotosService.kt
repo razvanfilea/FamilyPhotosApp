@@ -37,6 +37,7 @@ internal interface PhotosService {
         @Query("time_created") timeCreated: String,
         @Query("folder_id") folderId: Long?,
         @Query("make_public") makePublic: Boolean?,
+        @Query("hash") hash: String?,
         @Part file: MultipartBody.Part,
     ): Response<NetworkPhotoDto>
 

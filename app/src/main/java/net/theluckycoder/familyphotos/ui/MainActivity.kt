@@ -144,7 +144,9 @@ class MainActivity : ComponentActivity() {
             AppTheme {
                 val isLoggedIn = mainViewModel.isLoggedIn.collectAsState()
                 if (!isLoggedIn.value && !isBenchmark) {
-                    val initialServerAddress by mainViewModel.loginRepository.serverAddress.collectAsState(initial = "")
+                    val initialServerAddress by mainViewModel.loginRepository.serverAddress.collectAsState(
+                        initial = ""
+                    )
                     LoginScreen(
                         initialServerAddress = initialServerAddress ?: "",
                         testConnection = { address ->
@@ -211,23 +213,20 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun listenToTrashRequests() = lifecycleScope.launch(Dispatchers.IO) {
+    private fun listenToTrashRequests() = lifecycleScope.launch(Dispatchers.Main) {
         mainViewModel.localPhotosToDelete.collect { photos ->
             ensureActive()
 
             val uriList = photos.map { it.uri }
+            val pendingIntent = MediaStore.createTrashRequest(
+                this@MainActivity.contentResolver,
+                uriList,
+                true
+            )
 
-            withContext(Dispatchers.Main) {
-                val pendingIntent = MediaStore.createTrashRequest(
-                    this@MainActivity.contentResolver,
-                    uriList,
-                    true
-                )
+            val request = IntentSenderRequest.Builder(pendingIntent.intentSender).build()
 
-                val request = IntentSenderRequest.Builder(pendingIntent.intentSender).build()
-
-                deletePhotoLauncher.launch(request)
-            }
+            deletePhotoLauncher.launch(request)
         }
     }
 }
@@ -350,16 +349,17 @@ private fun Content(
 
                     PhotosViewer(
                         lazyPagingItems = lazyPagingItems,
-                        initialPhotoIndex = key.initialPhotoIndex
+                        initialPhotoIndex = key.initialPhotoIndex,
+                        mainViewModel = mainViewModel
                     )
                 }
 
                 is FolderNav -> navEntry(key) {
-                    FolderScreen(key.source, foldersTabViewModel)
+                    FolderScreen(key.source, foldersTabViewModel, mainViewModel = mainViewModel)
                 }
 
                 is PhotoViewerListNav -> navEntry(key) {
-                    PhotosViewer(key.photos)
+                    PhotosViewer(key.photos, mainViewModel = mainViewModel)
                 }
 
                 is MovePhotosNav -> navEntry(key) {
@@ -371,7 +371,7 @@ private fun Content(
                 }
 
                 is DuplicatesNav -> navEntry(key) {
-                    DuplicatesScreen()
+                    DuplicatesScreen(mainViewModel = mainViewModel)
                 }
 
                 is LargeFilesNav -> navEntry(key) {

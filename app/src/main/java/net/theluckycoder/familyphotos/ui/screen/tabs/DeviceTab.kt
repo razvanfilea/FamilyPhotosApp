@@ -104,8 +104,9 @@ private fun BackupStatusCard(
         }
 
         if (backupProgress != null && backupProgress.total > 0) {
+            val progressValue = backupProgress.currentPhotoPercent.toFloat() / 100f
             LinearProgressIndicator(
-                progress = { backupProgress.current.toFloat() / backupProgress.total },
+                progress = { progressValue },
                 modifier = Modifier.fillMaxWidth()
             )
             Text(

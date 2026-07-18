@@ -47,6 +47,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.paging.compose.LazyPagingItems
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
+import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
@@ -77,6 +78,7 @@ private const val CONTENT_TYPE_TITLE = "title"
 @Composable
 fun <T : Photo> PhotosList(
     photos: LazyPagingItems<T>,
+    mainViewModel: MainViewModel,
     modifier: Modifier = Modifier,
     gridState: LazyGridState = rememberLazyGridState(),
     timelineLayout: TimelineLayout = TimelineLayout.EMPTY,
@@ -233,7 +235,7 @@ fun <T : Photo> PhotosList(
 
     containsLocalPhotos.value?.let {
         PhotosSelectionBar(selectedPhotoIds) {
-            PhotoUtilitiesActions(it, selectedPhotoIds)
+            PhotoUtilitiesActions(it, selectedPhotoIds, mainViewModel)
         }
     }
 

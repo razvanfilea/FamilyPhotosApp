@@ -14,8 +14,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.R
@@ -117,12 +117,6 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.Default) {
             val photos = photoIds.map { photosRepository.getLocalPhoto(it) }.filterNotNull()
             _localPhotosToDelete.send(photos)
-        }
-    }
-
-    fun signOut() {
-        viewModelScope.launch(Dispatchers.IO) {
-            loginRepository.logout()
         }
     }
 

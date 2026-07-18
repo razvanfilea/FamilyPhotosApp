@@ -34,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -42,7 +41,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.LazyPagingItems
-import coil3.asImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import coil3.size.Size
@@ -67,14 +65,13 @@ import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewerViewModel
-import net.theluckycoder.familyphotos.utils.ScaledBitmapPainter
-import net.theluckycoder.familyphotos.utils.ThumbHashCache
 
 
 @Composable
 fun <T : Photo> PhotosViewer(
     lazyPagingItems: LazyPagingItems<T>,
     initialPhotoIndex: Int,
+    mainViewModel: MainViewModel,
     photoViewerViewModel: PhotoViewerViewModel = viewModel()
 ) {
     val showUi = remember { mutableStateOf(true) }
@@ -92,14 +89,17 @@ fun <T : Photo> PhotosViewer(
 
     val currentPhoto = items.getOrNull(pagerState.currentPage)?.second
 
-    PhotoViewerScaffold(currentPhoto, showUi.value, photoViewerViewModel) { paddingValues ->
+    PhotoViewerScaffold(currentPhoto, showUi.value, mainViewModel, photoViewerViewModel) { paddingValues ->
         HorizontalPager(
             modifier = Modifier.testTag("photo_viewer_pager"),
             state = pagerState,
-            key = { index -> items[index].second.id },
+            key = { index -> items.getOrNull(index)?.second?.id ?: index },
         ) { page ->
-            val (originalIndex, photo) = items[page]
-            lazyPagingItems[originalIndex] // Notify Paging Data!!
+            val item = items.getOrNull(page) ?: return@HorizontalPager
+            val (originalIndex, photo) = item
+            if (originalIndex in 0 until lazyPagingItems.itemCount) {
+                lazyPagingItems[originalIndex] // Notify Paging Data!!
+            }
 
             val localUri = remember { mutableStateOf<Uri?>(null) }
             LaunchedEffect(photo) {
@@ -117,6 +117,7 @@ fun <T : Photo> PhotosViewer(
 @Composable
 fun <T : Photo> PhotosViewer(
     items: List<T>,
+    mainViewModel: MainViewModel,
     photoViewerViewModel: PhotoViewerViewModel = viewModel()
 ) {
     val photosList = remember { mutableStateListOf<T>() }
@@ -125,17 +126,17 @@ fun <T : Photo> PhotosViewer(
         photosList.addAll(items)
     }
 
-    val pagerState = rememberPagerState(pageCount = { items.size })
+    val pagerState = rememberPagerState(pageCount = { photosList.size })
 
     val showUi = remember { mutableStateOf(true) }
-    val currentPhoto = items.getOrNull(pagerState.currentPage)
+    val currentPhoto = photosList.getOrNull(pagerState.currentPage)
 
-    PhotoViewerScaffold(currentPhoto, showUi.value, photoViewerViewModel) { paddingValues ->
+    PhotoViewerScaffold(currentPhoto, showUi.value, mainViewModel, photoViewerViewModel) { paddingValues ->
         HorizontalPager(
             state = pagerState,
-            key = { index -> items[index].id },
+            key = { index -> photosList.getOrNull(index)?.id ?: index },
         ) { page ->
-            val photo = items[page]
+            val photo = photosList.getOrNull(page) ?: return@HorizontalPager
 
             val photoFlow = remember(photo) {
                 if (photo is NetworkPhoto)
@@ -167,6 +168,7 @@ fun <T : Photo> PhotosViewer(
 private fun PhotoViewerScaffold(
     currentPhoto: Photo?,
     showUi: Boolean,
+    mainViewModel: MainViewModel,
     photoViewerViewModel: PhotoViewerViewModel,
     content: @Composable (PaddingValues) -> Unit
 ) {
@@ -189,6 +191,7 @@ private fun PhotoViewerScaffold(
                 ) {
                     BottomBar(
                         photo = currentPhoto,
+                        mainViewModel = mainViewModel,
                         photoViewerViewModel = photoViewerViewModel,
                     )
                 }
@@ -272,11 +275,11 @@ private fun TopBar(
 @Composable
 private fun BottomBar(
     photo: Photo,
+    mainViewModel: MainViewModel,
     photoViewerViewModel: PhotoViewerViewModel = viewModel()
 ) {
-    val deletePhotosDialog = rememberDeletePhotosDialog()
+    val deletePhotosDialog = rememberDeletePhotosDialog(mainViewModel)
     val backStack = LocalNavBackStack.current
-    val mainViewModel: MainViewModel = viewModel()
 
     Row(
         modifier = Modifier

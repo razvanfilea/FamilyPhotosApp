@@ -89,7 +89,27 @@ class BackupAndUploadWorker @AssistedInject constructor(
                 )
 
                 val success = try {
-                    photoUploadRepository.uploadFile(localPhoto, entry.toUploadChoice())
+                    var lastPercent = -1
+                    var lastUpdate = 0L
+                    photoUploadRepository.uploadFile(localPhoto, entry.toUploadChoice()) { bytesWritten, totalBytes ->
+                        if (totalBytes > 0) {
+                            val percent = ((bytesWritten * 100) / totalBytes).toInt().coerceIn(0, 100)
+                            val now = System.currentTimeMillis()
+                            if (percent != lastPercent && (percent == 100 || now - lastUpdate >= 500L)) {
+                                lastPercent = percent
+                                lastUpdate = now
+                                setProgressAsync(
+                                    Data.Builder()
+                                        .putInt(KEY_PROGRESS_CURRENT, successCount)
+                                        .putInt(KEY_PROGRESS_TOTAL, total)
+                                        .putInt(KEY_PROGRESS_PHOTO_PERCENT, percent)
+                                        .build()
+                                )
+                                val text = ctx.getString(R.string.notification_backup_progress, successCount, total) + " ($percent%)"
+                                setForegroundAsync(createForegroundInfo(text, successCount, total))
+                            }
+                        }
+                    }
                 } catch (_: ConnectException) {
                     return Result.retry()
                 } catch (e: Exception) {
@@ -269,5 +289,6 @@ class BackupAndUploadWorker @AssistedInject constructor(
         const val KEY_SKIP_FOLDER_SCAN = "skip_folder_scan"
         const val KEY_PROGRESS_CURRENT = "progress_current"
         const val KEY_PROGRESS_TOTAL = "progress_total"
+        const val KEY_PROGRESS_PHOTO_PERCENT = "progress_photo_percent"
     }
 }

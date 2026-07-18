@@ -37,12 +37,11 @@ fun interface DeletePhotosDialogCaller {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun rememberDeletePhotosDialog(): DeletePhotosDialogCaller {
+fun rememberDeletePhotosDialog(mainViewModel: MainViewModel): DeletePhotosDialogCaller {
     // TODO rename this to make it say move to trash
     var receivedData by remember { mutableStateOf<Pair<LongArray, () -> Unit>?>(null) }
     val visible = receivedData != null
 
-    val mainViewModel: MainViewModel = viewModel()
     val scope = rememberCoroutineScope()
 
     if (visible) {

@@ -54,4 +54,7 @@ dependencies {
     // Compose (for @Immutable annotation only)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
+
+    // Cryptography / Hash Functions
+    implementation(libs.blake.hash)
 }

@@ -20,11 +20,11 @@ import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 fun PhotoUtilitiesActions( // TODO row
     isLocalPhoto: Boolean,
     selectedItems: SnapshotStateSet<Long>,
-    mainViewModel: MainViewModel = viewModel()
+    mainViewModel: MainViewModel
 ) {
     val backStack = LocalNavBackStack.current
     val scope = rememberCoroutineScope()
-    val deletePhotosDialog = rememberDeletePhotosDialog()
+    val deletePhotosDialog = rememberDeletePhotosDialog(mainViewModel)
 
     if (selectedItems.isNotEmpty()) {
         IconButton(onClick = {

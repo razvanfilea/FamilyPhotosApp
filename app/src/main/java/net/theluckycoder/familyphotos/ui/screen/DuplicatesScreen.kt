@@ -42,10 +42,13 @@ import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialogCaller
 import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.UtilitiesViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @Composable
-fun DuplicatesScreen() {
-    val utilitiesViewModel: UtilitiesViewModel = viewModel()
+fun DuplicatesScreen(
+    mainViewModel: MainViewModel,
+    utilitiesViewModel: UtilitiesViewModel = viewModel()
+) {
     val backStack = LocalNavBackStack.current
     val duplicates = remember { mutableStateListOf<List<NetworkPhoto>>() }
     val folderNames = remember { mutableStateMapOf<Long, String>() }
@@ -63,7 +66,7 @@ fun DuplicatesScreen() {
     }
 
     val pagerState = rememberPagerState { duplicates.size }
-    val deletePhotosDialog = rememberDeletePhotosDialog()
+    val deletePhotosDialog = rememberDeletePhotosDialog(mainViewModel)
     val currentPhoto = duplicates.getOrNull(pagerState.currentPage)?.firstOrNull()
     val networkPhotoInfoDialog = rememberNetworkPhotoInfoDialog(currentPhoto)
 

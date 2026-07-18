@@ -1,5 +1,6 @@
 [versions]
 agp = "9.3.0"
+blakeHash = "1.1.1"
 kotlin_base = "2.4.10"
 kotlin_ksp = "2.3.10"
 kotlin_coroutines = "1.11.0"
@@ -39,6 +40,7 @@ kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref =
 
 
 [libraries]
+blake-hash = { module = "ch.trancee:blake-hash", version.ref = "blakeHash" }
 kotlin_coroutinesAndroid = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlin_coroutines" }
 kotlin_serializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlin_serialization" }
 kotlin_dateTime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlin_datetime" }

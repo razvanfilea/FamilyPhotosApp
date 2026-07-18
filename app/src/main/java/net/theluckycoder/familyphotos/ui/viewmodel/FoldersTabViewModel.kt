@@ -34,7 +34,8 @@ class FoldersTabViewModel @Inject constructor(
 
     data class BackupProgress(
         val current: Int,
-        val total: Int
+        val total: Int,
+        val currentPhotoPercent: Int = 0
     )
 
     val activeFolderViewModel = MutableStateFlow<FolderScreenViewModel?>(null)
@@ -78,7 +79,8 @@ class FoldersTabViewModel @Inject constructor(
                             BackupAndUploadWorker.KEY_PROGRESS_CURRENT,
                             0
                         ),
-                        total = info.progress.getInt(BackupAndUploadWorker.KEY_PROGRESS_TOTAL, 0)
+                        total = info.progress.getInt(BackupAndUploadWorker.KEY_PROGRESS_TOTAL, 0),
+                        currentPhotoPercent = info.progress.getInt(BackupAndUploadWorker.KEY_PROGRESS_PHOTO_PERCENT, 0)
                     )
                 }
             }

@@ -70,6 +70,7 @@ fun TimelineTab(
     PhotosList(
         gridState = timelineViewModel.timelineGridState,
         photos = photos,
+        mainViewModel = mainViewModel,
         timelineLayout = timelineLayout,
         openPhoto = {
             backStack.add(PhotoViewerFlowNav(it, PhotoViewerFlowNav.Source.Timeline))
