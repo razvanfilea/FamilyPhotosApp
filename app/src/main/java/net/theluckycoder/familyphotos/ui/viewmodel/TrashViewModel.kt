@@ -12,6 +12,7 @@ import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.core.data.repository.ServerRepository
 import net.theluckycoder.familyphotos.ui.SnackbarManager
 import net.theluckycoder.familyphotos.ui.UiMessageType
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -23,8 +24,8 @@ class TrashViewModel @Inject constructor(
 
     val trashedPhotos = photosRepository.getTrashedPhotos()
 
-    fun deleteNetworkPhotos(photoIds: LongArray) {
-        viewModelScope.launch(Dispatchers.IO) {
+    suspend fun deleteNetworkPhotos(photoIds: LongArray): Boolean {
+        val success = withContext(Dispatchers.IO) {
             photoIds.map { photoId ->
                 async {
                     val networkPhoto = photosRepository.getNetworkPhoto(photoId)
@@ -35,8 +36,19 @@ class TrashViewModel @Inject constructor(
                         false
                     }
                 }
-            }.awaitAll()
+            }.awaitAll().all { it }
+        }
+        if (success) {
             snackbarManager.showPluralMessage(R.plurals.status_photos_deleted, photoIds.size)
+        } else {
+            snackbarManager.showMessage(R.string.error_delete_failed, UiMessageType.Error)
+        }
+        return success
+    }
+
+    suspend fun getNetworkPhotos(photoIds: LongArray): List<net.theluckycoder.familyphotos.core.data.model.NetworkPhoto> {
+        return withContext(Dispatchers.IO) {
+            photoIds.map { photosRepository.getNetworkPhoto(it) }.filterNotNull()
         }
     }
 

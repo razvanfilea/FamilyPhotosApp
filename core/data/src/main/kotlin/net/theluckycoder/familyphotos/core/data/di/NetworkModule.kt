@@ -129,8 +129,6 @@ object NetworkModule {
                     cookies.add(header)
                 }
 
-                Log.i("Cookies", cookies.toString())
-
                 scope.launch {
                     userDataStore.setSessionCookie(cookies.first())
                 }

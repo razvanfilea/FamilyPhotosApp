@@ -61,7 +61,10 @@ import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.MovePhotosNav
 import net.theluckycoder.familyphotos.ui.UploadPhotosNav
 import net.theluckycoder.familyphotos.ui.composables.player.VideoPlayer
-import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewerViewModel
@@ -278,7 +281,7 @@ private fun BottomBar(
     mainViewModel: MainViewModel,
     photoViewerViewModel: PhotoViewerViewModel = viewModel()
 ) {
-    val deletePhotosDialog = rememberDeletePhotosDialog(mainViewModel)
+    var showDeleteDialogForPhotos by remember { mutableStateOf<List<Photo>?>(null) }
     val backStack = LocalNavBackStack.current
 
     Row(
@@ -292,10 +295,7 @@ private fun BottomBar(
         IconButtonText(
             onClick = {
                 when (photo) {
-                    is NetworkPhoto -> deletePhotosDialog.show(
-                        photoIds = longArrayOf(photo.id),
-                        onPhotosDeleted = {}
-                    )
+                    is NetworkPhoto -> showDeleteDialogForPhotos = listOf(photo)
 
                     is LocalPhoto -> mainViewModel.deleteLocalPhotos(longArrayOf(photo.id))
                 }
@@ -378,6 +378,16 @@ private fun BottomBar(
                 )
             }
         }
+    }
+
+    showDeleteDialogForPhotos?.let { photos ->
+        DeletePhotosDialog(
+            photos = photos,
+            isPermanent = false,
+            onDismissRequest = { showDeleteDialogForPhotos = null },
+            onConfirmDelete = { list -> mainViewModel.trashNetworkPhotos(list.map { it.id }.toLongArray()) },
+            onPhotosDeleted = {}
+        )
     }
 }
 

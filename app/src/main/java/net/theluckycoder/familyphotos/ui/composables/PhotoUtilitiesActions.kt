@@ -3,17 +3,21 @@ package net.theluckycoder.familyphotos.ui.composables
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.core.data.model.Photo
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.MovePhotosNav
 import net.theluckycoder.familyphotos.ui.UploadPhotosNav
-import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
+import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @Composable
@@ -24,7 +28,7 @@ fun PhotoUtilitiesActions( // TODO row
 ) {
     val backStack = LocalNavBackStack.current
     val scope = rememberCoroutineScope()
-    val deletePhotosDialog = rememberDeletePhotosDialog(mainViewModel)
+    var showDeleteDialogForPhotos by remember { mutableStateOf<List<Photo>?>(null) }
 
     if (selectedItems.isNotEmpty()) {
         IconButton(onClick = {
@@ -34,9 +38,8 @@ fun PhotoUtilitiesActions( // TODO row
                     mainViewModel.deleteLocalPhotos(selectedItems.toLongArray())
                     selectedItems.clear()
                 } else {
-                    deletePhotosDialog.show(
-                        photoIds = selectedItems.toLongArray(),
-                        onPhotosDeleted = { selectedItems.clear() })
+                    val photos = mainViewModel.getNetworkPhotos(selectedItems.toLongArray())
+                    showDeleteDialogForPhotos = photos
                 }
             }
         }) {
@@ -80,6 +83,18 @@ fun PhotoUtilitiesActions( // TODO row
                 )
             }
         }
+    }
+
+    showDeleteDialogForPhotos?.let { photos ->
+        DeletePhotosDialog(
+            photos = photos,
+            isPermanent = false,
+            onDismissRequest = { showDeleteDialogForPhotos = null },
+            onConfirmDelete = { list -> 
+                mainViewModel.trashNetworkPhotos(list.map { it.id }.toLongArray())
+            },
+            onPhotosDeleted = { selectedItems.clear() }
+        )
     }
 }
 

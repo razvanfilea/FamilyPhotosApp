@@ -21,6 +21,7 @@ import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
+import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.LoginRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
@@ -95,6 +96,12 @@ class MainViewModel @Inject constructor(
 
     fun getNetworkPhotosUriAsync(photoIds: LongArray) = viewModelScope.async(Dispatchers.IO) {
         getPhotoUrisUseCase.getNetworkPhotoUris(photoIds)
+    }
+
+    suspend fun getNetworkPhotos(photoIds: LongArray): List<NetworkPhoto> {
+        return withContext(Dispatchers.IO) {
+            photoIds.map { photosRepository.getNetworkPhoto(it) }.filterNotNull()
+        }
     }
 
     fun getLocalPhotosUriAsync(photoIds: LongArray) = viewModelScope.async(Dispatchers.IO) {

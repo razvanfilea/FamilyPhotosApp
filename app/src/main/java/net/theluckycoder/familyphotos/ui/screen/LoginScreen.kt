@@ -39,10 +39,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -94,6 +96,36 @@ fun LoginScreen(
     val invalidCredentialsMessage = stringResource(R.string.login_error_invalid_credentials)
     val serverUnreachableMessage = stringResource(R.string.login_error_server_unreachable)
 
+    val onCheckConnection: () -> Unit = {
+        focusManager.clearFocus()
+        isCheckingConnection = true
+        errorMessage = null
+        scope.launch {
+            connectionStatus = testConnection(serverAddress)
+            isCheckingConnection = false
+        }
+    }
+
+    val onLogin: () -> Unit = {
+        focusManager.clearFocus()
+        if (isFormValid && !isLoading && !isCheckingConnection) {
+            isLoading = true
+            errorMessage = null
+            scope.launch {
+                val result = loginAction(
+                    serverAddress,
+                    UserLoginDto(userName.lowercase().trim(), password.trim())
+                )
+                isLoading = false
+                errorMessage = when (result) {
+                    LoginResult.Success -> null
+                    LoginResult.InvalidCredentials -> invalidCredentialsMessage
+                    LoginResult.ServerUnreachable -> serverUnreachableMessage
+                }
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -114,59 +146,80 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            LoginForm(
-                serverAddress = serverAddress,
-                onServerAddressChange = {
-                    serverAddress = it
-                    errorMessage = null
-                    connectionStatus = null
-                },
-                userName = userName,
-                onUserNameChange = {
-                    userName = it
-                    errorMessage = null
-                },
-                password = password,
-                onPasswordChange = {
-                    password = it
-                    errorMessage = null
-                },
-                passwordVisible = passwordVisible,
-                onPasswordVisibleChange = { passwordVisible = it },
-                isLoading = isLoading,
-                isCheckingConnection = isCheckingConnection,
-                connectionStatus = connectionStatus,
-                errorMessage = errorMessage,
-                isFormValid = isFormValid,
-                onCheckConnection = {
-                    focusManager.clearFocus()
-                    isCheckingConnection = true
-                    errorMessage = null
-                    scope.launch {
-                        connectionStatus = testConnection(serverAddress)
-                        isCheckingConnection = false
-                    }
-                },
-                onLogin = {
-                    focusManager.clearFocus()
-                    if (isFormValid && !isLoading && !isCheckingConnection) {
-                        isLoading = true
-                        errorMessage = null
-                        scope.launch {
-                            val result = loginAction(
-                                serverAddress,
-                                UserLoginDto(userName.lowercase().trim(), password.trim())
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                ),
+                border = CardDefaults.outlinedCardBorder()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    ServerAddressInput(
+                        value = serverAddress,
+                        onValueChange = {
+                            serverAddress = it
+                            errorMessage = null
+                            connectionStatus = null
+                        },
+                        isLoading = isLoading,
+                        isCheckingConnection = isCheckingConnection,
+                        connectionStatus = connectionStatus,
+                        onCheckClick = onCheckConnection
+                    )
+
+                    UsernameInput(
+                        value = userName,
+                        onValueChange = {
+                            userName = it
+                            errorMessage = null
+                        },
+                        isLoading = isLoading,
+                        isCheckingConnection = isCheckingConnection
+                    )
+
+                    PasswordInput(
+                        value = password,
+                        onValueChange = {
+                            password = it
+                            errorMessage = null
+                        },
+                        passwordVisible = passwordVisible,
+                        onPasswordVisibleChange = { passwordVisible = it },
+                        isLoading = isLoading,
+                        isCheckingConnection = isCheckingConnection,
+                        onDoneAction = onLogin
+                    )
+
+                    errorMessage?.let { error ->
+                        Surface(
+                            color = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = error,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(12.dp)
                             )
-                            isLoading = false
-                            errorMessage = when (result) {
-                                LoginResult.Success -> null
-                                LoginResult.InvalidCredentials -> invalidCredentialsMessage
-                                LoginResult.ServerUnreachable -> serverUnreachableMessage
-                            }
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    LoginButton(
+                        onClick = onLogin,
+                        enabled = isFormValid && !isLoading && !isCheckingConnection,
+                        isLoading = isLoading
+                    )
                 }
-            )
+            }
         }
     }
 }
@@ -176,20 +229,15 @@ private fun LoginHeader(modifier: Modifier = Modifier) = Column(
     modifier = modifier,
     horizontalAlignment = Alignment.CenterHorizontally
 ) {
-    Surface(
-        modifier = Modifier.size(80.dp),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                painter = painterResource(R.drawable.ic_family_outline),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(48.dp)
-            )
-        }
-    }
+    Icon(
+        painter = painterResource(R.mipmap.ic_launcher_foreground),
+        contentDescription = null,
+        tint = null,
+        modifier = Modifier
+            .size(80.dp)
+            .clip(CircleShape)
+            .background(colorResource(R.color.ic_launcher_background))
+    )
 
     Spacer(modifier = Modifier.height(16.dp))
 
@@ -209,105 +257,36 @@ private fun LoginHeader(modifier: Modifier = Modifier) = Column(
 }
 
 @Composable
-private fun LoginForm(
-    serverAddress: String,
-    onServerAddressChange: (String) -> Unit,
-    userName: String,
-    onUserNameChange: (String) -> Unit,
-    password: String,
-    onPasswordChange: (String) -> Unit,
-    passwordVisible: Boolean,
-    onPasswordVisibleChange: (Boolean) -> Unit,
+private fun LoginButton(
+    onClick: () -> Unit,
+    enabled: Boolean,
     isLoading: Boolean,
-    isCheckingConnection: Boolean,
-    connectionStatus: ConnectionTestResult?,
-    errorMessage: String?,
-    isFormValid: Boolean,
-    onCheckConnection: () -> Unit,
-    onLogin: () -> Unit,
     modifier: Modifier = Modifier
-) = Card(
-    modifier = modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(24.dp),
-    colors = CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-    ),
-    border = CardDefaults.outlinedCardBorder()
 ) {
-    Column(
-        modifier = Modifier
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        shape = RoundedCornerShape(12.dp),
+        modifier = modifier
             .fillMaxWidth()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .height(50.dp)
     ) {
-        ServerAddressInput(
-            value = serverAddress,
-            onValueChange = onServerAddressChange,
-            isLoading = isLoading,
-            isCheckingConnection = isCheckingConnection,
-            connectionStatus = connectionStatus,
-            onCheckClick = onCheckConnection
-        )
-
-        UsernameInput(
-            value = userName,
-            onValueChange = onUserNameChange,
-            isLoading = isLoading,
-            isCheckingConnection = isCheckingConnection
-        )
-
-        PasswordInput(
-            value = password,
-            onValueChange = onPasswordChange,
-            passwordVisible = passwordVisible,
-            onPasswordVisibleChange = onPasswordVisibleChange,
-            isLoading = isLoading,
-            isCheckingConnection = isCheckingConnection,
-            onDoneAction = onLogin
-        )
-
-        errorMessage?.let { error ->
-            Surface(
-                color = MaterialTheme.colorScheme.errorContainer,
-                contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = error,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(12.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Button(
-            onClick = onLogin,
-            enabled = isFormValid && !isLoading && !isCheckingConnection,
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    strokeWidth = 2.5.dp
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = stringResource(R.string.login_loading),
-                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-                )
-            } else {
-                Text(
-                    text = stringResource(R.string.login_button),
-                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-                )
-            }
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                color = MaterialTheme.colorScheme.onPrimary,
+                strokeWidth = 2.5.dp
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = stringResource(R.string.login_loading),
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+            )
+        } else {
+            Text(
+                text = stringResource(R.string.login_button),
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+            )
         }
     }
 }

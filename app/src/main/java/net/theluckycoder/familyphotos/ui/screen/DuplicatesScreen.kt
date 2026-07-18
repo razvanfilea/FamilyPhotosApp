@@ -38,8 +38,7 @@ import net.theluckycoder.familyphotos.core.data.model.isPublic
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
 import net.theluckycoder.familyphotos.ui.composables.ZoomableImage
-import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialogCaller
-import net.theluckycoder.familyphotos.ui.dialog.rememberDeletePhotosDialog
+import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.UtilitiesViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
@@ -66,7 +65,7 @@ fun DuplicatesScreen(
     }
 
     val pagerState = rememberPagerState { duplicates.size }
-    val deletePhotosDialog = rememberDeletePhotosDialog(mainViewModel)
+    var deleteDialogState by remember { mutableStateOf<Pair<List<NetworkPhoto>, Int>?>(null) }
     val currentPhoto = duplicates.getOrNull(pagerState.currentPage)?.firstOrNull()
     val networkPhotoInfoDialog = rememberNetworkPhotoInfoDialog(currentPhoto)
 
@@ -122,10 +121,26 @@ fun DuplicatesScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) { page ->
-            PagerContent(duplicates, page, folderNames, deletePhotosDialog)
+            PagerContent(
+                duplicates = duplicates,
+                page = page,
+                folderNames = folderNames,
+                onDeleteClick = { toDelete ->
+                    deleteDialogState = toDelete to page
+                }
+            )
         }
     }
 
+    deleteDialogState?.let { (photos, pageToRemove) ->
+        DeletePhotosDialog(
+            photos = photos,
+            isPermanent = false,
+            onDismissRequest = { deleteDialogState = null },
+            onConfirmDelete = { list -> mainViewModel.trashNetworkPhotos(list.map { it.id }.toLongArray()) },
+            onPhotosDeleted = { duplicates.removeAt(pageToRemove) }
+        )
+    }
 }
 
 @Composable
@@ -133,7 +148,7 @@ private fun PagerContent(
     duplicates: SnapshotStateList<List<NetworkPhoto>>,
     page: Int,
     folderNames: SnapshotStateMap<Long, String>,
-    deletePhotosDialog: DeletePhotosDialogCaller
+    onDeleteClick: (List<NetworkPhoto>) -> Unit
 ) = Box(Modifier.fillMaxSize()) {
     val duplicate = duplicates[page]
 
@@ -163,12 +178,8 @@ private fun PagerContent(
         duplicate.forEach { photo ->
             Button(
                 onClick = {
-                    val toDelete = duplicate.map { it.id }.filterNot { it == photo.id }
-                        .toLongArray()
-                    deletePhotosDialog.show(
-                        photoIds = toDelete,
-                        onPhotosDeleted = { duplicates.removeAt(page) }
-                    )
+                    val toDelete = duplicate.filterNot { it.id == photo.id }
+                    onDeleteClick(toDelete)
                 },
             ) {
                 val icon =
