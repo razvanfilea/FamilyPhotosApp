@@ -26,13 +26,13 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.composables.FoldersGridList
-import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.FoldersTabViewModel
 
 @Composable
-fun DeviceTab(foldersViewModel: FoldersViewModel) {
+fun DeviceTab(foldersTabViewModel: FoldersTabViewModel) {
     val backStack = LocalNavBackStack.current
-    val folders by foldersViewModel.localFolders.collectAsState()
-    val backupFolders by foldersViewModel.backupFolders.collectAsState()
+    val folders by foldersTabViewModel.localFolders.collectAsState()
+    val backupFolders by foldersTabViewModel.backupFolders.collectAsState()
 
     FoldersGridList(
         folders = folders,
@@ -41,14 +41,14 @@ fun DeviceTab(foldersViewModel: FoldersViewModel) {
         },
         isBackupEnabled = { folder -> folder.name in backupFolders },
         extraHeader = {
-            val pendingBackupCount by foldersViewModel.pendingBackupCount.collectAsState()
-            val backupProgress by foldersViewModel.backupProgress.collectAsState()
+            val pendingBackupCount by foldersTabViewModel.pendingBackupCount.collectAsState()
+            val backupProgress by foldersTabViewModel.backupProgress.collectAsState()
 
             BackupStatusCard(
                 backupFolderCount = backupFolders.size,
                 pendingPhotoCount = pendingBackupCount,
                 backupProgress = backupProgress,
-                onBackupNow = { foldersViewModel.triggerBackup() },
+                onBackupNow = { foldersTabViewModel.triggerBackup() },
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
         }
@@ -59,7 +59,7 @@ fun DeviceTab(foldersViewModel: FoldersViewModel) {
 private fun BackupStatusCard(
     backupFolderCount: Int,
     pendingPhotoCount: Int,
-    backupProgress: FoldersViewModel.BackupProgress?,
+    backupProgress: FoldersTabViewModel.BackupProgress?,
     onBackupNow: () -> Unit,
     modifier: Modifier = Modifier
 ) = Card(modifier = modifier.fillMaxWidth()) {

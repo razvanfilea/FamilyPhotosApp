@@ -289,7 +289,7 @@ private fun GridFolderPreviewItem(
 ) = Column(modifier = modifier) {
     Box(
         Modifier
-            .photoSharedBounds(photo.id)
+//            .photoSharedBounds(photo.id)
             .fillMaxWidth()
             .aspectRatio(1f)
             .clip(RoundedCornerShape(16.dp))
@@ -353,7 +353,7 @@ private fun ListFolderPreviewItem(
         CoilPhoto(
             photo = photo,
             modifier = Modifier
-                .photoSharedBounds(photo.id)
+//                .photoSharedBounds(photo.id)
                 .size(72.dp)
                 .clip(RoundedCornerShape(18.dp)),
             preview = true,

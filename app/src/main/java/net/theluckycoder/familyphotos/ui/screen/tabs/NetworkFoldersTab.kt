@@ -11,13 +11,13 @@ import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.ui.composables.FoldersGridList
 import net.theluckycoder.familyphotos.ui.composables.PhotoTypeChips
-import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.FoldersTabViewModel
 
 @Composable
-fun NetworkFoldersTab(foldersViewModel: FoldersViewModel) {
+fun NetworkFoldersTab(foldersTabViewModel: FoldersTabViewModel) {
     val backStack = LocalNavBackStack.current
-    val folders by foldersViewModel.networkFolders.collectAsState()
-    val currentUser by foldersViewModel.currentUser.collectAsState(null)
+    val folders by foldersTabViewModel.networkFolders.collectAsState()
+    val currentUser by foldersTabViewModel.currentUser.collectAsState(null)
 
     FoldersGridList(
         folders = folders,

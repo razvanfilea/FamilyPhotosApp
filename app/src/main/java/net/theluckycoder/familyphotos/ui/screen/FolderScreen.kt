@@ -35,11 +35,14 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.FolderScreenViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,10 +52,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.flow.emptyFlow
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.core.data.model.Photo
 import net.theluckycoder.familyphotos.core.data.model.SharedFolderAccess
 import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolderEntity
 import net.theluckycoder.familyphotos.core.data.model.db.isPublic
@@ -63,29 +65,43 @@ import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
 import net.theluckycoder.familyphotos.ui.composables.FolderNameDialog
 import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
 import net.theluckycoder.familyphotos.ui.composables.PhotosList
-import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.FoldersTabViewModel
 
 @Composable
 fun FolderScreen(
     source: FolderNav.Source,
-    lazyPagingItems: LazyPagingItems<out Photo>,
-    foldersViewModel: FoldersViewModel
+    foldersTabViewModel: FoldersTabViewModel,
+    folderScreenViewModel: FolderScreenViewModel = viewModel(),
 ) {
-    val gridState by foldersViewModel.photoListState.collectAsState()
+    val lazyPagingItems = when (source) {
+        FolderNav.Source.Favorites -> folderScreenViewModel.favoritePhotosPager.collectAsLazyPagingItems()
+        is FolderNav.Source.Local -> folderScreenViewModel.localFolderPhotosPager.collectAsLazyPagingItems()
+        is FolderNav.Source.Network -> folderScreenViewModel.networkFolderPhotosPager.collectAsLazyPagingItems()
+    }
+
+    val gridState by folderScreenViewModel.photoListState.collectAsState()
     val backStack = LocalNavBackStack.current
     val timelineLayout by when (source) {
-        FolderNav.Source.Favorites -> foldersViewModel.favoriteTimelineLayout.collectAsState()
-        is FolderNav.Source.Local -> foldersViewModel.localFolderTimelineLayout.collectAsState()
-        is FolderNav.Source.Network -> foldersViewModel.networkFolderTimelineLayout.collectAsState()
+        FolderNav.Source.Favorites -> folderScreenViewModel.favoriteTimelineLayout.collectAsState()
+        is FolderNav.Source.Local -> folderScreenViewModel.localFolderTimelineLayout.collectAsState()
+        is FolderNav.Source.Network -> folderScreenViewModel.networkFolderTimelineLayout.collectAsState()
+    }
+
+    LaunchedEffect(source) {
+        folderScreenViewModel.setSource(source)
+    }
+
+    LaunchedEffect(folderScreenViewModel) {
+        foldersTabViewModel.registerFolderViewModel(folderScreenViewModel)
     }
 
     var showSharingBottomSheet by remember { mutableStateOf(false) }
     var showRenameFolderDialog by remember { mutableStateOf(false) }
     val networkFolderState =
-        remember { if (source is FolderNav.Source.Network) foldersViewModel.networkFolder else emptyFlow() }.collectAsState(
+        remember { if (source is FolderNav.Source.Network) folderScreenViewModel.networkFolder else emptyFlow() }.collectAsState(
             null
         )
-    val currentUser = foldersViewModel.currentUser.collectAsState(UserDto("", ""))
+    val currentUser = remember { if (source is FolderNav.Source.Network) folderScreenViewModel.currentUser else emptyFlow() }.collectAsState(UserDto("", ""))
 
     Scaffold { paddingValues ->
         PhotosList(
@@ -101,7 +117,7 @@ fun FolderScreen(
                     is FolderNav.Source.Local -> PhotoViewerFlowNav.Source.Local
                     is FolderNav.Source.Network -> PhotoViewerFlowNav.Source.Network
                 }
-                backStack.add(PhotoViewerFlowNav(it, viewerSource))
+                backStack.add(PhotoViewerFlowNav(it, viewerSource, folderSource = source))
             },
             headerContent = {
                 NavBackTopAppBar(
@@ -137,7 +153,7 @@ fun FolderScreen(
                 )
 
                 if (source is FolderNav.Source.Local) {
-                    val backupEnabled by foldersViewModel.isLocalFolderBackupUp(source.name)
+                    val backupEnabled by folderScreenViewModel.isLocalFolderBackupUp(source.name)
                         .collectAsState(false)
 
                     Row(
@@ -145,7 +161,7 @@ fun FolderScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable(onClick = {
-                                foldersViewModel.backupLocalFolder(
+                                folderScreenViewModel.backupLocalFolder(
                                     source.name,
                                     !backupEnabled
                                 )
@@ -180,7 +196,7 @@ fun FolderScreen(
                 initialIsPublic = networkFolder.isPublic,
                 onDismiss = { showRenameFolderDialog = false },
                 onConfirm = { newName, isPublic ->
-                    foldersViewModel.renameFolder(networkFolder.id, newName, isPublic)
+                    folderScreenViewModel.renameFolder(networkFolder.id, newName, isPublic)
                     showRenameFolderDialog = false
                 },
             )
@@ -188,7 +204,7 @@ fun FolderScreen(
 
         if (showSharingBottomSheet) {
             val folderShares =
-                remember(networkFolder.id) { foldersViewModel.getFolderShares(networkFolder.id) }.collectAsState(
+                remember(networkFolder.id) { folderScreenViewModel.getFolderShares(networkFolder.id) }.collectAsState(
                     SharedFolderAccess.EMPTY
                 )
 
@@ -197,10 +213,10 @@ fun FolderScreen(
                 folderShares = folderShares.value,
                 currentUser = currentUser.value,
                 onAddMember = { user ->
-                    foldersViewModel.addMemberToFolder(networkFolder.id, user.userId)
+                    folderScreenViewModel.addMemberToFolder(networkFolder.id, user.userId)
                 },
-                onUpdatePermissions = foldersViewModel::updateMemberFolderPermissions,
-                onRemoveMember = foldersViewModel::removeMemberFromFolder,
+                onUpdatePermissions = folderScreenViewModel::updateMemberFolderPermissions,
+                onRemoveMember = folderScreenViewModel::removeMemberFromFolder,
                 onDismiss = { showSharingBottomSheet = false },
             )
         }

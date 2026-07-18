@@ -68,7 +68,7 @@ class BackupAndUploadWorker @AssistedInject constructor(
                 val pending = photoUploadRepository.getPendingCountFlow().first()
                 val total = successCount + pending
 
-                val localPhoto = photosRepository.getLocalPhotoFlow(entry.localPhotoId).first()
+                val localPhoto = photosRepository.getLocalPhoto(entry.localPhotoId)
                 if (localPhoto == null || localPhoto.isSavedToCloud) {
                     photoUploadRepository.removeFromQueue(entry.id)
                     continue

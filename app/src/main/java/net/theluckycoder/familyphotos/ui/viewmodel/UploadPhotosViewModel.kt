@@ -89,7 +89,7 @@ class UploadPhotosViewModel @Inject constructor(
     fun movePhotos(networkPhotos: LongArray, uploadChoice: UploadChoice) {
         viewModelScope.launch(Dispatchers.IO) {
             val photos = networkPhotos.map { id ->
-                photosRepository.getNetworkPhotoFlow(id).firstOrNull()
+                photosRepository.getNetworkPhoto(id)
             }.filterNotNull()
 
             val result = serverRepository.movePhotos(photos = photos, uploadChoice = uploadChoice)

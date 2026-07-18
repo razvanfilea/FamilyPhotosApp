@@ -47,6 +47,7 @@ data class FolderNav(
 data class PhotoViewerFlowNav(
     val initialPhotoIndex: Int,
     val source: Source,
+    val folderSource: FolderNav.Source? = null,
 ) : NavKey {
     @Serializable
     enum class Source {

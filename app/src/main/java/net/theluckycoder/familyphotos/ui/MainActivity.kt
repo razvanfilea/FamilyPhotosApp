@@ -13,10 +13,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.EaseOutQuart
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +32,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.FolderScreenViewModel
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.core.content.ContextCompat
@@ -44,6 +50,7 @@ import coil3.ImageLoader
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -61,7 +68,7 @@ import net.theluckycoder.familyphotos.ui.screen.TopLevelScreen
 import net.theluckycoder.familyphotos.ui.screen.TrashScreen
 import net.theluckycoder.familyphotos.ui.screen.UploadPhotosScreen
 import net.theluckycoder.familyphotos.ui.theme.AppTheme
-import net.theluckycoder.familyphotos.ui.viewmodel.FoldersViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.FoldersTabViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.TimelineViewModel
 import javax.inject.Inject
@@ -75,13 +82,13 @@ class MainActivity : ComponentActivity() {
         ) { }
 
     private val mainViewModel: MainViewModel by viewModels()
-    private val foldersViewModel: FoldersViewModel by viewModels()
+    private val foldersTabViewModel: FoldersTabViewModel by viewModels()
     private val timelineViewModel: TimelineViewModel by viewModels()
 
     private val deletePhotoLauncher =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
             if (it.resultCode == RESULT_OK) {
-                foldersViewModel.refreshLocalPhotos()
+                foldersTabViewModel.refreshLocalPhotos()
             }
         }
 
@@ -159,7 +166,7 @@ class MainActivity : ComponentActivity() {
                         Content(
                             backStack,
                             mainViewModel,
-                            foldersViewModel,
+                            foldersTabViewModel,
                             timelineViewModel,
                             snackbarManager
                         )
@@ -219,56 +226,120 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private val transitionSpec =
+private val viewerTransitionSpec =
     (fadeIn(animationSpec = tween(220, delayMillis = 90)) +
             scaleIn(initialScale = 0.92f, animationSpec = tween(220, delayMillis = 90)))
         .togetherWith(fadeOut(animationSpec = tween(90)))
 
+private val forwardSlideTransitionSpec =
+    (fadeIn(animationSpec = tween(450, easing = EaseOutQuart)) +
+            slideInHorizontally(
+                initialOffsetX = { it },
+                animationSpec = tween(450, easing = EaseOutQuart)
+            ))
+        .togetherWith(
+            fadeOut(animationSpec = tween(400, easing = EaseOutCubic)) +
+                    slideOutHorizontally(
+                        targetOffsetX = { -it / 6 },
+                        animationSpec = tween(400, easing = EaseOutCubic)
+                    )
+        )
+
+private val backwardSlideTransitionSpec =
+    (fadeIn(animationSpec = tween(400, easing = EaseOutQuart)) +
+            slideInHorizontally(
+                initialOffsetX = { -it / 6 },
+                animationSpec = tween(400, easing = EaseOutQuart)
+            ))
+        .togetherWith(
+            fadeOut(animationSpec = tween(450, easing = EaseOutCubic)) +
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(450, easing = EaseOutCubic)
+                    )
+        )
+
+private fun NavKey?.isViewer(): Boolean =
+    this is PhotoViewerFlowNav || this is PhotoViewerListNav
+
+private fun <T : NavKey> navEntry(
+    key: T,
+    content: @Composable (T) -> Unit
+): NavEntry<NavKey> = NavEntry(
+    key = key,
+    metadata = mapOf("key" to key),
+    content = { @Suppress("UNCHECKED_CAST") content(it as T) }
+)
+
+@OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 private fun Content(
     backStack: NavBackStack<NavKey>,
     mainViewModel: MainViewModel,
-    foldersViewModel: FoldersViewModel,
+    foldersTabViewModel: FoldersTabViewModel,
     timelineViewModel: TimelineViewModel,
     snackbarManager: SnackbarManager,
 ) = Box(Modifier.fillMaxSize()) {
 
     val timelinePagingItems = timelineViewModel.timelinePager.collectAsLazyPagingItems()
-    val networkFolderPagingItems =
-        foldersViewModel.networkFolderPhotosPager.collectAsLazyPagingItems()
-    val localFolderPagingItems = foldersViewModel.localFolderPhotosPager.collectAsLazyPagingItems()
-    val favoritesFolderPagingItems = foldersViewModel.favoritePhotosPager.collectAsLazyPagingItems()
-
     if (backStack.isEmpty()) {
         backStack.add(TopLevelNav)
     }
 
     NavDisplay(
         backStack = backStack,
-        transitionSpec = { transitionSpec },
-        popTransitionSpec = { transitionSpec },
-        predictivePopTransitionSpec = { transitionSpec },
+        transitionSpec = {
+            val targetKey = targetState.entries.lastOrNull()?.metadata?.get("key") as? NavKey
+            val initialKey = initialState.entries.lastOrNull()?.metadata?.get("key") as? NavKey
+            if (targetKey.isViewer() || initialKey.isViewer()) {
+                viewerTransitionSpec
+            } else {
+                forwardSlideTransitionSpec
+            }
+        },
+        popTransitionSpec = {
+            val targetKey = targetState.entries.lastOrNull()?.metadata?.get("key") as? NavKey
+            val initialKey = initialState.entries.lastOrNull()?.metadata?.get("key") as? NavKey
+            if (targetKey.isViewer() || initialKey.isViewer()) {
+                viewerTransitionSpec
+            } else {
+                backwardSlideTransitionSpec
+            }
+        },
+        predictivePopTransitionSpec = {
+            val targetKey = targetState.entries.lastOrNull()?.metadata?.get("key") as? NavKey
+            val initialKey = initialState.entries.lastOrNull()?.metadata?.get("key") as? NavKey
+            if (targetKey.isViewer() || initialKey.isViewer()) {
+                viewerTransitionSpec
+            } else {
+                backwardSlideTransitionSpec
+            }
+        },
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator()
         ),
         entryProvider = { key ->
             when (key) {
-                is TopLevelNav -> NavEntry(key) {
+                is TopLevelNav -> navEntry(key) {
                     TopLevelScreen(
                         timelinePagingItems,
                         mainViewModel,
                         timelineViewModel,
-                        foldersViewModel,
+                        foldersTabViewModel,
                     )
                 }
 
-                is PhotoViewerFlowNav -> NavEntry(key) {
+                is PhotoViewerFlowNav -> navEntry(key) {
+                    val folderScreenViewModel: FolderScreenViewModel = viewModel()
+                    LaunchedEffect(key.folderSource) {
+                        key.folderSource?.let { folderScreenViewModel.setSource(it) }
+                    }
                     val lazyPagingItems = when (key.source) {
                         PhotoViewerFlowNav.Source.Timeline -> timelinePagingItems
-                        PhotoViewerFlowNav.Source.Network -> networkFolderPagingItems
-                        PhotoViewerFlowNav.Source.Local -> localFolderPagingItems
-                        PhotoViewerFlowNav.Source.Favorites -> favoritesFolderPagingItems
+                        PhotoViewerFlowNav.Source.Network -> folderScreenViewModel.networkFolderPhotosPager.collectAsLazyPagingItems()
+                        PhotoViewerFlowNav.Source.Local -> folderScreenViewModel.localFolderPhotosPager.collectAsLazyPagingItems()
+                        PhotoViewerFlowNav.Source.Favorites -> folderScreenViewModel.favoritePhotosPager.collectAsLazyPagingItems()
                     }
 
                     PhotosViewer(
@@ -277,60 +348,39 @@ private fun Content(
                     )
                 }
 
-                is FolderNav -> NavEntry(key) {
-                    val source = key.source
-                    LaunchedEffect(source) {
-                        when (source) {
-                            is FolderNav.Source.Network -> foldersViewModel.loadNetworkFolderPhotos(
-                                source.folderId
-                            )
-
-                            is FolderNav.Source.Local -> foldersViewModel.loadLocalFolderPhotos(
-                                source.name
-                            )
-
-                            else -> Unit
-                        }
-                    }
-
-                    val lazyPagingItems = when (source) {
-                        FolderNav.Source.Favorites -> favoritesFolderPagingItems
-                        is FolderNav.Source.Network -> networkFolderPagingItems
-                        is FolderNav.Source.Local -> localFolderPagingItems
-                    }
-
-                    FolderScreen(key.source, lazyPagingItems, foldersViewModel)
+                is FolderNav -> navEntry(key) {
+                    FolderScreen(key.source, foldersTabViewModel)
                 }
 
-                is PhotoViewerListNav -> NavEntry(key) {
+                is PhotoViewerListNav -> navEntry(key) {
                     PhotosViewer(key.photos)
                 }
 
-                is MovePhotosNav -> NavEntry(key) {
+                is MovePhotosNav -> navEntry(key) {
                     MovePhotosScreen(key.photoIds)
                 }
 
-                is UploadPhotosNav -> NavEntry(key) {
+                is UploadPhotosNav -> navEntry(key) {
                     UploadPhotosScreen(key.photoIds)
                 }
 
-                is DuplicatesNav -> NavEntry(key) {
+                is DuplicatesNav -> navEntry(key) {
                     DuplicatesScreen()
                 }
 
-                is LargeFilesNav -> NavEntry(key) {
+                is LargeFilesNav -> navEntry(key) {
                     LargeFilesScreen()
                 }
 
-                is SettingsNav -> NavEntry(key) {
+                is SettingsNav -> navEntry(key) {
                     SettingsScreen()
                 }
 
-                is TrashNav -> NavEntry(key) {
+                is TrashNav -> navEntry(key) {
                     TrashScreen()
                 }
 
-                else -> NavEntry(key) {
+                else -> navEntry(key) {
                     Text("Invalid route: $key")
                 }
             }
