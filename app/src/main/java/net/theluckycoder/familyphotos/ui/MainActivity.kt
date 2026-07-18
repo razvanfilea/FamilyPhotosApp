@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -143,11 +144,16 @@ class MainActivity : ComponentActivity() {
             AppTheme {
                 val isLoggedIn = mainViewModel.isLoggedIn.collectAsState()
                 if (!isLoggedIn.value && !isBenchmark) {
-                    LoginScreen(loginAction = { serverAddress, userLogin ->
-                        lifecycleScope.launch(Dispatchers.IO) {
-                            mainViewModel.loginRepository.login(serverAddress, userLogin)
+                    val initialServerAddress by mainViewModel.loginRepository.serverAddress.collectAsState(initial = "")
+                    LoginScreen(
+                        initialServerAddress = initialServerAddress ?: "",
+                        testConnection = { address ->
+                            mainViewModel.loginRepository.testServerConnection(address)
+                        },
+                        loginAction = { address, userLogin ->
+                            mainViewModel.loginRepository.login(address, userLogin)
                         }
-                    })
+                    )
                     return@AppTheme
                 }
 

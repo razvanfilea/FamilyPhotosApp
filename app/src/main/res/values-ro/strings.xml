@@ -17,6 +17,15 @@
     <string name="login_username_label">Nume utilizator</string>
     <string name="login_password_label">Parolă</string>
     <string name="login_button">Autentificare</string>
+    <string name="login_subtitle">Galeria ta foto self-hosted</string>
+    <string name="login_loading">Se autentifică…</string>
+    <string name="login_error_server_unreachable">Nu s-a putut stabili conexiunea cu serverul. Verificați adresa.</string>
+    <string name="login_error_invalid_credentials">Nume de utilizator sau parolă incorectă.</string>
+    <string name="login_btn_check">Verifică</string>
+    <string name="login_checking">Se verifică…</string>
+    <string name="login_error_invalid_url">URL Invalid</string>
+    <string name="login_server_connected">Conectat</string>
+    <string name="login_server_unreachable">Inaccesibil</string>
 
     <!-- Actions -->
     <string name="action_info">Info</string>
