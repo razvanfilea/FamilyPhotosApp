@@ -6,12 +6,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -49,6 +49,7 @@ fun DeviceTab(foldersTabViewModel: FoldersTabViewModel) {
                 pendingPhotoCount = pendingBackupCount,
                 backupProgress = backupProgress,
                 onBackupNow = { foldersTabViewModel.triggerBackup() },
+                onClearQueue = { foldersTabViewModel.clearQueue() },
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
         }
@@ -61,6 +62,7 @@ private fun BackupStatusCard(
     pendingPhotoCount: Int,
     backupProgress: FoldersTabViewModel.BackupProgress?,
     onBackupNow: () -> Unit,
+    onClearQueue: () -> Unit,
     modifier: Modifier = Modifier
 ) = Card(modifier = modifier.fillMaxWidth()) {
     Column(
@@ -109,17 +111,40 @@ private fun BackupStatusCard(
                 progress = { progressValue },
                 modifier = Modifier.fillMaxWidth()
             )
-            Text(
-                text = "${backupProgress.current} / ${backupProgress.total}",
-                style = MaterialTheme.typography.bodySmall
-            )
-        } else {
-            Button(
-                modifier = Modifier.wrapContentSize(Alignment.BottomEnd),
-                onClick = onBackupNow,
-                enabled = pendingPhotoCount > 0
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(stringResource(R.string.backup_now))
+                Text(
+                    text = "${backupProgress.current} / ${backupProgress.total}",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                OutlinedButton(
+                    onClick = onClearQueue
+                ) {
+                    Text(stringResource(R.string.backup_clear_queue))
+                }
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedButton(
+                    onClick = onClearQueue,
+                    enabled = pendingPhotoCount > 0
+                ) {
+                    Text(stringResource(R.string.backup_clear_queue))
+                }
+
+                Button(
+                    onClick = onBackupNow,
+                    enabled = pendingPhotoCount > 0
+                ) {
+                    Text(stringResource(R.string.backup_now))
+                }
             }
         }
     }

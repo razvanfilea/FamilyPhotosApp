@@ -86,6 +86,9 @@
     <string name="photo_detail_open_maps">Deschide în Maps</string>
     <string name="photo_detail_title_details">Detalii</string>
     <string name="photo_detail_no_folder">Niciun folder</string>
+    <string name="photo_detail_visibility">Vizibilitate</string>
+    <string name="photo_detail_visibility_public">Public</string>
+    <string name="photo_detail_visibility_private">Privat</string>
     <string name="send_to">Trimite la:</string>
 
     <!-- Statistics -->
@@ -96,7 +99,7 @@
     <string name="settings_backup_mobile_data">Backup pe date mobile</string>
     <string name="settings_backup_mobile_data_summary">Încarcă pozele chiar și fără Wi-Fi</string>
     <string name="settings_storage">Stocare</string>
-    <string name="settings_cache_size">Dimensiune cache (MB)</string>
+    <string name="settings_cache_size">Dimensiune cache</string>
     <string name="settings_cache_size_summary">Spațiu maxim pe disc pentru pozele din cache</string>
     <string name="settings_clear_cache">Șterge cache-ul</string>
     <string name="settings_cache_usage">Se utilizează %s</string>
@@ -110,6 +113,7 @@
     <!-- Backup -->
     <string name="backup_title">Backup</string>
     <string name="backup_now">Backup acum</string>
+    <string name="backup_clear_queue">Golește coada</string>
     <plurals name="backup_photos_pending">
         <item quantity="one">%d poză în așteptare</item>
         <item quantity="few">%d poze în așteptare</item>

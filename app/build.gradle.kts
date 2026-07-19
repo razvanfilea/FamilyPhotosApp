@@ -63,6 +63,11 @@ android {
         buildConfig = true
     }
 
+    composeCompiler {
+        reportsDestination = layout.buildDirectory.dir("compose_reports")
+        metricsDestination = layout.buildDirectory.dir("compose_reports")
+    }
+
     baselineProfile {
         dexLayoutOptimization = true
     }

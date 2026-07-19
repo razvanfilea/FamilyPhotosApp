@@ -39,7 +39,7 @@ import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
 import net.theluckycoder.familyphotos.ui.composables.ZoomableImage
 import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
-import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
+import net.theluckycoder.familyphotos.ui.dialog.NetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.UtilitiesViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
@@ -67,7 +67,7 @@ fun DuplicatesScreen(
     val pagerState = rememberPagerState { duplicates.size }
     var deleteDialogState by remember { mutableStateOf<Pair<List<NetworkPhoto>, Int>?>(null) }
     val currentPhoto = duplicates.getOrNull(pagerState.currentPage)?.firstOrNull()
-    val networkPhotoInfoDialog = rememberNetworkPhotoInfoDialog(currentPhoto)
+    var showInfoDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -79,7 +79,7 @@ fun DuplicatesScreen(
                 subtitle = duplicates.size.takeIf { it != 0 }?.toString(),
                 actions = {
                     if (currentPhoto != null) {
-                        IconButton(onClick = networkPhotoInfoDialog::show) {
+                        IconButton(onClick = { showInfoDialog = true }) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_outline_info),
                                 contentDescription = null
@@ -139,6 +139,13 @@ fun DuplicatesScreen(
             onDismissRequest = { deleteDialogState = null },
             onConfirmDelete = { list -> mainViewModel.trashNetworkPhotos(list.map { it.id }.toLongArray()) },
             onPhotosDeleted = { duplicates.removeAt(pageToRemove) }
+        )
+    }
+
+    if (showInfoDialog && currentPhoto != null) {
+        NetworkPhotoInfoDialog(
+            photo = currentPhoto,
+            onDismissRequest = { showInfoDialog = false }
         )
     }
 }

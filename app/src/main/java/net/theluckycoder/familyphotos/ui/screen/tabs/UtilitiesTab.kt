@@ -47,7 +47,7 @@ import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.SettingsNav
 import net.theluckycoder.familyphotos.ui.TrashNav
 import net.theluckycoder.familyphotos.ui.viewmodel.UtilitiesViewModel
-import java.text.DecimalFormat
+import android.text.format.Formatter
 
 @Composable
 fun UtilitiesTab(
@@ -133,6 +133,8 @@ private fun PhotoStatisticsCard(
     statistics: PhotoStatistics,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -156,13 +158,13 @@ private fun PhotoStatisticsCard(
                     iconId = R.drawable.ic_family_outline,
                     label = stringResource(R.string.photo_type_family),
                     count = statistics.familyCount,
-                    size = formatFileSize(statistics.familySize)
+                    size = Formatter.formatShortFileSize(context, statistics.familySize)
                 )
                 StatisticItem(
                     iconId = R.drawable.ic_person_outline,
                     label = stringResource(R.string.photo_type_personal),
                     count = statistics.personalCount,
-                    size = formatFileSize(statistics.personalSize)
+                    size = Formatter.formatShortFileSize(context, statistics.personalSize)
                 )
             }
 
@@ -176,13 +178,13 @@ private fun PhotoStatisticsCard(
                     iconId = R.drawable.ic_exif_image,
                     label = stringResource(R.string.photo_type_images),
                     count = statistics.imageCount,
-                    size = formatFileSize(statistics.imageSize)
+                    size = Formatter.formatShortFileSize(context, statistics.imageSize)
                 )
                 StatisticItem(
                     iconId = R.drawable.ic_video_play,
                     label = stringResource(R.string.photo_type_videos),
                     count = statistics.videoCount,
-                    size = formatFileSize(statistics.videoSize)
+                    size = Formatter.formatShortFileSize(context, statistics.videoSize)
                 )
             }
 
@@ -201,7 +203,7 @@ private fun PhotoStatisticsCard(
                         R.plurals.items_photos,
                         statistics.totalCount,
                         statistics.totalCount
-                    ) + " • " + formatFileSize(statistics.totalSize),
+                    ) + " • " + Formatter.formatShortFileSize(context, statistics.totalSize),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -265,17 +267,4 @@ private fun UtilityButton(
     }
 }
 
-private const val SIZE_KB = 1024.0f
-private const val SIZE_MB = SIZE_KB * SIZE_KB
-private const val SIZE_GB = SIZE_MB * SIZE_KB
-private const val SIZE_TB = SIZE_GB * SIZE_KB
 
-private fun formatFileSize(size: Long): String {
-    val df = DecimalFormat("0.00")
-    return when {
-        size < SIZE_MB -> df.format(size / SIZE_KB) + " KB"
-        size < SIZE_GB -> df.format(size / SIZE_MB) + " MB"
-        size < SIZE_TB -> df.format(size / SIZE_GB) + " GB"
-        else -> df.format(size / SIZE_TB) + " TB"
-    }
-}

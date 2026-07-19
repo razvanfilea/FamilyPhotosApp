@@ -56,7 +56,7 @@ class AppModule {
                     DiskCache.Builder()
                         .directory(context.cacheDir.resolve("image_cache").toOkioPath())
                         .minimumMaxSizeBytes(512L * 1024L * 1024L) // 512MB
-                        .maximumMaxSizeBytes(settingsDataStore.cacheSizeMbFlow.first() * 1024L)
+                        .maximumMaxSizeBytes(settingsDataStore.cacheSizeMbFlow.first() * 1024L * 1024L)
                         .build()
                 }
             }

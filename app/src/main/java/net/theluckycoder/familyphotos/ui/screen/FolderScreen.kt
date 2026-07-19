@@ -75,19 +75,11 @@ fun FolderScreen(
     mainViewModel: MainViewModel,
     folderScreenViewModel: FolderScreenViewModel = viewModel(),
 ) {
-    val lazyPagingItems = when (source) {
-        FolderNav.Source.Favorites -> folderScreenViewModel.favoritePhotosPager.collectAsLazyPagingItems()
-        is FolderNav.Source.Local -> folderScreenViewModel.localFolderPhotosPager.collectAsLazyPagingItems()
-        is FolderNav.Source.Network -> folderScreenViewModel.networkFolderPhotosPager.collectAsLazyPagingItems()
-    }
+    val lazyPagingItems = folderScreenViewModel.photosPager.collectAsLazyPagingItems()
 
     val gridState by folderScreenViewModel.photoListState.collectAsState()
     val backStack = LocalNavBackStack.current
-    val timelineLayout by when (source) {
-        FolderNav.Source.Favorites -> folderScreenViewModel.favoriteTimelineLayout.collectAsState()
-        is FolderNav.Source.Local -> folderScreenViewModel.localFolderTimelineLayout.collectAsState()
-        is FolderNav.Source.Network -> folderScreenViewModel.networkFolderTimelineLayout.collectAsState()
-    }
+    val timelineLayout by folderScreenViewModel.timelineLayout.collectAsState()
 
     LaunchedEffect(source) {
         folderScreenViewModel.setSource(source)
@@ -120,7 +112,7 @@ fun FolderScreen(
                     is FolderNav.Source.Local -> PhotoViewerFlowNav.Source.Local
                     is FolderNav.Source.Network -> PhotoViewerFlowNav.Source.Network
                 }
-                backStack.add(PhotoViewerFlowNav(it, viewerSource, folderSource = source))
+                backStack.add(PhotoViewerFlowNav(it, viewerSource))
             },
             headerContent = {
                 NavBackTopAppBar(

@@ -88,6 +88,9 @@
     <string name="photo_detail_open_maps">Open in Maps</string>
     <string name="photo_detail_title_details">Details</string>
     <string name="photo_detail_no_folder">No folder</string>
+    <string name="photo_detail_visibility">Visibility</string>
+    <string name="photo_detail_visibility_public">Public</string>
+    <string name="photo_detail_visibility_private">Private</string>
     <string name="send_to">Send to:</string>
 
     <!-- Statistics -->
@@ -98,7 +101,7 @@
     <string name="settings_backup_mobile_data">Backup over mobile data</string>
     <string name="settings_backup_mobile_data_summary">Upload photos even without Wi-Fi</string>
     <string name="settings_storage">Storage</string>
-    <string name="settings_cache_size">Cache size (MB)</string>
+    <string name="settings_cache_size">Cache size</string>
     <string name="settings_cache_size_summary">Maximum disk space for cached photos</string>
     <string name="settings_clear_cache">Clear cache</string>
     <string name="settings_cache_usage">Currently using %s</string>
@@ -112,6 +115,7 @@
     <!-- Backup -->
     <string name="backup_title">Backup</string>
     <string name="backup_now">Backup Now</string>
+    <string name="backup_clear_queue">Clear Queue</string>
     <plurals name="backup_photos_pending">
         <item quantity="one">%d photo pending backup</item>
         <item quantity="other">%d photos pending backup</item>

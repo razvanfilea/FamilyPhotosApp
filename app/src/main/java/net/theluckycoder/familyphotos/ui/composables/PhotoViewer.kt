@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -61,11 +62,8 @@ import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.MovePhotosNav
 import net.theluckycoder.familyphotos.ui.UploadPhotosNav
 import net.theluckycoder.familyphotos.ui.composables.player.VideoPlayer
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
-import net.theluckycoder.familyphotos.ui.dialog.rememberNetworkPhotoInfoDialog
+import net.theluckycoder.familyphotos.ui.dialog.NetworkPhotoInfoDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewerViewModel
 
@@ -92,7 +90,12 @@ fun <T : Photo> PhotosViewer(
 
     val currentPhoto = items.getOrNull(pagerState.currentPage)?.second
 
-    PhotoViewerScaffold(currentPhoto, showUi.value, mainViewModel, photoViewerViewModel) { paddingValues ->
+    PhotoViewerScaffold(
+        currentPhoto,
+        showUi.value,
+        mainViewModel,
+        photoViewerViewModel
+    ) { paddingValues ->
         HorizontalPager(
             modifier = Modifier.testTag("photo_viewer_pager"),
             state = pagerState,
@@ -134,7 +137,12 @@ fun <T : Photo> PhotosViewer(
     val showUi = remember { mutableStateOf(true) }
     val currentPhoto = photosList.getOrNull(pagerState.currentPage)
 
-    PhotoViewerScaffold(currentPhoto, showUi.value, mainViewModel, photoViewerViewModel) { paddingValues ->
+    PhotoViewerScaffold(
+        currentPhoto,
+        showUi.value,
+        mainViewModel,
+        photoViewerViewModel
+    ) { paddingValues ->
         HorizontalPager(
             state = pagerState,
             key = { index -> photosList.getOrNull(index)?.id ?: index },
@@ -162,7 +170,13 @@ fun <T : Photo> PhotosViewer(
                 null
             }
 
-            PagerContent(updatedPhoto ?: photo, localUri?.value, showUi, paddingValues, photoViewerViewModel)
+            PagerContent(
+                updatedPhoto ?: photo,
+                localUri?.value,
+                showUi,
+                paddingValues,
+                photoViewerViewModel
+            )
         }
     }
 }
@@ -282,6 +296,7 @@ private fun BottomBar(
     photoViewerViewModel: PhotoViewerViewModel = viewModel()
 ) {
     var showDeleteDialogForPhotos by remember { mutableStateOf<List<Photo>?>(null) }
+    var showInfoDialogForPhoto by remember { mutableStateOf<NetworkPhoto?>(null) }
     val backStack = LocalNavBackStack.current
 
     Row(
@@ -338,14 +353,11 @@ private fun BottomBar(
                     photoViewerViewModel.getNetworkPhotoFlow(photo.networkPhotoId)
                         .collectAsState(null)
 
-                val networkPhotoInfoDialog =
-                    rememberNetworkPhotoInfoDialog(networkPhotoState.value)
-
                 IconButtonText(
                     onClick = {
-                        val networkPhoto = networkPhotoState.value
-                        if (networkPhoto != null)
-                            networkPhotoInfoDialog.show()
+                        networkPhotoState.value?.let { networkPhoto ->
+                            showInfoDialogForPhoto = networkPhoto
+                        }
                     },
                     text = stringResource(id = R.string.status_saved),
                 ) {
@@ -366,10 +378,8 @@ private fun BottomBar(
                 )
             }
 
-            val networkPhotoInfoDialog = rememberNetworkPhotoInfoDialog(photo)
-
             IconButtonText(
-                onClick = { networkPhotoInfoDialog.show() },
+                onClick = { showInfoDialogForPhoto = photo },
                 text = stringResource(R.string.action_info),
             ) {
                 Icon(
@@ -385,8 +395,17 @@ private fun BottomBar(
             photos = photos,
             isPermanent = false,
             onDismissRequest = { showDeleteDialogForPhotos = null },
-            onConfirmDelete = { list -> mainViewModel.trashNetworkPhotos(list.map { it.id }.toLongArray()) },
+            onConfirmDelete = { list ->
+                mainViewModel.trashNetworkPhotos(list.map { it.id }.toLongArray())
+            },
             onPhotosDeleted = {}
+        )
+    }
+
+    showInfoDialogForPhoto?.let { networkPhoto ->
+        NetworkPhotoInfoDialog(
+            photo = networkPhoto,
+            onDismissRequest = { showInfoDialogForPhoto = null }
         )
     }
 }
@@ -399,7 +418,7 @@ fun ZoomableImage(
     showUI: (Boolean) -> Unit,
 ) {
     val ctx = LocalContext.current
-    val isImageLoaded = remember {mutableStateOf(false)}
+    val isImageLoaded = remember { mutableStateOf(false) }
 
     val zoomableState = rememberZoomableState()
     val zoomFraction = zoomableState.zoomFraction ?: 0.0f
@@ -416,22 +435,24 @@ fun ZoomableImage(
             .data(uri)
             .crossfade(true)
             .placeholderMemoryCacheKey(cacheKey)
-            .listener { _, _ -> isImageLoaded.value = true }
+            .listener(onSuccess = { _, _ -> isImageLoaded.value = true })
             .size(Size.ORIGINAL)
             .build()
     }
 
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(modifier, contentAlignment = Alignment.Center) {
         if (!isImageLoaded.value && thumbHashPainter != null) {
             Image(
                 thumbHashPainter,
-                modifier = Modifier.fillMaxWidth().aspectRatio(thumbHashPainter.aspectRatio),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(thumbHashPainter.aspectRatio),
                 contentDescription = null
             )
         }
 
         ZoomableAsyncImage(
-            modifier = modifier,
+            modifier = Modifier.fillMaxSize(),
             model = model,
             imageLoader = LocalImageLoader.current.get(),
             state = rememberZoomableImageState(zoomableState),

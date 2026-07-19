@@ -11,5 +11,7 @@ class ExifData internal constructor(exifData: List<ExifFieldDto>) {
 
     operator fun get(tag: String) = map[tag]
 
+    val keys: Set<String> get() = map.keys
+
     val isNotEmpty = map.isNotEmpty()
 }

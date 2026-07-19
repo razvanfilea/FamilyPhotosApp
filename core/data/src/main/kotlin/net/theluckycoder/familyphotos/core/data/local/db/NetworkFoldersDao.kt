@@ -29,6 +29,9 @@ internal interface NetworkFoldersDao {
     @Query("SELECT name FROM network_folder WHERE id = :folderId")
     suspend fun getFolderName(folderId: Long): String?
 
+    @Query("SELECT * FROM network_folder WHERE name = :name LIMIT 1")
+    suspend fun findByName(name: String): NetworkFolderEntity?
+
     @Query("SELECT id, latestEventId FROM network_folder WHERE ownerId IS NOT NULL AND ownerId != :currentUserId")
     suspend fun getSharedFolderCursors(currentUserId: String): List<FolderCursor>
 

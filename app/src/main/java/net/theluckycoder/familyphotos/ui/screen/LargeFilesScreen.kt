@@ -34,10 +34,12 @@ import net.theluckycoder.familyphotos.ui.PhotoViewerListNav
 import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
 import net.theluckycoder.familyphotos.ui.composables.PhotoListItem
 import net.theluckycoder.familyphotos.ui.viewmodel.UtilitiesViewModel
-import java.text.DecimalFormat
+import android.text.format.Formatter
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun LargeFilesScreen() {
+    val context = LocalContext.current
     val viewModel: UtilitiesViewModel = viewModel()
     val backStack = LocalNavBackStack.current
 
@@ -106,7 +108,7 @@ fun LargeFilesScreen() {
                     )
 
                     Text(
-                        text = formatFileSize(photo.fileSize),
+                        text = Formatter.formatShortFileSize(context, photo.fileSize),
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(4.dp)
@@ -124,14 +126,4 @@ fun LargeFilesScreen() {
     }
 }
 
-private const val SIZE_KB = 1024.0f
-private const val SIZE_MB = SIZE_KB * SIZE_KB
-private const val SIZE_GB = SIZE_MB * SIZE_KB
 
-private fun formatFileSize(size: Long): String {
-    val df = DecimalFormat("0.0")
-    return when {
-        size < SIZE_GB -> df.format(size / SIZE_MB) + " MB"
-        else -> df.format(size / SIZE_GB) + " GB"
-    }
-}

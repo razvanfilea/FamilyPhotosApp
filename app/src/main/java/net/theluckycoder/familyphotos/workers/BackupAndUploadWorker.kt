@@ -22,11 +22,14 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.db.UploadQueueEntry
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
+import net.theluckycoder.familyphotos.domain.RefreshPhotosUseCase
 import java.net.ConnectException
 
 @HiltWorker
@@ -36,11 +39,12 @@ class BackupAndUploadWorker @AssistedInject constructor(
     private val foldersRepository: FoldersRepository,
     private val photosRepository: PhotosRepository,
     private val photoUploadRepository: PhotoUploadRepository,
+    private val refreshPhotosUseCase: RefreshPhotosUseCase,
 ) : CoroutineWorker(context, workerParams) {
 
     private val notificationId = id.hashCode()
 
-    override suspend fun doWork(): Result {
+    override suspend fun doWork(): Result = workerMutex.withLock {
         val ctx = applicationContext
 
         // Setup notification channel
@@ -51,6 +55,13 @@ class BackupAndUploadWorker @AssistedInject constructor(
         )
         NotificationManagerCompat.from(ctx).createNotificationChannel(channel)
         setForeground(createForegroundInfo(ctx.getString(R.string.notification_backup_starting), 0, 0))
+
+        // Refresh photos & folders state from server and local DB
+        try {
+            refreshPhotosUseCase()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error refreshing photos before upload", e)
+        }
 
         // Step 1: Scan folders if not skipped
         val skipScan = inputData.getBoolean(KEY_SKIP_FOLDER_SCAN, false)
@@ -129,7 +140,6 @@ class BackupAndUploadWorker @AssistedInject constructor(
             createSuccessNotification(successCount, failCount)
             Result.success()
         } catch (_: CancellationException) {
-            photoUploadRepository.clearManualUploads()
             createFailNotification(FailReason.Cancelled)
             Result.failure()
         } catch (e: Exception) {
@@ -281,6 +291,7 @@ class BackupAndUploadWorker @AssistedInject constructor(
     }
 
     companion object {
+        private val workerMutex = Mutex()
         private const val NOTIFICATION_FAIL_ID = -100
         private const val NOTIFICATION_CHANNEL = "backup"
         const val TAG = "backup_upload"

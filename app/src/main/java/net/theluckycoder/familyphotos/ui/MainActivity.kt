@@ -15,10 +15,12 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.EaseOutQuart
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -28,13 +30,10 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
-import net.theluckycoder.familyphotos.ui.viewmodel.FolderScreenViewModel
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.core.content.ContextCompat
@@ -231,10 +230,18 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private val viewerTransitionSpec =
-    (fadeIn(animationSpec = tween(220, delayMillis = 90)) +
-            scaleIn(initialScale = 0.92f, animationSpec = tween(220, delayMillis = 90)))
-        .togetherWith(fadeOut(animationSpec = tween(90)))
+private val viewerEnterTransitionSpec =
+    (fadeIn(animationSpec = tween(150, easing = FastOutSlowInEasing)) +
+            scaleIn(initialScale = 0.96f, animationSpec = tween(150, easing = FastOutSlowInEasing)))
+        .togetherWith(fadeOut(animationSpec = tween(150)))
+
+private val viewerExitTransitionSpec =
+    (fadeIn(animationSpec = tween(150)) +
+            scaleIn(initialScale = 0.96f, animationSpec = tween(150, easing = FastOutSlowInEasing)))
+        .togetherWith(
+            fadeOut(animationSpec = tween(150, easing = FastOutSlowInEasing)) +
+                    scaleOut(targetScale = 0.96f, animationSpec = tween(150, easing = FastOutSlowInEasing))
+        )
 
 private val forwardSlideTransitionSpec =
     (fadeIn(animationSpec = tween(450, easing = EaseOutQuart)) +
@@ -287,6 +294,8 @@ private fun Content(
 ) = Box(Modifier.fillMaxSize()) {
 
     val timelinePagingItems = timelineViewModel.timelinePager.collectAsLazyPagingItems()
+    val folderPagingItems = foldersTabViewModel.folderPhotosPager.collectAsLazyPagingItems()
+
     if (backStack.isEmpty()) {
         backStack.add(TopLevelNav)
     }
@@ -296,8 +305,10 @@ private fun Content(
         transitionSpec = {
             val targetKey = targetState.entries.lastOrNull()?.metadata?.get("key") as? NavKey
             val initialKey = initialState.entries.lastOrNull()?.metadata?.get("key") as? NavKey
-            if (targetKey.isViewer() || initialKey.isViewer()) {
-                viewerTransitionSpec
+            if (targetKey.isViewer()) {
+                viewerEnterTransitionSpec
+            } else if (initialKey.isViewer()) {
+                viewerExitTransitionSpec
             } else {
                 forwardSlideTransitionSpec
             }
@@ -306,7 +317,7 @@ private fun Content(
             val targetKey = targetState.entries.lastOrNull()?.metadata?.get("key") as? NavKey
             val initialKey = initialState.entries.lastOrNull()?.metadata?.get("key") as? NavKey
             if (targetKey.isViewer() || initialKey.isViewer()) {
-                viewerTransitionSpec
+                viewerExitTransitionSpec
             } else {
                 backwardSlideTransitionSpec
             }
@@ -315,7 +326,7 @@ private fun Content(
             val targetKey = targetState.entries.lastOrNull()?.metadata?.get("key") as? NavKey
             val initialKey = initialState.entries.lastOrNull()?.metadata?.get("key") as? NavKey
             if (targetKey.isViewer() || initialKey.isViewer()) {
-                viewerTransitionSpec
+                viewerExitTransitionSpec
             } else {
                 backwardSlideTransitionSpec
             }
@@ -336,15 +347,11 @@ private fun Content(
                 }
 
                 is PhotoViewerFlowNav -> navEntry(key) {
-                    val folderScreenViewModel: FolderScreenViewModel = viewModel()
-                    LaunchedEffect(key.folderSource) {
-                        key.folderSource?.let { folderScreenViewModel.setSource(it) }
-                    }
                     val lazyPagingItems = when (key.source) {
                         PhotoViewerFlowNav.Source.Timeline -> timelinePagingItems
-                        PhotoViewerFlowNav.Source.Network -> folderScreenViewModel.networkFolderPhotosPager.collectAsLazyPagingItems()
-                        PhotoViewerFlowNav.Source.Local -> folderScreenViewModel.localFolderPhotosPager.collectAsLazyPagingItems()
-                        PhotoViewerFlowNav.Source.Favorites -> folderScreenViewModel.favoritePhotosPager.collectAsLazyPagingItems()
+                        PhotoViewerFlowNav.Source.Network,
+                        PhotoViewerFlowNav.Source.Local,
+                        PhotoViewerFlowNav.Source.Favorites -> folderPagingItems
                     }
 
                     PhotosViewer(

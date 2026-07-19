@@ -62,6 +62,12 @@ class PhotoUploadRepository @Inject internal constructor(
     suspend fun clearManualUploads() =
         uploadQueueDao.deleteManualUploads()
 
+    suspend fun clearQueue() =
+        uploadQueueDao.deleteAll()
+
+    suspend fun resetFailedRetries() =
+        uploadQueueDao.resetFailedRetries()
+
     fun getPendingCountFlow(): Flow<Int> =
         uploadQueueDao.getPendingCountFlow()
 
@@ -98,30 +104,36 @@ class PhotoUploadRepository @Inject internal constructor(
             is UploadChoice.NoFolder -> null
             is UploadChoice.Folder -> uploadChoice.folderId
             is UploadChoice.NewFolder -> {
-                val response = folderService.get()
-                    .createFolder(CreateFolderRequest(uploadChoice.name, uploadChoice.isPublic))
+                val existingFolder = networkFoldersDao.findByName(uploadChoice.name)
+                if (existingFolder != null) {
+                    uploadQueueDao.convertNewFolderToExisting(uploadChoice.name, existingFolder.id)
+                    existingFolder.id
+                } else {
+                    val response = folderService.get()
+                        .createFolder(CreateFolderRequest(uploadChoice.name, uploadChoice.isPublic))
 
-                val folderDto = response.body()
-                if (folderDto == null) {
-                    Log.e(
-                        "Error creating folder",
-                        "Folder with name: `${uploadChoice.name}` public: `${uploadChoice.isPublic}`. ${response.errorBody()}"
+                    val folderDto = response.body()
+                    if (folderDto == null) {
+                        Log.e(
+                            "Error creating folder",
+                            "Folder with name: `${uploadChoice.name}` public: `${uploadChoice.isPublic}`. ${response.errorBody()}"
+                        )
+                        return false
+                    }
+
+                    networkFoldersDao.insert(
+                        NetworkFolderEntity(
+                            id = folderDto.id,
+                            ownerId = folderDto.ownerId,
+                            name = folderDto.name,
+                            latestEventId = 0L,
+                            createdAt = 0L,
+                        )
                     )
-                    return false
+                    uploadQueueDao.convertNewFolderToExisting(uploadChoice.name, folderDto.id)
+
+                    folderDto.id
                 }
-
-                networkFoldersDao.insert(
-                    NetworkFolderEntity(
-                        id = folderDto.id,
-                        ownerId = folderDto.ownerId,
-                        name = folderDto.name,
-                        latestEventId = 0L,
-                        createdAt = 0L,
-                    )
-                )
-                uploadQueueDao.convertNewFolderToExisting(uploadChoice.name, folderDto.id)
-
-                folderDto.id
             }
         }
 

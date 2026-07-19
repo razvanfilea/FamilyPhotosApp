@@ -129,12 +129,16 @@ private fun BackupMobileDataItem(viewModel: SettingsViewModel) {
 private fun CacheSizeItem(viewModel: SettingsViewModel) {
     val cacheSizeMb by viewModel.cacheSizeMb.collectAsStateWithLifecycle()
     var sliderValue by remember(cacheSizeMb) { mutableIntStateOf(cacheSizeMb) }
+    val context = LocalContext.current
+    val formattedSize = remember(sliderValue) {
+        Formatter.formatShortFileSize(context, sliderValue * 1024L * 1024L)
+    }
 
     ListItem(
         leadingContent = {
             Icon(painterResource(R.drawable.ic_cloud_download_outline), contentDescription = null)
         },
-        headlineContent = { Text(stringResource(R.string.settings_cache_size)) },
+        headlineContent = { Text(stringResource(R.string.settings_cache_size) + " ($formattedSize)") },
         supportingContent = {
             Column {
                 Text(stringResource(R.string.settings_cache_size_summary))
@@ -145,7 +149,7 @@ private fun CacheSizeItem(viewModel: SettingsViewModel) {
                     valueRange = 512f..4096f,
                 )
             }
-        }
+        },
     )
 }
 

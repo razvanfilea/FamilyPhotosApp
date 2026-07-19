@@ -4,6 +4,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
+import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +13,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
+import net.theluckycoder.familyphotos.core.data.model.Photo
 import net.theluckycoder.familyphotos.core.data.model.SharedFolderAccess
 import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
@@ -56,7 +57,6 @@ class FolderScreenViewModel @Inject constructor(
     val photoListState = MutableStateFlow(LazyGridState())
 
     private val _source = MutableStateFlow<FolderNav.Source?>(null)
-    val source = _source.asStateFlow()
 
     val networkFolder = _source.flatMapLatest { source ->
         if (source is FolderNav.Source.Network) {
@@ -66,65 +66,31 @@ class FolderScreenViewModel @Inject constructor(
         }
     }
 
-    val networkFolderPhotosPager = _source
+    @Suppress("UNCHECKED_CAST")
+    val photosPager = _source
         .flatMapLatest { source ->
-            if (source is FolderNav.Source.Network) {
-                Pager(PAGING_CONFIG) {
+            when (source) {
+                is FolderNav.Source.Network -> Pager(PAGING_CONFIG) {
                     foldersRepository.networkPhotosFromFolderPaged(source.folderId)
                 }.flow
-            } else {
-                emptyFlow()
-            }
-        }
-        .cachedIn(viewModelScope)
-
-    val localFolderPhotosPager = _source
-        .flatMapLatest { source ->
-            if (source is FolderNav.Source.Local) {
-                Pager(PAGING_CONFIG) {
+                is FolderNav.Source.Local -> Pager(PAGING_CONFIG) {
                     foldersRepository.localPhotosFromFolderPaged(source.name)
                 }.flow
-            } else {
-                emptyFlow()
-            }
-        }
-        .cachedIn(viewModelScope)
-
-    val favoritePhotosPager = _source
-        .flatMapLatest { source ->
-            if (source is FolderNav.Source.Favorites) {
-                Pager(PAGING_CONFIG) {
+                is FolderNav.Source.Favorites -> Pager(PAGING_CONFIG) {
                     photosRepository.getFavoritePhotosPaged()
                 }.flow
-            } else {
-                emptyFlow()
-            }
+                null -> emptyFlow()
+            } as Flow<PagingData<Photo>>
         }
         .cachedIn(viewModelScope)
 
-    val favoriteTimelineLayout: StateFlow<TimelineLayout> = photosRepository.getFavoriteMonthSummaries()
-        .map { summaries -> TimelineLayout.build(summaries) }
-        .flowOn(Dispatchers.Default)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), TimelineLayout.EMPTY)
-
-    val networkFolderTimelineLayout: StateFlow<TimelineLayout> = _source
+    val timelineLayout: StateFlow<TimelineLayout> = _source
         .flatMapLatest { source ->
-            if (source is FolderNav.Source.Network) {
-                foldersRepository.networkMonthSummariesForFolder(source.folderId)
-            } else {
-                flowOf(emptyList())
-            }
-        }
-        .map { summaries -> TimelineLayout.build(summaries) }
-        .flowOn(Dispatchers.Default)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), TimelineLayout.EMPTY)
-
-    val localFolderTimelineLayout: StateFlow<TimelineLayout> = _source
-        .flatMapLatest { source ->
-            if (source is FolderNav.Source.Local) {
-                foldersRepository.localMonthSummariesForFolder(source.name)
-            } else {
-                flowOf(emptyList())
+            when (source) {
+                is FolderNav.Source.Network -> foldersRepository.networkMonthSummariesForFolder(source.folderId)
+                is FolderNav.Source.Local -> foldersRepository.localMonthSummariesForFolder(source.name)
+                is FolderNav.Source.Favorites -> photosRepository.getFavoriteMonthSummaries()
+                null -> flowOf(emptyList())
             }
         }
         .map { summaries -> TimelineLayout.build(summaries) }
@@ -212,7 +178,6 @@ class FolderScreenViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        super.onCleared()
         onClearedCallback?.invoke()
     }
 }

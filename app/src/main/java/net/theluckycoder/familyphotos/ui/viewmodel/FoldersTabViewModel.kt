@@ -5,12 +5,14 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import androidx.paging.cachedIn
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -23,10 +25,13 @@ import net.theluckycoder.familyphotos.workers.BackupAndUploadWorker
 import net.theluckycoder.familyphotos.workers.enqueueBackupAndUploadWorker
 import javax.inject.Inject
 
+import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class FoldersTabViewModel @Inject constructor(
     private val foldersRepository: FoldersRepository,
+    private val photoUploadRepository: PhotoUploadRepository,
     userDataStore: UserDataStore,
     settingsStore: SettingsDataStore,
     private val workManager: WorkManager,
@@ -39,6 +44,9 @@ class FoldersTabViewModel @Inject constructor(
     )
 
     val activeFolderViewModel = MutableStateFlow<FolderScreenViewModel?>(null)
+
+    val folderPhotosPager = activeFolderViewModel
+        .flatMapLatest { it?.photosPager ?: emptyFlow() }
 
     fun registerFolderViewModel(viewModel: FolderScreenViewModel) {
         activeFolderViewModel.value = viewModel
@@ -67,8 +75,12 @@ class FoldersTabViewModel @Inject constructor(
         .map { it.toSet() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptySet())
 
-    val pendingBackupCount: StateFlow<Int> = foldersRepository.getPendingBackupCount()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0)
+    val pendingBackupCount: StateFlow<Int> = combine(
+        foldersRepository.getPendingBackupCount(),
+        photoUploadRepository.getPendingCountFlow()
+    ) { folderPending, queuePending ->
+        maxOf(folderPending, queuePending)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0)
 
     val backupProgress: StateFlow<BackupProgress?> =
         workManager.getWorkInfosByTagFlow(BackupAndUploadWorker.TAG)
@@ -93,8 +105,17 @@ class FoldersTabViewModel @Inject constructor(
     }
 
     fun triggerBackup() {
-        workManager.enqueueBackupAndUploadWorker(
-            skipFolderScan = false
-        )
+        viewModelScope.launch(Dispatchers.IO) {
+            photoUploadRepository.resetFailedRetries()
+            workManager.enqueueBackupAndUploadWorker(
+                skipFolderScan = false
+            )
+        }
+    }
+
+    fun clearQueue() {
+        viewModelScope.launch(Dispatchers.IO) {
+            photoUploadRepository.clearQueue()
+        }
     }
 }

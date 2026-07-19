@@ -10,7 +10,7 @@ import net.theluckycoder.familyphotos.core.data.model.db.UploadQueueEntry
 @Dao
 internal interface UploadQueueDao {
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(entries: List<UploadQueueEntry>)
 
     @Query("SELECT * FROM upload_queue WHERE retryCount < maxRetries ORDER BY isManualUpload DESC, retryCount DESC, createdAt ASC LIMIT 1")
@@ -18,6 +18,9 @@ internal interface UploadQueueDao {
 
     @Query("UPDATE upload_queue SET retryCount = retryCount + 1 WHERE id = :entryId")
     suspend fun incrementRetryCount(entryId: Long)
+
+    @Query("UPDATE upload_queue SET retryCount = 0 WHERE retryCount >= maxRetries")
+    suspend fun resetFailedRetries()
 
     @Query("DELETE FROM upload_queue WHERE id = :entryId")
     suspend fun deleteById(entryId: Long)
@@ -30,6 +33,9 @@ internal interface UploadQueueDao {
 
     @Query("DELETE FROM upload_queue WHERE isManualUpload = 1")
     suspend fun deleteManualUploads()
+
+    @Query("DELETE FROM upload_queue")
+    suspend fun deleteAll()
 
     @Query("SELECT COUNT(*) FROM upload_queue WHERE retryCount < maxRetries")
     fun getPendingCountFlow(): Flow<Int>

@@ -1,7 +1,6 @@
 package net.theluckycoder.familyphotos.domain
 
 import android.util.Log
-import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -9,8 +8,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.ServerRepository
 import javax.inject.Inject
+import javax.inject.Singleton
 
-@ViewModelScoped
+@Singleton
 class RefreshPhotosUseCase @Inject constructor(
     private val serverRepository: ServerRepository,
     private val foldersRepository: FoldersRepository,

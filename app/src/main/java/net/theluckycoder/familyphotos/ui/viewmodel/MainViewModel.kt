@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -46,7 +46,7 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _localPhotosToDelete = Channel<List<LocalPhoto>>()
-    val localPhotosToDelete = _localPhotosToDelete.consumeAsFlow()
+    val localPhotosToDelete = _localPhotosToDelete.receiveAsFlow()
 
     val selectedTabState = mutableStateOf(TopLevelTab.Timeline)
 
