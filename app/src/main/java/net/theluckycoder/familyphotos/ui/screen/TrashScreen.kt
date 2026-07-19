@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -56,7 +59,7 @@ import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TrashScreen() {
+fun TrashScreen() = Scaffold { paddingValues ->
     val trashViewModel: TrashViewModel = viewModel()
     val backStack = LocalNavBackStack.current
 
@@ -73,10 +76,10 @@ fun TrashScreen() {
         selectedPhotoIds.clear()
     }
 
-    Scaffold { paddingValues ->
-        val columnCount =
-            if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 3 else 7
+    val columnCount =
+        if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) 3 else 7
 
+    Box(modifier = Modifier.fillMaxSize()) {
         LazyVerticalGrid(
             modifier = Modifier
                 .fillMaxSize()
@@ -167,7 +170,11 @@ fun TrashScreen() {
                     }
 
                     Text(
-                        text = pluralStringResource(R.plurals.trash_days_remaining, daysRemaining, daysRemaining),
+                        text = pluralStringResource(
+                            R.plurals.trash_days_remaining,
+                            daysRemaining,
+                            daysRemaining
+                        ),
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(4.dp)
@@ -183,12 +190,21 @@ fun TrashScreen() {
             }
         }
 
-        PhotosSelectionBar(selectedPhotoIds) {
+        PhotosSelectionBar(
+            selectedPhotoIds = selectedPhotoIds,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                .padding(top = 8.dp)
+        ) {
             IconButton(onClick = {
                 trashViewModel.restorePhotos(selectedPhotoIds.toLongArray())
                 selectedPhotoIds.clear()
             }) {
-                Icon(painterResource(R.drawable.ic_restore), contentDescription = null)
+                Icon(
+                    painter = painterResource(R.drawable.ic_restore),
+                    contentDescription = stringResource(R.string.action_restore),
+                )
             }
             IconButton(onClick = {
                 scope.launch {
@@ -196,7 +212,10 @@ fun TrashScreen() {
                     showDeleteDialogForPhotos = photos
                 }
             }) {
-                Icon(painterResource(R.drawable.ic_delete_forever), contentDescription = null)
+                Icon(
+                    painter = painterResource(R.drawable.ic_delete_forever),
+                    contentDescription = stringResource(R.string.confirm_permanent_delete),
+                )
             }
         }
     }
@@ -206,7 +225,9 @@ fun TrashScreen() {
             photos = photos,
             isPermanent = true,
             onDismissRequest = { showDeleteDialogForPhotos = null },
-            onConfirmDelete = { list -> trashViewModel.deleteNetworkPhotos(list.map { it.id }.toLongArray()) },
+            onConfirmDelete = { list ->
+                trashViewModel.deleteNetworkPhotos(list.map { it.id }.toLongArray())
+            },
             onPhotosDeleted = { selectedPhotoIds.clear() }
         )
     }

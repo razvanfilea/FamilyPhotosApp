@@ -1,5 +1,7 @@
 package net.theluckycoder.familyphotos.ui.composables
 
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -9,8 +11,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateSet
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.Photo
@@ -21,37 +26,43 @@ import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
 @Composable
-fun PhotoUtilitiesActions( // TODO row
+fun RowScope.PhotoUtilitiesActions(
     isLocalPhoto: Boolean,
     selectedItems: SnapshotStateSet<Long>,
-    mainViewModel: MainViewModel
+    mainViewModel: MainViewModel,
+    modifier: Modifier = Modifier,
+    iconSize: Dp = 24.dp,
 ) {
     val backStack = LocalNavBackStack.current
     val scope = rememberCoroutineScope()
     var showDeleteDialogForPhotos by remember { mutableStateOf<List<Photo>?>(null) }
 
     if (selectedItems.isNotEmpty()) {
-        IconButton(onClick = {
-            scope.launch {
-                @Suppress("UNCHECKED_CAST")
-                if (isLocalPhoto) {
-                    mainViewModel.deleteLocalPhotos(selectedItems.toLongArray())
-                    selectedItems.clear()
-                } else {
-                    val photos = mainViewModel.getNetworkPhotos(selectedItems.toLongArray())
-                    showDeleteDialogForPhotos = photos
+        IconButton(
+            onClick = {
+                scope.launch {
+                    @Suppress("UNCHECKED_CAST")
+                    if (isLocalPhoto) {
+                        mainViewModel.deleteLocalPhotos(selectedItems.toLongArray())
+                        selectedItems.clear()
+                    } else {
+                        val photos = mainViewModel.getNetworkPhotos(selectedItems.toLongArray())
+                        showDeleteDialogForPhotos = photos
+                    }
                 }
-            }
-        }) {
+            },
+            modifier = modifier
+        ) {
             Icon(
                 painter = painterResource(R.drawable.ic_action_delete),
-                contentDescription = null,
-                tint = Color.White,
+                contentDescription = stringResource(R.string.action_delete),
+                modifier = Modifier.size(iconSize),
             )
         }
 
         SharePhotoIconButton(
-            false,
+            subtitle = false,
+            iconSize = iconSize,
             getPhotosUris = {
                 val photoIds = selectedItems.toLongArray()
                 if (isLocalPhoto) {
@@ -68,8 +79,8 @@ fun PhotoUtilitiesActions( // TODO row
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_cloud_upload_outline),
-                    contentDescription = null,
-                    tint = Color.White,
+                    contentDescription = stringResource(R.string.action_upload),
+                    modifier = Modifier.size(iconSize),
                 )
             }
         } else {
@@ -78,8 +89,8 @@ fun PhotoUtilitiesActions( // TODO row
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_move_folder),
-                    contentDescription = null,
-                    tint = Color.White,
+                    contentDescription = stringResource(R.string.action_move),
+                    modifier = Modifier.size(iconSize),
                 )
             }
         }

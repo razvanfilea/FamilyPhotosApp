@@ -2,18 +2,24 @@ package net.theluckycoder.familyphotos.ui.composables
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
@@ -24,6 +30,9 @@ import net.theluckycoder.familyphotos.ui.LocalSnackbarHostState
 @Composable
 fun SharePhotoIconButton(
     subtitle: Boolean,
+    modifier: Modifier = Modifier,
+    tint: Color = Color.Unspecified,
+    iconSize: Dp = 24.dp,
     getPhotosUris: suspend () -> List<Uri>,
 ) {
     val context = LocalContext.current
@@ -69,25 +78,38 @@ fun SharePhotoIconButton(
             R.drawable.ic_action_share
     )
 
+    val resolvedTint = if (tint != Color.Unspecified) {
+        tint
+    } else if (subtitle) {
+        LocalContentColor.current
+    } else {
+        MaterialTheme.colorScheme.onTertiaryContainer
+    }
+
+    val iconModifier = Modifier.size(iconSize)
+
     if (subtitle) {
         IconButtonText(
             onClick = onClick,
             text = stringResource(id = R.string.action_share),
-            enabled = !isLoading
+            enabled = !isLoading,
+            modifier = modifier
         ) {
             Icon(
                 painter = icon,
                 contentDescription = null,
+                modifier = iconModifier,
+                tint = resolvedTint
             )
         }
     } else {
-        IconButton(onClick = onClick, enabled = !isLoading) {
+        IconButton(onClick = onClick, enabled = !isLoading, modifier = modifier) {
             Icon(
                 painter = icon,
-                contentDescription = null,
-                tint = Color.White
+                contentDescription = stringResource(id = R.string.action_share),
+                modifier = iconModifier,
+                tint = resolvedTint
             )
         }
     }
 }
-

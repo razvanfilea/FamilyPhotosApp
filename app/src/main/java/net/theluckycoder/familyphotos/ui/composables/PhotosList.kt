@@ -40,6 +40,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.graphics.Color
@@ -234,7 +236,13 @@ fun <T : Photo> PhotosList(
     }
 
     containsLocalPhotos.value?.let {
-        PhotosSelectionBar(selectedPhotoIds) {
+        PhotosSelectionBar(
+            selectedPhotoIds = selectedPhotoIds,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                .padding(top = 8.dp)
+        ) {
             PhotoUtilitiesActions(it, selectedPhotoIds, mainViewModel)
         }
     }
