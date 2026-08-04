@@ -25,7 +25,7 @@ import javax.inject.Inject
 @HiltViewModel
 class TimelineViewModel @Inject constructor(
     private val photosRepository: PhotosRepository,
-    private val settingsStore: SettingsDataStore,
+    settingsStore: SettingsDataStore,
 ) : ViewModel() {
 
     val timelinePager = settingsStore.photoType.flatMapLatest { photoType ->

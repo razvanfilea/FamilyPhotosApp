@@ -82,7 +82,12 @@ fun FolderScreen(
     val timelineLayout by folderScreenViewModel.timelineLayout.collectAsState()
 
     LaunchedEffect(source) {
-        folderScreenViewModel.setSource(source)
+        val photoCount = when (source) {
+            is FolderNav.Source.Network -> source.photoCount
+            is FolderNav.Source.Local -> source.photoCount
+            is FolderNav.Source.Favorites -> 0
+        }
+        folderScreenViewModel.setSource(source, photoCount)
     }
 
     LaunchedEffect(folderScreenViewModel) {

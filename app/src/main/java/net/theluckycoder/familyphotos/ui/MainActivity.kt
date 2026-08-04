@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
@@ -139,6 +140,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val backStack = rememberNavBackStack(TopLevelNav)
             val snackbarHostState = remember { SnackbarHostState() }
+            val openingPhotoId = remember { mutableStateOf<Long?>(null) }
 
             AppTheme {
                 val isLoggedIn = mainViewModel.isLoggedIn.collectAsState()
@@ -169,6 +171,7 @@ class MainActivity : ComponentActivity() {
                         LocalSharedTransitionScope provides this@SharedTransitionLayout,
                         LocalNavBackStack provides backStack,
                         LocalSettingsDataStore provides settingsDataStore,
+                        LocalOpeningPhotoId provides openingPhotoId,
                     ) {
                         Content(
                             backStack,

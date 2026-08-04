@@ -35,12 +35,17 @@ class BaselineProfileGenerator {
         rule.collect(
             packageName = packageName,
             includeInStartupProfile = true,
-            maxIterations = 5,
+            maxIterations = 4,
         ) {
             pressHome()
             startActivityAndWait(launchIntent)
 
             waitForGalleryContent()
+            
+            openNetworkFoldersTab()
+            openFoldersSequentially(count = 3)
+            openTimelineTab()
+
             scrollGalleryGrid()
             viewAndScrollPhotos()
             scrollWithMonthIndicator()

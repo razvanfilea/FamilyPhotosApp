@@ -15,31 +15,43 @@ object ThumbHashCache {
     fun get(thumbHash: String?): ImageBitmap? {
         if (thumbHash == null) return null
 
-        synchronized(cache) {
-            return cache.get(thumbHash)
+        return cache.get(thumbHash)
+    }
+
+    /**
+     * Decoding takes around 200-1000 micro seconds
+     */
+    fun getOrDecodeSync(thumbHash: String?): ImageBitmap? {
+        if (thumbHash == null) return null
+
+        cache.get(thumbHash)?.let { return it }
+
+        return try {
+            val bytes = Base64.decode(thumbHash)
+            val bitmap = ThumbHash.thumbHashToRGBA(bytes)
+            val imageBitmap = bitmap.asImageBitmap()
+            cache.put(thumbHash, imageBitmap)
+            imageBitmap
+        } catch (e: Exception) {
+            Log.e("ThumbHash", "Failed to decode thumb hash", e)
+            null
         }
     }
 
     suspend fun getOrCompute(thumbHash: String?): ImageBitmap? {
         if (thumbHash == null) return null
 
-        synchronized(cache) {
-            cache.get(thumbHash)?.let { return it }
-        }
+        cache.get(thumbHash)?.let { return it }
 
         return withContext(Dispatchers.Default) {
             try {
                 val bytes = Base64.decode(thumbHash)
-                if (!isActive) {
-                    return@withContext null
-                }
+                if (!isActive) return@withContext null
 
                 val bitmap = ThumbHash.thumbHashToRGBA(bytes)
                 val imageBitmap = bitmap.asImageBitmap()
 
-                synchronized(cache) {
-                    cache.put(thumbHash, imageBitmap)
-                }
+                cache.put(thumbHash, imageBitmap)
                 imageBitmap
             } catch (e: Exception) {
                 Log.e("ThumbHash", "Failed to decode thumb hash", e)

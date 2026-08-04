@@ -22,7 +22,7 @@ fun NetworkFoldersTab(foldersTabViewModel: FoldersTabViewModel) {
     FoldersGridList(
         folders = folders,
         onFolderClick = { folder ->
-            backStack.add(FolderNav(FolderNav.Source.Network(folder.id, folder.name)))
+            backStack.add(FolderNav(FolderNav.Source.Network(folder.id, folder.name, folder.count)))
         },
         currentUserId = currentUser?.userId,
         extraHeader = {

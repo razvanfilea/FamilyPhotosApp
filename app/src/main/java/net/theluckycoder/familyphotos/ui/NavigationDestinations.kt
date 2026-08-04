@@ -36,10 +36,10 @@ data class FolderNav(
         data object Favorites : Source()
 
         @Serializable
-        data class Network(val folderId: Long, val folderName: String) : Source()
+        data class Network(val folderId: Long, val folderName: String, val photoCount: Int = 0) : Source()
 
         @Serializable
-        data class Local(val name: String) : Source()
+        data class Local(val name: String, val photoCount: Int = 0) : Source()
     }
 }
 

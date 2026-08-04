@@ -3,13 +3,12 @@ package net.theluckycoder.familyphotos.ui.composables
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -22,7 +21,6 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,20 +30,17 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.graphics.painter.ColorPainter
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -56,7 +51,6 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import coil3.size.Size
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
@@ -72,8 +66,10 @@ import java.time.format.DateTimeFormatter
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-private val LOADING_PAINTER = ColorPainter(Color.DarkGray)
+private val PLACEHOLDER_COLOR = Color.DarkGray
+private val SELECTION_SCRIM_COLOR = Color.Black.copy(alpha = 0.4f)
 
+// TODO: Add .size() on CoilPhoto this should kill all ConstraintsSizeResolver and size negociation
 @Composable
 fun CoilPhoto(
     photo: Photo,
@@ -82,67 +78,52 @@ fun CoilPhoto(
     contentScale: ContentScale = ContentScale.Fit,
 ) {
     val isImageLoaded = remember { mutableStateOf(false) }
-    var targetSizePx by remember { mutableIntStateOf(0) }
-    val thumbHashPainter = thumbHashPainter(photo.thumbHash)
+    val thumbHashPainter = if (!isImageLoaded.value) thumbHashPainter(photo.thumbHash) else null
 
-    Box(modifier = modifier.onSizeChanged { size ->
-        targetSizePx = maxOf(size.width, size.height)
-    }) {
-        if (!isImageLoaded.value) {
-            Image(
-                painter = thumbHashPainter ?: LOADING_PAINTER,
-                contentDescription = null,
-                contentScale = contentScale,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
+    val context = LocalContext.current
+    val model = remember(preview, photo.id) {
+        ImageRequest.Builder(context)
+            .data(if (!preview) photo.getUri() else photo.getPreviewUri())
+            .crossfade(false)
+            .build()
+    }
 
-        // Only start loading once we know the target size to avoid loading full-size images
-        if (targetSizePx > 0) {
-            val context = LocalContext.current
-            // Round to 64px buckets for better memory cache hits across similar-sized cells
-            val bucketSize = ((targetSizePx + 63) / 64) * 64
-            val model = remember(preview, bucketSize, photo.id) {
-                ImageRequest.Builder(context)
-                    .data(if (!preview) photo.getUri() else photo.getPreviewUri())
-                    .size(Size(bucketSize, bucketSize))
-                    .crossfade(false) // Disable crossfade animation for grid items
-                    .build()
+    val placeholderModifier = remember(thumbHashPainter) {
+        Modifier.drawBehind {
+            if (isImageLoaded.value) return@drawBehind
+            if (thumbHashPainter == null) {
+                drawRect(PLACEHOLDER_COLOR)
+                return@drawBehind
             }
 
-            AsyncImage(
-                model = model,
-                imageLoader = LocalImageLoader.current.get(),
-                contentDescription = null,
-                contentScale = contentScale,
-                modifier = Modifier.fillMaxSize(),
-                filterQuality = if (preview) FilterQuality.None else FilterQuality.Low,
-                onState = { state ->
-                    if (state is AsyncImagePainter.State.Success) {
-                        isImageLoaded.value = true
-                    }
-                }
-            )
+            clipRect {
+                with(thumbHashPainter) { draw(size) }
+            }
         }
     }
+
+    AsyncImage(
+        model = model,
+        imageLoader = LocalImageLoader.current.get(),
+        contentDescription = null,
+        contentScale = contentScale,
+        modifier = placeholderModifier
+            .fillMaxSize()
+            .then(modifier),
+        filterQuality = if (preview) FilterQuality.None else FilterQuality.Low,
+        onState = { state ->
+            if (state is AsyncImagePainter.State.Success) {
+                isImageLoaded.value = true
+            }
+        }
+    )
 }
 
 @Composable
 fun thumbHashPainter(thumbHash: String?): ScaledBitmapPainter? {
-    // Check synchronous cache first to avoid coroutine overhead for cached items
-    var thumbHashPainter: ScaledBitmapPainter? by remember(thumbHash) {
-        mutableStateOf(ThumbHashCache.get(thumbHash)?.let { ScaledBitmapPainter(it) })
+    return remember(thumbHash) {
+        ThumbHashCache.getOrDecodeSync(thumbHash)?.let { ScaledBitmapPainter(it) }
     }
-    // Only launch coroutine for cache misses
-    if (thumbHashPainter == null && thumbHash != null) {
-        LaunchedEffect(thumbHash) {
-            ThumbHashCache.getOrCompute(thumbHash)?.let {
-                thumbHashPainter = ScaledBitmapPainter(it)
-            }
-        }
-    }
-
-    return thumbHashPainter
 }
 
 @Composable
@@ -221,21 +202,25 @@ fun SelectablePhoto(
         onDeselect = onDeselect
     )
 ) {
-    val progress = remember { Animatable(0f) }
-
-    LaunchedEffect(inSelectionMode, selected) {
-        progress.animateTo(if (inSelectionMode && selected) 1f else 0f)
-    }
-
     Box(
-        modifier = Modifier
-            .padding((progress.value * 8f).dp)
-            .clip(RoundedCornerShape(percent = (progress.value * 30f).toInt()))
+        modifier = Modifier.drawWithContent {
+            drawContent()
+            if (selected) drawRect(SELECTION_SCRIM_COLOR)
+        }
     ) {
         content()
     }
 
-    if (inSelectionMode) {
+    val iconAlpha by animateFloatAsState(
+        targetValue = if (inSelectionMode) 1f else 0f,
+        label = "selectionIconAlpha"
+    )
+    if (iconAlpha > 0f) {
+        val iconScale by animateFloatAsState(
+            targetValue = if (selected) 1f else 0.85f,
+            label = "selectionIconScale"
+        )
+
         Icon(
             painter = painterResource(
                 if (selected) R.drawable.radio_button_checked
@@ -247,6 +232,11 @@ fun SelectablePhoto(
             contentDescription = null,
             modifier = Modifier
                 .padding(4.dp)
+                .graphicsLayer {
+                    alpha = iconAlpha
+                    scaleX = iconScale
+                    scaleY = iconScale
+                }
                 .then(
                     if (selected) Modifier.background(
                         MaterialTheme.colorScheme.surface,

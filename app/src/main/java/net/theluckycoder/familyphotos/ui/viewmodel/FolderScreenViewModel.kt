@@ -11,15 +11,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
@@ -84,22 +83,29 @@ class FolderScreenViewModel @Inject constructor(
         }
         .cachedIn(viewModelScope)
 
-    val timelineLayout: StateFlow<TimelineLayout> = _source
-        .flatMapLatest { source ->
-            when (source) {
-                is FolderNav.Source.Network -> foldersRepository.networkMonthSummariesForFolder(source.folderId)
-                is FolderNav.Source.Local -> foldersRepository.localMonthSummariesForFolder(source.name)
-                is FolderNav.Source.Favorites -> photosRepository.getFavoriteMonthSummaries()
-                null -> flowOf(emptyList())
-            }
-        }
-        .map { summaries -> TimelineLayout.build(summaries) }
-        .flowOn(Dispatchers.Default)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), TimelineLayout.EMPTY)
+    private val _timelineLayout = MutableStateFlow(TimelineLayout.EMPTY)
+    val timelineLayout: StateFlow<TimelineLayout> = _timelineLayout.asStateFlow()
 
-    fun setSource(source: FolderNav.Source) {
+    init {
+        viewModelScope.launch {
+            _source.flatMapLatest { source ->
+                when (source) {
+                    is FolderNav.Source.Network -> foldersRepository.networkMonthSummariesForFolder(source.folderId)
+                    is FolderNav.Source.Local -> foldersRepository.localMonthSummariesForFolder(source.name)
+                    is FolderNav.Source.Favorites -> photosRepository.getFavoriteMonthSummaries()
+                    null -> flowOf(emptyList())
+                }
+            }
+                .map { summaries -> TimelineLayout.build(summaries) }
+                .flowOn(Dispatchers.Default)
+                .collect { _timelineLayout.value = it }
+        }
+    }
+
+    fun setSource(source: FolderNav.Source, photoCount: Int = 0) {
         if (_source.value != source) {
             photoListState.value = LazyGridState()
+            _timelineLayout.value = TimelineLayout.provisional(photoCount)
             _source.value = source
         }
     }

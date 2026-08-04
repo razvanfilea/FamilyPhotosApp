@@ -59,6 +59,7 @@ import net.theluckycoder.familyphotos.core.data.model.isVideo
 import net.theluckycoder.familyphotos.core.data.model.thumbHash
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
+import net.theluckycoder.familyphotos.ui.LocalOpeningPhotoId
 import net.theluckycoder.familyphotos.ui.MovePhotosNav
 import net.theluckycoder.familyphotos.ui.UploadPhotosNav
 import net.theluckycoder.familyphotos.ui.composables.player.VideoPlayer
@@ -89,6 +90,13 @@ fun <T : Photo> PhotosViewer(
     )
 
     val currentPhoto = items.getOrNull(pagerState.currentPage)?.second
+
+    // Keep the grid-side shared-bounds target in sync with the visible page, so swiping in the
+    // viewer and then closing morphs back to the correct grid cell (not the one first tapped).
+    val openingPhotoId = LocalOpeningPhotoId.current
+    LaunchedEffect(currentPhoto?.id) {
+        currentPhoto?.let { openingPhotoId.value = it.id }
+    }
 
     PhotoViewerScaffold(
         currentPhoto,
@@ -136,6 +144,11 @@ fun <T : Photo> PhotosViewer(
 
     val showUi = remember { mutableStateOf(true) }
     val currentPhoto = photosList.getOrNull(pagerState.currentPage)
+
+    val openingPhotoId = LocalOpeningPhotoId.current
+    LaunchedEffect(currentPhoto?.id) {
+        currentPhoto?.let { openingPhotoId.value = it.id }
+    }
 
     PhotoViewerScaffold(
         currentPhoto,

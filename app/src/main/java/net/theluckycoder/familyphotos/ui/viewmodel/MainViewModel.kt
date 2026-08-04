@@ -128,6 +128,11 @@ class MainViewModel @Inject constructor(
     }
 
     companion object {
-        val PAGING_CONFIG = PagingConfig(pageSize = 300, enablePlaceholders = true, jumpThreshold = 300)
+        val PAGING_CONFIG = PagingConfig(
+            pageSize = 300,
+            initialLoadSize = 300,
+            enablePlaceholders = true,
+            jumpThreshold = 300
+        )
     }
 }

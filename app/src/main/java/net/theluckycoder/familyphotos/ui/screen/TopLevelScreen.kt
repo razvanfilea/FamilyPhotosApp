@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.paging.compose.LazyPagingItems
@@ -55,6 +56,7 @@ fun TopLevelScreen(
         navigationSuiteItems = {
             TopLevelTab.entries.forEach { tab ->
                 item(
+                    modifier = Modifier.testTag("tab_${tab.name}"),
                     icon = {
                         Icon(
                             painter = painterResource(if (selectedTabState.value == tab) tab.selectedIcon else tab.icon),

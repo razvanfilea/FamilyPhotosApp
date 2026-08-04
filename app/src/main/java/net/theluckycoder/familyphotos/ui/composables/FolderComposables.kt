@@ -58,6 +58,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
@@ -135,6 +136,7 @@ fun <T : PhotoFolder> FoldersGridList(
             val modifier = Modifier
                 .padding(horizontal = if (!showAsGrid) 16.dp else 8.dp)
                 .animateItem()
+                .testTag("folder_item")
 
             val photosCount =
                 pluralStringResource(R.plurals.items_photos, folder.count, folder.count)

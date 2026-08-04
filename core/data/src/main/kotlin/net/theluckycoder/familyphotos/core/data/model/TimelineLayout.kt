@@ -40,6 +40,14 @@ data class TimelineLayout(
 
             return TimelineLayout(summaries, map, currentIndex)
         }
+
+        fun provisional(photoCount: Int): TimelineLayout {
+            if (photoCount <= 0) return EMPTY
+            val fakeSummary = MonthSummary(timeCreated = 0L, coverPhotoId = 0L, photoCount = photoCount)
+            val map = TreeMap<Int, Pair<MonthSummary, Int>>()
+            map[0] = fakeSummary to 0
+            return TimelineLayout(listOf(fakeSummary), map, 1 + photoCount)
+        }
     }
 
     /** Total items in the grid including offset */

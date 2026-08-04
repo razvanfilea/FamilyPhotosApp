@@ -37,7 +37,7 @@ fun DeviceTab(foldersTabViewModel: FoldersTabViewModel) {
     FoldersGridList(
         folders = folders,
         onFolderClick = { folder ->
-            backStack.add(FolderNav(FolderNav.Source.Local(folder.name)))
+            backStack.add(FolderNav(FolderNav.Source.Local(folder.name, folder.count)))
         },
         isBackupEnabled = { folder -> folder.name in backupFolders },
         extraHeader = {

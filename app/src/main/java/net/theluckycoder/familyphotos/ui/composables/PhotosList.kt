@@ -30,7 +30,6 @@ import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,7 +47,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.paging.compose.LazyPagingItems
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.distinctUntilChanged
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
@@ -57,6 +55,7 @@ import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.core.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.core.data.model.Photo
 import net.theluckycoder.familyphotos.core.data.model.isVideo
+import net.theluckycoder.familyphotos.ui.LocalOpeningPhotoId
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.utils.buildDateString
 import kotlin.time.Duration.Companion.milliseconds
@@ -104,7 +103,6 @@ fun <T : Photo> PhotosList(
     val settingsDataStore = LocalSettingsDataStore.current
     val zoomIndex by settingsDataStore.zoomLevel.collectAsState()
     var appliedZoomIndex by remember { mutableIntStateOf(zoomIndex) }
-    val isZoomTransitioning = appliedZoomIndex != zoomIndex
 
     LaunchedEffect(zoomIndex) {
         if (zoomIndex != appliedZoomIndex) {
@@ -127,23 +125,7 @@ fun <T : Photo> PhotosList(
         timelineLayout = layout,
     )
 
-    // Debounced scroll state to prevent mass recomposition during scroll-pause-scroll sequences
-    var sharedBoundsEnabled by remember { mutableStateOf(true) }
-    LaunchedEffect(gridState, isThumbDragging.value, isZoomTransitioning) {
-        if (isThumbDragging.value || isZoomTransitioning) {
-            sharedBoundsEnabled = false
-        } else {
-            snapshotFlow { gridState.isScrollInProgress }.distinctUntilChanged()
-                .collect { isScrolling ->
-                    if (isScrolling) {
-                        sharedBoundsEnabled = false
-                    } else {
-                        delay(150.milliseconds) // Only re-enable after idle
-                        sharedBoundsEnabled = true
-                    }
-                }
-        }
-    }
+    val openingPhotoIdState = LocalOpeningPhotoId.current
 
     LazyVerticalGrid(
         state = gridState,
@@ -194,12 +176,11 @@ fun <T : Photo> PhotosList(
                         if (pagingIndex in 0 until photos.itemCount) photos[pagingIndex] else null
 
                     if (photo != null) {
-                        // If scrolling, use an empty Modifier. If idle, use the expensive shared bounds.
                         val sharedBoundsModifier =
-                            if (!sharedBoundsEnabled && !hasSelection.value) {
-                                Modifier
-                            } else {
+                            if (photo.id == openingPhotoIdState.value) {
                                 Modifier.photoSharedBounds(photo.id)
+                            } else {
+                                Modifier
                             }
 
                         val itemModifier = Modifier
@@ -212,7 +193,10 @@ fun <T : Photo> PhotosList(
                             photo = photo,
                             inSelectionMode = hasSelection.value,
                             selectedPhotoIds = selectedPhotoIds,
-                            openPhoto = { openPhoto(pagingIndex) },
+                            openPhoto = {
+                                openingPhotoIdState.value = photo.id
+                                openPhoto(pagingIndex)
+                            },
                         )
                     } else {
                         // Gray placeholder box - Paging will auto-fetch
