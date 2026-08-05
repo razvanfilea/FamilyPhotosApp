@@ -39,7 +39,7 @@ data class LocalPhoto(
     override val name: String,
     override val timeCreated: Long,
     val folder: String?,
-    @kotlinx.serialization.Serializable(UriAsStringSerializer::class)
+    @Serializable(UriAsStringSerializer::class)
     val uri: Uri,
     val mimeType: String? = null,
 ) : Photo() {
@@ -71,26 +71,43 @@ data class NetworkPhoto(
     val thumbHash: String? = null,
 ) : Photo()
 
+@Immutable
+@Keep
+@Serializable
+data class NetworkPhotoThumbnail(
+    override val id: Long,
+    override val timeCreated: Long,
+    val thumbHash: String? = null,
+    override val name: String,
+) : Photo()
+
+val Photo.isNetwork
+    get() = this !is LocalPhoto
+
 val Photo.isVideo
     get() = when (this) {
         is NetworkPhoto -> name.substringAfterLast('.').lowercase() in VIDEO_EXTENSIONS
         is LocalPhoto -> mimeType?.startsWith("video/") == true
+        is NetworkPhotoThumbnail -> name.substringAfterLast('.').lowercase() in VIDEO_EXTENSIONS
     }
 
 fun Photo.getUri(): Uri = when (this) {
     is NetworkPhoto -> "${NetworkModule.PLACEHOLDER_BASE_URL}api/download/$id".toUri()
     is LocalPhoto -> uri
+    is NetworkPhotoThumbnail -> "${NetworkModule.PLACEHOLDER_BASE_URL}api/download/$id".toUri()
 }
 
 fun Photo.getPreviewUri(): Uri = when (this) {
     is NetworkPhoto -> "${NetworkModule.PLACEHOLDER_BASE_URL}api/preview/$id".toUri()
     is LocalPhoto -> uri
+    is NetworkPhotoThumbnail -> "${NetworkModule.PLACEHOLDER_BASE_URL}api/preview/$id".toUri()
 }
 
 val Photo.thumbHash
     get() = when (this) {
         is NetworkPhoto -> thumbHash
         is LocalPhoto -> null
+        is NetworkPhotoThumbnail -> thumbHash
     }
 
 val NetworkPhoto.isPublic

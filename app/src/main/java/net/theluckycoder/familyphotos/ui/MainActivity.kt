@@ -164,6 +164,7 @@ class MainActivity : ComponentActivity() {
                     Modifier.semantics { testTagsAsResourceId = true }
                 } else Modifier
 
+                // Compose has to perform lookahead node instantiation for each newly composed items
                 SharedTransitionLayout(benchmarkModifier) {
                     CompositionLocalProvider(
                         LocalImageLoader provides imageLoaderLazy,

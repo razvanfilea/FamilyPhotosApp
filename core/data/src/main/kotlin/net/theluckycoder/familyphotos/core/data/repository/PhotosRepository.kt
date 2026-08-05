@@ -9,6 +9,7 @@ import net.theluckycoder.familyphotos.core.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.NetworkPhotoThumbnail
 import javax.inject.Inject
 
 class PhotosRepository @Inject internal constructor(
@@ -30,7 +31,7 @@ class PhotosRepository @Inject internal constructor(
     suspend fun getLocalPhotoFromNetwork(networkPhotoId: Long) =
         localPhotosDao.findByNetworkId(networkPhotoId)
 
-    fun getMemories(photoType: PhotoType): Flow<Map<Int, List<NetworkPhoto>>> =
+    fun getMemories(photoType: PhotoType): Flow<Map<Int, List<NetworkPhotoThumbnail>>> =
         networkPhotosDao.getPhotosGroupedByYearsAgo(photoType, currentUserId).map { photosWithOffset ->
             photosWithOffset.groupBy { it.yearOffset }
                 .mapValues { entry -> entry.value.map { it.photo } }

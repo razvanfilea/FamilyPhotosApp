@@ -51,6 +51,7 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import coil3.size.Size
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
@@ -69,22 +70,23 @@ import kotlin.time.Instant
 private val PLACEHOLDER_COLOR = Color.DarkGray
 private val SELECTION_SCRIM_COLOR = Color.Black.copy(alpha = 0.4f)
 
-// TODO: Add .size() on CoilPhoto this should kill all ConstraintsSizeResolver and size negociation
 @Composable
 fun CoilPhoto(
     photo: Photo,
     modifier: Modifier = Modifier,
     preview: Boolean = false,
     contentScale: ContentScale = ContentScale.Fit,
+    requestedPhotoSize: Size? = null,
 ) {
     val isImageLoaded = remember { mutableStateOf(false) }
     val thumbHashPainter = if (!isImageLoaded.value) thumbHashPainter(photo.thumbHash) else null
 
     val context = LocalContext.current
-    val model = remember(preview, photo.id) {
+    val model = remember(preview, photo.id, requestedPhotoSize) {
         ImageRequest.Builder(context)
             .data(if (!preview) photo.getUri() else photo.getPreviewUri())
             .crossfade(false)
+            .apply { requestedPhotoSize?.let { size(it) } }
             .build()
     }
 
@@ -108,7 +110,6 @@ fun CoilPhoto(
         contentDescription = null,
         contentScale = contentScale,
         modifier = placeholderModifier
-            .fillMaxSize()
             .then(modifier),
         filterQuality = if (preview) FilterQuality.None else FilterQuality.Low,
         onState = { state ->

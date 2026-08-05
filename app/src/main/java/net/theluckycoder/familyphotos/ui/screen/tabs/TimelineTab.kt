@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.NetworkPhotoThumbnail
 import androidx.paging.compose.LazyPagingItems
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
@@ -55,7 +56,7 @@ import net.theluckycoder.familyphotos.ui.viewmodel.TimelineViewModel
 
 @Composable
 fun TimelineTab(
-    photos: LazyPagingItems<NetworkPhoto>,
+    photos: LazyPagingItems<NetworkPhotoThumbnail>,
     mainViewModel: MainViewModel,
     timelineViewModel: TimelineViewModel,
 ) {
@@ -95,7 +96,7 @@ fun TimelineTab(
 
 @Composable
 private fun MemoriesList(
-    memories: Map<Int, List<NetworkPhoto>>?,
+    memories: Map<Int, List<NetworkPhotoThumbnail>>?,
     listState: LazyListState,
 ) {
     val backStack = LocalNavBackStack.current

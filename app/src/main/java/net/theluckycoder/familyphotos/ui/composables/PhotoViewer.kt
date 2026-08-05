@@ -31,7 +31,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,6 +58,7 @@ import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.core.data.model.Photo
 import net.theluckycoder.familyphotos.core.data.model.getPreviewUri
 import net.theluckycoder.familyphotos.core.data.model.getUri
+import net.theluckycoder.familyphotos.core.data.model.isNetwork
 import net.theluckycoder.familyphotos.core.data.model.isVideo
 import net.theluckycoder.familyphotos.core.data.model.thumbHash
 import net.theluckycoder.familyphotos.ui.LocalImageLoader
@@ -91,15 +95,24 @@ fun <T : Photo> PhotosViewer(
 
     val currentPhoto = items.getOrNull(pagerState.currentPage)?.second
 
-    // Keep the grid-side shared-bounds target in sync with the visible page, so swiping in the
-    // viewer and then closing morphs back to the correct grid cell (not the one first tapped).
+    val fullNetworkPhoto by remember(currentPhoto?.id) {
+        val photoId = currentPhoto?.id
+        if (photoId != null && currentPhoto.isNetwork) {
+            photoViewerViewModel.getNetworkPhotoFlow(photoId)
+        } else {
+            flowOf(null)
+        }
+    }.collectAsState(initial = currentPhoto as? NetworkPhoto)
+
+    val activePhoto = fullNetworkPhoto ?: currentPhoto
+
     val openingPhotoId = LocalOpeningPhotoId.current
-    LaunchedEffect(currentPhoto?.id) {
-        currentPhoto?.let { openingPhotoId.value = it.id }
+    LaunchedEffect(activePhoto?.id) {
+        activePhoto?.let { openingPhotoId.value = it.id }
     }
 
     PhotoViewerScaffold(
-        currentPhoto,
+        activePhoto,
         showUi.value,
         mainViewModel,
         photoViewerViewModel
@@ -117,8 +130,8 @@ fun <T : Photo> PhotosViewer(
 
             val localUri = remember { mutableStateOf<Uri?>(null) }
             LaunchedEffect(photo) {
-                if (photo is NetworkPhoto) {
-                    val d = photoViewerViewModel.getEquivalentLocalUri(photo)
+                if (photo.isNetwork) {
+                    val d = photoViewerViewModel.getEquivalentLocalUri(photo.id)
                     localUri.value = d
                 }
             }
@@ -145,13 +158,24 @@ fun <T : Photo> PhotosViewer(
     val showUi = remember { mutableStateOf(true) }
     val currentPhoto = photosList.getOrNull(pagerState.currentPage)
 
+    val fullNetworkPhoto by remember(currentPhoto?.id) {
+        val photoId = currentPhoto?.id
+        if (photoId != null && currentPhoto.isNetwork) {
+            photoViewerViewModel.getNetworkPhotoFlow(photoId)
+        } else {
+            flowOf(null)
+        }
+    }.collectAsState(initial = currentPhoto as? NetworkPhoto)
+
+    val activePhoto = fullNetworkPhoto ?: currentPhoto
+
     val openingPhotoId = LocalOpeningPhotoId.current
-    LaunchedEffect(currentPhoto?.id) {
-        currentPhoto?.let { openingPhotoId.value = it.id }
+    LaunchedEffect(activePhoto?.id) {
+        activePhoto?.let { openingPhotoId.value = it.id }
     }
 
     PhotoViewerScaffold(
-        currentPhoto,
+        activePhoto,
         showUi.value,
         mainViewModel,
         photoViewerViewModel
@@ -163,7 +187,7 @@ fun <T : Photo> PhotosViewer(
             val photo = photosList.getOrNull(page) ?: return@HorizontalPager
 
             val photoFlow = remember(photo) {
-                if (photo is NetworkPhoto)
+                if (photo.isNetwork)
                     photoViewerViewModel.getNetworkPhotoFlow(photo.id)
                 else
                     photoViewerViewModel.getLocalPhotoFlow(photo.id)
@@ -175,8 +199,8 @@ fun <T : Photo> PhotosViewer(
                 }
             }
 
-            val localUri = if (photo is NetworkPhoto) {
-                remember(photo) { photoViewerViewModel.getEquivalentLocalUriFlow(photo) }.collectAsState(
+            val localUri = if (photo.isNetwork) {
+                remember(photo) { photoViewerViewModel.getEquivalentLocalUriFlow(photo.id) }.collectAsState(
                     null
                 )
             } else {
@@ -283,10 +307,10 @@ private fun TopBar(
         title = title,
         navIconOnClick = onClose,
         actions = {
-            if (photo is NetworkPhoto) {
+            if (photo.isNetwork) {
                 IconButton(onClick = {
                     photoViewerViewModel.updateFavorite(
-                        photo,
+                        photo.id,
                         !isFavorite
                     )
                 }) {
@@ -308,6 +332,7 @@ private fun BottomBar(
     mainViewModel: MainViewModel,
     photoViewerViewModel: PhotoViewerViewModel = viewModel()
 ) {
+    val scope = rememberCoroutineScope()
     var showDeleteDialogForPhotos by remember { mutableStateOf<List<Photo>?>(null) }
     var showInfoDialogForPhoto by remember { mutableStateOf<NetworkPhoto?>(null) }
     val backStack = LocalNavBackStack.current
@@ -322,10 +347,10 @@ private fun BottomBar(
 
         IconButtonText(
             onClick = {
-                when (photo) {
-                    is NetworkPhoto -> showDeleteDialogForPhotos = listOf(photo)
-
-                    is LocalPhoto -> mainViewModel.deleteLocalPhotos(longArrayOf(photo.id))
+                if (photo is LocalPhoto) {
+                    mainViewModel.deleteLocalPhotos(longArrayOf(photo.id))
+                } else {
+                    showDeleteDialogForPhotos = listOf(photo)
                 }
             },
             text = stringResource(id = R.string.action_delete),
@@ -380,7 +405,7 @@ private fun BottomBar(
                     )
                 }
             }
-        } else if (photo is NetworkPhoto) { // Network only
+        } else if (photo.isNetwork) { // Network or NetworkPhotoThumbnail
             IconButtonText(
                 onClick = { backStack.add(MovePhotosNav(longArrayOf(photo.id))) },
                 text = stringResource(R.string.action_move),
@@ -392,7 +417,15 @@ private fun BottomBar(
             }
 
             IconButtonText(
-                onClick = { showInfoDialogForPhoto = photo },
+                onClick = {
+                    if (photo is NetworkPhoto) {
+                        showInfoDialogForPhoto = photo
+                    } else {
+                        scope.launch {
+                            showInfoDialogForPhoto = photoViewerViewModel.getNetworkPhoto(photo.id)
+                        }
+                    }
+                },
                 text = stringResource(R.string.action_info),
             ) {
                 Icon(

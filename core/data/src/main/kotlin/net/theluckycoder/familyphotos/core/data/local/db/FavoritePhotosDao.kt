@@ -8,7 +8,7 @@ import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.core.data.model.db.FavoriteNetworkPhoto
 import net.theluckycoder.familyphotos.core.data.model.db.MonthSummary
-import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.NetworkPhotoThumbnail
 
 @Dao
 internal interface FavoritePhotosDao {
@@ -18,13 +18,13 @@ internal interface FavoritePhotosDao {
 
     @Query(
         """
-        SELECT p.* FROM network_photo p
+        SELECT p.id, p.timeCreated, p.thumbHash, p.name FROM network_photo p
         JOIN favorite_network_photo ON p.id = favorite_network_photo.photoId
         WHERE p.trashedOn IS NULL
         ORDER BY p.timeCreated DESC
     """
     )
-    fun getFavoritePhotosPaged(): PagingSource<Int, NetworkPhoto>
+    fun getFavoritePhotosPaged(): PagingSource<Int, NetworkPhotoThumbnail>
 
     @Query("INSERT INTO favorite_network_photo VALUES (:photoId)")
     suspend fun addFavorite(photoId: Long)

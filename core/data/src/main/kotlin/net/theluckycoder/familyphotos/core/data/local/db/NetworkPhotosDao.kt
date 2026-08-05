@@ -11,6 +11,7 @@ import net.theluckycoder.familyphotos.core.data.model.network.PhotoEventLog
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.NetworkPhotoThumbnail
 import net.theluckycoder.familyphotos.core.data.model.db.PhotoStatistics
 import net.theluckycoder.familyphotos.core.data.model.db.NetworkPhotoWithYearOffset
 
@@ -24,7 +25,7 @@ internal interface NetworkPhotosDao {
     fun findByIdFlow(photoId: Long): Flow<NetworkPhoto?>
 
     @Query(
-        """SELECT * FROM network_photo
+        """SELECT id, timeCreated, thumbHash, name FROM network_photo
             WHERE CASE
                 WHEN :photoType = 1 THEN (userId = :currentUserId)
                 WHEN :photoType = 2 THEN (userId IS NULL)
@@ -34,19 +35,19 @@ internal interface NetworkPhotosDao {
             AND trashedOn IS NULL
             ORDER BY network_photo.timeCreated DESC"""
     )
-    fun getPhotosPaged(photoType: PhotoType, currentUserId: String): PagingSource<Int, NetworkPhoto>
+    fun getPhotosPaged(photoType: PhotoType, currentUserId: String): PagingSource<Int, NetworkPhotoThumbnail>
 
     @Query(
-        """SELECT * FROM network_photo
+        """SELECT id, timeCreated, thumbHash, name FROM network_photo
         WHERE network_photo.folderId = :folderId
         AND trashedOn IS NULL
         ORDER BY network_photo.timeCreated DESC"""
     )
-    fun getFolderPhotos(folderId: Long): PagingSource<Int, NetworkPhoto>
+    fun getFolderPhotos(folderId: Long): PagingSource<Int, NetworkPhotoThumbnail>
 
 
     @Query(
-        """SELECT *,
+        """SELECT id, timeCreated, thumbHash, name,
               CAST(strftime('%Y', 'now') AS INTEGER) - CAST(strftime('%Y', datetime(network_photo.timeCreated, 'unixepoch')) AS INTEGER) AS yearOffset
         FROM network_photo
         WHERE CASE

@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -44,8 +45,12 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.paging.compose.LazyPagingItems
+import androidx.window.layout.WindowMetricsCalculator
+import coil3.size.Size
 import kotlinx.coroutines.delay
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
@@ -57,7 +62,9 @@ import net.theluckycoder.familyphotos.core.data.model.Photo
 import net.theluckycoder.familyphotos.core.data.model.isVideo
 import net.theluckycoder.familyphotos.ui.LocalOpeningPhotoId
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
+import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
 import net.theluckycoder.familyphotos.utils.buildDateString
+import kotlin.math.ceil
 import kotlin.time.Duration.Companion.milliseconds
 
 private val PORTRAIT_ZOOM_LEVELS = intArrayOf(4, 5, 7)
@@ -93,7 +100,6 @@ fun <T : Photo> PhotosList(
     var showMonthOverlay by remember { mutableStateOf(false) }
     val selectedPhotoIds = remember { mutableStateSetOf<Long>() }
     val isThumbDragging = remember { mutableStateOf(false) }
-
     val hasSelection = remember { derivedStateOf { selectedPhotoIds.isNotEmpty() } }
 
     BackHandler(enabled = hasSelection.value) {
@@ -112,6 +118,7 @@ fun <T : Photo> PhotosList(
     }
 
     val columnCount = getZoomColumnCount(appliedZoomIndex)
+    val coilImageSize = getCoilImageSize(columnCount)
 
     val photosModifier = Modifier
         .fillMaxWidth()
@@ -131,6 +138,9 @@ fun <T : Photo> PhotosList(
         state = gridState,
         modifier = Modifier
             .fillMaxSize()
+            .then(with(LocalSharedTransitionScope.current) {
+                Modifier.skipToLookaheadSize(enabled = { true })
+            })
             .detectZoomIn(
                 zoomIndex = zoomIndex,
                 maxZoomIndex = MAX_ZOOM_LEVEL_INDEX,
@@ -193,6 +203,7 @@ fun <T : Photo> PhotosList(
                             photo = photo,
                             inSelectionMode = hasSelection.value,
                             selectedPhotoIds = selectedPhotoIds,
+                            requestedPhotoSize = coilImageSize,
                             openPhoto = {
                                 openingPhotoIdState.value = photo.id
                                 openPhoto(pagingIndex)
@@ -341,7 +352,8 @@ fun PhotoListItem(
     photo: Photo,
     inSelectionMode: Boolean,
     selectedPhotoIds: SnapshotStateSet<Long>,
-    openPhoto: (id: Long) -> Unit
+    openPhoto: (id: Long) -> Unit,
+    requestedPhotoSize: Size? = null,
 ) {
     val isVideo = remember(photo.id) { photo.isVideo }
     val selected by remember(photo.id) { derivedStateOf { selectedPhotoIds.contains(photo.id) } }
@@ -357,6 +369,7 @@ fun PhotoListItem(
             photo = photo,
             preview = true,
             contentScale = ContentScale.Crop,
+            requestedPhotoSize = requestedPhotoSize,
         )
 
         if (isVideo) {
@@ -394,4 +407,27 @@ private fun scrollToGridIndex(
     val offset = -(viewportHeight * SCROLL_TARGET_POSITION).toInt()
 
     gridState.requestScrollToItem(gridIndex, offset)
+}
+
+@Composable
+private fun getCoilImageSize(columnCount: Int): Size {
+    val density = LocalDensity.current
+    val configuration = LocalConfiguration.current
+    val context = LocalContext.current
+    return remember(configuration, density, columnCount) {
+        with(density) {
+            val windowMetrics = WindowMetricsCalculator.getOrCreate()
+                .computeCurrentWindowMetrics(context)
+            val windowWidthPx = windowMetrics.bounds.width()
+
+            val rawItemPx = windowWidthPx / columnCount
+            val px = rawItemPx.roundUpTo64()
+            Size(px, px)
+        }
+    }
+}
+
+private fun Int.roundUpTo64(): Int {
+    if (this <= 0) return 64
+    return (ceil(this.toDouble() / 64.0) * 64).toInt()
 }

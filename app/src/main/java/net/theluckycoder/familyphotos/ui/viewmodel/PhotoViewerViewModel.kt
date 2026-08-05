@@ -43,17 +43,21 @@ class PhotoViewerViewModel @Inject constructor(
     fun isNetworkPhotoFavorite(photoId: Long): Flow<Boolean> =
         photosRepository.isNetworkPhotoFavorite(photoId)
 
-    fun updateFavorite(photo: NetworkPhoto, add: Boolean) {
+    fun updateFavorite(photoId: Long, add: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
+            val photo = photosRepository.getNetworkPhoto(photoId) ?: return@launch
             serverRepository.updateFavorite(photo, add)
         }
     }
 
-    fun getEquivalentLocalUriFlow(photo: NetworkPhoto): Flow<Uri?> =
-        flow { photosRepository.getLocalPhotoFromNetwork(photo.id)?.uri }
+    suspend fun getNetworkPhoto(photoId: Long): NetworkPhoto? =
+        photosRepository.getNetworkPhoto(photoId)
 
-    suspend fun getEquivalentLocalUri(photo: NetworkPhoto): Uri? =
-         photosRepository.getLocalPhotoFromNetwork(photo.id)?.uri
+    fun getEquivalentLocalUriFlow(photoId: Long): Flow<Uri?> =
+        flow { emit(photosRepository.getLocalPhotoFromNetwork(photoId)?.uri) }
+
+    suspend fun getEquivalentLocalUri(photoId: Long): Uri? =
+        photosRepository.getLocalPhotoFromNetwork(photoId)?.uri
 
     suspend fun getExifData(photo: NetworkPhoto): ExifData? = withContext(Dispatchers.IO) {
         serverRepository.getExifData(photo)
