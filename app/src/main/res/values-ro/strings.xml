@@ -59,8 +59,10 @@
 
     <!-- Folders -->
     <string name="folder_name">Nume folder</string>
-    <string name="ascending">Crescător</string>
-    <string name="descending">Descrescător</string>
+    <string name="sort_name_asc">Nume (A la Z)</string>
+    <string name="sort_name_desc">Nume (Z la A)</string>
+    <string name="sort_date_desc">Dată (Cele mai noi)</string>
+    <string name="sort_count_desc">Număr poze (Cele mai multe)</string>
 
     <!-- Duplicates -->
     <string name="duplicates_which_to_keep">Pe care îl păstrezi?</string>

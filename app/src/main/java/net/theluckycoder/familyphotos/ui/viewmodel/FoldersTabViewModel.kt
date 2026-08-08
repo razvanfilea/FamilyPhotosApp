@@ -55,14 +55,14 @@ class FoldersTabViewModel @Inject constructor(
         }
     }
 
-    val localFolders = settingsStore.showFoldersAscending
+    val localFolders = settingsStore.localFolderSortOrder
         .flatMapLatest { foldersRepository.localFoldersFlow(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     val networkFolders: StateFlow<List<NetworkFolder>> = settingsStore.photoType
-        .combine(settingsStore.showFoldersAscending) { type, ascending -> type to ascending }
-        .flatMapLatest { (type, ascending) ->
-            foldersRepository.networkFoldersFlow(type, ascending)
+        .combine(settingsStore.networkFolderSortOrder) { type, sortOrder -> type to sortOrder }
+        .flatMapLatest { (type, sortOrder) ->
+            foldersRepository.networkFoldersFlow(type, sortOrder)
         }.map {
             it
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())

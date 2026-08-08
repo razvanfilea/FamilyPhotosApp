@@ -41,7 +41,7 @@ internal interface NetworkFoldersDao {
                agg.coverPhotoId, agg.photoCount
         FROM network_folder nf
         INNER JOIN (
-            SELECT folderId, COUNT(*) AS photoCount, MAX(timeCreated),
+            SELECT folderId, COUNT(*) AS photoCount, MAX(timeCreated) AS maxTime,
                    id AS coverPhotoId
             FROM network_photo
             WHERE trashedOn IS NULL
@@ -52,13 +52,16 @@ internal interface NetworkFoldersDao {
             GROUP BY folderId
         ) agg ON agg.folderId = nf.id
         ORDER BY
-            CASE WHEN :ascending <> 0 THEN nf.name END ASC,
-            CASE WHEN :ascending = 0 THEN nf.name END DESC
+            CASE WHEN :sortOrder = 0 THEN agg.maxTime END DESC,
+            CASE WHEN :sortOrder = 1 THEN nf.name END ASC,
+            CASE WHEN :sortOrder = 2 THEN nf.name END DESC,
+            CASE WHEN :sortOrder = 3 THEN agg.photoCount END DESC,
+            nf.name ASC
         """
     )
     fun getFolders(
         photoType: PhotoType,
-        ascending: Boolean,
+        sortOrder: Int,
         currentUserId: String
     ): Flow<List<NetworkFolder>>
 

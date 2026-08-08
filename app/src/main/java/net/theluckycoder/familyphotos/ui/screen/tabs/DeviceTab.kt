@@ -28,17 +28,23 @@ import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.composables.FoldersGridList
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersTabViewModel
 
+import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
+
 @Composable
 fun DeviceTab(foldersTabViewModel: FoldersTabViewModel) {
     val backStack = LocalNavBackStack.current
     val folders by foldersTabViewModel.localFolders.collectAsState()
     val backupFolders by foldersTabViewModel.backupFolders.collectAsState()
+    val settingsDataStore = LocalSettingsDataStore.current
+    val sortOrder by settingsDataStore.localFolderSortOrder.collectAsState()
 
     FoldersGridList(
         folders = folders,
         onFolderClick = { folder ->
             backStack.add(FolderNav(FolderNav.Source.Local(folder.name, folder.count)))
         },
+        sortOrder = sortOrder,
+        onSortOrderChange = settingsDataStore::setLocalFolderSortOrder,
         isBackupEnabled = { folder -> folder.name in backupFolders },
         extraHeader = {
             val pendingBackupCount by foldersTabViewModel.pendingBackupCount.collectAsState()

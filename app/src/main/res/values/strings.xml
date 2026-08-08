@@ -62,8 +62,10 @@
 
     <!-- Folders -->
     <string name="folder_name">Folder Name</string>
-    <string name="ascending">Ascending</string>
-    <string name="descending">Descending</string>
+    <string name="sort_name_asc">Name (A to Z)</string>
+    <string name="sort_name_desc">Name (Z to A)</string>
+    <string name="sort_date_desc">Date (Newest)</string>
+    <string name="sort_count_desc">Photo Count (Most)</string>
 
     <!-- Duplicates -->
     <string name="duplicates_which_to_keep">Which do you want to keep?</string>

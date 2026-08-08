@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.kotlin.parcelize) apply false
-    id("com.github.ben-manes.versions") version "0.60.0"
+    id("io.github.ben-manes.versions") version "0.60.0"
     alias(libs.plugins.android.test) apply false
     alias(libs.plugins.android.baselineprofile) apply false
 }

@@ -4,10 +4,12 @@ import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -30,6 +32,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -52,6 +57,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
@@ -71,9 +77,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.core.data.model.FolderSortOrder
 import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.core.data.model.Photo
 import net.theluckycoder.familyphotos.core.data.model.PhotoFolder
+import net.theluckycoder.familyphotos.core.data.model.PhotoType
+import net.theluckycoder.familyphotos.core.data.model.getFolderType
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.utils.normalize
 
@@ -81,13 +90,14 @@ import net.theluckycoder.familyphotos.utils.normalize
 fun <T : PhotoFolder> FoldersGridList(
     folders: List<T>,
     onFolderClick: (T) -> Unit,
+    sortOrder: FolderSortOrder,
+    onSortOrderChange: (FolderSortOrder) -> Unit,
     currentUserId: String? = null,
     isBackupEnabled: (T) -> Boolean = { false },
     extraHeader: @Composable ColumnScope.() -> Unit = {},
 ) {
     val gridState = rememberLazyGridState()
     val settingsDataStore = LocalSettingsDataStore.current
-    val sortAscending by settingsDataStore.showFoldersAscending.collectAsState()
     val showAsGrid by settingsDataStore.showFoldersAsGrid.collectAsState()
     var folderNameFilter by remember { mutableStateOf("") }
 
@@ -118,10 +128,8 @@ fun <T : PhotoFolder> FoldersGridList(
                 extraHeader()
 
                 SortButton(
-                    sortAscending = sortAscending,
-                    onChangeSort = {
-                        settingsDataStore.setShowFoldersAscending(!sortAscending)
-                    },
+                    sortOrder = sortOrder,
+                    onChangeSortOrder = onSortOrderChange,
                     showAsGrid = showAsGrid,
                     onShowAsGrid = settingsDataStore::setShowFoldersAsGrid,
                     modifier = Modifier
@@ -140,11 +148,13 @@ fun <T : PhotoFolder> FoldersGridList(
 
             val photosCount =
                 pluralStringResource(R.plurals.items_photos, folder.count, folder.count)
-            val detailsText = if (folder is NetworkFolder) {
-                val ownerLabel = when {
-                    folder.userId == null -> stringResource(R.string.photo_type_family)
-                    folder.userId == currentUserId -> stringResource(R.string.photo_type_personal)
-                    else -> stringResource(R.string.photo_type_shared)
+            val folderType = folder.getFolderType(currentUserId)
+
+            val detailsText = if (!showAsGrid && folderType != PhotoType.All) {
+                val ownerLabel = when (folderType) {
+                    PhotoType.Family -> stringResource(R.string.photo_type_family)
+                    PhotoType.Personal -> stringResource(R.string.photo_type_personal)
+                    PhotoType.Shared -> stringResource(R.string.photo_type_shared)
                 }
                 "$photosCount • $ownerLabel"
             } else {
@@ -160,6 +170,7 @@ fun <T : PhotoFolder> FoldersGridList(
                     detailsText = detailsText,
                     onClick = { onFolderClick(folder) },
                     showBackupIndicator = backupEnabled,
+                    folderType = folderType,
                 )
             } else {
                 ListFolderPreviewItem(
@@ -169,6 +180,7 @@ fun <T : PhotoFolder> FoldersGridList(
                     detailsText = detailsText,
                     onClick = { onFolderClick(folder) },
                     showBackupIndicator = backupEnabled,
+                    folderType = folderType,
                 )
             }
         }
@@ -252,24 +264,69 @@ private fun FolderFilterTextField(query: String, onSearch: (String) -> Unit) {
 
 @Composable
 private fun SortButton(
-    sortAscending: Boolean,
-    onChangeSort: () -> Unit,
+    sortOrder: FolderSortOrder,
+    onChangeSortOrder: (FolderSortOrder) -> Unit,
     showAsGrid: Boolean,
     onShowAsGrid: (Boolean) -> Unit,
     modifier: Modifier = Modifier
-) = Row(modifier = modifier, horizontalArrangement = Arrangement.SpaceBetween) {
-    TextButton(
-        onClick = onChangeSort
-    ) {
-        Icon(
-            painterResource(R.drawable.ic_sort_ascending),
-            contentDescription = null
-        )
-        Spacer(Modifier.width(4.dp))
-        Text(
-            stringResource(if (sortAscending) R.string.ascending else R.string.descending),
-            fontSize = 14.sp
-        )
+) = Row(
+    modifier = modifier,
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    val currentLabelRes = when (sortOrder) {
+        FolderSortOrder.DATE_DESC -> R.string.sort_date_desc
+        FolderSortOrder.NAME_ASC -> R.string.sort_name_asc
+        FolderSortOrder.NAME_DESC -> R.string.sort_name_desc
+        FolderSortOrder.COUNT_DESC -> R.string.sort_count_desc
+    }
+
+    Box {
+        TextButton(
+            onClick = { expanded = true }
+        ) {
+            Icon(
+                painterResource(R.drawable.ic_sort_ascending),
+                contentDescription = null
+            )
+            Spacer(Modifier.width(4.dp))
+            Text(
+                stringResource(currentLabelRes),
+                fontSize = 14.sp
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            FolderSortOrder.entries.forEach { option ->
+                val textRes = when (option) {
+                    FolderSortOrder.NAME_ASC -> R.string.sort_name_asc
+                    FolderSortOrder.NAME_DESC -> R.string.sort_name_desc
+                    FolderSortOrder.DATE_DESC -> R.string.sort_date_desc
+                    FolderSortOrder.COUNT_DESC -> R.string.sort_count_desc
+                }
+                DropdownMenuItem(
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(option == sortOrder, null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                stringResource(textRes),
+                                fontWeight = if (option == sortOrder) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    },
+                    onClick = {
+                        expanded = false
+                        onChangeSortOrder(option)
+                    }
+                )
+            }
+        }
     }
 
     IconButton(onClick = { onShowAsGrid(!showAsGrid) }) {
@@ -288,6 +345,7 @@ private fun GridFolderPreviewItem(
     detailsText: String?,
     onClick: () -> Unit,
     showBackupIndicator: Boolean = false,
+    folderType: PhotoType? = null,
 ) = Column(modifier = modifier) {
     Box(
         Modifier
@@ -303,17 +361,10 @@ private fun GridFolderPreviewItem(
             contentScale = ContentScale.Crop,
         )
 
-        if (showBackupIndicator) {
-            Icon(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .size(36.dp)
-                    .padding(8.dp),
-                painter = painterResource(R.drawable.ic_cloud_done_filled),
-                tint = Color.White,
-                contentDescription = null
-            )
-        }
+        FolderStatusIndicators(
+            folderType = folderType,
+            showBackupIndicator = showBackupIndicator
+        )
     }
 
     Text(
@@ -322,7 +373,7 @@ private fun GridFolderPreviewItem(
             .fillMaxWidth(),
         text = folderName,
         textAlign = TextAlign.Center,
-        fontSize = 14.sp,
+        fontSize = 13.5.sp,
         fontWeight = FontWeight.Medium
     )
 
@@ -346,32 +397,30 @@ private fun ListFolderPreviewItem(
     detailsText: String?,
     onClick: () -> Unit,
     showBackupIndicator: Boolean = false,
+    folderType: PhotoType? = null,
 ) = Row(
     modifier = modifier.clickable(onClick = onClick),
     verticalAlignment = Alignment.CenterVertically,
 ) {
-    Box {
+    Box(
+        modifier = Modifier
+            .size(72.dp)
+            .clip(RoundedCornerShape(18.dp))
+    ) {
         CoilPhoto(
             photo = photo,
-            modifier = Modifier
-                .size(72.dp)
-                .clip(RoundedCornerShape(18.dp)),
+            modifier = Modifier.fillMaxSize(),
             preview = true,
             contentScale = ContentScale.Crop,
         )
 
-        if (showBackupIndicator) {
-            Icon(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .size(36.dp)
-                    .padding(8.dp),
-                painter = painterResource(R.drawable.ic_cloud_done_filled),
-                tint = Color.White,
-                contentDescription = null
-            )
-        }
+        FolderStatusIndicators(
+            folderType = folderType,
+            showBackupIndicator = showBackupIndicator
+        )
     }
+
+    Spacer(Modifier.width(4.dp))
 
     Column(
         Modifier
@@ -391,6 +440,66 @@ private fun ListFolderPreviewItem(
                 modifier = Modifier.padding(bottom = 8.dp),
                 text = detailsText,
                 fontSize = 14.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.FolderStatusIndicators(
+    folderType: PhotoType?,
+    showBackupIndicator: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    if (folderType == null && !showBackupIndicator) return
+
+    val folderIconRes = when (folderType) {
+        null, PhotoType.All -> null
+        PhotoType.Personal -> R.drawable.ic_person_filled
+        PhotoType.Family -> R.drawable.ic_family_filled
+        PhotoType.Shared -> R.drawable.ic_action_share
+    }
+
+    if (folderIconRes == null && !showBackupIndicator) return
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(0.60f)
+            .align(Alignment.BottomCenter)
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Transparent,
+                        Color.Black.copy(alpha = 0.40f),
+                        Color.Black.copy(alpha = 0.85f)
+                    )
+                )
+            )
+    )
+
+    Row(
+        modifier = modifier
+            .align(Alignment.BottomEnd)
+            .padding(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        if (folderIconRes != null) {
+            Icon(
+                painter = painterResource(folderIconRes),
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        if (showBackupIndicator) {
+            Icon(
+                painter = painterResource(R.drawable.ic_cloud_done_filled),
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
             )
         }
     }

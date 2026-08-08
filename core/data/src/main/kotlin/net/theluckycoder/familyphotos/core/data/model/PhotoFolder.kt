@@ -4,12 +4,25 @@ import android.net.Uri
 import androidx.compose.runtime.Immutable
 import androidx.room.ColumnInfo
 
-abstract class PhotoFolder {
+sealed class PhotoFolder {
     abstract val name: String
     abstract val coverPhotoId: Long
     abstract val count: Int
 
     abstract fun getCoverPhoto(): Photo
+}
+
+fun PhotoFolder.getFolderType(currentUserId: String?): PhotoType {
+    return when (this) {
+        is NetworkFolder ->
+            when {
+                userId == null -> PhotoType.Family
+                userId == currentUserId -> PhotoType.Personal
+                else -> PhotoType.Shared
+            }
+
+        is LocalFolder -> PhotoType.All
+    }
 }
 
 @Immutable

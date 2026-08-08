@@ -48,9 +48,9 @@ class UploadPhotosViewModel @Inject constructor(
     val currentUser: StateFlow<UserDto?> = userDataStore.user
 
     val networkFolders: StateFlow<List<NetworkFolder>> =
-        settingsStore.photoType.combine(settingsStore.showFoldersAscending) { type, ascending -> type to ascending }
-            .flatMapLatest { (type, ascending) ->
-                foldersRepository.networkFoldersFlow(type, ascending)
+        settingsStore.photoType.combine(settingsStore.networkFolderSortOrder) { type, sortOrder -> type to sortOrder }
+            .flatMapLatest { (type, sortOrder) ->
+                foldersRepository.networkFoldersFlow(type, sortOrder)
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     fun getLocalPhotos(photoIds: LongArray): Deferred<List<LocalPhoto>> =

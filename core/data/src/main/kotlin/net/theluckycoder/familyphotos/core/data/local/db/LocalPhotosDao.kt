@@ -26,10 +26,13 @@ internal interface LocalPhotosDao {
         SELECT folder, id, uri, COUNT(id) FROM local_photo
         WHERE folder <> '' GROUP BY folder HAVING timeCreated = MAX(timeCreated)
         ORDER BY
-            CASE WHEN :ascending <> 0 THEN folder END ASC,
-            CASE WHEN :ascending = 0 THEN folder END DESC"""
+            CASE WHEN :sortOrder = 0 THEN MAX(timeCreated) END DESC,
+            CASE WHEN :sortOrder = 1 THEN folder END ASC,
+            CASE WHEN :sortOrder = 2 THEN folder END DESC,
+            CASE WHEN :sortOrder = 3 THEN COUNT(id) END DESC,
+            folder ASC"""
     )
-    fun getFolders(ascending: Boolean): Flow<List<LocalFolder>>
+    fun getFolders(sortOrder: Int): Flow<List<LocalFolder>>
 
     @Query("SELECT * FROM local_photo WHERE local_photo.folder = :folder ORDER BY local_photo.timeCreated DESC LIMIT :count")
     fun getFolderPhotos(folder: String, count: Int): List<LocalPhoto>

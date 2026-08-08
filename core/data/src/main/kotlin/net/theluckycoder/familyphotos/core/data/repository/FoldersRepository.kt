@@ -26,6 +26,7 @@ import net.theluckycoder.familyphotos.core.data.local.db.LocalFolderBackupDao
 import net.theluckycoder.familyphotos.core.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkFoldersDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkPhotosDao
+import net.theluckycoder.familyphotos.core.data.model.FolderSortOrder
 import net.theluckycoder.familyphotos.core.data.model.LocalFolder
 import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
@@ -52,11 +53,11 @@ class FoldersRepository @Inject internal constructor(
         private const val TAG = "MediaStoreObserver"
     }
 
-    fun localFoldersFlow(ascending: Boolean): Flow<List<LocalFolder>> =
-        localPhotosDao.getFolders(ascending)
+    fun localFoldersFlow(sortOrder: FolderSortOrder): Flow<List<LocalFolder>> =
+        localPhotosDao.getFolders(sortOrder.id)
 
-    fun networkFoldersFlow(photoType: PhotoType, ascending: Boolean): Flow<List<NetworkFolder>> =
-        networkFoldersDao.getFolders(photoType, ascending, currentUserId)
+    fun networkFoldersFlow(photoType: PhotoType, sortOrder: FolderSortOrder): Flow<List<NetworkFolder>> =
+        networkFoldersDao.getFolders(photoType, sortOrder.id, currentUserId)
 
     fun localPhotosFromFolder(folder: String, count: Int) =
         localPhotosDao.getFolderPhotos(folder, count)

@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -18,6 +19,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,12 +30,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,35 +50,40 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.flow.emptyFlow
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
+import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.model.SharedFolderAccess
 import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolderEntity
 import net.theluckycoder.familyphotos.core.data.model.db.isPublic
+import net.theluckycoder.familyphotos.core.data.model.getFolderType
 import net.theluckycoder.familyphotos.core.data.model.network.UserDto
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
 import net.theluckycoder.familyphotos.ui.composables.FolderNameDialog
-import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
 import net.theluckycoder.familyphotos.ui.composables.PhotosList
 import net.theluckycoder.familyphotos.ui.viewmodel.FolderScreenViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersTabViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FolderScreen(
     source: FolderNav.Source,
     foldersTabViewModel: FoldersTabViewModel,
     mainViewModel: MainViewModel,
     folderScreenViewModel: FolderScreenViewModel = viewModel(),
-) {
+) = Surface(Modifier.fillMaxSize()) {
     val lazyPagingItems = folderScreenViewModel.photosPager.collectAsLazyPagingItems()
 
     val gridState by folderScreenViewModel.photoListState.collectAsState()
@@ -105,79 +114,201 @@ fun FolderScreen(
             UserDto("", "")
         )
 
-    Scaffold { paddingValues ->
-        PhotosList(
-            gridState = gridState,
-            photos = lazyPagingItems,
-            mainViewModel = mainViewModel,
-            timelineLayout = timelineLayout,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = paddingValues.calculateBottomPadding()),
-            openPhoto = {
-                val viewerSource = when (source) {
-                    FolderNav.Source.Favorites -> PhotoViewerFlowNav.Source.Favorites
-                    is FolderNav.Source.Local -> PhotoViewerFlowNav.Source.Local
-                    is FolderNav.Source.Network -> PhotoViewerFlowNav.Source.Network
-                }
-                backStack.add(PhotoViewerFlowNav(it, viewerSource))
-            },
-            headerContent = {
-                NavBackTopAppBar(
-                    navIconOnClick = backStack::removeLastOrNull,
-                    title = when (source) {
-                        FolderNav.Source.Favorites -> stringResource(R.string.title_favorites)
-                        is FolderNav.Source.Network -> networkFolderState.value?.name
-                            ?: source.folderName
+    val folderSharesState = remember(networkFolderState.value?.id) {
+        val id = networkFolderState.value?.id
+        if (id != null) folderScreenViewModel.getFolderShares(id) else emptyFlow()
+    }.collectAsState(SharedFolderAccess.EMPTY)
 
-                        is FolderNav.Source.Local -> source.name
-                    },
-                    subtitle = timelineLayout.totalPhotoCount.takeIf { it != 0 }?.toString(),
-                    actions = {
-                        val networkFolder = networkFolderState.value
-                        if (source is FolderNav.Source.Network && networkFolder != null) {
-                            IconButton(onClick = {
-                                showSharingBottomSheet = true
-                            }) {
-                                Icon(
-                                    painterResource(R.drawable.ic_action_share),
-                                    contentDescription = null
-                                )
+    val titleText = when (source) {
+        FolderNav.Source.Favorites -> stringResource(R.string.title_favorites)
+        is FolderNav.Source.Network -> networkFolderState.value?.name ?: source.folderName
+        is FolderNav.Source.Local -> source.name
+    }
+
+    val folderType = remember(networkFolderState.value, currentUser.value?.userId) {
+        val netFolder = networkFolderState.value
+        if (netFolder != null) {
+            val domainFolder = NetworkFolder(
+                id = netFolder.id,
+                name = netFolder.name,
+                coverPhotoId = 0L,
+                userId = netFolder.ownerId,
+                count = 0
+            )
+            domainFolder.getFolderType(currentUser.value?.userId)
+        } else null
+    }
+
+    val sharedWithCount = folderSharesState.value.sharedWith.size
+
+    val badgeData: Pair<String, Int>? = remember(source, folderType, sharedWithCount) {
+        when {
+            source is FolderNav.Source.Favorites -> Pair("Favorites", R.drawable.ic_star_filled)
+            source is FolderNav.Source.Local -> Pair("Local Device", R.drawable.tab_device_outline)
+            folderType == PhotoType.Family -> Pair("Public", R.drawable.ic_family_filled)
+            folderType == PhotoType.Personal && sharedWithCount > 0 -> Pair(
+                "Shared ($sharedWithCount)",
+                R.drawable.ic_action_share
+            )
+
+            folderType == PhotoType.Personal -> Pair("Personal", R.drawable.ic_person_filled)
+            folderType == PhotoType.Shared -> Pair("Shared with me", R.drawable.ic_action_share)
+            else -> null
+        }
+    }
+
+    PhotosList(
+        gridState = gridState,
+        photos = lazyPagingItems,
+        mainViewModel = mainViewModel,
+        timelineLayout = timelineLayout,
+        modifier = Modifier.fillMaxSize(),
+        openPhoto = {
+            val viewerSource = when (source) {
+                FolderNav.Source.Favorites -> PhotoViewerFlowNav.Source.Favorites
+                is FolderNav.Source.Local -> PhotoViewerFlowNav.Source.Local
+                is FolderNav.Source.Network -> PhotoViewerFlowNav.Source.Network
+            }
+            backStack.add(PhotoViewerFlowNav(it, viewerSource))
+        },
+        headerContent = {
+            MediumTopAppBar(
+                navigationIcon = {
+                    IconButton(onClick = backStack::removeLastOrNull) {
+                        Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = null)
+                    }
+                },
+                title = {
+                    Column {
+                        Text(
+                            text = titleText,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) {
+                            if (timelineLayout.totalPhotoCount > 0) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                ) {
+                                    Text(
+                                        text = pluralStringResource(
+                                            R.plurals.items_photos,
+                                            timelineLayout.totalPhotoCount,
+                                            timelineLayout.totalPhotoCount
+                                        ),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        modifier = Modifier.padding(
+                                            horizontal = 10.dp,
+                                            vertical = 3.dp
+                                        ),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
 
-                            IconButton(onClick = {
-                                showRenameFolderDialog = true
-                            }) {
-                                Icon(
-                                    painterResource(R.drawable.ic_action_edit),
-                                    contentDescription = null
-                                )
+                            badgeData?.let { (label, iconRes) ->
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(
+                                            horizontal = 10.dp,
+                                            vertical = 3.dp
+                                        )
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(iconRes),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(13.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = label,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            modifier = Modifier.padding(start = 4.dp),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
-                )
+                },
+                actions = {
+                    val networkFolder = networkFolderState.value
+                    if (source is FolderNav.Source.Network && networkFolder != null) {
+                        IconButton(onClick = {
+                            showSharingBottomSheet = true
+                        }) {
+                            Icon(
+                                painterResource(R.drawable.ic_action_share),
+                                contentDescription = null
+                            )
+                        }
 
-                if (source is FolderNav.Source.Local) {
-                    val backupEnabled by folderScreenViewModel.isLocalFolderBackupUp(source.name)
-                        .collectAsState(false)
+                        IconButton(onClick = {
+                            showRenameFolderDialog = true
+                        }) {
+                            Icon(
+                                painterResource(R.drawable.ic_action_edit),
+                                contentDescription = null
+                            )
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+            )
 
+            if (source is FolderNav.Source.Local) {
+                val backupEnabled by folderScreenViewModel.isLocalFolderBackupUp(source.name)
+                    .collectAsState(false)
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    onClick = {
+                        folderScreenViewModel.backupLocalFolder(
+                            source.name,
+                            !backupEnabled
+                        )
+                    }
+                ) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(onClick = {
-                                folderScreenViewModel.backupLocalFolder(
-                                    source.name,
-                                    !backupEnabled
-                                )
-                            })
-                            .padding(16.dp)
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Icon(
+                            painter = painterResource(
+                                if (backupEnabled) R.drawable.ic_cloud_done_filled
+                                else R.drawable.ic_cloud_off_outline
+                            ),
+                            contentDescription = null,
+                            tint = if (backupEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
+                        )
+
                         Text(
-                            stringResource(R.string.backup_title),
-                            Modifier
+                            text = stringResource(R.string.backup_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier
                                 .weight(1f)
-                                .padding(horizontal = 16.dp)
+                                .padding(horizontal = 12.dp)
                         )
 
                         Switch(
@@ -185,12 +316,10 @@ fun FolderScreen(
                             onCheckedChange = null
                         )
                     }
-
-                    HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 }
-            },
-        )
-    }
+            }
+        },
+    )
 
     val networkFolder = networkFolderState.value
     if (networkFolder != null) {

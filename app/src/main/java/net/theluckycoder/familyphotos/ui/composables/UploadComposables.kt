@@ -218,9 +218,13 @@ private fun UploadDialogContent(
     val hasFolderSelected =
         selectedChoice is UploadChoice.Folder || selectedChoice is UploadChoice.NewFolder
 
+    val sortOrder by settingsDataStore.networkFolderSortOrder.collectAsState()
+
     FoldersGridList(
         folders = if (hasFolderSelected) emptyList() else foldersList,
         onFolderClick = { onChoiceChange(UploadChoice.Folder(it.id)) },
+        sortOrder = sortOrder,
+        onSortOrderChange = settingsDataStore::setNetworkFolderSortOrder,
         currentUserId = currentUserId,
         extraHeader = {
             if (photosToShowcase.isNotEmpty()) {

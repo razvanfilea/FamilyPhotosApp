@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.core.data.di.DefaultCoroutineScope
+import net.theluckycoder.familyphotos.core.data.model.FolderSortOrder
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -43,10 +44,21 @@ class SettingsDataStore @Inject constructor(
     val cacheSizeMbFlow: Flow<Int> =
         settingsDataStore.data.map { it[CACHE_SIZE] ?: DEFAULT_CACHE_SIZE }.distinctUntilChanged()
 
-    val showFoldersAscending: StateFlow<Boolean> = settingsDataStore.data
-        .map { it[SHOW_FOLDERS_ASCENDING] != false }
+    val localFolderSortOrder: StateFlow<FolderSortOrder> = settingsDataStore.data
+        .map { prefs ->
+            prefs[LOCAL_FOLDERS_SORT_ORDER]?.let { FolderSortOrder.fromId(it) }
+                ?: if (prefs[SHOW_FOLDERS_ASCENDING] == false) FolderSortOrder.NAME_DESC else FolderSortOrder.NAME_ASC
+        }
         .distinctUntilChanged()
-        .stateIn(scope, SharingStarted.Eagerly, true)
+        .stateIn(scope, SharingStarted.Eagerly, FolderSortOrder.NAME_ASC)
+
+    val networkFolderSortOrder: StateFlow<FolderSortOrder> = settingsDataStore.data
+        .map { prefs ->
+            prefs[NETWORK_FOLDERS_SORT_ORDER]?.let { FolderSortOrder.fromId(it) }
+                ?: if (prefs[SHOW_FOLDERS_ASCENDING] == false) FolderSortOrder.NAME_DESC else FolderSortOrder.NAME_ASC
+        }
+        .distinctUntilChanged()
+        .stateIn(scope, SharingStarted.Eagerly, FolderSortOrder.NAME_ASC)
 
     val showFoldersAsGrid: StateFlow<Boolean> = settingsDataStore.data
         .map { it[SHOW_FOLDERS_AS_GRID] != false }
@@ -72,8 +84,12 @@ class SettingsDataStore @Inject constructor(
         settingsDataStore.edit { it[BACKUP_OVER_MOBILE_DATA] = value }
     }
 
-    fun setShowFoldersAscending(value: Boolean) = scope.launch {
-        settingsDataStore.edit { it[SHOW_FOLDERS_ASCENDING] = value }
+    fun setLocalFolderSortOrder(order: FolderSortOrder) = scope.launch {
+        settingsDataStore.edit { it[LOCAL_FOLDERS_SORT_ORDER] = order.id }
+    }
+
+    fun setNetworkFolderSortOrder(order: FolderSortOrder) = scope.launch {
+        settingsDataStore.edit { it[NETWORK_FOLDERS_SORT_ORDER] = order.id }
     }
 
     fun setShowFoldersAsGrid(value: Boolean) = scope.launch {
@@ -94,6 +110,8 @@ class SettingsDataStore @Inject constructor(
 
         val CACHE_SIZE = intPreferencesKey("cache_size")
         val SHOW_FOLDERS_ASCENDING = booleanPreferencesKey("show_folders_ascending")
+        val LOCAL_FOLDERS_SORT_ORDER = intPreferencesKey("local_folders_sort_order")
+        val NETWORK_FOLDERS_SORT_ORDER = intPreferencesKey("network_folders_sort_order")
         val SHOW_FOLDERS_AS_GRID = booleanPreferencesKey("show_folders_as_grid")
         val FOLDERS_FILTER_TYPE = intPreferencesKey("folders_filter_type")
         val PHOTOS_ZOOM_LEVEL = intPreferencesKey("photos_zoom_level")

@@ -18,12 +18,16 @@ fun NetworkFoldersTab(foldersTabViewModel: FoldersTabViewModel) {
     val backStack = LocalNavBackStack.current
     val folders by foldersTabViewModel.networkFolders.collectAsState()
     val currentUser by foldersTabViewModel.currentUser.collectAsState(null)
+    val settingsDataStore = LocalSettingsDataStore.current
+    val sortOrder by settingsDataStore.networkFolderSortOrder.collectAsState()
 
     FoldersGridList(
         folders = folders,
         onFolderClick = { folder ->
             backStack.add(FolderNav(FolderNav.Source.Network(folder.id, folder.name, folder.count)))
         },
+        sortOrder = sortOrder,
+        onSortOrderChange = settingsDataStore::setNetworkFolderSortOrder,
         currentUserId = currentUser?.userId,
         extraHeader = {
             val settingsDataStore = LocalSettingsDataStore.current
