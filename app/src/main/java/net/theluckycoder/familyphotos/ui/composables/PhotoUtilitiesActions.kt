@@ -101,7 +101,7 @@ fun RowScope.PhotoUtilitiesActions(
             photos = photos,
             isPermanent = false,
             onDismissRequest = { showDeleteDialogForPhotos = null },
-            onConfirmDelete = { list -> 
+            onConfirmDelete = { list ->
                 mainViewModel.trashNetworkPhotos(list.map { it.id }.toLongArray())
             },
             onPhotosDeleted = { selectedItems.clear() }

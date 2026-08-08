@@ -1,6 +1,7 @@
 package net.theluckycoder.familyphotos.ui.viewmodel
 
 import android.app.Application
+import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
@@ -10,10 +11,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import androidx.datastore.preferences.core.edit
-import kotlinx.coroutines.flow.map
 import net.theluckycoder.familyphotos.BuildConfig
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
@@ -34,7 +34,11 @@ class SettingsViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     val cacheSizeMb: StateFlow<Int> = settingsDataStore.cacheSizeMbFlow
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsDataStore.DEFAULT_CACHE_SIZE)
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            SettingsDataStore.DEFAULT_CACHE_SIZE
+        )
 
     private val _cacheUsageBytes = MutableStateFlow(0L)
     val cacheUsageBytes: StateFlow<Long> = _cacheUsageBytes.asStateFlow()

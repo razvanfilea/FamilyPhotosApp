@@ -2,6 +2,7 @@ package net.theluckycoder.familyphotos.core.data.repository
 
 import android.util.Log
 import dagger.Lazy
+import dagger.Reusable
 import net.theluckycoder.familyphotos.core.data.model.SharedFolderAccess
 import net.theluckycoder.familyphotos.core.data.model.network.CreateShareRequest
 import net.theluckycoder.familyphotos.core.data.model.network.SharedNetworkFolderDto
@@ -9,7 +10,6 @@ import net.theluckycoder.familyphotos.core.data.model.network.UpdateShareRequest
 import net.theluckycoder.familyphotos.core.data.model.network.UserDto
 import net.theluckycoder.familyphotos.core.data.remote.SharingService
 import net.theluckycoder.familyphotos.core.data.remote.UserService
-import dagger.Reusable
 import javax.inject.Inject
 
 @Reusable

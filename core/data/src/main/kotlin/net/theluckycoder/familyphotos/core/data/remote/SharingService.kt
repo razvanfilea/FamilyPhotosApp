@@ -23,7 +23,10 @@ internal interface SharingService {
     suspend fun createShare(@Body body: CreateShareRequest): Response<SharedNetworkFolderDto>
 
     @PUT("/api/sharing/{share_id}")
-    suspend fun updateShare(@Path("share_id") shareId: Long, @Body body: UpdateShareRequest): Response<SharedNetworkFolderDto>
+    suspend fun updateShare(
+        @Path("share_id") shareId: Long,
+        @Body body: UpdateShareRequest
+    ): Response<SharedNetworkFolderDto>
 
     @DELETE("/api/sharing/{share_id}")
     suspend fun revokeShare(@Path("share_id") shareId: Long): Response<Void>

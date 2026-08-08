@@ -22,7 +22,11 @@ enum class TopLevelTab(
         R.string.section_folders
     ),
     Device(R.drawable.tab_device_outline, R.drawable.tab_device_filled, R.string.section_device),
-    Utility(R.drawable.tab_utilities_outline, R.drawable.tab_utilities_filled, R.string.section_utilities),
+    Utility(
+        R.drawable.tab_utilities_outline,
+        R.drawable.tab_utilities_filled,
+        R.string.section_utilities
+    ),
 }
 
 @Serializable
@@ -36,7 +40,8 @@ data class FolderNav(
         data object Favorites : Source()
 
         @Serializable
-        data class Network(val folderId: Long, val folderName: String, val photoCount: Int = 0) : Source()
+        data class Network(val folderId: Long, val folderName: String, val photoCount: Int = 0) :
+            Source()
 
         @Serializable
         data class Local(val name: String, val photoCount: Int = 0) : Source()

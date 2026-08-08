@@ -11,7 +11,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -94,9 +93,17 @@ class UploadPhotosViewModel @Inject constructor(
 
             val result = serverRepository.movePhotos(photos = photos, uploadChoice = uploadChoice)
             if (result) {
-                snackbarManager.showPluralMessage(R.plurals.status_move_success, photos.size, UiMessageType.Success)
+                snackbarManager.showPluralMessage(
+                    R.plurals.status_move_success,
+                    photos.size,
+                    UiMessageType.Success
+                )
             } else {
-                snackbarManager.showPluralMessage(R.plurals.status_move_failure, photos.size, UiMessageType.Error)
+                snackbarManager.showPluralMessage(
+                    R.plurals.status_move_failure,
+                    photos.size,
+                    UiMessageType.Error
+                )
             }
         }
     }

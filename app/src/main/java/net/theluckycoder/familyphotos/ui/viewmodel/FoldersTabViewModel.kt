@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import dagger.hilt.android.lifecycle.HiltViewModel
-import androidx.paging.cachedIn
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,11 +20,10 @@ import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStor
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
+import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
 import net.theluckycoder.familyphotos.workers.BackupAndUploadWorker
 import net.theluckycoder.familyphotos.workers.enqueueBackupAndUploadWorker
 import javax.inject.Inject
-
-import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -92,7 +90,10 @@ class FoldersTabViewModel @Inject constructor(
                             0
                         ),
                         total = info.progress.getInt(BackupAndUploadWorker.KEY_PROGRESS_TOTAL, 0),
-                        currentPhotoPercent = info.progress.getInt(BackupAndUploadWorker.KEY_PROGRESS_PHOTO_PERCENT, 0)
+                        currentPhotoPercent = info.progress.getInt(
+                            BackupAndUploadWorker.KEY_PROGRESS_PHOTO_PERCENT,
+                            0
+                        )
                     )
                 }
             }

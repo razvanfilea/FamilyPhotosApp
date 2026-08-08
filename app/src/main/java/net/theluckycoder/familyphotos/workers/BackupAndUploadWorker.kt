@@ -54,7 +54,13 @@ class BackupAndUploadWorker @AssistedInject constructor(
             NotificationManager.IMPORTANCE_DEFAULT
         )
         NotificationManagerCompat.from(ctx).createNotificationChannel(channel)
-        setForeground(createForegroundInfo(ctx.getString(R.string.notification_backup_starting), 0, 0))
+        setForeground(
+            createForegroundInfo(
+                ctx.getString(R.string.notification_backup_starting),
+                0,
+                0
+            )
+        )
 
         // Refresh photos & folders state from server and local DB
         try {
@@ -102,9 +108,13 @@ class BackupAndUploadWorker @AssistedInject constructor(
                 val success = try {
                     var lastPercent = -1
                     var lastUpdate = 0L
-                    photoUploadRepository.uploadFile(localPhoto, entry.toUploadChoice()) { bytesWritten, totalBytes ->
+                    photoUploadRepository.uploadFile(
+                        localPhoto,
+                        entry.toUploadChoice()
+                    ) { bytesWritten, totalBytes ->
                         if (totalBytes > 0) {
-                            val percent = ((bytesWritten * 100) / totalBytes).toInt().coerceIn(0, 100)
+                            val percent =
+                                ((bytesWritten * 100) / totalBytes).toInt().coerceIn(0, 100)
                             val now = System.currentTimeMillis()
                             if (percent != lastPercent && (percent == 100 || now - lastUpdate >= 500L)) {
                                 lastPercent = percent
@@ -116,7 +126,11 @@ class BackupAndUploadWorker @AssistedInject constructor(
                                         .putInt(KEY_PROGRESS_PHOTO_PERCENT, percent)
                                         .build()
                                 )
-                                val text = ctx.getString(R.string.notification_backup_progress, successCount, total) + " ($percent%)"
+                                val text = ctx.getString(
+                                    R.string.notification_backup_progress,
+                                    successCount,
+                                    total
+                                ) + " ($percent%)"
                                 setForegroundAsync(createForegroundInfo(text, successCount, total))
                             }
                         }
@@ -256,10 +270,12 @@ class BackupAndUploadWorker @AssistedInject constructor(
                 R.string.notification_backup_finished_desc_only_failure,
                 failedCount
             )
+
             failedCount == 0 -> ctx.getString(
                 R.string.notification_backup_finished_desc_only_success,
                 successfulCount
             )
+
             else -> ctx.getString(
                 R.string.notification_backup_finished_desc,
                 successfulCount,

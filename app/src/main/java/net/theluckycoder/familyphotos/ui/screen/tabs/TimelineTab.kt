@@ -1,6 +1,5 @@
 package net.theluckycoder.familyphotos.ui.screen.tabs
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,7 +18,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -39,10 +37,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
-import net.theluckycoder.familyphotos.core.data.model.NetworkPhotoThumbnail
 import androidx.paging.compose.LazyPagingItems
+import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.core.data.model.NetworkPhotoThumbnail
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
@@ -80,7 +77,8 @@ fun TimelineTab(
             PhotoTypeChips(
                 selectedPhotoType = selectedPhotoType,
                 onChangePhotoType = settingsDataStore::setSelectedPhotoType,
-                modifier = Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                modifier = Modifier
+                    .windowInsetsPadding(TopAppBarDefaults.windowInsets)
                     .padding(8.dp),
             )
 

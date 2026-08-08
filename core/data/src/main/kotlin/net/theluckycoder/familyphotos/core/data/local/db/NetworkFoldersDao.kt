@@ -6,9 +6,9 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
+import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.model.db.FolderCursor
-import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolderEntity
 
 @Dao
@@ -56,7 +56,11 @@ internal interface NetworkFoldersDao {
             CASE WHEN :ascending = 0 THEN nf.name END DESC
         """
     )
-    fun getFolders(photoType: PhotoType, ascending: Boolean, currentUserId: String): Flow<List<NetworkFolder>>
+    fun getFolders(
+        photoType: PhotoType,
+        ascending: Boolean,
+        currentUserId: String
+    ): Flow<List<NetworkFolder>>
 
     @Transaction
     suspend fun replaceAll(folders: List<NetworkFolderEntity>) {

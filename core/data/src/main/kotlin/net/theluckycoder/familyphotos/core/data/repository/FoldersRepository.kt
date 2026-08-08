@@ -1,6 +1,5 @@
 package net.theluckycoder.familyphotos.core.data.repository
 
-import android.R.attr.value
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
@@ -16,23 +15,23 @@ import androidx.core.database.getLongOrNull
 import androidx.core.database.getStringOrNull
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.core.data.local.db.LocalFolderBackupDao
 import net.theluckycoder.familyphotos.core.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkFoldersDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkPhotosDao
-import net.theluckycoder.familyphotos.core.data.model.db.LocalFolderToBackup
-import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.model.LocalFolder
 import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
-import net.theluckycoder.familyphotos.core.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
+import net.theluckycoder.familyphotos.core.data.model.PhotoType
+import net.theluckycoder.familyphotos.core.data.model.db.LocalFolderToBackup
+import net.theluckycoder.familyphotos.core.data.model.db.MonthSummary
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime

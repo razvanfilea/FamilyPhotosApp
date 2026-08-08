@@ -1,15 +1,14 @@
 package net.theluckycoder.familyphotos.core.data.repository
 
-import android.R.attr.value
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.core.data.local.db.FavoritePhotosDao
 import net.theluckycoder.familyphotos.core.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkPhotosDao
-import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhotoThumbnail
+import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import javax.inject.Inject
 
 class PhotosRepository @Inject internal constructor(
@@ -32,10 +31,11 @@ class PhotosRepository @Inject internal constructor(
         localPhotosDao.findByNetworkId(networkPhotoId)
 
     fun getMemories(photoType: PhotoType): Flow<Map<Int, List<NetworkPhotoThumbnail>>> =
-        networkPhotosDao.getPhotosGroupedByYearsAgo(photoType, currentUserId).map { photosWithOffset ->
-            photosWithOffset.groupBy { it.yearOffset }
-                .mapValues { entry -> entry.value.map { it.photo } }
-        }
+        networkPhotosDao.getPhotosGroupedByYearsAgo(photoType, currentUserId)
+            .map { photosWithOffset ->
+                photosWithOffset.groupBy { it.yearOffset }
+                    .mapValues { entry -> entry.value.map { it.photo } }
+            }
 
     suspend fun removeNetworkReference(photo: NetworkPhoto) {
         getLocalPhotoFromNetwork(photo.id)?.let { localPhoto ->
@@ -43,7 +43,8 @@ class PhotosRepository @Inject internal constructor(
         }
     }
 
-    fun getAllPhotosPaged(photoType: PhotoType) = networkPhotosDao.getPhotosPaged(photoType, currentUserId)
+    fun getAllPhotosPaged(photoType: PhotoType) =
+        networkPhotosDao.getPhotosPaged(photoType, currentUserId)
 
     fun getFavoritePhotosPaged() = favoritePhotosDao.getFavoritePhotosPaged()
 
@@ -53,9 +54,11 @@ class PhotosRepository @Inject internal constructor(
 
     fun getTrashedPhotos() = networkPhotosDao.getTrashedPhotos()
 
-    fun getMonthSummaries(photoType: PhotoType) = networkPhotosDao.getMonthSummaries(photoType, currentUserId)
+    fun getMonthSummaries(photoType: PhotoType) =
+        networkPhotosDao.getMonthSummaries(photoType, currentUserId)
 
     fun getPhotoStatistics() = networkPhotosDao.getPhotoStatistics(currentUserId)
 
-    fun getLargePhotos(minSizeBytes: Long = 52_428_800L) = networkPhotosDao.getLargePhotos(minSizeBytes)
+    fun getLargePhotos(minSizeBytes: Long = 52_428_800L) =
+        networkPhotosDao.getLargePhotos(minSizeBytes)
 }

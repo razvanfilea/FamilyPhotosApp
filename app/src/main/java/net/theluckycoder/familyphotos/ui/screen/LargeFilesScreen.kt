@@ -1,6 +1,7 @@
 package net.theluckycoder.familyphotos.ui.screen
 
 import android.content.res.Configuration
+import android.text.format.Formatter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -34,8 +36,6 @@ import net.theluckycoder.familyphotos.ui.PhotoViewerListNav
 import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
 import net.theluckycoder.familyphotos.ui.composables.PhotoListItem
 import net.theluckycoder.familyphotos.ui.viewmodel.UtilitiesViewModel
-import android.text.format.Formatter
-import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun LargeFilesScreen() {

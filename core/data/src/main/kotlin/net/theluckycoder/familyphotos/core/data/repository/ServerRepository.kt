@@ -1,6 +1,5 @@
 package net.theluckycoder.familyphotos.core.data.repository
 
-import android.R.attr.value
 import android.util.Log
 import dagger.Lazy
 import kotlinx.coroutines.async
@@ -9,12 +8,12 @@ import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.core.data.local.db.FavoritePhotosDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkFoldersDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkPhotosDao
-import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolderEntity
-import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.core.data.model.ExifData
+import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.core.data.model.UploadChoice
-import net.theluckycoder.familyphotos.core.data.model.network.toEntity
+import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolderEntity
 import net.theluckycoder.familyphotos.core.data.model.network.CreateFolderRequest
+import net.theluckycoder.familyphotos.core.data.model.network.toEntity
 import net.theluckycoder.familyphotos.core.data.remote.FolderService
 import net.theluckycoder.familyphotos.core.data.remote.PhotosService
 import net.theluckycoder.familyphotos.core.data.remote.SyncService

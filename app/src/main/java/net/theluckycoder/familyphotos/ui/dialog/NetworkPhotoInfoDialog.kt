@@ -47,7 +47,6 @@ import androidx.exifinterface.media.ExifInterface.TAG_GPS_LONGITUDE_REF
 import androidx.exifinterface.media.ExifInterface.TAG_IMAGE_LENGTH
 import androidx.exifinterface.media.ExifInterface.TAG_IMAGE_WIDTH
 import androidx.exifinterface.media.ExifInterface.TAG_LENS_MODEL
-import androidx.exifinterface.media.ExifInterface.TAG_MAKE
 import androidx.exifinterface.media.ExifInterface.TAG_MODEL
 import androidx.exifinterface.media.ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -58,7 +57,6 @@ import net.theluckycoder.familyphotos.core.data.model.isPublic
 import net.theluckycoder.familyphotos.core.data.model.isVideo
 import net.theluckycoder.familyphotos.ui.composables.photoDateText
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewerViewModel
-import java.text.DecimalFormat
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -180,7 +178,10 @@ fun NetworkPhotoInfoDialogContent(photo: NetworkPhoto) = Column(
             // 3. Folder & File Size
             val context = LocalContext.current
             val sizeText =
-                if (photo.fileSize != 0L) Formatter.formatShortFileSize(context, photo.fileSize) else null
+                if (photo.fileSize != 0L) Formatter.formatShortFileSize(
+                    context,
+                    photo.fileSize
+                ) else null
             DetailItem(
                 title = folderName ?: stringResource(R.string.photo_detail_no_folder),
                 summary = sizeText,

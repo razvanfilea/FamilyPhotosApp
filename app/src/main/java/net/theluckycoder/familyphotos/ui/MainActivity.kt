@@ -244,7 +244,10 @@ private val viewerExitTransitionSpec =
             scaleIn(initialScale = 0.96f, animationSpec = tween(150, easing = FastOutSlowInEasing)))
         .togetherWith(
             fadeOut(animationSpec = tween(150, easing = FastOutSlowInEasing)) +
-                    scaleOut(targetScale = 0.96f, animationSpec = tween(150, easing = FastOutSlowInEasing))
+                    scaleOut(
+                        targetScale = 0.96f,
+                        animationSpec = tween(150, easing = FastOutSlowInEasing)
+                    )
         )
 
 private val forwardSlideTransitionSpec =

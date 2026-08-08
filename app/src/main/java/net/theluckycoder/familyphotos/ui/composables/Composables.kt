@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -70,6 +69,9 @@ import kotlin.time.Instant
 private val PLACEHOLDER_COLOR = Color.DarkGray
 private val SELECTION_SCRIM_COLOR = Color.Black.copy(alpha = 0.4f)
 
+/**
+ * :param its reommended for this modifier to contain a size defintion of some sort, othersize the thumbhash might not render properly
+ */
 @Composable
 fun CoilPhoto(
     photo: Photo,
@@ -109,8 +111,8 @@ fun CoilPhoto(
         imageLoader = LocalImageLoader.current.get(),
         contentDescription = null,
         contentScale = contentScale,
-        modifier = placeholderModifier
-            .then(modifier),
+        modifier = modifier
+            .then(placeholderModifier),
         filterQuality = if (preview) FilterQuality.None else FilterQuality.Low,
         onState = { state ->
             if (state is AsyncImagePainter.State.Success) {
@@ -212,11 +214,11 @@ fun SelectablePhoto(
         content()
     }
 
-    val iconAlpha by animateFloatAsState(
-        targetValue = if (inSelectionMode) 1f else 0f,
-        label = "selectionIconAlpha"
-    )
-    if (iconAlpha > 0f) {
+    if (inSelectionMode) {
+        val iconAlpha by animateFloatAsState(
+            targetValue = if (inSelectionMode) 1f else 0f,
+            label = "selectionIconAlpha"
+        )
         val iconScale by animateFloatAsState(
             targetValue = if (selected) 1f else 0.85f,
             label = "selectionIconScale"

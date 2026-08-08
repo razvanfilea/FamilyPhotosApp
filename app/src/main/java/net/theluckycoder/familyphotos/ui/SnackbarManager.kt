@@ -18,11 +18,20 @@ class SnackbarManager @Inject constructor() {
         _messages.tryEmit(UiMessage.Text(text, type))
     }
 
-    fun showMessage(@StringRes resId: Int, type: UiMessageType = UiMessageType.Info, vararg args: Any) {
+    fun showMessage(
+        @StringRes resId: Int,
+        type: UiMessageType = UiMessageType.Info,
+        vararg args: Any
+    ) {
         _messages.tryEmit(UiMessage.Resource(resId, args.toList(), type))
     }
 
-    fun showPluralMessage(@PluralsRes resId: Int, quantity: Int, type: UiMessageType = UiMessageType.Info, vararg args: Any) {
+    fun showPluralMessage(
+        @PluralsRes resId: Int,
+        quantity: Int,
+        type: UiMessageType = UiMessageType.Info,
+        vararg args: Any
+    ) {
         _messages.tryEmit(UiMessage.PluralResource(resId, quantity, args.toList(), type))
     }
 }

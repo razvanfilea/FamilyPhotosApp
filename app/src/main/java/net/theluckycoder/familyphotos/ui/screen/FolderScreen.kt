@@ -41,8 +41,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.viewmodel.compose.viewModel
-import net.theluckycoder.familyphotos.ui.viewmodel.FolderScreenViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,6 +50,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.flow.emptyFlow
 import net.theluckycoder.familyphotos.R
@@ -65,6 +64,7 @@ import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
 import net.theluckycoder.familyphotos.ui.composables.FolderNameDialog
 import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
 import net.theluckycoder.familyphotos.ui.composables.PhotosList
+import net.theluckycoder.familyphotos.ui.viewmodel.FolderScreenViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersTabViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
@@ -100,7 +100,10 @@ fun FolderScreen(
         remember { if (source is FolderNav.Source.Network) folderScreenViewModel.networkFolder else emptyFlow() }.collectAsState(
             null
         )
-    val currentUser = remember { if (source is FolderNav.Source.Network) folderScreenViewModel.currentUser else emptyFlow() }.collectAsState(UserDto("", ""))
+    val currentUser =
+        remember { if (source is FolderNav.Source.Network) folderScreenViewModel.currentUser else emptyFlow() }.collectAsState(
+            UserDto("", "")
+        )
 
     Scaffold { paddingValues ->
         PhotosList(
@@ -124,7 +127,9 @@ fun FolderScreen(
                     navIconOnClick = backStack::removeLastOrNull,
                     title = when (source) {
                         FolderNav.Source.Favorites -> stringResource(R.string.title_favorites)
-                        is FolderNav.Source.Network -> networkFolderState.value?.name ?: source.folderName
+                        is FolderNav.Source.Network -> networkFolderState.value?.name
+                            ?: source.folderName
+
                         is FolderNav.Source.Local -> source.name
                     },
                     subtitle = timelineLayout.totalPhotoCount.takeIf { it != 0 }?.toString(),
@@ -284,7 +289,9 @@ private fun SharingBottomSheet(
         }
 
         item {
-            val ownerName = folderShares.availableMembers.find { it.userId == folder.ownerId }?.displayName ?: currentUser?.displayName ?: ""
+            val ownerName =
+                folderShares.availableMembers.find { it.userId == folder.ownerId }?.displayName
+                    ?: currentUser?.displayName ?: ""
             ListItem(
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 headlineContent = { Text(if (folder.isPublic) stringResource(R.string.sharing_owner_everyone) else ownerName) },

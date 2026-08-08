@@ -113,11 +113,22 @@ private fun GridOverlay(gridMode: GridMode, modifier: Modifier = Modifier) {
                 val thirdH = size.height / 3
                 // Vertical lines
                 drawLine(lineColor, Offset(thirdW, 0f), Offset(thirdW, size.height), strokeWidth)
-                drawLine(lineColor, Offset(thirdW * 2, 0f), Offset(thirdW * 2, size.height), strokeWidth)
+                drawLine(
+                    lineColor,
+                    Offset(thirdW * 2, 0f),
+                    Offset(thirdW * 2, size.height),
+                    strokeWidth
+                )
                 // Horizontal lines
                 drawLine(lineColor, Offset(0f, thirdH), Offset(size.width, thirdH), strokeWidth)
-                drawLine(lineColor, Offset(0f, thirdH * 2), Offset(size.width, thirdH * 2), strokeWidth)
+                drawLine(
+                    lineColor,
+                    Offset(0f, thirdH * 2),
+                    Offset(size.width, thirdH * 2),
+                    strokeWidth
+                )
             }
+
             GridMode.GOLDEN_RATIO -> {
                 val phi = 1.618f
                 val w1 = size.width / phi
@@ -131,6 +142,7 @@ private fun GridOverlay(gridMode: GridMode, modifier: Modifier = Modifier) {
                 drawLine(lineColor, Offset(0f, h2), Offset(size.width, h2), strokeWidth)
                 drawLine(lineColor, Offset(0f, h1), Offset(size.width, h1), strokeWidth)
             }
+
             GridMode.OFF -> {} // Already handled by early return
         }
     }

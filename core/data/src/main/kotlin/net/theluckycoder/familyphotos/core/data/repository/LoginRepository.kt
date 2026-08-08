@@ -42,7 +42,7 @@ class LoginRepository @Inject internal constructor(
     suspend fun testServerConnection(serverAddress: String): ConnectionTestResult {
         val normalized = normalizeUrl(serverAddress)
         if (normalized.isEmpty()) return ConnectionTestResult.InvalidAddress
-        
+
         return withContext(Dispatchers.IO) {
             try {
                 val client = OkHttpClient.Builder()
@@ -68,7 +68,7 @@ class LoginRepository @Inject internal constructor(
 
     suspend fun login(serverAddress: String, userLogin: UserLoginDto): LoginResult {
         val normalized = normalizeUrl(serverAddress)
-        
+
         val testResult = testServerConnection(normalized)
         if (testResult !is ConnectionTestResult.Success) {
             return LoginResult.ServerUnreachable
@@ -105,7 +105,11 @@ class LoginRepository @Inject internal constructor(
     /**
      * Set credentials directly for benchmark tests, bypassing the login API.
      */
-    suspend fun setBenchmarkCredentials(sessionCookie: String, username: String, serverAddress: String) {
+    suspend fun setBenchmarkCredentials(
+        sessionCookie: String,
+        username: String,
+        serverAddress: String
+    ) {
         val normalized = normalizeUrl(serverAddress)
         userDataStore.setServerAddress(normalized)
         userDataStore.setSessionCookie(sessionCookie)
@@ -117,7 +121,8 @@ class LoginRepository @Inject internal constructor(
         return if (trimmed.isEmpty()) {
             ""
         } else if (!trimmed.startsWith("http://", ignoreCase = true) &&
-            !trimmed.startsWith("https://", ignoreCase = true)) {
+            !trimmed.startsWith("https://", ignoreCase = true)
+        ) {
             "https://$trimmed"
         } else {
             trimmed

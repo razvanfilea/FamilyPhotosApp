@@ -7,13 +7,13 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
-import net.theluckycoder.familyphotos.core.data.model.network.PhotoEventLog
-import net.theluckycoder.familyphotos.core.data.model.PhotoType
-import net.theluckycoder.familyphotos.core.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhotoThumbnail
-import net.theluckycoder.familyphotos.core.data.model.db.PhotoStatistics
+import net.theluckycoder.familyphotos.core.data.model.PhotoType
+import net.theluckycoder.familyphotos.core.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.core.data.model.db.NetworkPhotoWithYearOffset
+import net.theluckycoder.familyphotos.core.data.model.db.PhotoStatistics
+import net.theluckycoder.familyphotos.core.data.model.network.PhotoEventLog
 
 @Dao
 internal interface NetworkPhotosDao {
@@ -35,7 +35,10 @@ internal interface NetworkPhotosDao {
             AND trashedOn IS NULL
             ORDER BY network_photo.timeCreated DESC"""
     )
-    fun getPhotosPaged(photoType: PhotoType, currentUserId: String): PagingSource<Int, NetworkPhotoThumbnail>
+    fun getPhotosPaged(
+        photoType: PhotoType,
+        currentUserId: String
+    ): PagingSource<Int, NetworkPhotoThumbnail>
 
     @Query(
         """SELECT id, timeCreated, thumbHash, name FROM network_photo

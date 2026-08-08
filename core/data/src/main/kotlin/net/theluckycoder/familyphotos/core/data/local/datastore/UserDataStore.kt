@@ -1,7 +1,6 @@
 package net.theluckycoder.familyphotos.core.data.local.datastore
 
 import android.content.Context
-import android.util.Log.i
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore

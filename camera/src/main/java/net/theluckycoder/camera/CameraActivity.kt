@@ -110,9 +110,10 @@ class CameraActivity : ComponentActivity() {
                                     permissionLauncher.launch(Manifest.permission.CAMERA)
                                 },
                                 onOpenSettings = {
-                                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                        data = Uri.fromParts("package", packageName, null)
-                                    }
+                                    val intent =
+                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                            data = Uri.fromParts("package", packageName, null)
+                                        }
                                     startActivity(intent)
                                 }
                             )

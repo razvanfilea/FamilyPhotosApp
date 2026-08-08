@@ -7,12 +7,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.core.data.repository.ServerRepository
 import net.theluckycoder.familyphotos.ui.SnackbarManager
 import net.theluckycoder.familyphotos.ui.UiMessageType
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -56,7 +56,11 @@ class TrashViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val result = serverRepository.trashNetworkPhoto(photoIds, false)
             if (result) {
-                snackbarManager.showPluralMessage(R.plurals.status_photos_restored, photoIds.size, UiMessageType.Success)
+                snackbarManager.showPluralMessage(
+                    R.plurals.status_photos_restored,
+                    photoIds.size,
+                    UiMessageType.Success
+                )
             } else {
                 snackbarManager.showMessage(R.string.error_restore_failed, UiMessageType.Error)
             }

@@ -12,7 +12,8 @@ import coil3.ImageLoader
 import dagger.Lazy
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
 
-val LocalImageLoader = staticCompositionLocalOf<Lazy<ImageLoader>> { error("No ImageLoader found!") }
+val LocalImageLoader =
+    staticCompositionLocalOf<Lazy<ImageLoader>> { error("No ImageLoader found!") }
 
 val LocalNavBackStack = compositionLocalOf<NavBackStack<NavKey>> { error("No NavBackStack found!") }
 
@@ -24,7 +25,8 @@ val LocalSettingsDataStore = staticCompositionLocalOf<SettingsDataStore> {
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
-val LocalSharedTransitionScope = staticCompositionLocalOf<SharedTransitionScope> { error("No LocalSharedTransitionScope found!") }
+val LocalSharedTransitionScope =
+    staticCompositionLocalOf<SharedTransitionScope> { error("No LocalSharedTransitionScope found!") }
 
 /**
  * Holds the id of the photo currently transitioning between the grid and the viewer.

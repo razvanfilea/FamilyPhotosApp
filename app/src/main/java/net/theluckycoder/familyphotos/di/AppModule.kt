@@ -49,7 +49,11 @@ class AppModule {
                 )
             }
             // Limit parallelism to reduce DiskLruCache lock contention during fast scrolling
-            .fetcherCoroutineContext(Dispatchers.IO.limitedParallelism((Runtime.getRuntime().availableProcessors() * 1.5).toInt()))
+            .fetcherCoroutineContext(
+                Dispatchers.IO.limitedParallelism(
+                    (Runtime.getRuntime().availableProcessors() * 1.5).toInt()
+                )
+            )
             .memoryCache { MemoryCache.Builder().maxSizePercent(context, 0.40).build() }
             .diskCache {
                 runBlocking {

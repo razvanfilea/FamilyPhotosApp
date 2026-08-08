@@ -17,16 +17,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.paging.compose.LazyPagingItems
 import androidx.window.core.layout.WindowSizeClass
-import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhotoThumbnail
 import net.theluckycoder.familyphotos.ui.TopLevelTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.DeviceTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.NetworkFoldersTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.TimelineTab
 import net.theluckycoder.familyphotos.ui.screen.tabs.UtilitiesTab
-import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
-
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersTabViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.TimelineViewModel
 
 @Composable
@@ -79,7 +77,12 @@ fun TopLevelScreen(
             modifier = modifier
         ) {
             when (selectedTabState.value) {
-                TopLevelTab.Timeline -> TimelineTab(timelinePagingItems, mainViewModel, timelineViewModel)
+                TopLevelTab.Timeline -> TimelineTab(
+                    timelinePagingItems,
+                    mainViewModel,
+                    timelineViewModel
+                )
+
                 TopLevelTab.NetworkFolders -> NetworkFoldersTab(foldersTabViewModel)
                 TopLevelTab.Device -> DeviceTab(foldersTabViewModel)
                 TopLevelTab.Utility -> UtilitiesTab()

@@ -12,7 +12,9 @@ enum class UiMessageType {
 sealed interface UiMessage {
     val type: UiMessageType
 
-    data class Text(val value: String, override val type: UiMessageType = UiMessageType.Info) : UiMessage
+    data class Text(val value: String, override val type: UiMessageType = UiMessageType.Info) :
+        UiMessage
+
     data class Resource(
         @StringRes val resId: Int,
         val args: List<Any> = emptyList(),

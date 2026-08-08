@@ -40,8 +40,8 @@ import net.theluckycoder.familyphotos.ui.composables.NavBackTopAppBar
 import net.theluckycoder.familyphotos.ui.composables.ZoomableImage
 import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.dialog.NetworkPhotoInfoDialog
-import net.theluckycoder.familyphotos.ui.viewmodel.UtilitiesViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.UtilitiesViewModel
 
 @Composable
 fun DuplicatesScreen(
@@ -137,7 +137,9 @@ fun DuplicatesScreen(
             photos = photos,
             isPermanent = false,
             onDismissRequest = { deleteDialogState = null },
-            onConfirmDelete = { list -> mainViewModel.trashNetworkPhotos(list.map { it.id }.toLongArray()) },
+            onConfirmDelete = { list ->
+                mainViewModel.trashNetworkPhotos(list.map { it.id }.toLongArray())
+            },
             onPhotosDeleted = { duplicates.removeAt(pageToRemove) }
         )
     }

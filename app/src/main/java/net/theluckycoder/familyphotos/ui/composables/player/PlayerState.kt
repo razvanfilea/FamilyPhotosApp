@@ -1,4 +1,5 @@
 @file:OptIn(UnstableApi::class)
+
 package net.theluckycoder.familyphotos.ui.composables.player
 
 import androidx.annotation.OptIn
@@ -10,8 +11,8 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.listen
+import androidx.media3.common.util.UnstableApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

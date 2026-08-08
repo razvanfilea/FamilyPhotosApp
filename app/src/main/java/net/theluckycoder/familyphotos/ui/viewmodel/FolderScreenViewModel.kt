@@ -72,12 +72,15 @@ class FolderScreenViewModel @Inject constructor(
                 is FolderNav.Source.Network -> Pager(PAGING_CONFIG) {
                     foldersRepository.networkPhotosFromFolderPaged(source.folderId)
                 }.flow
+
                 is FolderNav.Source.Local -> Pager(PAGING_CONFIG) {
                     foldersRepository.localPhotosFromFolderPaged(source.name)
                 }.flow
+
                 is FolderNav.Source.Favorites -> Pager(PAGING_CONFIG) {
                     photosRepository.getFavoritePhotosPaged()
                 }.flow
+
                 null -> emptyFlow()
             } as Flow<PagingData<Photo>>
         }
@@ -90,8 +93,14 @@ class FolderScreenViewModel @Inject constructor(
         viewModelScope.launch {
             _source.flatMapLatest { source ->
                 when (source) {
-                    is FolderNav.Source.Network -> foldersRepository.networkMonthSummariesForFolder(source.folderId)
-                    is FolderNav.Source.Local -> foldersRepository.localMonthSummariesForFolder(source.name)
+                    is FolderNav.Source.Network -> foldersRepository.networkMonthSummariesForFolder(
+                        source.folderId
+                    )
+
+                    is FolderNav.Source.Local -> foldersRepository.localMonthSummariesForFolder(
+                        source.name
+                    )
+
                     is FolderNav.Source.Favorites -> photosRepository.getFavoriteMonthSummaries()
                     null -> flowOf(emptyList())
                 }
@@ -153,9 +162,15 @@ class FolderScreenViewModel @Inject constructor(
             )
             if (result != null) {
                 _sharingRefreshTrigger.update { it + 1 }
-                snackbarManager.showMessage(R.string.status_permissions_updated, UiMessageType.Success)
+                snackbarManager.showMessage(
+                    R.string.status_permissions_updated,
+                    UiMessageType.Success
+                )
             } else {
-                snackbarManager.showMessage(R.string.error_permissions_update_failed, UiMessageType.Error)
+                snackbarManager.showMessage(
+                    R.string.error_permissions_update_failed,
+                    UiMessageType.Error
+                )
             }
         }
     }
@@ -167,7 +182,10 @@ class FolderScreenViewModel @Inject constructor(
                 _sharingRefreshTrigger.update { it + 1 }
                 snackbarManager.showMessage(R.string.status_member_removed, UiMessageType.Success)
             } else {
-                snackbarManager.showMessage(R.string.error_member_remove_failed, UiMessageType.Error)
+                snackbarManager.showMessage(
+                    R.string.error_member_remove_failed,
+                    UiMessageType.Error
+                )
             }
         }
     }
@@ -178,7 +196,10 @@ class FolderScreenViewModel @Inject constructor(
             if (result) {
                 snackbarManager.showMessage(R.string.status_folder_renamed, UiMessageType.Success)
             } else {
-                snackbarManager.showMessage(R.string.error_folder_rename_failed, UiMessageType.Error)
+                snackbarManager.showMessage(
+                    R.string.error_folder_rename_failed,
+                    UiMessageType.Error
+                )
             }
         }
     }

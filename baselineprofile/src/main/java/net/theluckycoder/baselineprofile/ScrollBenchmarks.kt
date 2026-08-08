@@ -10,6 +10,7 @@ import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Direction
+import androidx.test.uiautomator.Until
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -61,8 +62,8 @@ class ScrollBenchmarks {
                 startActivityAndWait(launchIntent)
                 waitForGalleryContent()
                 // Scroll a bit first to make indicator visible
-                val grid = device.findObject(By.res("photos_list"))
-                grid.fling(Direction.DOWN)
+                val grid = device.wait(Until.findObject(By.res("photos_list")), 5_000)
+                grid?.fling(Direction.DOWN)
                 Thread.sleep(500)
             },
             measureBlock = {

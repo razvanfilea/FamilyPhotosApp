@@ -63,6 +63,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -95,6 +97,11 @@ fun VideoPlayer(
     val lifecycleOwner = rememberUpdatedState(LocalLifecycleOwner.current)
 
     val exoPlayer = remember(sourceUri) {
+        val autoAttributes = AudioAttributes.Builder()
+            .setUsage(C.USAGE_MEDIA)
+            .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+            .build()
+
         val mediaItem = MediaItem.Builder()
             .setUri(sourceUri)
             .build()
@@ -103,6 +110,7 @@ fun VideoPlayer(
             .createMediaSource(mediaItem)
 
         ExoPlayer.Builder(context)
+            .setAudioAttributes(autoAttributes, true)
             .setSeekBackIncrementMs(5000)
             .setSeekForwardIncrementMs(5000)
             .build()
@@ -291,18 +299,21 @@ private fun TimeProgressBar2(
                         if (change != null) {
                             // Dragging started
                             isDragging = true
-                            val startProgress = (change.position.x / size.width.toFloat()).coerceIn(0f, 1f)
+                            val startProgress =
+                                (change.position.x / size.width.toFloat()).coerceIn(0f, 1f)
                             dragProgress = startProgress
 
                             // Handle subsequent drag events
                             drag(change.id) { dragChange ->
                                 dragChange.consume()
-                                val newProgress = (dragChange.position.x / size.width.toFloat()).coerceIn(0f, 1f)
+                                val newProgress =
+                                    (dragChange.position.x / size.width.toFloat()).coerceIn(0f, 1f)
                                 dragProgress = newProgress
                             }
                         } else {
                             // It was a Tap
-                            val tapProgress = (down.position.x / size.width.toFloat()).coerceIn(0f, 1f)
+                            val tapProgress =
+                                (down.position.x / size.width.toFloat()).coerceIn(0f, 1f)
                             val seekPos = (tapProgress * duration).toLong()
                             player.seekTo(seekPos)
                         }
@@ -327,7 +338,8 @@ private fun TimeProgressBar2(
                     onDrawBehind {
                         // READ STATE HERE (Inside the draw scope)
                         // This ensures only the drawing logic re-runs on tick updates
-                        val currentProgress = if (isDragging) dragProgress else barProgressState.currentPositionProgress
+                        val currentProgress =
+                            if (isDragging) dragProgress else barProgressState.currentPositionProgress
                         val bufferedProgress = barProgressState.bufferedPositionProgress
 
                         val width = size.width

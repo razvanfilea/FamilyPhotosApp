@@ -1,6 +1,5 @@
 package net.theluckycoder.familyphotos.core.data.di
 
-import android.util.Log
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

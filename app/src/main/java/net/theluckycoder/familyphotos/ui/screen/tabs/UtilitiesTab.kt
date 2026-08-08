@@ -1,6 +1,7 @@
 package net.theluckycoder.familyphotos.ui.screen.tabs
 
 import android.content.Intent
+import android.text.format.Formatter
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -47,7 +48,6 @@ import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.SettingsNav
 import net.theluckycoder.familyphotos.ui.TrashNav
 import net.theluckycoder.familyphotos.ui.viewmodel.UtilitiesViewModel
-import android.text.format.Formatter
 
 @Composable
 fun UtilitiesTab(
@@ -64,7 +64,7 @@ fun UtilitiesTab(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        item(span = { GridItemSpan(maxCurrentLineSpan)}) {
+        item(span = { GridItemSpan(maxCurrentLineSpan) }) {
             PhotoStatisticsCard(statistics)
         }
 
