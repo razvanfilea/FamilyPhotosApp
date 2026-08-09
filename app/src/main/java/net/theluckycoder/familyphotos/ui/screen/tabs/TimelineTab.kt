@@ -46,7 +46,12 @@ import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
 import net.theluckycoder.familyphotos.ui.PhotoViewerListNav
 import net.theluckycoder.familyphotos.ui.composables.CoilPhoto
 import net.theluckycoder.familyphotos.ui.composables.PhotoTypeChips
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.mutableStateSetOf
+import androidx.compose.runtime.remember
+import net.theluckycoder.familyphotos.ui.composables.PhotoUtilitiesActions
 import net.theluckycoder.familyphotos.ui.composables.PhotosList
+import net.theluckycoder.familyphotos.ui.composables.PhotosSelectionBar
 import net.theluckycoder.familyphotos.ui.composables.photoSharedBounds
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.TimelineViewModel
@@ -64,32 +69,49 @@ fun TimelineTab(
 
     val isOnline by mainViewModel.isOnline.collectAsState()
     val isRefreshing by mainViewModel.isRefreshing.collectAsState()
+    val selectedPhotoIds = remember { mutableStateSetOf<Long>() }
 
-    PhotosList(
-        gridState = timelineViewModel.timelineGridState,
-        photos = photos,
-        mainViewModel = mainViewModel,
-        timelineLayout = timelineLayout,
-        openPhoto = {
-            backStack.add(PhotoViewerFlowNav(it, PhotoViewerFlowNav.Source.Timeline))
-        },
-        headerContent = {
-            PhotoTypeChips(
-                selectedPhotoType = selectedPhotoType,
-                onChangePhotoType = settingsDataStore::setSelectedPhotoType,
-                modifier = Modifier
-                    .windowInsetsPadding(TopAppBarDefaults.windowInsets)
-                    .padding(8.dp),
+    Box(modifier = Modifier.fillMaxSize()) {
+        PhotosList(
+            gridState = timelineViewModel.timelineGridState,
+            photos = photos,
+            timelineLayout = timelineLayout,
+            selectedPhotoIds = selectedPhotoIds,
+            openPhoto = { index, _ ->
+                backStack.add(PhotoViewerFlowNav(index, PhotoViewerFlowNav.Source.Timeline))
+            },
+            headerContent = {
+                PhotoTypeChips(
+                    selectedPhotoType = selectedPhotoType,
+                    onChangePhotoType = settingsDataStore::setSelectedPhotoType,
+                    modifier = Modifier
+                        .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                        .padding(8.dp),
+                )
+
+                val memories by timelineViewModel.memories.collectAsState()
+                MemoriesList(memories, timelineViewModel.memoriesListState)
+
+                if (!isOnline && !isRefreshing) {
+                    FailedConnectionCard(mainViewModel)
+                }
+            },
+        )
+
+        PhotosSelectionBar(
+            selectedPhotoIds = selectedPhotoIds,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                .padding(top = 8.dp)
+        ) {
+            PhotoUtilitiesActions(
+                isLocalPhoto = false,
+                selectedItems = selectedPhotoIds,
+                mainViewModel = mainViewModel
             )
-
-            val memories by timelineViewModel.memories.collectAsState()
-            MemoriesList(memories, timelineViewModel.memoriesListState)
-
-            if (!isOnline && !isRefreshing) {
-                FailedConnectionCard(mainViewModel)
-            }
-        },
-    )
+        }
+    }
 }
 
 @Composable

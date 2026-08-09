@@ -11,7 +11,6 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 private val displayLocale: Locale = Locale.forLanguageTag("ro-RO")
-private val titleCaseLocale: Locale = Locale.getDefault()
 
 @OptIn(ExperimentalTime::class)
 internal fun buildDateString(epochSeconds: Long): String {
@@ -21,8 +20,9 @@ internal fun buildDateString(epochSeconds: Long): String {
     return buildDateString(currentDate, date)
 }
 
-internal fun buildDateString(currentDate: LocalDateTime, afterDate: LocalDateTime) =
-    buildString {
+internal fun buildDateString(currentDate: LocalDateTime, afterDate: LocalDateTime): String {
+    val locale = Locale.getDefault()
+    return buildString {
         append(
             afterDate.month.toJavaMonth().getDisplayName(
                 TextStyle.FULL,
@@ -33,4 +33,5 @@ internal fun buildDateString(currentDate: LocalDateTime, afterDate: LocalDateTim
         val year = afterDate.year
         if (year != currentDate.year)
             append(' ').append(year)
-    }.replaceFirstChar { if (it.isLowerCase()) it.titlecase(titleCaseLocale) else it.toString() }
+    }.replaceFirstChar { if (it.isLowerCase()) it.titlecase(locale) else it.toString() }
+}

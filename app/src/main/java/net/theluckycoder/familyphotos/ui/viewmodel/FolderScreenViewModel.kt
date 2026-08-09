@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -136,10 +137,17 @@ class FolderScreenViewModel @Inject constructor(
 
     private val _sharingRefreshTrigger = MutableStateFlow(0)
 
-    fun getFolderShares(folderId: Long): Flow<SharedFolderAccess> =
-        _sharingRefreshTrigger.flatMapLatest {
-            flow { emit(sharingRepository.getFolderShares(folderId)) }
-        }.flowOn(Dispatchers.IO)
+    val folderShares: Flow<SharedFolderAccess> = combine(_source, _sharingRefreshTrigger) { source, _ -> source }
+        .flatMapLatest { source ->
+            if (source is FolderNav.Source.Network) {
+                flow { emit(sharingRepository.getFolderShares(source.folderId)) }
+            } else {
+                flowOf(SharedFolderAccess.EMPTY)
+            }
+        }
+        .flowOn(Dispatchers.IO)
+
+    fun getFolderShares(folderId: Long): Flow<SharedFolderAccess> = folderShares
 
     fun addMemberToFolder(folderId: Long, userId: String) {
         viewModelScope.launch(Dispatchers.IO) {

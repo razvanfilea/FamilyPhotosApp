@@ -1,43 +1,27 @@
 package net.theluckycoder.familyphotos.ui.screen
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -47,18 +31,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
-import kotlinx.coroutines.flow.emptyFlow
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
@@ -70,580 +52,375 @@ import net.theluckycoder.familyphotos.core.data.model.network.UserDto
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.runtime.mutableStateSetOf
 import net.theluckycoder.familyphotos.ui.composables.FolderNameDialog
+import net.theluckycoder.familyphotos.ui.composables.PhotoUtilitiesActions
 import net.theluckycoder.familyphotos.ui.composables.PhotosList
+import net.theluckycoder.familyphotos.ui.composables.PhotosSelectionBar
+import net.theluckycoder.familyphotos.ui.dialog.FolderSharingBottomSheet
 import net.theluckycoder.familyphotos.ui.viewmodel.FolderScreenViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.FoldersTabViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun FolderScreen(
     source: FolderNav.Source,
     foldersTabViewModel: FoldersTabViewModel,
     mainViewModel: MainViewModel,
     folderScreenViewModel: FolderScreenViewModel = viewModel(),
-) = Surface(Modifier.fillMaxSize()) {
-    val lazyPagingItems = folderScreenViewModel.photosPager.collectAsLazyPagingItems()
+) {
+    var showLocalPhotoPicker by remember { mutableStateOf(false) }
+    val selectedPhotoIds = remember { mutableStateSetOf<Long>() }
 
-    val gridState by folderScreenViewModel.photoListState.collectAsState()
-    val backStack = LocalNavBackStack.current
-    val timelineLayout by folderScreenViewModel.timelineLayout.collectAsState()
-
-    LaunchedEffect(source) {
-        val photoCount = when (source) {
-            is FolderNav.Source.Network -> source.photoCount
-            is FolderNav.Source.Local -> source.photoCount
-            is FolderNav.Source.Favorites -> 0
-        }
-        folderScreenViewModel.setSource(source, photoCount)
-    }
-
-    LaunchedEffect(folderScreenViewModel) {
-        foldersTabViewModel.registerFolderViewModel(folderScreenViewModel)
-    }
-
-    var showSharingBottomSheet by remember { mutableStateOf(false) }
-    var showRenameFolderDialog by remember { mutableStateOf(false) }
-    val networkFolderState =
-        remember { if (source is FolderNav.Source.Network) folderScreenViewModel.networkFolder else emptyFlow() }.collectAsState(
-            null
-        )
-    val currentUser =
-        remember { if (source is FolderNav.Source.Network) folderScreenViewModel.currentUser else emptyFlow() }.collectAsState(
-            UserDto("", "")
-        )
-
-    val folderSharesState = remember(networkFolderState.value?.id) {
-        val id = networkFolderState.value?.id
-        if (id != null) folderScreenViewModel.getFolderShares(id) else emptyFlow()
-    }.collectAsState(SharedFolderAccess.EMPTY)
-
-    val titleText = when (source) {
-        FolderNav.Source.Favorites -> stringResource(R.string.title_favorites)
-        is FolderNav.Source.Network -> networkFolderState.value?.name ?: source.folderName
-        is FolderNav.Source.Local -> source.name
-    }
-
-    val folderType = remember(networkFolderState.value, currentUser.value?.userId) {
-        val netFolder = networkFolderState.value
-        if (netFolder != null) {
-            val domainFolder = NetworkFolder(
-                id = netFolder.id,
-                name = netFolder.name,
-                coverPhotoId = 0L,
-                userId = netFolder.ownerId,
-                count = 0
-            )
-            domainFolder.getFolderType(currentUser.value?.userId)
-        } else null
-    }
-
-    val sharedWithCount = folderSharesState.value.sharedWith.size
-
-    val badgeData: Pair<String, Int>? = remember(source, folderType, sharedWithCount) {
-        when {
-            source is FolderNav.Source.Favorites -> Pair("Favorites", R.drawable.ic_star_filled)
-            source is FolderNav.Source.Local -> Pair("Local Device", R.drawable.tab_device_outline)
-            folderType == PhotoType.Family -> Pair("Public", R.drawable.ic_family_filled)
-            folderType == PhotoType.Personal && sharedWithCount > 0 -> Pair(
-                "Shared ($sharedWithCount)",
-                R.drawable.ic_action_share
-            )
-
-            folderType == PhotoType.Personal -> Pair("Personal", R.drawable.ic_person_filled)
-            folderType == PhotoType.Shared -> Pair("Shared with me", R.drawable.ic_action_share)
-            else -> null
-        }
-    }
-
-    PhotosList(
-        gridState = gridState,
-        photos = lazyPagingItems,
-        mainViewModel = mainViewModel,
-        timelineLayout = timelineLayout,
+    Scaffold(
         modifier = Modifier.fillMaxSize(),
-        openPhoto = {
-            val viewerSource = when (source) {
-                FolderNav.Source.Favorites -> PhotoViewerFlowNav.Source.Favorites
-                is FolderNav.Source.Local -> PhotoViewerFlowNav.Source.Local
-                is FolderNav.Source.Network -> PhotoViewerFlowNav.Source.Network
-            }
-            backStack.add(PhotoViewerFlowNav(it, viewerSource))
-        },
-        headerContent = {
-            MediumTopAppBar(
-                navigationIcon = {
-                    IconButton(onClick = backStack::removeLastOrNull) {
-                        Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = null)
-                    }
-                },
-                title = {
-                    Column {
-                        Text(
-                            text = titleText,
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(top = 4.dp)
-                        ) {
-                            if (timelineLayout.totalPhotoCount > 0) {
-                                Surface(
-                                    shape = CircleShape,
-                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                ) {
-                                    Text(
-                                        text = pluralStringResource(
-                                            R.plurals.items_photos,
-                                            timelineLayout.totalPhotoCount,
-                                            timelineLayout.totalPhotoCount
-                                        ),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        modifier = Modifier.padding(
-                                            horizontal = 10.dp,
-                                            vertical = 3.dp
-                                        ),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-
-                            badgeData?.let { (label, iconRes) ->
-                                Surface(
-                                    shape = CircleShape,
-                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.padding(
-                                            horizontal = 10.dp,
-                                            vertical = 3.dp
-                                        )
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(iconRes),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(13.dp),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        Text(
-                                            text = label,
-                                            style = MaterialTheme.typography.labelMedium,
-                                            modifier = Modifier.padding(start = 4.dp),
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                actions = {
-                    val networkFolder = networkFolderState.value
-                    if (source is FolderNav.Source.Network && networkFolder != null) {
-                        IconButton(onClick = {
-                            showSharingBottomSheet = true
-                        }) {
-                            Icon(
-                                painterResource(R.drawable.ic_action_share),
-                                contentDescription = null
-                            )
-                        }
-
-                        IconButton(onClick = {
-                            showRenameFolderDialog = true
-                        }) {
-                            Icon(
-                                painterResource(R.drawable.ic_action_edit),
-                                contentDescription = null
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-
-            if (source is FolderNav.Source.Local) {
-                val backupEnabled by folderScreenViewModel.isLocalFolderBackupUp(source.name)
-                    .collectAsState(false)
-
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                    ),
-                    shape = RoundedCornerShape(16.dp),
-                    onClick = {
-                        folderScreenViewModel.backupLocalFolder(
-                            source.name,
-                            !backupEnabled
-                        )
-                    }
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(
-                                if (backupEnabled) R.drawable.ic_cloud_done_filled
-                                else R.drawable.ic_cloud_off_outline
-                            ),
-                            contentDescription = null,
-                            tint = if (backupEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(24.dp)
-                        )
-
-                        Text(
-                            text = stringResource(R.string.backup_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(horizontal = 12.dp)
-                        )
-
-                        Switch(
-                            checked = backupEnabled,
-                            onCheckedChange = null
-                        )
-                    }
-                }
-            }
-        },
-    )
-
-    val networkFolder = networkFolderState.value
-    if (networkFolder != null) {
-        if (showRenameFolderDialog) {
-            FolderNameDialog(
-                actionLabel = stringResource(R.string.action_rename_folder),
-                initialName = networkFolder.name,
-                initialIsPublic = networkFolder.isPublic,
-                onDismiss = { showRenameFolderDialog = false },
-                onConfirm = { newName, isPublic ->
-                    folderScreenViewModel.renameFolder(networkFolder.id, newName, isPublic)
-                    showRenameFolderDialog = false
-                },
-            )
-        }
-
-        if (showSharingBottomSheet) {
-            val folderShares =
-                remember(networkFolder.id) { folderScreenViewModel.getFolderShares(networkFolder.id) }.collectAsState(
-                    SharedFolderAccess.EMPTY
+        floatingActionButton = {
+            if (source is FolderNav.Source.Network) {
+                UploadButton(
+                    onClick = { showLocalPhotoPicker = true }
                 )
+            }
+        }
+    ) { contentPadding ->
+        val lazyPagingItems = folderScreenViewModel.photosPager.collectAsLazyPagingItems()
 
-            SharingBottomSheet(
-                folder = networkFolder,
-                folderShares = folderShares.value,
-                currentUser = currentUser.value,
-                onAddMember = { user ->
-                    folderScreenViewModel.addMemberToFolder(networkFolder.id, user.userId)
+        val gridState by folderScreenViewModel.photoListState.collectAsState()
+        val backStack = LocalNavBackStack.current
+        val timelineLayout by folderScreenViewModel.timelineLayout.collectAsState()
+
+        LaunchedEffect(source) {
+            selectedPhotoIds.clear()
+            val photoCount = when (source) {
+                is FolderNav.Source.Network -> source.photoCount
+                is FolderNav.Source.Local -> source.photoCount
+                is FolderNav.Source.Favorites -> 0
+            }
+            folderScreenViewModel.setSource(source, photoCount)
+        }
+
+        LaunchedEffect(folderScreenViewModel) {
+            foldersTabViewModel.registerFolderViewModel(folderScreenViewModel)
+        }
+
+        var showSharingBottomSheet by remember { mutableStateOf(false) }
+        var showRenameFolderDialog by remember { mutableStateOf(false) }
+
+        val networkFolder by folderScreenViewModel.networkFolder.collectAsState(null)
+        val currentUser by folderScreenViewModel.currentUser.collectAsState(UserDto("", ""))
+        val folderShares by folderScreenViewModel.folderShares.collectAsState(SharedFolderAccess.EMPTY)
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            PhotosList(
+                gridState = gridState,
+                photos = lazyPagingItems,
+                timelineLayout = timelineLayout,
+                selectedPhotoIds = selectedPhotoIds,
+                modifier = Modifier.fillMaxSize(),
+                openPhoto = { index, _ ->
+                    val viewerSource = when (source) {
+                        FolderNav.Source.Favorites -> PhotoViewerFlowNav.Source.Favorites
+                        is FolderNav.Source.Local -> PhotoViewerFlowNav.Source.Local
+                        is FolderNav.Source.Network -> PhotoViewerFlowNav.Source.Network
+                    }
+                    backStack.add(PhotoViewerFlowNav(index, viewerSource))
                 },
-                onUpdatePermissions = folderScreenViewModel::updateMemberFolderPermissions,
-                onRemoveMember = folderScreenViewModel::removeMemberFromFolder,
-                onDismiss = { showSharingBottomSheet = false },
+                headerContent = {
+                    FolderTopAppBar(
+                        source = source,
+                        networkFolder = networkFolder,
+                        currentUserId = currentUser?.userId,
+                        folderShares = folderShares,
+                        photoCount = timelineLayout.totalPhotoCount,
+                        onOpenSharing = { showSharingBottomSheet = true },
+                        onOpenRename = { showRenameFolderDialog = true }
+                    )
+
+                    if (source is FolderNav.Source.Local) {
+                        val backupEnabled by folderScreenViewModel.isLocalFolderBackupUp(source.name)
+                            .collectAsState(false)
+
+                        LocalFolderBackupCard(
+                            backupEnabled = backupEnabled,
+                            onToggleBackup = { enabled ->
+                                folderScreenViewModel.backupLocalFolder(source.name, enabled)
+                            }
+                        )
+                    }
+                },
+            )
+
+            PhotosSelectionBar(
+                selectedPhotoIds = selectedPhotoIds,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                    .padding(top = 8.dp)
+            ) {
+                PhotoUtilitiesActions(
+                    isLocalPhoto = source is FolderNav.Source.Local,
+                    selectedItems = selectedPhotoIds,
+                    mainViewModel = mainViewModel
+                )
+            }
+        }
+
+        val currentFolder = networkFolder
+        if (currentFolder != null) {
+            if (showLocalPhotoPicker && source is FolderNav.Source.Network) {
+                LocalPhotoPickerSheet(
+                    targetFolderId = source.folderId,
+                    targetFolderName = source.folderName,
+                    onDismiss = { showLocalPhotoPicker = false }
+                )
+            }
+            if (showRenameFolderDialog) {
+                FolderNameDialog(
+                    actionLabel = stringResource(R.string.action_rename_folder),
+                    initialName = currentFolder.name,
+                    initialIsPublic = currentFolder.isPublic,
+                    onDismiss = { showRenameFolderDialog = false },
+                    onConfirm = { newName, isPublic ->
+                        folderScreenViewModel.renameFolder(currentFolder.id, newName, isPublic)
+                        showRenameFolderDialog = false
+                    },
+                )
+            }
+
+            if (showSharingBottomSheet) {
+                FolderSharingBottomSheet(
+                    folder = currentFolder,
+                    folderShares = folderShares,
+                    currentUser = currentUser,
+                    onAddMember = { user ->
+                        folderScreenViewModel.addMemberToFolder(currentFolder.id, user.userId)
+                    },
+                    onUpdatePermissions = folderScreenViewModel::updateMemberFolderPermissions,
+                    onRemoveMember = folderScreenViewModel::removeMemberFromFolder,
+                    onDismiss = { showSharingBottomSheet = false },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun UploadButton(onClick: () -> Unit) {
+    FloatingActionButton(
+        onClick = onClick
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_cloud_upload_outline),
+            stringResource(R.string.action_upload)
+        )
+    }
+}
+
+@Composable
+private fun LocalFolderBackupCard(
+    backupEnabled: Boolean,
+    onToggleBackup: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        shape = RoundedCornerShape(16.dp),
+        onClick = { onToggleBackup(!backupEnabled) }
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(
+                    if (backupEnabled) R.drawable.ic_cloud_done_filled
+                    else R.drawable.ic_cloud_off_outline
+                ),
+                contentDescription = null,
+                tint = if (backupEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp)
+            )
+
+            Text(
+                text = stringResource(R.string.backup_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 12.dp)
+            )
+
+            Switch(
+                checked = backupEnabled,
+                onCheckedChange = null
             )
         }
+    }
+}
+
+@Composable
+private fun FolderBadge(
+    label: String,
+    painter: Painter,
+    modifier: Modifier = Modifier,
+) = Surface(
+    modifier = modifier,
+    shape = CircleShape,
+    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(
+            horizontal = 10.dp,
+            vertical = 3.dp
+        )
+    ) {
+        Icon(
+            painter = painter,
+            contentDescription = null,
+            modifier = Modifier.size(13.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(start = 4.dp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SharingBottomSheet(
-    folder: NetworkFolderEntity,
+private fun FolderTopAppBar(
+    source: FolderNav.Source,
+    networkFolder: NetworkFolderEntity?,
+    currentUserId: String?,
     folderShares: SharedFolderAccess,
-    currentUser: UserDto?,
-    onAddMember: (UserDto) -> Unit,
-    onUpdatePermissions: (shareId: Long, canUpload: Boolean, canDelete: Boolean) -> Unit,
-    onRemoveMember: (shareId: Long) -> Unit,
-    onDismiss: () -> Unit,
-) = ModalBottomSheet(
-    onDismissRequest = onDismiss,
-    sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    photoCount: Int,
+    onOpenSharing: () -> Unit,
+    onOpenRename: () -> Unit,
 ) {
-    val canModifyMembers = !folder.isPublic && folder.ownerId == currentUser?.userId
-    val canAddMembers = folderShares.availableMembers.isNotEmpty() && canModifyMembers
-    val viewPermissionString = stringResource(R.string.sharing_permission_view)
-    val uploadPermissionString = stringResource(R.string.sharing_permission_upload)
-    val uploadAndDeletePermissionString = stringResource(R.string.sharing_permission_upload_delete)
+    val titleText = when (source) {
+        FolderNav.Source.Favorites -> stringResource(R.string.title_favorites)
+        is FolderNav.Source.Network -> networkFolder?.name ?: source.folderName
+        is FolderNav.Source.Local -> source.name
+    }
 
-    var addPeopleExpanded by remember { mutableStateOf(false) }
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight(0.85f),
-        contentPadding = PaddingValues(
-            start = 12.dp,
-            end = 12.dp,
-            bottom = WindowInsets.navigationBars.asPaddingValues()
-                .calculateBottomPadding() + 16.dp
-        ),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        item {
-            Text(
-                text = stringResource(R.string.sharing_manage),
-                modifier = Modifier.padding(
-                    start = 24.dp,
-                    end = 24.dp,
-                    bottom = 16.dp,
-                    top = 8.dp
-                ),
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+    val folderType = remember(networkFolder, currentUserId) {
+        if (networkFolder != null) {
+            val domainFolder = NetworkFolder(
+                id = networkFolder.id,
+                name = networkFolder.name,
+                coverPhotoId = 0L,
+                userId = networkFolder.ownerId,
+                count = 0
             )
-        }
+            domainFolder.getFolderType(currentUserId)
+        } else null
+    }
 
-        item {
-            Text(
-                text = stringResource(R.string.sharing_members),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(
-                    start = 24.dp,
-                    end = 24.dp,
-                    bottom = 16.dp,
-                    top = 8.dp
+    val sharedWithCount = folderShares.sharedWith.size
+    val favoritesLabel = stringResource(R.string.title_favorites)
+    val localDeviceLabel = stringResource(R.string.folder_badge_local_device)
+    val publicLabel = stringResource(R.string.photo_type_family)
+    val sharedCountLabel = stringResource(R.string.folder_badge_shared_count, sharedWithCount)
+    val personalLabel = stringResource(R.string.photo_type_personal)
+    val sharedLabel = stringResource(R.string.photo_type_shared)
+
+    val badgeData: Pair<String, Int>? = remember(source, folderType, sharedWithCount) {
+        when {
+            source is FolderNav.Source.Favorites -> Pair(favoritesLabel, R.drawable.ic_star_filled)
+            source is FolderNav.Source.Local -> Pair(
+                localDeviceLabel,
+                R.drawable.tab_device_outline
+            )
+
+            folderType == PhotoType.Family -> Pair(publicLabel, R.drawable.ic_family_filled)
+            folderType == PhotoType.Personal && sharedWithCount > 0 -> Pair(
+                sharedCountLabel,
+                R.drawable.ic_action_share
+            )
+
+            folderType == PhotoType.Personal -> Pair(personalLabel, R.drawable.ic_person_filled)
+            folderType == PhotoType.Shared -> Pair(sharedLabel, R.drawable.ic_action_share)
+            else -> null
+        }
+    }
+
+    val backStack = LocalNavBackStack.current
+    MediumTopAppBar(
+        navigationIcon = {
+            IconButton(onClick = backStack::removeLastOrNull) {
+                Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = null)
+            }
+        },
+        title = {
+            Column {
+                Text(
+                    text = titleText,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-            )
-        }
 
-        item {
-            val ownerName =
-                folderShares.availableMembers.find { it.userId == folder.ownerId }?.displayName
-                    ?: currentUser?.displayName ?: ""
-            ListItem(
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                headlineContent = { Text(if (folder.isPublic) stringResource(R.string.sharing_owner_everyone) else ownerName) },
-                supportingContent = { Text(stringResource(if (folder.isPublic) R.string.sharing_shared_access else R.string.sharing_owner)) },
-                leadingContent = {
-                    Surface(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape),
-                        color = MaterialTheme.colorScheme.secondaryContainer
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 4.dp)
+                ) {
+                    if (photoCount > 0) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        ) {
                             Text(
-                                (if (folder.isPublic) "P" else ownerName).take(1),
-                                style = MaterialTheme.typography.titleMedium
+                                text = pluralStringResource(
+                                    R.plurals.items_photos,
+                                    photoCount,
+                                    photoCount
+                                ),
+                                style = MaterialTheme.typography.labelMedium,
+                                modifier = Modifier.padding(
+                                    horizontal = 10.dp,
+                                    vertical = 3.dp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
-                }
-            )
 
-            AnimatedVisibility(canAddMembers) {
-                ListItem(
-                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                    headlineContent = {
-                        Text(stringResource(R.string.sharing_add_members))
-                    },
-                    modifier = Modifier.clickable { addPeopleExpanded = !addPeopleExpanded },
-                    leadingContent = {
-                        Icon(
-                            painterResource(R.drawable.ic_action_add),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    },
-                )
-            }
-        }
-
-        if (canAddMembers && addPeopleExpanded) {
-            val existingUsers = folderShares.sharedWith.map { it.userId }.toSet()
-            val filteredMembers =
-                folderShares.availableMembers.filter { it.userId !in existingUsers && it.userId != folder.ownerId }
-
-            items(filteredMembers, key = { it.userId }) { user ->
-                ListItem(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 2.dp)
-                        .animateItem()
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable {
-                            onAddMember(user)
-                            addPeopleExpanded = false
-                        },
-                    colors = ListItemDefaults.colors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                    ),
-                    headlineContent = { Text(user.displayName) }
-                )
-            }
-        }
-
-        items(folderShares.sharedWith, key = { it.shareId }) { member ->
-            MemberRowItem(
-                member = member,
-                canModifyMembers = canModifyMembers,
-                viewPermissionString = viewPermissionString,
-                uploadPermissionString = uploadPermissionString,
-                uploadAndDeletePermissionString = uploadAndDeletePermissionString,
-                onUpdatePermissions = onUpdatePermissions,
-                onRemoveMember = onRemoveMember,
-                modifier = Modifier.animateItem()
-            )
-        }
-
-        /*item {
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-        }
-
-        item {
-            Text(
-                text = stringResource(R.string.sharing_links),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(
-                    start = 24.dp,
-                    end = 24.dp,
-                    bottom = 16.dp,
-                    top = 24.dp
-                )
-            )
-        }
-
-        items(folderShares.links) {
-        }*/
-    }
-}
-
-@Composable
-private fun MemberRowItem(
-    member: SharedFolderAccess.Member,
-    canModifyMembers: Boolean,
-    viewPermissionString: String,
-    uploadPermissionString: String,
-    uploadAndDeletePermissionString: String,
-    onUpdatePermissions: (shareId: Long, canUpload: Boolean, canDelete: Boolean) -> Unit,
-    onRemoveMember: (shareId: Long) -> Unit,
-    modifier: Modifier = Modifier
-) {
-
-    var dropdownExpanded by remember { mutableStateOf(false) }
-
-    val currentPermissionText = when {
-        member.canUpload && member.canDelete -> uploadAndDeletePermissionString
-        member.canUpload -> uploadPermissionString
-        else -> viewPermissionString
-    }
-
-    ListItem(
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        modifier = modifier,
-        headlineContent = {
-            Text(member.userDisplayName, fontWeight = FontWeight.SemiBold)
-        },
-        supportingContent = {
-            Text(
-                currentPermissionText,
-                fontStyle = FontStyle.Italic,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        },
-        leadingContent = {
-            Surface(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape),
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = member.userDisplayName.take(1),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                    badgeData?.let { (label, iconRes) ->
+                        FolderBadge(label = label, painterResource(iconRes))
+                    }
                 }
             }
         },
-        trailingContent = {
-            if (!canModifyMembers) {
-                return@ListItem
-            }
-            Box {
-                IconButton(
-                    onClick = { dropdownExpanded = true }
-                ) {
+        actions = {
+            if (source is FolderNav.Source.Network && networkFolder != null) {
+                IconButton(onClick = onOpenSharing) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_more_options_vertical),
-                        contentDescription = stringResource(R.string.cd_edit_permissions),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        painterResource(R.drawable.ic_action_share),
+                        contentDescription = null
                     )
                 }
 
-                DropdownMenu(
-                    expanded = dropdownExpanded,
-                    onDismissRequest = { dropdownExpanded = false }
-                ) {
-                    val isViewOnly = !member.canUpload && !member.canDelete
-                    val isUploadOnly = member.canUpload && !member.canDelete
-                    val isUploadAndDelete = member.canUpload && member.canDelete
-
-                    DropdownMenuItem(
-                        text = { Text(viewPermissionString) },
-                        leadingIcon = {
-                            RadioButton(selected = isViewOnly, onClick = null)
-                        },
-                        onClick = {
-                            onUpdatePermissions(member.shareId, false, false)
-                            dropdownExpanded = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(uploadPermissionString) },
-                        leadingIcon = {
-                            RadioButton(selected = isUploadOnly, onClick = null)
-                        },
-                        onClick = {
-                            onUpdatePermissions(member.shareId, true, false)
-                            dropdownExpanded = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(uploadAndDeletePermissionString) },
-                        leadingIcon = {
-                            RadioButton(selected = isUploadAndDelete, onClick = null)
-                        },
-                        onClick = {
-                            onUpdatePermissions(member.shareId, true, true)
-                            dropdownExpanded = false
-                        }
-                    )
-
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                stringResource(R.string.sharing_remove_member),
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        },
-                        leadingIcon = {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_action_delete),
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        },
-                        onClick = {
-                            onRemoveMember(member.shareId)
-                            dropdownExpanded = false
-                        }
+                IconButton(onClick = onOpenRename) {
+                    Icon(
+                        painterResource(R.drawable.ic_action_edit),
+                        contentDescription = null
                     )
                 }
             }
-        }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
     )
 }

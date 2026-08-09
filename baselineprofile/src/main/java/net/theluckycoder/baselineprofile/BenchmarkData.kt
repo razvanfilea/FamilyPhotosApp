@@ -197,7 +197,7 @@ fun MacrobenchmarkScope.viewAndScrollPhotos() {
 
 fun MacrobenchmarkScope.selectMonth() {
     // Long press a photo to enter selection mode
-    val photo = device.findObject(By.res("photo_item"))
+    val photo = findCenterPhoto()
         ?: return
     photo.longClick()
     Thread.sleep(500)

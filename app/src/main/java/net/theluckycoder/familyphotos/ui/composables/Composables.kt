@@ -70,7 +70,7 @@ private val PLACEHOLDER_COLOR = Color.DarkGray
 private val SELECTION_SCRIM_COLOR = Color.Black.copy(alpha = 0.4f)
 
 /**
- * :param its reommended for this modifier to contain a size defintion of some sort, othersize the thumbhash might not render properly
+ * :param it's recommended for this modifier to contain a size definition of some sort, otherwise the thumbhash might not render properly
  */
 @Composable
 fun CoilPhoto(

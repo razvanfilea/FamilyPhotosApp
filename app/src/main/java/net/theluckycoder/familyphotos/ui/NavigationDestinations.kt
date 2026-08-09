@@ -77,6 +77,8 @@ class UploadPhotosNav(
     val photoIds: LongArray,
 ) : NavKey
 
+
+
 @Serializable
 object DuplicatesNav : NavKey
 

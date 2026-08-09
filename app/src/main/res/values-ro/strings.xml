@@ -11,6 +11,7 @@
     <string name="title_favorites">Favorite</string>
     <string name="title_trash">Coș de gunoi</string>
     <string name="title_large_files">Fișiere mari</string>
+    <string name="title_upload_to">Încarcă în: %s</string>
 
     <!-- Login -->
     <string name="login_server_address_label">Adresă Server</string>
@@ -59,6 +60,8 @@
 
     <!-- Folders -->
     <string name="folder_name">Nume folder</string>
+    <string name="folder_badge_local_device">Dispozitiv Local</string>
+    <string name="folder_badge_shared_count">Partajat (%d)</string>
     <string name="sort_name_asc">Nume (A la Z)</string>
     <string name="sort_name_desc">Nume (Z la A)</string>
     <string name="sort_date_desc">Dată (Cele mai noi)</string>

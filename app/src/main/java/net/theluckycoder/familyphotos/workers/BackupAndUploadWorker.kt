@@ -23,14 +23,12 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.db.UploadQueueEntry
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.domain.RefreshPhotosUseCase
-import java.net.ConnectException
 
 @HiltWorker
 class BackupAndUploadWorker @AssistedInject constructor(
@@ -44,42 +42,28 @@ class BackupAndUploadWorker @AssistedInject constructor(
 
     private val notificationId = id.hashCode()
 
-    override suspend fun doWork(): Result = workerMutex.withLock {
-        val ctx = applicationContext
-
-        // Setup notification channel
-        val channel = NotificationChannel(
-            NOTIFICATION_CHANNEL,
-            ctx.getString(R.string.notification_channel_backup),
-            NotificationManager.IMPORTANCE_DEFAULT
-        )
-        NotificationManagerCompat.from(ctx).createNotificationChannel(channel)
-        setForeground(
-            createForegroundInfo(
-                ctx.getString(R.string.notification_backup_starting),
-                0,
-                0
+    override suspend fun doWork(): Result {
+        if (!workerMutex.tryLock()) {
+            Log.i(
+                TAG,
+                "Another backup/upload worker is already running. Exiting periodic worker cleanly."
             )
-        )
+            return Result.success()
+        }
 
-        // Refresh photos & folders state from server and local DB
         try {
-            refreshPhotosUseCase()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error refreshing photos before upload", e)
-        }
+            prepareWorkerState()
 
-        // Step 1: Scan folders if not skipped
-        val skipScan = inputData.getBoolean(KEY_SKIP_FOLDER_SCAN, false)
-        if (!skipScan) {
-            scanFoldersAndQueue()
-        }
+            // Step 1: Scan folders if not skipped
+            val skipScan = inputData.getBoolean(KEY_SKIP_FOLDER_SCAN, false)
+            if (!skipScan) {
+                scanFoldersAndQueue()
+            }
 
-        // Step 2: Process upload queue
-        var successCount = 0
-        var failCount = 0
+            // Step 2: Process upload queue
+            var successCount = 0
+            var failCount = 0
 
-        val result = try {
             while (true) {
                 val entry = photoUploadRepository.getNextPending() ?: break
                 val pending = photoUploadRepository.getPendingCountFlow().first()
@@ -91,11 +75,10 @@ class BackupAndUploadWorker @AssistedInject constructor(
                     continue
                 }
 
-                setForeground(
+                setForegroundSafe(
                     createForegroundInfo(
-                        ctx.getString(R.string.notification_backup_progress, successCount, total),
-                        successCount,
-                        total
+                        applicationContext.getString(R.string.notification_backup_progress, successCount, total),
+                        successCount
                     )
                 )
                 setProgress(
@@ -126,16 +109,22 @@ class BackupAndUploadWorker @AssistedInject constructor(
                                         .putInt(KEY_PROGRESS_PHOTO_PERCENT, percent)
                                         .build()
                                 )
-                                val text = ctx.getString(
+                                val text = applicationContext.getString(
                                     R.string.notification_backup_progress,
                                     successCount,
                                     total
-                                ) + " ($percent%)"
-                                setForegroundAsync(createForegroundInfo(text, successCount, total))
+                                )
+                                setForegroundAsyncSafe(createForegroundInfo(text, percent))
                             }
                         }
                     }
-                } catch (_: ConnectException) {
+                } catch (e: java.io.IOException) {
+                    // Network interruption (socket drop, connection loss, timeout)
+                    Log.w(
+                        TAG,
+                        "Network failure uploading photo ${entry.localPhotoId}. Requesting WorkManager retry.",
+                        e
+                    )
                     return Result.retry()
                 } catch (e: Exception) {
                     Log.e(TAG, "Caught exception while uploading ${entry.localPhotoId}", e)
@@ -152,18 +141,39 @@ class BackupAndUploadWorker @AssistedInject constructor(
             }
 
             createSuccessNotification(successCount, failCount)
-            Result.success()
-        } catch (_: CancellationException) {
+            return Result.success()
+        } catch (e: CancellationException) {
+            if (isStopped) {
+                Log.i(TAG, "Worker stopped by WorkManager due to constraint change. Rescheduling.")
+                throw e // WorkManager will automatically reschedule
+            }
             createFailNotification(FailReason.Cancelled)
-            Result.failure()
+            return Result.failure()
         } catch (e: Exception) {
-            e.printStackTrace()
-            Log.e(TAG, e.stackTraceToString())
+
             createFailNotification(FailReason.Other, e.stackTraceToString())
-            Result.failure()
+            return Result.failure()
+        } finally {
+            workerMutex.unlock()
+        }
+    }
+
+    private suspend fun prepareWorkerState() {
+        val ctx = applicationContext
+        val channel = NotificationChannel(
+            NOTIFICATION_CHANNEL,
+            ctx.getString(R.string.notification_channel_backup),
+            NotificationManager.IMPORTANCE_DEFAULT
+        )
+        NotificationManagerCompat.from(ctx).createNotificationChannel(channel)
+
+        try {
+            refreshPhotosUseCase()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error refreshing photos before upload", e)
         }
 
-        return result
+        photoUploadRepository.resetFailedRetries()
     }
 
     private suspend fun scanFoldersAndQueue() {
@@ -198,8 +208,7 @@ class BackupAndUploadWorker @AssistedInject constructor(
 
     private fun createForegroundInfo(
         text: String,
-        progress: Int,
-        progressMax: Int
+        progress: Int
     ): ForegroundInfo {
         val ctx = applicationContext
 
@@ -219,7 +228,7 @@ class BackupAndUploadWorker @AssistedInject constructor(
             .setOnlyAlertOnce(true)
             .setSmallIcon(android.R.drawable.stat_sys_upload)
             .setOngoing(true)
-            .setProgress(progressMax, progress, false)
+            .setProgress(100, progress, false)
             .addAction(cancelAction)
             .build()
 
@@ -297,6 +306,34 @@ class BackupAndUploadWorker @AssistedInject constructor(
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             NotificationManagerCompat.from(ctx).notify(NOTIFICATION_FAIL_ID, notification)
+        }
+    }
+
+    private suspend fun setForegroundSafe(foregroundInfo: ForegroundInfo) {
+        try {
+            setForeground(foregroundInfo)
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            notifyManually(foregroundInfo)
+        }
+    }
+
+    private fun setForegroundAsyncSafe(foregroundInfo: ForegroundInfo) {
+        try {
+            setForegroundAsync(foregroundInfo)
+        } catch (e: Exception) {
+            notifyManually(foregroundInfo)
+        }
+    }
+
+    private fun notifyManually(foregroundInfo: ForegroundInfo) {
+        val ctx = applicationContext
+        if (ActivityCompat.checkSelfPermission(
+                ctx,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            NotificationManagerCompat.from(ctx).notify(notificationId, foregroundInfo.notification)
         }
     }
 

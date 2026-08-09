@@ -26,7 +26,7 @@ fun WorkManager.enqueueBackupAndUploadWorker(
         .setConstraints(constraints)
         .setInputData(inputData)
         .addTag(BackupAndUploadWorker.TAG)
-        .setBackoffCriteria(BackoffPolicy.LINEAR, 1, TimeUnit.MINUTES)
+        .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)
         .build()
 
     enqueueUniqueWork(
@@ -36,7 +36,10 @@ fun WorkManager.enqueueBackupAndUploadWorker(
     )
 }
 
-fun WorkManager.enqueuePeriodBackupWorker(useMobileData: Boolean) {
+fun WorkManager.enqueuePeriodBackupWorker(
+    useMobileData: Boolean,
+    policy: ExistingPeriodicWorkPolicy = ExistingPeriodicWorkPolicy.KEEP,
+) {
     val networkType = if (useMobileData) NetworkType.NOT_ROAMING else NetworkType.UNMETERED
 
     val constraints = Constraints.Builder()
@@ -47,11 +50,12 @@ fun WorkManager.enqueuePeriodBackupWorker(useMobileData: Boolean) {
     val periodicWork = PeriodicWorkRequestBuilder<BackupAndUploadWorker>(4, TimeUnit.HOURS)
         .setConstraints(constraints)
         .addTag(BackupAndUploadWorker.TAG)
+        .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 15, TimeUnit.SECONDS)
         .build()
 
     enqueueUniquePeriodicWork(
         BackupAndUploadWorker.UNIQUE_WORK_NAME_AUTOMATIC,
-        ExistingPeriodicWorkPolicy.UPDATE,
+        policy,
         periodicWork
     )
 }

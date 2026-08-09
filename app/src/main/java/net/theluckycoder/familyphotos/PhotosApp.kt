@@ -54,9 +54,6 @@ class PhotosApp : Application(), Configuration.Provider {
     private fun createUploadWorker() = coroutineScope.launch {
         val workManager = WorkManager.getInstance(this@PhotosApp)
 
-        // TODO: Remove after a few releases - cleans up old worker with wrong name
-        workManager.cancelUniqueWork("periodic_upload")
-
         val useMobileData = settingsDataStore.backupOverMobileData.first()
         workManager.enqueuePeriodBackupWorker(useMobileData)
     }

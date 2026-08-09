@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.WorkManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +27,7 @@ class SettingsViewModel @Inject constructor(
     private val application: Application,
     private val settingsDataStore: SettingsDataStore,
     private val loginRepository: LoginRepository,
-    private val userDataStore: UserDataStore,
+    userDataStore: UserDataStore,
     private val workManager: WorkManager,
 ) : ViewModel() {
 
@@ -54,7 +55,7 @@ class SettingsViewModel @Inject constructor(
 
     fun setBackupOverMobileData(value: Boolean) {
         settingsDataStore.setBackupOverMobileData(value)
-        workManager.enqueuePeriodBackupWorker(value)
+        workManager.enqueuePeriodBackupWorker(value, ExistingPeriodicWorkPolicy.UPDATE)
     }
 
     fun setCacheSize(value: Int) {

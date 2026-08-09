@@ -14,6 +14,7 @@
     <string name="title_favorites">Favorites</string>
     <string name="title_trash">Trash</string>
     <string name="title_large_files">Large Files</string>
+    <string name="title_upload_to">Upload to: %s</string>
 
     <!-- Login -->
     <string name="login_server_address_label">Server Address</string>
@@ -62,6 +63,8 @@
 
     <!-- Folders -->
     <string name="folder_name">Folder Name</string>
+    <string name="folder_badge_local_device">Local Device</string>
+    <string name="folder_badge_shared_count">Shared (%d)</string>
     <string name="sort_name_asc">Name (A to Z)</string>
     <string name="sort_name_desc">Name (Z to A)</string>
     <string name="sort_date_desc">Date (Newest)</string>

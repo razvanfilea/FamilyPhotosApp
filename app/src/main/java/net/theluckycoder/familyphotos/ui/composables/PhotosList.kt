@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -26,7 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -65,7 +63,6 @@ import net.theluckycoder.familyphotos.core.data.model.isVideo
 import net.theluckycoder.familyphotos.ui.LocalOpeningPhotoId
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
-import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.utils.buildDateString
 import kotlin.math.ceil
 import kotlin.time.Duration.Companion.milliseconds
@@ -89,19 +86,18 @@ private const val CONTENT_TYPE_TITLE = "title"
 @Composable
 fun <T : Photo> PhotosList(
     photos: LazyPagingItems<T>,
-    mainViewModel: MainViewModel,
     modifier: Modifier = Modifier,
     gridState: LazyGridState = rememberLazyGridState(),
     timelineLayout: TimelineLayout = TimelineLayout.EMPTY,
+    selectedPhotoIds: SnapshotStateSet<Long> = remember { mutableStateSetOf() },
     headerContent: @Composable ColumnScope.() -> Unit = {},
-    openPhoto: (index: Int) -> Unit,
+    openPhoto: (index: Int, photoId: Long) -> Unit,
 ) = Box(Modifier.fillMaxSize()) {
     val coroutineScope = rememberCoroutineScope()
 
     // Apply offset to timeline layout to account for header at index 0
     val layout = timelineLayout.withOffset(1)
     var showMonthOverlay by remember { mutableStateOf(false) }
-    val selectedPhotoIds = remember { mutableStateSetOf<Long>() }
     val isThumbDragging = remember { mutableStateOf(false) }
     val hasSelection = remember { derivedStateOf { selectedPhotoIds.isNotEmpty() } }
 
@@ -212,7 +208,7 @@ fun <T : Photo> PhotosList(
                             requestedPhotoSize = coilImageSize,
                             openPhoto = {
                                 openingPhotoIdState.value = photo.id
-                                openPhoto(pagingIndex)
+                                openPhoto(pagingIndex, photo.id)
                             },
                         )
                     } else {
@@ -221,30 +217,6 @@ fun <T : Photo> PhotosList(
                     }
                 }
             }
-        }
-    }
-
-    val containsLocalPhotos = remember { mutableStateOf<Boolean?>(null) }
-    LaunchedEffect(photos.itemCount > 0) {
-        if (containsLocalPhotos.value == null && photos.itemCount > 0) {
-            val photo =
-                photos.itemSnapshotList.items.asSequence().take(10).firstNotNullOfOrNull { it }
-
-            if (photo != null) {
-                containsLocalPhotos.value = photo is LocalPhoto
-            }
-        }
-    }
-
-    containsLocalPhotos.value?.let {
-        PhotosSelectionBar(
-            selectedPhotoIds = selectedPhotoIds,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .windowInsetsPadding(TopAppBarDefaults.windowInsets)
-                .padding(top = 8.dp)
-        ) {
-            PhotoUtilitiesActions(it, selectedPhotoIds, mainViewModel)
         }
     }
 
@@ -314,8 +286,8 @@ private fun <T : Photo> MonthSeparatorHeader(
         Text(
             modifier = Modifier.weight(1f),
             text = text,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Medium
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
         )
 
         IconButton(
@@ -353,9 +325,9 @@ private fun <T : Photo> MonthSeparatorHeader(
 }
 
 @Composable
-fun PhotoListItem(
+fun <T : Photo> PhotoListItem(
     modifier: Modifier,
-    photo: Photo,
+    photo: T,
     inSelectionMode: Boolean,
     selectedPhotoIds: SnapshotStateSet<Long>,
     openPhoto: (id: Long) -> Unit,

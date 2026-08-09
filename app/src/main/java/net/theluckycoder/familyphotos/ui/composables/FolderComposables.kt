@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,7 +36,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -86,6 +86,10 @@ import net.theluckycoder.familyphotos.core.data.model.getFolderType
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.utils.normalize
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.ExperimentalMaterial3Api
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T : PhotoFolder> FoldersGridList(
     folders: List<T>,
@@ -94,6 +98,7 @@ fun <T : PhotoFolder> FoldersGridList(
     onSortOrderChange: (FolderSortOrder) -> Unit,
     currentUserId: String? = null,
     isBackupEnabled: (T) -> Boolean = { false },
+    contentPadding: PaddingValues = TopAppBarDefaults.windowInsets.asPaddingValues(),
     extraHeader: @Composable ColumnScope.() -> Unit = {},
 ) {
     val gridState = rememberLazyGridState()
@@ -117,9 +122,9 @@ fun <T : PhotoFolder> FoldersGridList(
     LazyVerticalGrid(
         state = gridState,
         columns = GridCells.Fixed(columnCount),
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().consumeWindowInsets(contentPadding),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = TopAppBarDefaults.windowInsets.asPaddingValues()
+        contentPadding = contentPadding,
     ) {
         item(span = { GridItemSpan(columnCount) }, key = "header") {
             Column {
