@@ -25,6 +25,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -107,7 +108,7 @@ fun <T : Photo> PhotosViewer(
     val activePhoto = fullNetworkPhoto ?: currentPhoto
 
     val openingPhotoId = LocalOpeningPhotoId.current
-    LaunchedEffect(activePhoto?.id) {
+    SideEffect(key1 = activePhoto?.id) {
         activePhoto?.let { openingPhotoId.value = it.id }
     }
 
@@ -170,7 +171,7 @@ fun <T : Photo> PhotosViewer(
     val activePhoto = fullNetworkPhoto ?: currentPhoto
 
     val openingPhotoId = LocalOpeningPhotoId.current
-    LaunchedEffect(activePhoto?.id) {
+    SideEffect(key1 = activePhoto?.id) {
         activePhoto?.let { openingPhotoId.value = it.id }
     }
 
@@ -468,7 +469,7 @@ fun ZoomableImage(
 
     val zoomableState = rememberZoomableState()
     val zoomFraction = zoomableState.zoomFraction ?: 0.0f
-    LaunchedEffect(zoomFraction < 0.1f) {
+    SideEffect(key1 = zoomFraction < 0.1f) {
         showUI(zoomFraction < 0.1f)
     }
 
@@ -487,7 +488,7 @@ fun ZoomableImage(
     }
 
     Box(modifier, contentAlignment = Alignment.Center) {
-        if (!isImageLoaded.value && thumbHashPainter != null) {
+        if (!isImageLoaded.value) {
             Image(
                 thumbHashPainter,
                 modifier = Modifier

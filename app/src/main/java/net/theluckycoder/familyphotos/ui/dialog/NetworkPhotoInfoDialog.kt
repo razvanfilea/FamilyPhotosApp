@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.text.selection.rememberSelectionState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -99,12 +101,9 @@ private fun DetailItem(title: String, summary: String?, @DrawableRes icon: Int) 
     )
 
 @Composable
-fun NetworkPhotoInfoDialogContent(photo: NetworkPhoto) = Column(
-    modifier = Modifier
-        .fillMaxWidth()
-        .verticalScroll(rememberScrollState())
-        .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
-) {
+fun NetworkPhotoInfoDialogContent(
+    photo: NetworkPhoto
+) = SelectionContainer(state = rememberSelectionState()) {
     val viewModel: PhotoViewerViewModel = viewModel()
     var exif by remember { mutableStateOf(ExifData()) }
     var folderName by remember { mutableStateOf<String?>(null) }
@@ -118,95 +117,102 @@ fun NetworkPhotoInfoDialogContent(photo: NetworkPhoto) = Column(
         folderName = photo.folderId?.let { viewModel.getFolderName(it) }
     }
 
-    Text(
-        text = photo.name,
-        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-        maxLines = 2,
-        overflow = TextOverflow.Ellipsis
-    )
-
-    Spacer(Modifier.height(4.dp))
-
-    Text(
-        text = photo.photoDateText(),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
-
-    Spacer(Modifier.height(16.dp))
-
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-    Spacer(Modifier.height(8.dp))
-
-    LocationInfoCard(exif)
-
-    Text(
-        text = stringResource(R.string.photo_detail_title_details),
-        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-        modifier = Modifier.padding(vertical = 8.dp)
-    )
-
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-        ),
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth()
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
     ) {
-        Column {
-            // 1. Format / Extension & Resolution
-            val (typeText, typeIcon) = getMediaTypeDetails(photo)
-            val resolutionText = getResolutionText(exif)
+        Text(
+            text = photo.name,
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
 
-            DetailItem(
-                title = typeText,
-                summary = resolutionText,
-                icon = typeIcon
-            )
+        Spacer(Modifier.height(4.dp))
 
-            // 2. Camera EXIF Settings (if available)
-            val cameraDetails = getCameraDetails(exif)
-            if (cameraDetails != null) {
+        Text(
+            text = photo.photoDateText(),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+        Spacer(Modifier.height(8.dp))
+
+        LocationInfoCard(exif)
+
+        Text(
+            text = stringResource(R.string.photo_detail_title_details),
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            ),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column {
+                // 1. Format / Extension & Resolution
+                val (typeText, typeIcon) = getMediaTypeDetails(photo)
+                val resolutionText = getResolutionText(exif)
+
                 DetailItem(
-                    title = cameraDetails.first,
-                    summary = cameraDetails.second.ifEmpty { null },
-                    icon = R.drawable.ic_exif_camera
+                    title = typeText,
+                    summary = resolutionText,
+                    icon = typeIcon
+                )
+
+                // 2. Camera EXIF Settings (if available)
+                val cameraDetails = getCameraDetails(exif)
+                if (cameraDetails != null) {
+                    DetailItem(
+                        title = cameraDetails.first,
+                        summary = cameraDetails.second.ifEmpty { null },
+                        icon = R.drawable.ic_exif_camera
+                    )
+                }
+
+                // 3. Folder & File Size
+                val context = LocalContext.current
+                val sizeText =
+                    if (photo.fileSize != 0L) Formatter.formatShortFileSize(
+                        context,
+                        photo.fileSize
+                    ) else null
+                DetailItem(
+                    title = folderName ?: stringResource(R.string.photo_detail_no_folder),
+                    summary = sizeText,
+                    icon = R.drawable.ic_folder_outlined
+                )
+
+                // 4. Visibility Status (Public/Private)
+                val visibilityTitle = stringResource(R.string.photo_detail_visibility)
+                val (visibilitySummary, visibilityIcon) = if (photo.isPublic) {
+                    Pair(
+                        stringResource(R.string.photo_detail_visibility_public),
+                        R.drawable.ic_visibility
+                    )
+                } else {
+                    Pair(
+                        stringResource(R.string.photo_detail_visibility_private),
+                        R.drawable.ic_lock_outline
+                    )
+                }
+
+                DetailItem(
+                    title = visibilityTitle,
+                    summary = visibilitySummary,
+                    icon = visibilityIcon
                 )
             }
-
-            // 3. Folder & File Size
-            val context = LocalContext.current
-            val sizeText =
-                if (photo.fileSize != 0L) Formatter.formatShortFileSize(
-                    context,
-                    photo.fileSize
-                ) else null
-            DetailItem(
-                title = folderName ?: stringResource(R.string.photo_detail_no_folder),
-                summary = sizeText,
-                icon = R.drawable.ic_folder_outlined
-            )
-
-            // 4. Visibility Status (Public/Private)
-            val visibilityTitle = stringResource(R.string.photo_detail_visibility)
-            val (visibilitySummary, visibilityIcon) = if (photo.isPublic) {
-                Pair(
-                    stringResource(R.string.photo_detail_visibility_public),
-                    R.drawable.ic_visibility
-                )
-            } else {
-                Pair(
-                    stringResource(R.string.photo_detail_visibility_private),
-                    R.drawable.ic_lock_outline
-                )
-            }
-
-            DetailItem(
-                title = visibilityTitle,
-                summary = visibilitySummary,
-                icon = visibilityIcon
-            )
         }
     }
 }

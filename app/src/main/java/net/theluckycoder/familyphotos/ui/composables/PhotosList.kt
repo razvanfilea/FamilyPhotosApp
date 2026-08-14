@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.gestures.FlingBehavior
+import androidx.compose.foundation.gestures.ScrollScope
+import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
@@ -67,8 +70,8 @@ import net.theluckycoder.familyphotos.utils.buildDateString
 import kotlin.math.ceil
 import kotlin.time.Duration.Companion.milliseconds
 
-private val PORTRAIT_ZOOM_LEVELS = intArrayOf(4, 5, 7)
-private val LANDSCAPE_ZOOM_LEVELS = intArrayOf(8, 10, 13)
+private val PORTRAIT_ZOOM_LEVELS = intArrayOf(3, 4, 5, 7)
+private val LANDSCAPE_ZOOM_LEVELS = intArrayOf(5, 8, 10, 13)
 private val MAX_ZOOM_LEVEL_INDEX = PORTRAIT_ZOOM_LEVELS.size - 1
 
 @Composable
@@ -135,6 +138,7 @@ fun <T : Photo> PhotosList(
 
     LazyVerticalGrid(
         state = gridState,
+        flingBehavior = rememberGalleryFlingBehavior(),
         modifier = Modifier
             .fillMaxSize()
             .then(with(LocalSharedTransitionScope.current) {
@@ -154,16 +158,25 @@ fun <T : Photo> PhotosList(
         )
     ) {
         items(count = layout.totalItemCount, key = { gridIndex ->
-            if (gridIndex == 0) "header"
-            else layout.getHeaderAt(gridIndex)?.timeCreated ?: run {
-                val pagingIndex = layout.pagingIndexOf(gridIndex)
-                if (pagingIndex in 0 until photos.itemCount) photos.peek(pagingIndex)?.id else null
-            } ?: gridIndex
+            if (gridIndex == 0) "top_header"
+            else {
+                val header = layout.getHeaderAt(gridIndex)
+                if (header != null) {
+                    "month_header_${header.timeCreated}_$gridIndex"
+                } else {
+                    val pagingIndex = layout.pagingIndexOf(gridIndex)
+                    val photoId = if (pagingIndex in 0 until photos.itemCount) photos.peek(pagingIndex)?.id else null
+                    if (photoId != null) "photo_${photoId}_$gridIndex" else "placeholder_$gridIndex"
+                }
+            }
         }, contentType = { gridIndex ->
             when {
                 gridIndex == 0 -> CONTENT_TYPE_HEADER
                 layout.isHeader(gridIndex) -> CONTENT_TYPE_TITLE
-                else -> null
+                else -> {
+                    val pagingIndex = layout.pagingIndexOf(gridIndex)
+                    if (pagingIndex in 0 until photos.itemCount && photos.peek(pagingIndex) != null) "photo" else "placeholder"
+                }
             }
         }, span = { gridIndex ->
             GridItemSpan(if (gridIndex == 0 || layout.isHeader(gridIndex)) columnCount else 1)
@@ -409,4 +422,19 @@ private fun getCoilImageSize(columnCount: Int): Size {
 private fun Int.roundUpTo64(): Int {
     if (this <= 0) return 64
     return (ceil(this.toDouble() / 64.0) * 64).toInt()
+}
+
+@Composable
+private fun rememberGalleryFlingBehavior(): FlingBehavior {
+    val defaultFling = ScrollableDefaults.flingBehavior()
+    return remember(defaultFling) {
+        object : FlingBehavior {
+            override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
+                // Boost velocity for faster, Google Photos-like scrolling
+                return with(defaultFling) {
+                    performFling(initialVelocity * 1.5f)
+                }
+            }
+        }
+    }
 }

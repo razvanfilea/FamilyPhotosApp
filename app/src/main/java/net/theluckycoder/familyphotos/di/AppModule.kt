@@ -54,7 +54,7 @@ class AppModule {
                     (Runtime.getRuntime().availableProcessors() * 1.5).toInt()
                 )
             )
-            .memoryCache { MemoryCache.Builder().maxSizePercent(context, 0.40).build() }
+            .memoryCache { MemoryCache.Builder().maxSizePercent(context, 0.25).build() }
             .diskCache {
                 runBlocking {
                     DiskCache.Builder()

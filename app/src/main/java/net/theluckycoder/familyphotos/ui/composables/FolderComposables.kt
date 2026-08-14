@@ -88,6 +88,7 @@ import net.theluckycoder.familyphotos.utils.normalize
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.ExperimentalMaterial3Api
+import net.theluckycoder.familyphotos.core.data.model.LocalFolder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -144,7 +145,12 @@ fun <T : PhotoFolder> FoldersGridList(
             }
         }
 
-        items(filteredFolders, key = { it.coverPhotoId }) { folder ->
+        items(filteredFolders, key = { folder ->
+            when (folder) {
+                is NetworkFolder -> "network_${folder.id}"
+                is LocalFolder -> "local_${folder.name}"
+            }
+        }) { folder ->
             val photo = folder.getCoverPhoto()
             val modifier = Modifier
                 .padding(horizontal = if (!showAsGrid) 16.dp else 8.dp)

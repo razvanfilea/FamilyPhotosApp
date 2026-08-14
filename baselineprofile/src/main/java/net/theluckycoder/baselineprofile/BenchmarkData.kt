@@ -29,32 +29,40 @@ fun MacrobenchmarkScope.waitForGalleryContent() {
 }
 
 fun MacrobenchmarkScope.scrollGalleryGrid() {
-    val gestureTimeout = 100L
+    val gestureTimeout = 200L
     val margin = device.displayWidth / 5
-    val grid = device.findObject(By.res("photos_list"))
-    grid.setGestureMargin(margin)
+    fun getGrid(): UiObject2? = device.findObject(By.res("photos_list"))?.apply {
+        setGestureMargin(margin)
+    }
 
-    grid.fling(Direction.DOWN)
+    getGrid()?.fling(Direction.DOWN)
+    device.waitForIdle()
     Thread.sleep(gestureTimeout)
 
     // Pinch to zoom out (more columns)
-    grid.pinchClose(0.5f)
+    getGrid()?.pinchClose(0.5f)
+    device.waitForIdle()
     Thread.sleep(gestureTimeout)
 
-    grid.fling(Direction.DOWN)
+    getGrid()?.fling(Direction.DOWN)
+    device.waitForIdle()
     Thread.sleep(gestureTimeout)
 
-    grid.pinchClose(1f)
+    getGrid()?.pinchClose(1f)
+    device.waitForIdle()
     Thread.sleep(gestureTimeout)
 
-    grid.fling(Direction.DOWN)
+    getGrid()?.fling(Direction.DOWN)
+    device.waitForIdle()
     Thread.sleep(gestureTimeout)
 
     // Pinch to zoom back in (fewer columns)
-    grid.pinchOpen(0.75f)
+    getGrid()?.pinchOpen(0.75f)
+    device.waitForIdle()
     Thread.sleep(gestureTimeout)
 
-    grid.fling(Direction.UP)
+    getGrid()?.fling(Direction.UP)
+    device.waitForIdle()
 }
 
 /**
@@ -98,9 +106,9 @@ fun MacrobenchmarkScope.openFolderAndWait(index: Int = 0): Boolean {
     val folders = device.findObjects(By.res("folder_item"))
     val folder = folders.getOrNull(index) ?: return false
     folder.click()
-    device.wait(Until.hasObject(By.res("photos_list")), 10_000)
+    val hasGrid = device.wait(Until.hasObject(By.res("photos_list")), 10_000)
     device.waitForIdle()
-    return true
+    return hasGrid
 }
 
 /**
@@ -108,11 +116,16 @@ fun MacrobenchmarkScope.openFolderAndWait(index: Int = 0): Boolean {
  * decoding under scroll.
  */
 fun MacrobenchmarkScope.scrollFolderGrid() {
-    val grid = device.findObject(By.res("photos_list")) ?: return
-    grid.setGestureMargin(device.displayWidth / 5)
-    grid.fling(Direction.DOWN)
+    val margin = device.displayWidth / 5
+    fun getGrid(): UiObject2? = device.findObject(By.res("photos_list"))?.apply {
+        setGestureMargin(margin)
+    }
+
+    getGrid()?.fling(Direction.DOWN)
+    device.waitForIdle()
     Thread.sleep(100)
-    grid.fling(Direction.UP)
+
+    getGrid()?.fling(Direction.UP)
     device.waitForIdle()
 }
 
@@ -132,9 +145,9 @@ fun MacrobenchmarkScope.openFoldersSequentially(count: Int) {
 
 fun MacrobenchmarkScope.scrollWithMonthIndicator() {
     // Scroll the grid enough so the indicator thumb appears away from the status bar
-    val grid = device.findObject(By.res("photos_list"))
-        ?: return
+    val grid = device.findObject(By.res("photos_list")) ?: return
     grid.scroll(Direction.DOWN, 2f)
+    device.waitForIdle()
 
     // Wait for indicator thumb to appear
     device.wait(Until.hasObject(By.res("month_scroll_indicator")), 500)
@@ -176,23 +189,28 @@ fun MacrobenchmarkScope.viewAndScrollPhotos() {
 
     // Wait for viewer to appear
     device.wait(Until.hasObject(By.res("photo_viewer_pager")), 2_000)
-    val pager = device.findObject(By.res("photo_viewer_pager"))
-        ?: return
 
-    pager.setGestureMargin(device.displayWidth / 10)
+    val margin = device.displayWidth / 10
 
     // Swipe through photos
     repeat(5) {
+        val pager = device.findObject(By.res("photo_viewer_pager")) ?: return@repeat
+        pager.setGestureMargin(margin)
         pager.swipe(Direction.LEFT, 0.8f)
+        device.waitForIdle()
         Thread.sleep(300)
     }
     repeat(3) {
+        val pager = device.findObject(By.res("photo_viewer_pager")) ?: return@repeat
+        pager.setGestureMargin(margin)
         pager.swipe(Direction.RIGHT, 0.8f)
+        device.waitForIdle()
         Thread.sleep(300)
     }
 
     // Press back to return
     device.pressBack()
+    device.waitForIdle()
 }
 
 fun MacrobenchmarkScope.selectMonth() {
@@ -200,6 +218,7 @@ fun MacrobenchmarkScope.selectMonth() {
     val photo = findCenterPhoto()
         ?: return
     photo.longClick()
+    device.waitForIdle()
     Thread.sleep(500)
 
     // Find and click month select button
@@ -207,8 +226,10 @@ fun MacrobenchmarkScope.selectMonth() {
     val monthButton = device.findObject(By.res("month_select_button"))
         ?: return
     monthButton.click()
+    device.waitForIdle()
     Thread.sleep(500)
 
     // Press back to clear selection
     device.pressBack()
+    device.waitForIdle()
 }

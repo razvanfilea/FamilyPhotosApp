@@ -41,14 +41,21 @@ import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
 import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
 import kotlin.math.abs
 
+import androidx.compose.ui.graphics.LayerOutsets
+import androidx.compose.ui.graphics.graphicsLayer
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun Modifier.photoSharedBounds(photoId: Long): Modifier {
     with(LocalSharedTransitionScope.current) {
-        return sharedBounds(
-            sharedContentState = rememberSharedContentState(key = "photo-$photoId"),
-            animatedVisibilityScope = LocalNavAnimatedContentScope.current,
-        )
+        return this@photoSharedBounds
+            .graphicsLayer {
+                clip = false
+            }
+            .sharedBounds(
+                sharedContentState = rememberSharedContentState(key = "photo-$photoId"),
+                animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+            )
     }
 }
 
@@ -127,12 +134,24 @@ private fun <T : Photo> Modifier.photoGridDrag(
     getLayout: () -> TimelineLayout,
 ) = pointerInput(Unit) {
     fun LazyGridState.hitKeyAt(rawOffset: Offset): Long? {
-        return layoutInfo.visibleItemsInfo
+        val key = layoutInfo.visibleItemsInfo
             .find { info ->
                 info.size.toIntRect()
                     .contains((rawOffset.round() - info.offset))
             }
-            ?.key as? Long
+            ?.key
+
+        return when (key) {
+            is Long -> key
+            is String -> {
+                if (key.startsWith("photo_")) {
+                    key.removePrefix("photo_").substringBefore("_").toLongOrNull()
+                } else {
+                    key.toLongOrNull()
+                }
+            }
+            else -> null
+        }
     }
 
     fun IntRange.mapIndexToId(): List<Long> {

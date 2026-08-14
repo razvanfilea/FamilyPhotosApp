@@ -30,15 +30,13 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -47,8 +45,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
+import coil3.request.bitmapConfig
 import coil3.request.crossfade
 import coil3.size.Size
 import kotlinx.datetime.TimeZone
@@ -66,7 +64,6 @@ import java.time.format.DateTimeFormatter
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-private val PLACEHOLDER_COLOR = Color.DarkGray
 private val SELECTION_SCRIM_COLOR = Color.Black.copy(alpha = 0.4f)
 
 /**
@@ -80,8 +77,7 @@ fun CoilPhoto(
     contentScale: ContentScale = ContentScale.Fit,
     requestedPhotoSize: Size? = null,
 ) {
-    val isImageLoaded = remember { mutableStateOf(false) }
-    val thumbHashPainter = if (!isImageLoaded.value) thumbHashPainter(photo.thumbHash) else null
+    val thumbHashPainter = thumbHashPainter(photo.thumbHash)
 
     val context = LocalContext.current
     val model = remember(preview, photo.id, requestedPhotoSize) {
@@ -89,21 +85,12 @@ fun CoilPhoto(
             .data(if (!preview) photo.getUri() else photo.getPreviewUri())
             .crossfade(false)
             .apply { requestedPhotoSize?.let { size(it) } }
+            .apply { 
+                if (preview) {
+                    bitmapConfig(android.graphics.Bitmap.Config.RGB_565)
+                }
+            }
             .build()
-    }
-
-    val placeholderModifier = remember(thumbHashPainter) {
-        Modifier.drawBehind {
-            if (isImageLoaded.value) return@drawBehind
-            if (thumbHashPainter == null) {
-                drawRect(PLACEHOLDER_COLOR)
-                return@drawBehind
-            }
-
-            clipRect {
-                with(thumbHashPainter) { draw(size) }
-            }
-        }
     }
 
     AsyncImage(
@@ -111,21 +98,29 @@ fun CoilPhoto(
         imageLoader = LocalImageLoader.current.get(),
         contentDescription = null,
         contentScale = contentScale,
-        modifier = modifier
-            .then(placeholderModifier),
+        modifier = modifier,
+        placeholder = thumbHashPainter,
+        fallback = thumbHashPainter,
+        error = thumbHashPainter,
         filterQuality = if (preview) FilterQuality.None else FilterQuality.Low,
-        onState = { state ->
-            if (state is AsyncImagePainter.State.Success) {
-                isImageLoaded.value = true
-            }
-        }
     )
 }
 
 @Composable
-fun thumbHashPainter(thumbHash: String?): ScaledBitmapPainter? {
-    return remember(thumbHash) {
-        ThumbHashCache.getOrDecodeSync(thumbHash)?.let { ScaledBitmapPainter(it) }
+fun thumbHashPainter(thumbHash: String?): ScaledBitmapPainter {
+    val bitmapState = produceState(
+        initialValue = ThumbHashCache.get(thumbHash),
+        key1 = thumbHash
+    ) {
+        if (thumbHash != null && value == null) {
+            value = ThumbHashCache.getOrCompute(thumbHash)
+        } else if (thumbHash == null) {
+            value = null
+        }
+    }
+
+    return remember(bitmapState) {
+        ScaledBitmapPainter(bitmapState)
     }
 }
 
