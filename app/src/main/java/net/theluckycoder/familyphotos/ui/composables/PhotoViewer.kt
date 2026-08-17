@@ -82,19 +82,15 @@ fun <T : Photo> PhotosViewer(
     photoViewerViewModel: PhotoViewerViewModel = viewModel()
 ) {
     val showUi = remember { mutableStateOf(true) }
-    // Now paging items are plain photos, not DataOrSeparator
-    val items = remember(lazyPagingItems.itemSnapshotList) {
-        lazyPagingItems.itemSnapshotList.withIndex()
-            .mapNotNull { (index, photo) -> photo?.let { index to it } }
-    }
-    val actualInitialIndex = items.indexOfFirst { it.first == initialPhotoIndex }.coerceAtLeast(0)
 
     val pagerState = rememberPagerState(
-        initialPage = actualInitialIndex,
-        pageCount = { items.size }
+        initialPage = initialPhotoIndex,
+        pageCount = { lazyPagingItems.itemCount }
     )
 
-    val currentPhoto = items.getOrNull(pagerState.currentPage)?.second
+    val currentPhoto = if (lazyPagingItems.itemCount > 0 && pagerState.currentPage < lazyPagingItems.itemCount) {
+        lazyPagingItems.peek(pagerState.currentPage)
+    } else null
 
     val fullNetworkPhoto by remember(currentPhoto?.id) {
         val photoId = currentPhoto?.id
@@ -121,12 +117,22 @@ fun <T : Photo> PhotosViewer(
         HorizontalPager(
             modifier = Modifier.testTag("photo_viewer_pager"),
             state = pagerState,
-            key = { index -> items.getOrNull(index)?.second?.id ?: index },
+            key = { index -> 
+                if (index < lazyPagingItems.itemCount) {
+                    lazyPagingItems.peek(index)?.id ?: index 
+                } else {
+                    index
+                }
+            },
         ) { page ->
-            val item = items.getOrNull(page) ?: return@HorizontalPager
-            val (originalIndex, photo) = item
-            if (originalIndex in 0 until lazyPagingItems.itemCount) {
-                lazyPagingItems[originalIndex] // Notify Paging Data!!
+            val photo = if (page < lazyPagingItems.itemCount) {
+                lazyPagingItems[page]
+            } else null
+
+            if (photo == null) {
+                // Placeholder
+                Box(Modifier.fillMaxSize())
+                return@HorizontalPager
             }
 
             val localUri = remember { mutableStateOf<Uri?>(null) }
