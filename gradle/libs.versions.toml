@@ -1,8 +1,8 @@
 [versions]
-agp = "9.4.1"
+agp = "9.5.0"
 blakeHash = "1.1.1"
 kotlin_base = "2.4.21"
-kotlin_ksp = "2.3.12"
+kotlin_ksp = "2.3.13"
 kotlin_coroutines = "1.11.0"
 kotlin_serialization = "1.12.0"
 kotlin_datetime = "0.8.0-0.6.x-compat"
