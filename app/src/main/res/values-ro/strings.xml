@@ -19,6 +19,8 @@
     <string name="login_password_label">Parolă</string>
     <string name="login_button">Autentificare</string>
     <string name="login_subtitle">Galeria ta foto self-hosted</string>
+    <string name="login_tagline">Momentele familiei tale, pe propriul tău server</string>
+    <string name="login_sign_in_title">Autentificare</string>
     <string name="login_loading">Se autentifică…</string>
     <string name="login_error_server_unreachable">Nu s-a putut stabili conexiunea cu serverul. Verificați adresa.</string>
     <string name="login_error_invalid_credentials">Nume de utilizator sau parolă incorectă.</string>

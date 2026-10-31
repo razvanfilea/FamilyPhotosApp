@@ -22,6 +22,8 @@
     <string name="login_password_label">Password</string>
     <string name="login_button">Login</string>
     <string name="login_subtitle">Your self-hosted photo library</string>
+    <string name="login_tagline">Your family’s moments, on your own server</string>
+    <string name="login_sign_in_title">Sign in</string>
     <string name="login_loading">Logging in…</string>
     <string name="login_error_server_unreachable">Cannot connect to the server. Check the address and try again.</string>
     <string name="login_error_invalid_credentials">Invalid username or password.</string>
