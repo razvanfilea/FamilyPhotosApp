@@ -9,6 +9,8 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import java.time.Duration
+import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 
 fun WorkManager.enqueueBackupAndUploadWorker(
@@ -58,4 +60,40 @@ fun WorkManager.enqueuePeriodBackupWorker(
         policy,
         periodicWork
     )
+}
+
+fun WorkManager.enqueueSharedActivityWorker(
+    policy: ExistingPeriodicWorkPolicy = ExistingPeriodicWorkPolicy.KEEP,
+) {
+    val constraints = Constraints.Builder()
+        .setRequiredNetworkType(NetworkType.CONNECTED)
+        .build()
+
+    val periodicWork = PeriodicWorkRequestBuilder<SharedActivityWorker>(1, TimeUnit.HOURS)
+        .setConstraints(constraints)
+        .build()
+
+    enqueueUniquePeriodicWork(SharedActivityWorker.UNIQUE_WORK_NAME, policy, periodicWork)
+}
+
+fun WorkManager.cancelSharedActivityWorker() {
+    cancelUniqueWork(SharedActivityWorker.UNIQUE_WORK_NAME)
+}
+
+fun WorkManager.enqueueMemoriesWorker(
+    policy: ExistingWorkPolicy = ExistingWorkPolicy.KEEP,
+) {
+    val now = LocalDateTime.now()
+    var next = now.toLocalDate().atTime(MemoriesWorker.NOTIFY_HOUR, 0)
+    if (!next.isAfter(now)) next = next.plusDays(1)
+
+    val request = OneTimeWorkRequestBuilder<MemoriesWorker>()
+        .setInitialDelay(Duration.between(now, next))
+        .build()
+
+    enqueueUniqueWork(MemoriesWorker.UNIQUE_WORK_NAME, policy, request)
+}
+
+fun WorkManager.cancelMemoriesWorker() {
+    cancelUniqueWork(MemoriesWorker.UNIQUE_WORK_NAME)
 }

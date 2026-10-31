@@ -2,8 +2,11 @@ package net.theluckycoder.familyphotos.core.data.local.datastore
 
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -66,22 +69,61 @@ class SettingsDataStore @Inject constructor(
         .stateIn(scope, SharingStarted.Eagerly, true)
 
     val photoType: StateFlow<PhotoType> = settingsDataStore.data
-        .map {
-            when (it[FOLDERS_FILTER_TYPE]) {
-                PhotoType.Personal.index -> PhotoType.Personal
-                PhotoType.Family.index -> PhotoType.Family
-                PhotoType.Shared.index -> PhotoType.Shared
-                else -> PhotoType.All
-            }
-        }
+        .map { it.toPhotoType() }
         .distinctUntilChanged()
         .stateIn(scope, SharingStarted.Eagerly, PhotoType.All)
+
+    /** The stored value, for background callers that can't wait for [photoType] to load. */
+    suspend fun currentPhotoType(): PhotoType = settingsDataStore.data.first().toPhotoType()
+
+    private fun Preferences.toPhotoType() = when (this[FOLDERS_FILTER_TYPE]) {
+        PhotoType.Personal.index -> PhotoType.Personal
+        PhotoType.Family.index -> PhotoType.Family
+        PhotoType.Shared.index -> PhotoType.Shared
+        else -> PhotoType.All
+    }
 
     val backupOverMobileData: Flow<Boolean> =
         settingsDataStore.data.map { it[BACKUP_OVER_MOBILE_DATA] == true }.distinctUntilChanged()
 
     fun setBackupOverMobileData(value: Boolean) = scope.launch {
         settingsDataStore.edit { it[BACKUP_OVER_MOBILE_DATA] = value }
+    }
+
+    val notifySharedFolders: Flow<Boolean> =
+        settingsDataStore.data.map { it[NOTIFY_SHARED_FOLDERS] != false }.distinctUntilChanged()
+
+    suspend fun setNotifySharedFolders(value: Boolean) {
+        settingsDataStore.edit { it[NOTIFY_SHARED_FOLDERS] = value }
+    }
+
+    val notifyMemories: Flow<Boolean> =
+        settingsDataStore.data.map { it[NOTIFY_MEMORIES] != false }.distinctUntilChanged()
+
+    suspend fun setNotifyMemories(value: Boolean) {
+        settingsDataStore.edit { it[NOTIFY_MEMORIES] = value }
+    }
+
+    /** Photos already announced in a memories notification, so the overlapping daily windows don't repeat them. */
+    suspend fun getNotifiedMemoryIds(): Set<Long> =
+        settingsDataStore.data.first()[NOTIFIED_MEMORY_IDS].orEmpty()
+            .split(',').mapNotNull { it.toLongOrNull() }.toSet()
+
+    suspend fun setNotifiedMemoryIds(ids: Set<Long>) {
+        settingsDataStore.edit { it[NOTIFIED_MEMORY_IDS] = ids.joinToString(",") }
+    }
+
+    suspend fun getLastMemoriesDay(): Long = settingsDataStore.data.first()[LAST_MEMORIES_DAY] ?: -1L
+
+    suspend fun setLastMemoriesDay(epochDay: Long) {
+        settingsDataStore.edit { it[LAST_MEMORIES_DAY] = epochDay }
+    }
+
+    suspend fun clearMemoriesState() {
+        settingsDataStore.edit {
+            it.remove(LAST_MEMORIES_DAY)
+            it.remove(NOTIFIED_MEMORY_IDS)
+        }
     }
 
     fun setLocalFolderSortOrder(order: FolderSortOrder) = scope.launch {
@@ -116,6 +158,10 @@ class SettingsDataStore @Inject constructor(
         val FOLDERS_FILTER_TYPE = intPreferencesKey("folders_filter_type")
         val PHOTOS_ZOOM_LEVEL = intPreferencesKey("photos_zoom_level")
         val BACKUP_OVER_MOBILE_DATA = booleanPreferencesKey("backup_over_mobile_data")
+        val LAST_MEMORIES_DAY = longPreferencesKey("last_memories_day")
+        val NOTIFIED_MEMORY_IDS = stringPreferencesKey("notified_memory_ids")
+        val NOTIFY_MEMORIES = booleanPreferencesKey("notify_memories")
+        val NOTIFY_SHARED_FOLDERS = booleanPreferencesKey("notify_shared_folders")
 
         const val DEFAULT_CACHE_SIZE = 1024
         const val DEFAULT_ZOOM_LEVEL = 1

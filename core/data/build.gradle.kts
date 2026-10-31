@@ -57,4 +57,6 @@ dependencies {
 
     // Cryptography / Hash Functions
     implementation(libs.blake.hash)
+
+    testImplementation(libs.junit4)
 }

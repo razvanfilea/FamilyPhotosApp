@@ -105,6 +105,11 @@
     <!-- Settings -->
     <string name="settings_backup_mobile_data">Backup over mobile data</string>
     <string name="settings_backup_mobile_data_summary">Upload photos even without Wi-Fi</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notify_shared_folders">Notify me about shared folders</string>
+    <string name="settings_notify_shared_folders_summary">When a folder is shared with you or someone adds photos to one</string>
+    <string name="settings_notify_memories">Memories</string>
+    <string name="settings_notify_memories_summary">A daily reminder of photos from earlier years</string>
     <string name="settings_storage">Storage</string>
     <string name="settings_cache_size">Cache size</string>
     <string name="settings_cache_size_summary">Maximum disk space for cached photos</string>
@@ -186,6 +191,22 @@
     <!-- Notifications -->
     <string name="notification_missing_permission">Missing notification permission</string>
     <string name="notification_channel_backup">Backup</string>
+    <string name="notification_channel_memories">Memories</string>
+    <plurals name="notification_memories_title">
+        <item quantity="one">Memories from %d year ago</item>
+        <item quantity="other">Memories from %d years ago</item>
+    </plurals>
+    <plurals name="notification_memories_text">
+        <item quantity="one">%d photo from around this date</item>
+        <item quantity="other">%d photos from around this date</item>
+    </plurals>
+    <string name="notification_channel_shared_folders">Shared folders</string>
+    <string name="notification_shared_folder_new">%1$s shared “%2$s” with you</string>
+    <string name="notification_shared_folder_new_unknown">Someone shared “%1$s” with you</string>
+    <plurals name="notification_shared_folder_added_unknown">
+        <item quantity="one">%1$d new photo in “%2$s”</item>
+        <item quantity="other">%1$d new photos in “%2$s”</item>
+    </plurals>
     <string name="notification_backup_title">Backup up files</string>
     <string name="notification_backup_starting">Starting backup</string>
     <string name="notification_backup_progress">Uploaded %1$d/%2$d photos</string>

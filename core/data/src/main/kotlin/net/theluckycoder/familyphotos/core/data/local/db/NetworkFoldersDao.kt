@@ -35,6 +35,9 @@ internal interface NetworkFoldersDao {
     @Query("SELECT id, latestEventId FROM network_folder WHERE ownerId IS NOT NULL AND ownerId != :currentUserId")
     suspend fun getSharedFolderCursors(currentUserId: String): List<FolderCursor>
 
+    @Query("SELECT id FROM network_folder WHERE ownerId = :currentUserId")
+    suspend fun getOwnedFolderIds(currentUserId: String): List<Long>
+
     @Query(
         """
         SELECT nf.id AS folderId, nf.name AS folderName, nf.ownerId as userId,

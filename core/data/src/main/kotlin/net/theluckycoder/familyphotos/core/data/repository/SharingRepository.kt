@@ -3,6 +3,7 @@ package net.theluckycoder.familyphotos.core.data.repository
 import android.util.Log
 import dagger.Lazy
 import dagger.Reusable
+import net.theluckycoder.familyphotos.core.data.local.datastore.SharedActivityStore
 import net.theluckycoder.familyphotos.core.data.model.SharedFolderAccess
 import net.theluckycoder.familyphotos.core.data.model.network.CreateShareRequest
 import net.theluckycoder.familyphotos.core.data.model.network.SharedNetworkFolderDto
@@ -16,6 +17,7 @@ import javax.inject.Inject
 class SharingRepository @Inject internal constructor(
     private val sharingService: Lazy<SharingService>,
     private val userService: Lazy<UserService>,
+    private val sharedActivityStore: SharedActivityStore,
 ) {
 
     private var cachedMembers: List<UserDto> = emptyList()
@@ -121,6 +123,8 @@ class SharingRepository @Inject internal constructor(
         }
         val members = response.body() ?: emptyList()
         cachedMembers = members
+        // Notifications are built in the background, where the members can't be fetched
+        sharedActivityStore.saveMembers(members)
         return members
     }
 

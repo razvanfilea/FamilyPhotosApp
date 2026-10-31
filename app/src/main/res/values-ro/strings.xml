@@ -103,6 +103,11 @@
     <!-- Settings -->
     <string name="settings_backup_mobile_data">Backup pe date mobile</string>
     <string name="settings_backup_mobile_data_summary">Încarcă pozele chiar și fără Wi-Fi</string>
+    <string name="settings_notifications">Notificări</string>
+    <string name="settings_notify_shared_folders">Notifică-mă despre folderele partajate</string>
+    <string name="settings_notify_shared_folders_summary">Când un folder este partajat cu tine sau cineva adaugă poze într-unul</string>
+    <string name="settings_notify_memories">Amintiri</string>
+    <string name="settings_notify_memories_summary">O amintire zilnică cu poze din anii trecuți</string>
     <string name="settings_storage">Stocare</string>
     <string name="settings_cache_size">Dimensiune cache</string>
     <string name="settings_cache_size_summary">Spațiu maxim pe disc pentru pozele din cache</string>
@@ -191,6 +196,25 @@
     <!-- Notifications -->
     <string name="notification_missing_permission">Lipsă permisiune notificări</string>
     <string name="notification_channel_backup">Backup</string>
+    <string name="notification_channel_memories">Amintiri</string>
+    <plurals name="notification_memories_title">
+        <item quantity="one">Amintiri de acum %d an</item>
+        <item quantity="few">Amintiri de acum %d ani</item>
+        <item quantity="other">Amintiri de acum %d de ani</item>
+    </plurals>
+    <plurals name="notification_memories_text">
+        <item quantity="one">%d poză de pe la această dată</item>
+        <item quantity="few">%d poze de pe la această dată</item>
+        <item quantity="other">%d de poze de pe la această dată</item>
+    </plurals>
+    <string name="notification_channel_shared_folders">Foldere partajate</string>
+    <string name="notification_shared_folder_new">%1$s a partajat „%2$s” cu tine</string>
+    <string name="notification_shared_folder_new_unknown">Cineva a partajat „%1$s” cu tine</string>
+    <plurals name="notification_shared_folder_added_unknown">
+        <item quantity="one">%1$d poză nouă în „%2$s”</item>
+        <item quantity="few">%1$d poze noi în „%2$s”</item>
+        <item quantity="other">%1$d de poze noi în „%2$s”</item>
+    </plurals>
     <string name="notification_backup_title">Se încarcă fișierele</string>
     <string name="notification_backup_starting">Începe procesul de backup</string>
     <string name="notification_backup_progress">S-au încărcat %1$d/%2$d poze</string>

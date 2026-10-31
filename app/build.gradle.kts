@@ -121,6 +121,7 @@ dependencies {
     implementation(libs.compose.animation)
     implementation(libs.compose.activity)
     implementation(libs.compose.lifecycleViewmodel)
+    implementation(libs.androidx.lifecycle.process)
 
     // Navigation
     implementation(libs.androidx.navigation3.ui)

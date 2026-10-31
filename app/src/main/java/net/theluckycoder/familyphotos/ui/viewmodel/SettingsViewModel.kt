@@ -17,9 +17,16 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.BuildConfig
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
+import net.theluckycoder.familyphotos.core.data.local.datastore.SharedActivityStore
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.core.data.repository.LoginRepository
+import net.theluckycoder.familyphotos.notifications.MemoriesNotifier
+import net.theluckycoder.familyphotos.notifications.SharedFolderNotifier
+import net.theluckycoder.familyphotos.workers.cancelMemoriesWorker
+import net.theluckycoder.familyphotos.workers.cancelSharedActivityWorker
+import net.theluckycoder.familyphotos.workers.enqueueMemoriesWorker
 import net.theluckycoder.familyphotos.workers.enqueuePeriodBackupWorker
+import net.theluckycoder.familyphotos.workers.enqueueSharedActivityWorker
 import javax.inject.Inject
 
 @HiltViewModel
@@ -29,10 +36,19 @@ class SettingsViewModel @Inject constructor(
     private val loginRepository: LoginRepository,
     userDataStore: UserDataStore,
     private val workManager: WorkManager,
+    private val sharedActivityStore: SharedActivityStore,
+    private val sharedFolderNotifier: SharedFolderNotifier,
+    private val memoriesNotifier: MemoriesNotifier,
 ) : ViewModel() {
 
     val backupOverMobileData: StateFlow<Boolean> = settingsDataStore.backupOverMobileData
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    val notifySharedFolders: StateFlow<Boolean> = settingsDataStore.notifySharedFolders
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    val notifyMemories: StateFlow<Boolean> = settingsDataStore.notifyMemories
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
     val cacheSizeMb: StateFlow<Int> = settingsDataStore.cacheSizeMbFlow
         .stateIn(
@@ -58,6 +74,30 @@ class SettingsViewModel @Inject constructor(
         workManager.enqueuePeriodBackupWorker(value, ExistingPeriodicWorkPolicy.UPDATE)
     }
 
+    fun setNotifySharedFolders(value: Boolean) {
+        viewModelScope.launch {
+            settingsDataStore.setNotifySharedFolders(value)
+            if (value) {
+                workManager.enqueueSharedActivityWorker(ExistingPeriodicWorkPolicy.UPDATE)
+            } else {
+                workManager.cancelSharedActivityWorker()
+                sharedFolderNotifier.cancelAll()
+                sharedActivityStore.update { it.copy(folders = emptyList()) }
+            }
+        }
+    }
+
+    fun setNotifyMemories(value: Boolean) {
+        viewModelScope.launch {
+            settingsDataStore.setNotifyMemories(value)
+            if (value) {
+                workManager.enqueueMemoriesWorker()
+            } else {
+                workManager.cancelMemoriesWorker()
+            }
+        }
+    }
+
     fun setCacheSize(value: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             settingsDataStore.dataStore().edit { it[SettingsDataStore.CACHE_SIZE] = value }
@@ -74,6 +114,8 @@ class SettingsViewModel @Inject constructor(
     fun signOut() {
         viewModelScope.launch(Dispatchers.IO) {
             loginRepository.logout()
+            sharedFolderNotifier.cancelAll()
+            memoriesNotifier.cancel()
         }
     }
 

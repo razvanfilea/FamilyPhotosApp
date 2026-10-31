@@ -1,6 +1,7 @@
 package net.theluckycoder.familyphotos.core.data.repository
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.core.data.local.db.FavoritePhotosDao
@@ -36,6 +37,13 @@ class PhotosRepository @Inject internal constructor(
                 photosWithOffset.groupBy { it.yearOffset }
                     .mapValues { entry -> entry.value.map { it.photo } }
             }
+
+    suspend fun getMemoriesNow(photoType: PhotoType): Map<Int, List<NetworkPhotoThumbnail>> {
+        val userId = userDataStore.getUser()?.userId ?: return emptyMap()
+        return networkPhotosDao.getPhotosGroupedByYearsAgo(photoType, userId).first()
+            .groupBy { it.yearOffset }
+            .mapValues { entry -> entry.value.map { it.photo } }
+    }
 
     suspend fun removeNetworkReference(photo: NetworkPhoto) {
         getLocalPhotoFromNetwork(photo.id)?.let { localPhoto ->

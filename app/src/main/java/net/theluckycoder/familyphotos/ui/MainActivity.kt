@@ -1,6 +1,7 @@
 package net.theluckycoder.familyphotos.ui
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -30,6 +31,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +55,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.BuildConfig
@@ -106,6 +110,40 @@ class MainActivity : ComponentActivity() {
         const val EXTRA_BENCHMARK_SESSION_COOKIE = "benchmark_session_cookie"
         const val EXTRA_BENCHMARK_USERNAME = "benchmark_username"
         const val EXTRA_BENCHMARK_SERVER_ADDRESS = "benchmark_server_address"
+        const val EXTRA_OPEN_FOLDER_ID = "open_folder_id"
+        const val EXTRA_OPEN_FOLDER_NAME = "open_folder_name"
+        const val EXTRA_OPEN_MEMORY_YEARS_AGO = "open_memory_years_ago"
+    }
+
+    private val folderToOpen = mutableStateOf<FolderNav.Source.Network?>(null)
+
+    private val memoryToOpen = mutableStateOf<Int?>(null)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        readNotificationTarget(intent)
+    }
+
+    private fun readNotificationTarget(intent: Intent) {
+        // Relaunching from recents redelivers the notification's intent
+        if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
+
+        val folderId = intent.getLongExtra(EXTRA_OPEN_FOLDER_ID, -1L)
+        if (folderId != -1L) {
+            // Consume the extra, or it would reopen the folder on every recreation
+            intent.removeExtra(EXTRA_OPEN_FOLDER_ID)
+            folderToOpen.value = FolderNav.Source.Network(
+                folderId = folderId,
+                folderName = intent.getStringExtra(EXTRA_OPEN_FOLDER_NAME).orEmpty(),
+            )
+        }
+
+        val yearsAgo = intent.getIntExtra(EXTRA_OPEN_MEMORY_YEARS_AGO, -1)
+        if (yearsAgo != -1) {
+            intent.removeExtra(EXTRA_OPEN_MEMORY_YEARS_AGO)
+            memoryToOpen.value = yearsAgo
+        }
     }
 
     @OptIn(ExperimentalSharedTransitionApi::class)
@@ -114,6 +152,8 @@ class MainActivity : ComponentActivity() {
         window.isNavigationBarContrastEnforced = false
         super.onCreate(savedInstanceState)
         val viewModel = mainViewModel
+
+        if (savedInstanceState == null) readNotificationTarget(intent)
 
         val isBenchmark = BuildConfig.BENCHMARK
 
@@ -158,6 +198,24 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                     return@AppTheme
+                }
+
+                val requestedFolder = folderToOpen.value
+                LaunchedEffect(requestedFolder) {
+                    if (requestedFolder == null) return@LaunchedEffect
+                    folderToOpen.value = null
+                    // Only the id: a folder opened from the list also carries its photo count
+                    val alreadyOpen = ((backStack.lastOrNull() as? FolderNav)?.source as? FolderNav.Source.Network)
+                        ?.folderId == requestedFolder.folderId
+                    if (!alreadyOpen) backStack.add(FolderNav(requestedFolder))
+                }
+
+                val requestedMemory = memoryToOpen.value
+                LaunchedEffect(requestedMemory) {
+                    if (requestedMemory == null) return@LaunchedEffect
+                    memoryToOpen.value = null
+                    val photos = timelineViewModel.memories.filterNotNull().first()[requestedMemory]
+                    if (!photos.isNullOrEmpty()) backStack.add(PhotoViewerListNav(photos))
                 }
 
                 val benchmarkModifier = if (isBenchmark) {

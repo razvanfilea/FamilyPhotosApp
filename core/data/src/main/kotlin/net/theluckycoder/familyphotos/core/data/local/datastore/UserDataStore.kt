@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import net.theluckycoder.familyphotos.core.data.di.DefaultCoroutineScope
@@ -41,6 +42,11 @@ class UserDataStore @Inject constructor(
     val user: StateFlow<UserDto?> = userDataStore.data
         .map { UserDto(it[USER_ID] ?: return@map null, it[DISPLAY_NAME] ?: return@map null) }
         .stateIn(scope, SharingStarted.Eagerly, null)
+
+    /** Reads the stored user instead of waiting for [user], which is null until its first load. */
+    suspend fun getUser(): UserDto? = userDataStore.data.first().let { prefs ->
+        UserDto(prefs[USER_ID] ?: return null, prefs[DISPLAY_NAME] ?: return null)
+    }
 
     suspend fun setUser(value: UserDto) = userDataStore.edit { preferences ->
         preferences[USER_ID] = value.userId

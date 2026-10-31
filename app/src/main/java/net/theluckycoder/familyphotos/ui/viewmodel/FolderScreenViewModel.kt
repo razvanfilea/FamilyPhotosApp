@@ -32,6 +32,7 @@ import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.core.data.repository.ServerRepository
 import net.theluckycoder.familyphotos.core.data.repository.SharingRepository
+import net.theluckycoder.familyphotos.notifications.SharedFolderNotifier
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.SnackbarManager
 import net.theluckycoder.familyphotos.ui.UiMessageType
@@ -48,6 +49,7 @@ class FolderScreenViewModel @Inject constructor(
     private val sharingRepository: SharingRepository,
     userDataStore: UserDataStore,
     private val snackbarManager: SnackbarManager,
+    private val sharedFolderNotifier: SharedFolderNotifier,
 ) : ViewModel() {
 
     val currentUser = userDataStore.user
@@ -114,6 +116,9 @@ class FolderScreenViewModel @Inject constructor(
 
     fun setSource(source: FolderNav.Source, photoCount: Int = 0) {
         if (_source.value != source) {
+            if (source is FolderNav.Source.Network) {
+                viewModelScope.launch { sharedFolderNotifier.dismiss(source.folderId) }
+            }
             photoListState.value = LazyGridState()
             _timelineLayout.value = TimelineLayout.provisional(photoCount)
             _source.value = source

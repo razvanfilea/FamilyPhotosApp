@@ -51,7 +51,7 @@ internal interface NetworkPhotosDao {
 
     @Query(
         """SELECT id, timeCreated, thumbHash, name,
-              CAST(strftime('%Y', 'now') AS INTEGER) - CAST(strftime('%Y', datetime(network_photo.timeCreated, 'unixepoch')) AS INTEGER) AS yearOffset
+              CAST(strftime('%Y', 'now', 'localtime') AS INTEGER) - CAST(strftime('%Y', network_photo.timeCreated, 'unixepoch', 'localtime') AS INTEGER) AS yearOffset
         FROM network_photo
         WHERE CASE
             WHEN :photoType = 1 THEN (userId = :currentUserId)
@@ -61,8 +61,8 @@ internal interface NetworkPhotosDao {
         END
         AND yearOffset BETWEEN :minYearsAgo AND :maxYearsAgo
         AND MIN(
-            ABS(CAST(strftime('%j', 'now') AS INTEGER) - CAST(strftime('%j', datetime(network_photo.timeCreated, 'unixepoch')) AS INTEGER)),
-            366 - ABS(CAST(strftime('%j', 'now') AS INTEGER) - CAST(strftime('%j', datetime(network_photo.timeCreated, 'unixepoch')) AS INTEGER))
+            ABS(CAST(strftime('%j', 'now', 'localtime') AS INTEGER) - CAST(strftime('%j', network_photo.timeCreated, 'unixepoch', 'localtime') AS INTEGER)),
+            366 - ABS(CAST(strftime('%j', 'now', 'localtime') AS INTEGER) - CAST(strftime('%j', network_photo.timeCreated, 'unixepoch', 'localtime') AS INTEGER))
         ) <= 3
         AND trashedOn is null
         ORDER BY yearOffset ASC, network_photo.timeCreated DESC"""
@@ -196,6 +196,12 @@ internal interface NetworkPhotosDao {
         deletePhotosByFolderId(folderId)
         insert(photos)
     }
+
+    @Query("SELECT id FROM network_photo WHERE folderId = :folderId")
+    suspend fun getPhotoIdsInFolder(folderId: Long): List<Long>
+
+    @Query("SELECT id FROM network_photo WHERE id IN (:photoIds)")
+    suspend fun getExistingPhotoIds(photoIds: List<Long>): List<Long>
 
     @Transaction
     suspend fun applySharedFolderEvents(events: List<PhotoEventLog>) {

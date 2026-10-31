@@ -17,9 +17,9 @@ class RefreshPhotosUseCase @Inject constructor(
 ) {
     val isOnlineState = MutableStateFlow(true)
 
-    suspend operator fun invoke(): Result = coroutineScope {
+    suspend operator fun invoke(refreshDeviceAlbums: Boolean = true): Result = coroutineScope {
         val localPhotosJob = async(Dispatchers.IO) {
-            foldersRepository.updatePhoneAlbums()
+            if (refreshDeviceAlbums) foldersRepository.updatePhoneAlbums()
         }
 
         try {

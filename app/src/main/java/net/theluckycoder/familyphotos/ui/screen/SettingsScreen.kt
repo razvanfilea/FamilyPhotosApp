@@ -71,6 +71,11 @@ fun SettingsScreen(
             SectionHeader(stringResource(R.string.backup_title))
             BackupMobileDataItem(settingsViewModel)
 
+            // Notifications
+            SectionHeader(stringResource(R.string.settings_notifications))
+            NotifySharedFoldersItem(settingsViewModel)
+            NotifyMemoriesItem(settingsViewModel)
+
             // Storage
             SectionHeader(stringResource(R.string.settings_storage))
             CacheSizeItem(settingsViewModel)
@@ -122,6 +127,40 @@ private fun BackupMobileDataItem(viewModel: SettingsViewModel) {
             Switch(checked = enabled, onCheckedChange = { viewModel.setBackupOverMobileData(it) })
         },
         modifier = Modifier.clickable { viewModel.setBackupOverMobileData(!enabled) }
+    )
+}
+
+@Composable
+private fun NotifySharedFoldersItem(viewModel: SettingsViewModel) {
+    val enabled by viewModel.notifySharedFolders.collectAsStateWithLifecycle()
+
+    ListItem(
+        leadingContent = {
+            Icon(painterResource(R.drawable.ic_folder_outlined), contentDescription = null)
+        },
+        headlineContent = { Text(stringResource(R.string.settings_notify_shared_folders)) },
+        supportingContent = { Text(stringResource(R.string.settings_notify_shared_folders_summary)) },
+        trailingContent = {
+            Switch(checked = enabled, onCheckedChange = { viewModel.setNotifySharedFolders(it) })
+        },
+        modifier = Modifier.clickable { viewModel.setNotifySharedFolders(!enabled) }
+    )
+}
+
+@Composable
+private fun NotifyMemoriesItem(viewModel: SettingsViewModel) {
+    val enabled by viewModel.notifyMemories.collectAsStateWithLifecycle()
+
+    ListItem(
+        leadingContent = {
+            Icon(painterResource(R.drawable.ic_large_photos), contentDescription = null)
+        },
+        headlineContent = { Text(stringResource(R.string.settings_notify_memories)) },
+        supportingContent = { Text(stringResource(R.string.settings_notify_memories_summary)) },
+        trailingContent = {
+            Switch(checked = enabled, onCheckedChange = { viewModel.setNotifyMemories(it) })
+        },
+        modifier = Modifier.clickable { viewModel.setNotifyMemories(!enabled) }
     )
 }
 

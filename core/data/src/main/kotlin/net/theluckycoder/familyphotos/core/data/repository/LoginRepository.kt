@@ -7,6 +7,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
+import net.theluckycoder.familyphotos.core.data.local.datastore.SharedActivityStore
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.core.data.model.network.UserDto
 import net.theluckycoder.familyphotos.core.data.model.network.UserLoginDto
@@ -31,6 +33,8 @@ sealed interface LoginResult {
 class LoginRepository @Inject internal constructor(
     private val userDataStore: UserDataStore,
     private val userService: Lazy<UserService>,
+    private val sharedActivityStore: SharedActivityStore,
+    private val settingsDataStore: SettingsDataStore,
 ) {
     val isLoggedIn =
         userDataStore.sessionCookie.combine(userDataStore.user) { sessionCookie, userName ->
@@ -100,6 +104,9 @@ class LoginRepository @Inject internal constructor(
             }
         }
         userDataStore.clear()
+        // The next login must count as a first sync, or the whole account would look new
+        sharedActivityStore.clear()
+        settingsDataStore.clearMemoriesState()
     }
 
     /**

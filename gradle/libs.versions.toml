@@ -1,8 +1,8 @@
 [versions]
-agp = "9.4.1"
+agp = "9.5.1"
 blakeHash = "1.1.1"
 kotlin_base = "2.4.21"
-kotlin_ksp = "2.3.12"
+kotlin_ksp = "2.3.13"
 kotlin_coroutines = "1.11.0"
 kotlin_serialization = "1.12.0"
 kotlin_datetime = "0.8.0-0.6.x-compat"
@@ -41,6 +41,7 @@ kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref =
 
 
 [libraries]
+junit4 = { module = "junit:junit", version = "4.13.2" }
 blake-hash = { module = "ch.trancee:blake-hash", version.ref = "blakeHash" }
 kotlin_coroutinesAndroid = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlin_coroutines" }
 kotlin_serializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlin_serialization" }
@@ -64,6 +65,7 @@ compose_tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 compose_toolingPreview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 compose_activity = { module = "androidx.activity:activity-compose", version.ref = "compose_activity" }
 compose_lifecycleViewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "compose_lifecycleViewmodel" }
+androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "compose_lifecycleViewmodel" }
 compose_runtimeLivedata = { group = "androidx.compose.runtime", name = "runtime-livedata" }
 
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "androidx_nav3" }

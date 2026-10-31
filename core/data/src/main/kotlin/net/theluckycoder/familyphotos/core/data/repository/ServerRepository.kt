@@ -4,6 +4,13 @@ import android.util.Log
 import dagger.Lazy
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import androidx.room.withTransaction
+import net.theluckycoder.familyphotos.core.data.local.db.PhotosDatabase
+import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
+import net.theluckycoder.familyphotos.core.data.local.datastore.SharedActivityStore
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.core.data.local.db.FavoritePhotosDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkFoldersDao
@@ -13,7 +20,12 @@ import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.core.data.model.UploadChoice
 import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolderEntity
 import net.theluckycoder.familyphotos.core.data.model.network.CreateFolderRequest
+import net.theluckycoder.familyphotos.core.data.model.network.PhotoEventLog
 import net.theluckycoder.familyphotos.core.data.model.network.toEntity
+import net.theluckycoder.familyphotos.core.data.model.sharing.FolderSyncDelta
+import net.theluckycoder.familyphotos.core.data.model.sharing.PhotoEvent
+import net.theluckycoder.familyphotos.core.data.model.sharing.SharedFolderChange
+import net.theluckycoder.familyphotos.core.data.model.sharing.SharedFolderChangeDetector
 import net.theluckycoder.familyphotos.core.data.remote.FolderService
 import net.theluckycoder.familyphotos.core.data.remote.PhotosService
 import net.theluckycoder.familyphotos.core.data.remote.SyncService
@@ -32,7 +44,15 @@ class ServerRepository @Inject internal constructor(
     private val networkFoldersDao: NetworkFoldersDao,
     private val favoritePhotosDao: FavoritePhotosDao,
     private val userDataStore: UserDataStore,
+    private val settingsDataStore: SettingsDataStore,
+    private val sharedActivityStore: SharedActivityStore,
+    private val database: PhotosDatabase,
 ) {
+
+    private companion object {
+        // Syncs can overlap (app refresh, backup worker, notification worker); each delta must be read once
+        val syncMutex = Mutex()
+    }
 
     enum class DownloadResponse {
         SUCCESSFUL,
@@ -42,6 +62,11 @@ class ServerRepository @Inject internal constructor(
     }
 
     suspend fun downloadPartialPhotos(): DownloadResponse {
+        val currentUserId = userDataStore.getUser()?.userId ?: return DownloadResponse.NOT_LOGGED_IN
+        return syncMutex.withLock { downloadPartialPhotosLocked(currentUserId) }
+    }
+
+    private suspend fun downloadPartialPhotosLocked(currentUserId: String): DownloadResponse {
         val lastSyncedEventLogId = networkPhotosDao.getEventLogId()
         Log.i("ServerRepository", "Last synced event id: $lastSyncedEventLogId")
 
@@ -56,7 +81,14 @@ class ServerRepository @Inject internal constructor(
         } else {
             val partialPhotos = response.body()!!
             if (partialPhotos.events.isNotEmpty()) {
+                // Has to be read before the events are applied to the DB
+                val changes = if (lastSyncedEventLogId != 0L) {
+                    detectOwnFolderChanges(currentUserId, partialPhotos.events)
+                } else {
+                    emptyList()
+                }
                 networkPhotosDao.updatePartialSync(partialPhotos.events, partialPhotos.eventLogId)
+                if (changes.isNotEmpty()) sharedActivityStore.recordSync(currentUserId, changes)
             }
 
             Log.i(
@@ -68,9 +100,39 @@ class ServerRepository @Inject internal constructor(
         }
     }
 
-    suspend fun downloadUserPhotos(): DownloadResponse = coroutineScope {
-        val userId = userDataStore.user.value?.userId
-            ?: return@coroutineScope DownloadResponse.NOT_LOGGED_IN
+    private suspend fun detectOwnFolderChanges(
+        currentUserId: String,
+        events: Collection<PhotoEventLog>,
+    ): List<SharedFolderChange> {
+        if (!settingsDataStore.notifySharedFolders.first()) return emptyList()
+        // Before the first folder sync of this user every photo would look new
+        if (sharedActivityStore.isFirstSync(currentUserId)) return emptyList()
+
+        val ownFolderIds = networkFoldersDao.getOwnedFolderIds(currentUserId).toSet()
+        if (ownFolderIds.isEmpty()) return emptyList()
+
+        val photoEvents = events.map { event ->
+            val photo = event.decodePhoto()
+            PhotoEvent(event.photoId, present = photo != null && photo.trashedOn == null, folderId = photo?.folderId)
+        }
+        val candidates = photoEvents.filter { it.present && it.folderId in ownFolderIds }
+            .map { it.photoId }.distinct()
+        if (candidates.isEmpty()) return emptyList()
+
+        // Kept under SQLite's bound-parameter limit
+        val alreadyKnown = candidates.chunked(500)
+            .flatMap { networkPhotosDao.getExistingPhotoIds(it) }
+            .toSet()
+
+        return SharedFolderChangeDetector.detectInOwnFolders(currentUserId, ownFolderIds, alreadyKnown, photoEvents)
+    }
+
+    suspend fun downloadUserPhotos(): DownloadResponse {
+        val userId = userDataStore.getUser()?.userId ?: return DownloadResponse.NOT_LOGGED_IN
+        return syncMutex.withLock { downloadUserPhotosLocked(userId) }
+    }
+
+    private suspend fun downloadUserPhotosLocked(userId: String): DownloadResponse = coroutineScope {
 
         val service = syncService.get()
         val photosAsync = async { service.getFullPhotosList() }
@@ -109,49 +171,96 @@ class ServerRepository @Inject internal constructor(
         DownloadResponse.UNSUCCESSFUL
     }
 
-    suspend fun syncFolders(): Boolean {
-        val currentUserId = userDataStore.user.value?.userId ?: return false
+    suspend fun syncFolders(): Boolean = syncFoldersWithChanges() != null
 
+    /**
+     * Syncs the shared folders and reports what changed for the user (for notifications).
+     * The changes are also recorded in [SharedActivityStore], because this sync is run by several
+     * callers and only the first one to run sees the server-side delta.
+     *
+     * @return null if the sync failed
+     */
+    suspend fun syncFoldersWithChanges(): List<SharedFolderChange>? {
+        // `user` is still null right after a cold start, which is when background workers run
+        val currentUserId = userDataStore.getUser()?.userId ?: return null
+
+        return syncMutex.withLock { syncFoldersLocked(currentUserId) }
+    }
+
+    private suspend fun syncFoldersLocked(currentUserId: String): List<SharedFolderChange>? {
         val localCursors = networkFoldersDao.getSharedFolderCursors(currentUserId)
         val requestBody = localCursors.associate { it.id to it.latestEventId }
+        val isFirstSync = sharedActivityStore.isFirstSync(currentUserId)
 
         val response = syncService.get().syncFolders(requestBody)
         if (!response.isSuccessful) {
             Log.e("ServerRepository", "Folder sync failed: ${response.code()}")
-            return false
+            return null
         }
 
         val responseFolders = response.body()!!
 
-        val responseFolderIds = responseFolders.map { it.id }.toSet()
-        val localSharedFolderIds = localCursors.map { it.id }.toSet()
-        for (folderId in (localSharedFolderIds - responseFolderIds)) {
-            networkPhotosDao.deletePhotosByFolderId(folderId)
-        }
-
-        for (folder in responseFolders) {
-            when {
-                folder.photos != null -> networkPhotosDao.replaceSharedFolderPhotos(
-                    folder.id,
-                    folder.photos.map { it.toEntity() })
-
-                folder.events != null -> networkPhotosDao.applySharedFolderEvents(folder.events)
-            }
-        }
-
-        val existingCursors = localCursors.associate { it.id to it.latestEventId }
-        val folderEntities = responseFolders.map { folder ->
-            NetworkFolderEntity(
+        // Has to be read before the events are applied to the DB
+        val deltas = responseFolders.map { folder ->
+            FolderSyncDelta(
                 id = folder.id,
                 ownerId = folder.ownerId,
-                name = folder.name,
-                latestEventId = folder.latestEventId ?: existingCursors[folder.id] ?: 0L,
-                createdAt = 0L,
+                isFullList = folder.photos != null,
+                events = folder.events.orEmpty().map { event ->
+                    val photo = event.decodePhoto()
+                    PhotoEvent(event.photoId, present = photo != null && photo.trashedOn == null)
+                },
             )
         }
-        networkFoldersDao.replaceAll(folderEntities)
+        val photoIdsAlreadyInFolder = deltas
+            .filter { it.id in requestBody && it.events.any { e -> e.present } }
+            .associate { it.id to networkPhotosDao.getPhotoIdsInFolder(it.id).toSet() }
+        val changes = if (settingsDataStore.notifySharedFolders.first()) {
+            SharedFolderChangeDetector.detect(
+                currentUserId = currentUserId,
+                isFirstSync = isFirstSync,
+                knownFolderIds = requestBody.keys,
+                photoIdsAlreadyInFolder = photoIdsAlreadyInFolder,
+                folders = deltas,
+            )
+        } else {
+            emptyList()
+        }
 
-        return true
+        // Events and cursors change together: if this fails midway the next sync must see the same delta
+        database.withTransaction {
+            val responseFolderIds = responseFolders.map { it.id }.toSet()
+            val localSharedFolderIds = localCursors.map { it.id }.toSet()
+            for (folderId in (localSharedFolderIds - responseFolderIds)) {
+                networkPhotosDao.deletePhotosByFolderId(folderId)
+            }
+
+            for (folder in responseFolders) {
+                when {
+                    folder.photos != null -> networkPhotosDao.replaceSharedFolderPhotos(
+                        folder.id,
+                        folder.photos.map { it.toEntity() })
+
+                    folder.events != null -> networkPhotosDao.applySharedFolderEvents(folder.events)
+                }
+            }
+
+            val existingCursors = localCursors.associate { it.id to it.latestEventId }
+            val folderEntities = responseFolders.map { folder ->
+                NetworkFolderEntity(
+                    id = folder.id,
+                    ownerId = folder.ownerId,
+                    name = folder.name,
+                    latestEventId = folder.latestEventId ?: existingCursors[folder.id] ?: 0L,
+                    createdAt = 0L,
+                )
+            }
+            networkFoldersDao.replaceAll(folderEntities)
+        }
+
+        sharedActivityStore.recordSync(currentUserId, changes)
+
+        return changes
     }
 
     suspend fun trashNetworkPhoto(photoIds: LongArray, trash: Boolean): Boolean {
