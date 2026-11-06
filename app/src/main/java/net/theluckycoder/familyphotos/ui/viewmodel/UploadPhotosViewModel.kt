@@ -69,13 +69,7 @@ class UploadPhotosViewModel @Inject constructor(
     fun uploadPhotosAsync(localPhotos: LongArray, uploadChoice: UploadChoice) {
         viewModelScope.launch(Dispatchers.IO) {
             val entries = localPhotos.map { localPhotoId ->
-                UploadQueueEntry(
-                    localPhotoId = localPhotoId,
-                    makePublic = uploadChoice.isPublic,
-                    folderId = (uploadChoice as? UploadChoice.Folder)?.folderId,
-                    newFolderName = (uploadChoice as? UploadChoice.NewFolder)?.name,
-                    isManualUpload = true,
-                )
+                UploadQueueEntry.forLocalPhoto(localPhotoId, uploadChoice, isManualUpload = true)
             }
             photoUploadRepository.enqueueUploads(entries)
             workManager.enqueueBackupAndUploadWorker(

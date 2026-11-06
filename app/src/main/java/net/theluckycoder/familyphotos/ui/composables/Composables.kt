@@ -54,6 +54,7 @@ import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.Photo
+import net.theluckycoder.familyphotos.core.data.model.ThumbHashBytes
 import net.theluckycoder.familyphotos.core.data.model.getPreviewUri
 import net.theluckycoder.familyphotos.core.data.model.getUri
 import net.theluckycoder.familyphotos.core.data.model.thumbHash
@@ -107,7 +108,7 @@ fun CoilPhoto(
 }
 
 @Composable
-fun thumbHashPainter(thumbHash: String?): ScaledBitmapPainter {
+fun thumbHashPainter(thumbHash: ThumbHashBytes?): ScaledBitmapPainter {
     val bitmapState = produceState(
         initialValue = ThumbHashCache.get(thumbHash),
         key1 = thumbHash

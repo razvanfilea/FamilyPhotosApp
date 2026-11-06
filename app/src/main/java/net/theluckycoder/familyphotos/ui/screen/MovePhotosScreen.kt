@@ -33,6 +33,7 @@ fun MovePhotosScreen(photoIds: LongArray) {
         actionName = stringResource(R.string.action_move_photos),
         photosToShowcase = photosToShowcase,
         currentUserId = userId?.userId,
+        onCancel = { backStack.removeLastOrNull() },
         doneAction = { choice ->
             uploadPhotosViewModel.movePhotos(photoIds, choice)
             backStack.removeLastOrNull()

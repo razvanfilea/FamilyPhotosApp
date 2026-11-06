@@ -29,6 +29,7 @@ dependencies {
     // AndroidX
     implementation(libs.androidx.core)
     implementation(libs.androidx.dataStore)
+    implementation(libs.androidx.exif)
 
     // Room
     implementation(libs.room.runtime)

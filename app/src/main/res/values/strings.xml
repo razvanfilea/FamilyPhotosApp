@@ -152,6 +152,8 @@
 
     <!-- Status Messages -->
     <string name="status_upload_queued">Upload queued</string>
+    <string name="status_upload_queued_partial">Upload queued, but some shared items couldn\'t be added</string>
+    <string name="status_preparing_shared_items">Preparing shared items…</string>
     <string name="status_saved">Saved</string>
     <string name="status_member_added">Member added</string>
     <string name="status_permissions_updated">Permissions updated</string>
@@ -177,6 +179,8 @@
     <!-- Errors -->
     <string name="error_server_connection">Failed to connect to server</string>
     <string name="error_refresh_failed">Failed to refresh photos</string>
+    <string name="error_shared_items_failed">Couldn\'t add the shared items</string>
+    <string name="error_shared_items_partial">Some shared items couldn\'t be added</string>
     <string name="error_trash_failed">Failed to move photos to trash</string>
     <string name="error_delete_failed">Failed to delete photos</string>
     <string name="error_restore_failed">Failed to restore photos</string>

@@ -24,6 +24,7 @@ import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.LoginRepository
+import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.core.data.repository.ServerRepository
 import net.theluckycoder.familyphotos.domain.GetPhotoUrisUseCase
@@ -43,6 +44,7 @@ class MainViewModel @Inject constructor(
     private val serverRepository: ServerRepository,
     val loginRepository: LoginRepository,
     private val snackbarManager: SnackbarManager,
+    private val photoUploadRepository: PhotoUploadRepository,
 ) : ViewModel() {
 
     private val _localPhotosToDelete = Channel<List<LocalPhoto>>()
@@ -64,6 +66,10 @@ class MainViewModel @Inject constructor(
                     refreshPhotos()
                 }
             }
+        }
+
+        viewModelScope.launch {
+            photoUploadRepository.deleteOrphanedSharedFiles()
         }
 
         viewModelScope.launch {

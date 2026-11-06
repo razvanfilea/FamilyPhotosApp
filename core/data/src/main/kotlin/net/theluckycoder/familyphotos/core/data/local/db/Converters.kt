@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.core.net.toUri
 import androidx.room.TypeConverter
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
+import net.theluckycoder.familyphotos.core.data.model.ThumbHashBytes
 
 internal class Converters {
     @TypeConverter
@@ -17,4 +18,10 @@ internal class Converters {
 
     @TypeConverter
     fun fromPhotoType(value: PhotoType) = value.index
+
+    @TypeConverter
+    fun thumbHashToBytes(value: ThumbHashBytes?): ByteArray? = value?.bytes
+
+    @TypeConverter
+    fun bytesToThumbHash(value: ByteArray?): ThumbHashBytes? = value?.let(::ThumbHashBytes)
 }

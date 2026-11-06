@@ -35,6 +35,7 @@ class LoginRepository @Inject internal constructor(
     private val userService: Lazy<UserService>,
     private val sharedActivityStore: SharedActivityStore,
     private val settingsDataStore: SettingsDataStore,
+    private val photoUploadRepository: PhotoUploadRepository,
 ) {
     val isLoggedIn =
         userDataStore.sessionCookie.combine(userDataStore.user) { sessionCookie, userName ->
@@ -107,6 +108,7 @@ class LoginRepository @Inject internal constructor(
         // The next login must count as a first sync, or the whole account would look new
         sharedActivityStore.clear()
         settingsDataStore.clearMemoriesState()
+        photoUploadRepository.clearSharedUploads()
     }
 
     /**

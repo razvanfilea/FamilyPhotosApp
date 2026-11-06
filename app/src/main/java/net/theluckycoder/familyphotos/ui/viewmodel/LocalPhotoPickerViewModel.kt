@@ -24,6 +24,7 @@ import net.theluckycoder.familyphotos.core.data.model.FolderSortOrder
 import net.theluckycoder.familyphotos.core.data.model.LocalFolder
 import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
+import net.theluckycoder.familyphotos.core.data.model.UploadChoice
 import net.theluckycoder.familyphotos.core.data.model.db.UploadQueueEntry
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
@@ -68,11 +69,9 @@ class LocalPhotoPickerViewModel @Inject constructor(
     fun uploadPhotos(selectedPhotoIds: Set<Long>, targetFolderId: Long, targetFolderName: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val entries = selectedPhotoIds.map { localPhotoId ->
-                UploadQueueEntry(
-                    localPhotoId = localPhotoId,
-                    makePublic = null,
-                    folderId = targetFolderId,
-                    newFolderName = null,
+                UploadQueueEntry.forLocalPhoto(
+                    localPhotoId,
+                    UploadChoice.Folder(targetFolderId),
                     isManualUpload = true,
                 )
             }

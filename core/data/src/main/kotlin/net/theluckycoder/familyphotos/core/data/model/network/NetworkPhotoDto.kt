@@ -3,6 +3,7 @@ package net.theluckycoder.familyphotos.core.data.model.network
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.ThumbHashBytes
 
 @Serializable
 internal data class NetworkPhotoDto(
@@ -32,6 +33,6 @@ internal fun NetworkPhotoDto.toEntity() = NetworkPhoto(
     fileSize = fileSize,
     folderId = folderId,
     trashedOn = trashedOn,
-    thumbHash = thumbHash
+    thumbHash = ThumbHashBytes.fromBase64(thumbHash),
 )
 

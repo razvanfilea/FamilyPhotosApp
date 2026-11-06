@@ -5,6 +5,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.ServerRepository
 import javax.inject.Inject
@@ -17,7 +19,13 @@ class RefreshPhotosUseCase @Inject constructor(
 ) {
     val isOnlineState = MutableStateFlow(true)
 
-    suspend operator fun invoke(refreshDeviceAlbums: Boolean = true): Result = coroutineScope {
+    // Callers (screens, workers) can overlap; two syncs at once would consume the same event delta
+    private val mutex = Mutex()
+
+    suspend operator fun invoke(refreshDeviceAlbums: Boolean = true): Result =
+        mutex.withLock { refresh(refreshDeviceAlbums) }
+
+    private suspend fun refresh(refreshDeviceAlbums: Boolean): Result = coroutineScope {
         val localPhotosJob = async(Dispatchers.IO) {
             if (refreshDeviceAlbums) foldersRepository.updatePhoneAlbums()
         }

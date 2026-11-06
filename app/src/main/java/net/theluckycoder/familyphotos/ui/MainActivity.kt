@@ -122,11 +122,11 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        readNotificationTarget(intent)
+        readIntentTarget(intent)
     }
 
-    private fun readNotificationTarget(intent: Intent) {
-        // Relaunching from recents redelivers the notification's intent
+    private fun readIntentTarget(intent: Intent) {
+        // Relaunching from recents redelivers the original intent (notification tap)
         if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
 
         val folderId = intent.getLongExtra(EXTRA_OPEN_FOLDER_ID, -1L)
@@ -153,7 +153,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val viewModel = mainViewModel
 
-        if (savedInstanceState == null) readNotificationTarget(intent)
+        if (savedInstanceState == null) readIntentTarget(intent)
 
         val isBenchmark = BuildConfig.BENCHMARK
 

@@ -68,7 +68,7 @@ data class NetworkPhoto(
     val fileSize: Long = 0,
     val folderId: Long? = null,
     val trashedOn: Long? = null,
-    val thumbHash: String? = null,
+    val thumbHash: ThumbHashBytes? = null,
 ) : Photo()
 
 @Immutable
@@ -77,7 +77,7 @@ data class NetworkPhoto(
 data class NetworkPhotoThumbnail(
     override val id: Long,
     override val timeCreated: Long,
-    val thumbHash: String? = null,
+    val thumbHash: ThumbHashBytes? = null,
     override val name: String,
 ) : Photo()
 

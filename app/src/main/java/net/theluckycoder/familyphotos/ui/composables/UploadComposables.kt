@@ -57,7 +57,6 @@ import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.core.data.model.Photo
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.model.UploadChoice
-import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 
 @Composable
@@ -124,10 +123,11 @@ fun UploadPhotosLayout(
     actionName: String,
     photosToShowcase: List<Photo>,
     currentUserId: String? = null,
+    onCancel: () -> Unit,
+    // Off outside MainActivity's NavDisplay, which provides the shared transition scopes
+    animateSharedBounds: Boolean = true,
     doneAction: (choice: UploadChoice) -> Unit,
 ) {
-    val backStack = LocalNavBackStack.current
-
     var choice by remember { mutableStateOf<UploadChoice?>(UploadChoice.NoFolder(isPublic = false)) }
     var selectedFolderName by remember { mutableStateOf<String?>(null) }
     var showCreateFolderDialog by remember { mutableStateOf(false) }
@@ -154,7 +154,7 @@ fun UploadPhotosLayout(
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.End)
             ) {
-                TextButton(onClick = { backStack.removeLastOrNull() }) {
+                TextButton(onClick = onCancel) {
                     Text(stringResource(R.string.action_cancel))
                 }
 
@@ -187,6 +187,7 @@ fun UploadPhotosLayout(
                 foldersList = networkFolders,
                 onCreateFolder = { showCreateFolderDialog = true },
                 selectedFolderName = selectedFolderName,
+                animateSharedBounds = animateSharedBounds,
             )
         }
     }
@@ -202,6 +203,7 @@ private fun UploadDialogContent(
     foldersList: List<NetworkFolder>,
     onCreateFolder: () -> Unit,
     selectedFolderName: String?,
+    animateSharedBounds: Boolean,
 ) {
     val settingsDataStore = LocalSettingsDataStore.current
     val selectedPhotoType by settingsDataStore.photoType.collectAsState()
@@ -230,6 +232,7 @@ private fun UploadDialogContent(
             if (photosToShowcase.isNotEmpty()) {
                 PhotoShowcaseRow(
                     photos = photosToShowcase,
+                    animateSharedBounds = animateSharedBounds,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             }
@@ -388,6 +391,7 @@ private fun CreateFolderButton(
 @Composable
 private fun PhotoShowcaseRow(
     photos: List<Photo>,
+    animateSharedBounds: Boolean,
     modifier: Modifier = Modifier,
 ) = Row(
     modifier.fillMaxWidth(),
@@ -403,7 +407,7 @@ private fun PhotoShowcaseRow(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .photoSharedBounds(photo.id),
+                    .then(if (animateSharedBounds) Modifier.photoSharedBounds(photo.id) else Modifier),
                 preview = true,
                 contentScale = ContentScale.Crop,
             )

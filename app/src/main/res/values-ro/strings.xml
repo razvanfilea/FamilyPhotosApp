@@ -152,6 +152,8 @@
 
     <!-- Status Messages -->
     <string name="status_upload_queued">Încărcare programată</string>
+    <string name="status_upload_queued_partial">Încărcare programată, dar unele elemente partajate nu au putut fi adăugate</string>
+    <string name="status_preparing_shared_items">Se pregătesc elementele partajate…</string>
     <string name="status_saved">Salvată</string>
     <string name="status_member_added">Membru adăugat</string>
     <string name="status_permissions_updated">Permisiuni actualizate</string>
@@ -181,6 +183,8 @@
     <!-- Errors -->
     <string name="error_server_connection">Nu s-a putut conecta la server</string>
     <string name="error_refresh_failed">Nu s-au putut reîncărca pozele</string>
+    <string name="error_shared_items_failed">Elementele partajate nu au putut fi adăugate</string>
+    <string name="error_shared_items_partial">Unele elemente partajate nu au putut fi adăugate</string>
     <string name="error_trash_failed">Nu s-au putut muta pozele în coșul de gunoi</string>
     <string name="error_delete_failed">Nu s-au putut șterge pozele</string>
     <string name="error_restore_failed">Nu s-au putut restaura pozele</string>

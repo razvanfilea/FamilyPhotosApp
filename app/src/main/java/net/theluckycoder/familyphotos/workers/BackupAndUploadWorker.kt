@@ -24,7 +24,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.core.data.model.UploadChoice
+import net.theluckycoder.familyphotos.core.data.model.UploadSource
 import net.theluckycoder.familyphotos.core.data.model.db.UploadQueueEntry
+import net.theluckycoder.familyphotos.core.data.model.toUploadSource
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
@@ -69,9 +72,9 @@ class BackupAndUploadWorker @AssistedInject constructor(
                 val pending = photoUploadRepository.getPendingCountFlow().first()
                 val total = successCount + pending
 
-                val localPhoto = photosRepository.getLocalPhoto(entry.localPhotoId)
-                if (localPhoto == null || localPhoto.isSavedToCloud) {
-                    photoUploadRepository.removeFromQueue(entry.id)
+                val source = resolveSource(entry)
+                if (source == null) {
+                    photoUploadRepository.removeFromQueue(entry)
                     continue
                 }
 
@@ -92,7 +95,7 @@ class BackupAndUploadWorker @AssistedInject constructor(
                     var lastPercent = -1
                     var lastUpdate = 0L
                     photoUploadRepository.uploadFile(
-                        localPhoto,
+                        source,
                         entry.toUploadChoice()
                     ) { bytesWritten, totalBytes ->
                         if (totalBytes > 0) {
@@ -122,17 +125,17 @@ class BackupAndUploadWorker @AssistedInject constructor(
                     // Network interruption (socket drop, connection loss, timeout)
                     Log.w(
                         TAG,
-                        "Network failure uploading photo ${entry.localPhotoId}. Requesting WorkManager retry.",
+                        "Network failure uploading ${source.name}. Requesting WorkManager retry.",
                         e
                     )
                     return Result.retry()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Caught exception while uploading ${entry.localPhotoId}", e)
+                    Log.e(TAG, "Caught exception while uploading ${source.name}", e)
                     false
                 }
 
                 if (success) {
-                    photoUploadRepository.removeFromQueue(entry.id)
+                    photoUploadRepository.removeFromQueue(entry)
                     successCount++
                 } else {
                     photoUploadRepository.incrementRetryCount(entry.id)
@@ -156,6 +159,16 @@ class BackupAndUploadWorker @AssistedInject constructor(
         } finally {
             workerMutex.unlock()
         }
+    }
+
+    /** Null if there's nothing to upload anymore */
+    private suspend fun resolveSource(entry: UploadQueueEntry): UploadSource? {
+        val localPhotoId = entry.localPhotoId
+        if (localPhotoId != null) {
+            val localPhoto = photosRepository.getLocalPhoto(localPhotoId)
+            return localPhoto?.takeUnless { it.isSavedToCloud }?.toUploadSource()
+        }
+        return entry.sharedFileName?.let { photoUploadRepository.getSharedUploadSource(it) }
     }
 
     private suspend fun prepareWorkerState() {
@@ -191,10 +204,9 @@ class BackupAndUploadWorker @AssistedInject constructor(
                 .filter { !it.isSavedToCloud }
 
             photos.mapTo(entries) { localPhoto ->
-                UploadQueueEntry(
+                UploadQueueEntry.forLocalPhoto(
                     localPhotoId = localPhoto.id,
-                    makePublic = false,
-                    newFolderName = folderName,
+                    uploadChoice = UploadChoice.NewFolder(folderName, isPublic = false),
                     isManualUpload = false,
                 )
             }

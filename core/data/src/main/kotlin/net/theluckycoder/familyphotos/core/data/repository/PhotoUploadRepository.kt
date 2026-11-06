@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.core.data.repository
 
+import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -12,8 +13,9 @@ import net.theluckycoder.familyphotos.core.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkFoldersDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.core.data.local.db.UploadQueueDao
-import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
+import net.theluckycoder.familyphotos.core.data.model.SharedUploadFile
 import net.theluckycoder.familyphotos.core.data.model.UploadChoice
+import net.theluckycoder.familyphotos.core.data.model.UploadSource
 import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolderEntity
 import net.theluckycoder.familyphotos.core.data.model.db.UploadQueueEntry
 import net.theluckycoder.familyphotos.core.data.model.network.CreateFolderRequest
@@ -25,6 +27,7 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okio.BufferedSink
 import okio.source
+import java.io.File
 import java.io.IOException
 import javax.inject.Inject
 
@@ -40,6 +43,7 @@ class PhotoUploadRepository @Inject internal constructor(
     private val networkFoldersDao: NetworkFoldersDao,
     private val localPhotosDao: LocalPhotosDao,
     private val uploadQueueDao: UploadQueueDao,
+    private val sharedUploadsRepository: SharedUploadsRepository,
 ) {
 
     // Upload Queue Operations
@@ -53,17 +57,66 @@ class PhotoUploadRepository @Inject internal constructor(
     suspend fun incrementRetryCount(entryId: Long) =
         uploadQueueDao.incrementRetryCount(entryId)
 
-    suspend fun removeFromQueue(entryId: Long) =
-        uploadQueueDao.deleteById(entryId)
-
     suspend fun removeFromQueueByFolder(folderName: String) =
         uploadQueueDao.deleteByFolder(folderName)
 
-    suspend fun clearManualUploads() =
-        uploadQueueDao.deleteManualUploads()
+    suspend fun enqueueSharedUploads(files: List<SharedUploadFile>, uploadChoice: UploadChoice) =
+        uploadQueueDao.insertSharedUploads(
+            files,
+            files.map { UploadQueueEntry.forSharedFile(it, uploadChoice) },
+        )
 
-    suspend fun clearQueue() =
+    /** Null if the shared entry or its copy is gone */
+    suspend fun getSharedUploadSource(fileName: String): UploadSource? {
+        val sharedFile = uploadQueueDao.getSharedFile(fileName) ?: return null
+        val copy = sharedUploadsRepository.fileOf(sharedFile)
+        if (!copy.exists()) return null
+        return UploadSource(
+            uri = Uri.fromFile(copy),
+            name = sharedFile.displayName,
+            timeCreated = sharedFile.timeCreated,
+            mimeType = sharedFile.mimeType,
+            localPhoto = null,
+        )
+    }
+
+    /** Removes [entry] from the queue, along with its shared copy if it has one */
+    suspend fun removeFromQueue(entry: UploadQueueEntry) {
+        val sharedFileName = entry.sharedFileName
+        // Explicit even for shared entries: a leftover row would make the worker loop forever
+        uploadQueueDao.deleteById(entry.id)
+        if (sharedFileName != null) deleteSharedUpload(sharedFileName)
+    }
+
+    /** Also removes the entry from the queue */
+    private suspend fun deleteSharedUpload(fileName: String) {
+        uploadQueueDao.deleteSharedFile(fileName)
+        sharedUploadsRepository.delete(listOf(fileName))
+    }
+
+    // Shared uploads are always manual
+    suspend fun clearManualUploads() {
+        uploadQueueDao.deleteManualUploads()
+        clearSharedUploads()
+    }
+
+    suspend fun clearQueue() {
         uploadQueueDao.deleteAll()
+        clearSharedUploads()
+    }
+
+    /** Removes queued shared uploads and every copied file, including ones not queued yet */
+    suspend fun clearSharedUploads() {
+        uploadQueueDao.deleteAllSharedFiles()
+        sharedUploadsRepository.deleteAll()
+    }
+
+    /** Deletes copies not in the queue that are older than a day (see [SharedUploadsRepository.deleteOrphans]) */
+    suspend fun deleteOrphanedSharedFiles() =
+        sharedUploadsRepository.deleteOrphans(
+            referenced = uploadQueueDao.getSharedFileNames().toSet(),
+            maxAgeMillis = ORPHAN_MAX_AGE_MILLIS,
+        )
 
     suspend fun resetFailedRetries() =
         uploadQueueDao.resetFailedRetries()
@@ -74,15 +127,18 @@ class PhotoUploadRepository @Inject internal constructor(
     // Upload Operations
 
     suspend fun uploadFile(
-        localPhoto: LocalPhoto,
+        source: UploadSource,
         uploadChoice: UploadChoice,
         onProgress: ((bytesWritten: Long, totalBytes: Long) -> Unit)? = null,
     ): Boolean {
         val contentResolver = context.contentResolver
-        val mediaType = contentResolver.getType(localPhoto.uri)?.toMediaTypeOrNull()
+        val uri = source.uri
+        val mediaType = (contentResolver.getType(uri) ?: source.mimeType)?.toMediaTypeOrNull()
 
         var contentLength = -1L
-        contentResolver.query(localPhoto.uri, arrayOf(OpenableColumns.SIZE), null, null, null)
+        if (uri.scheme == ContentResolver.SCHEME_FILE) {
+            contentLength = uri.path?.let { File(it).length() } ?: -1L
+        } else contentResolver.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)
             ?.use { cursor ->
                 if (cursor.moveToFirst()) {
                     val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
@@ -94,7 +150,7 @@ class PhotoUploadRepository @Inject internal constructor(
 
         if (contentLength == -1L && mediaType == null) {
             Log.e(
-                "Error uploading ${localPhoto.id}",
+                "Error uploading ${source.name}",
                 "Cannot determine content length ($contentLength) or media type ($mediaType)"
             )
             return false
@@ -137,7 +193,7 @@ class PhotoUploadRepository @Inject internal constructor(
             }
         }
 
-        val hash = calculateBlake3Hash(localPhoto.uri)
+        val hash = calculateBlake3Hash(uri)
 
         val requestBody = object : RequestBody() {
             override fun contentType() = mediaType
@@ -146,7 +202,7 @@ class PhotoUploadRepository @Inject internal constructor(
 
             @Throws(IOException::class)
             override fun writeTo(sink: BufferedSink) {
-                contentResolver.openInputStream(localPhoto.uri)?.use { inputStream ->
+                contentResolver.openInputStream(uri)?.use { inputStream ->
                     if (onProgress != null) {
                         val buffer = ByteArray(8192)
                         var bytesWritten = 0L
@@ -162,15 +218,15 @@ class PhotoUploadRepository @Inject internal constructor(
                             sink.writeAll(source)
                         }
                     }
-                } ?: throw IOException("Failed to open InputStream for URI: $localPhoto.uri")
+                } ?: throw IOException("Failed to open InputStream for URI: $uri")
             }
         }
 
         // MultipartBody.Part is used to send also the actual file name
-        val fileBody = MultipartBody.Part.createFormData("file", localPhoto.name, requestBody)
+        val fileBody = MultipartBody.Part.createFormData("file", source.name, requestBody)
 
         val response = photosService.get().uploadPhoto(
-            timeCreated = localPhoto.timeCreated.toString(),
+            timeCreated = source.timeCreated.toString(),
             file = fileBody,
             makePublic = uploadChoice.isPublic,
             folderId = folderId,
@@ -180,11 +236,13 @@ class PhotoUploadRepository @Inject internal constructor(
         response.body()?.let { dto ->
             val networkPhoto = dto.toEntity()
             networkPhotosDao.insert(networkPhoto)
-            localPhotosDao.insertOrReplace(localPhoto.copy(networkPhotoId = networkPhoto.id))
+            source.localPhoto?.let {
+                localPhotosDao.insertOrReplace(it.copy(networkPhotoId = networkPhoto.id))
+            }
             return true
         }
 
-        Log.e("Error uploading ${localPhoto.id}", response.errorBody()?.string().orEmpty())
+        Log.e("Error uploading ${source.name}", response.errorBody()?.string().orEmpty())
 
         return false
     }
@@ -205,5 +263,9 @@ class PhotoUploadRepository @Inject internal constructor(
             Log.e("PhotoUploadRepository", "Failed to compute BLAKE3 hash for $uri", e)
             null
         }
+    }
+
+    private companion object {
+        const val ORPHAN_MAX_AGE_MILLIS = 24L * 60 * 60 * 1000
     }
 }

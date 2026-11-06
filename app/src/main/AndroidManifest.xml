@@ -44,21 +44,32 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!--
-                        <intent-filter>
-                            <action android:name="android.intent.action.SEND" />
-                            <action android:name="android.intent.action.SEND_MULTIPLE" />
-
-                            <category android:name="android.intent.category.DEFAULT" />
-
-                            <data android:mimeType="image/*" />
-                            <data android:mimeType="video/*" />
-                        </intent-filter>
-            -->
-
             <meta-data
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
+
+        </activity>
+
+        <!-- Runs in the sender's task (or its own, removed from recents once finished),
+             never in the main app's -->
+        <activity
+            android:name="net.theluckycoder.familyphotos.ui.ShareActivity"
+            android:autoRemoveFromRecents="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:exported="true"
+            android:launchMode="standard"
+            android:taskAffinity=""
+            android:windowSoftInputMode="adjustResize">
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="image/*" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
 
         </activity>
 

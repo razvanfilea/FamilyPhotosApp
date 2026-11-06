@@ -7,28 +7,27 @@ import androidx.compose.ui.graphics.asImageBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
-import kotlin.io.encoding.Base64
+import net.theluckycoder.familyphotos.core.data.model.ThumbHashBytes
 
 object ThumbHashCache {
-    private val cache = object : LruCache<String, ImageBitmap>(1000) {} // ~4MB memory
+    private val cache = object : LruCache<ThumbHashBytes, ImageBitmap>(1000) {} // ~4MB memory
 
-    fun get(thumbHash: String?): ImageBitmap? {
+    fun get(thumbHash: ThumbHashBytes?): ImageBitmap? {
         if (thumbHash == null) return null
 
         return cache.get(thumbHash)
     }
 
-    suspend fun getOrCompute(thumbHash: String?): ImageBitmap? {
+    suspend fun getOrCompute(thumbHash: ThumbHashBytes?): ImageBitmap? {
         if (thumbHash == null) return null
 
         cache.get(thumbHash)?.let { return it }
 
         return withContext(Dispatchers.Default) {
             try {
-                val bytes = Base64.decode(thumbHash)
                 if (!isActive) return@withContext null
 
-                val bitmap = ThumbHash.thumbHashToRGBA(bytes)
+                val bitmap = ThumbHash.thumbHashToRGBA(thumbHash.bytes)
                 val imageBitmap = bitmap.asImageBitmap()
 
                 cache.put(thumbHash, imageBitmap)

@@ -63,7 +63,7 @@ class PhotosApp : Application(), Configuration.Provider {
         memoriesNotifier.createChannel()
 
         // Changes found while the app was open were seen by the user, don't notify about them later
-        AppForegroundTracker.register {
+        AppForegroundTracker.register(this) {
             coroutineScope.launch {
                 sharedActivityStore.update { it.dropUnseen() }
             }
