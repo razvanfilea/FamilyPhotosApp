@@ -250,4 +250,9 @@
     <string name="cd_open_month_picker">Open month picker</string>
     <string name="cd_scroll_timeline">Scroll Timeline</string>
     <string name="cd_edit_permissions">Edit permissions</string>
+    <string name="update_available">A new app version is available</string>
+    <string name="update_tap_to_install">Tap to download and install it</string>
+    <string name="update_downloading">Downloading the update…</string>
+    <string name="update_download_failed">Download failed, tap to retry</string>
+    <string name="update_no_installer">Couldn\'t open the installer</string>
 </resources>

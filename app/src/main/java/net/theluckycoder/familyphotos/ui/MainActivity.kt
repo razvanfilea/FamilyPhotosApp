@@ -1,17 +1,21 @@
 package net.theluckycoder.familyphotos.ui
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.core.net.toUri
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.EaseOutCubic
@@ -37,10 +41,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
@@ -60,6 +68,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.BuildConfig
+import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.ui.composables.PhotosViewer
 import net.theluckycoder.familyphotos.ui.composables.TypedSnackbar
@@ -367,6 +376,34 @@ private fun Content(
 
     if (backStack.isEmpty()) {
         backStack.add(TopLevelNav)
+    }
+
+    val context = LocalContext.current
+    // Once "Install unknown apps" is granted, go on to the installer (the cached APK is reused)
+    val unknownSourcesLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (context.packageManager.canRequestPackageInstalls()) mainViewModel.downloadUpdate()
+    }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner) {
+        // Only while started: a background activity can't launch the installer, and the
+        // conflated channel keeps the intent until the user returns
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            mainViewModel.installUpdate.collect { intent ->
+                if (!context.packageManager.canRequestPackageInstalls()) {
+                    unknownSourcesLauncher.launch(
+                        Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, "package:${context.packageName}".toUri())
+                    )
+                    return@collect
+                }
+                try {
+                    context.startActivity(intent)
+                } catch (_: ActivityNotFoundException) {
+                    snackbarManager.showMessage(R.string.update_no_installer, UiMessageType.Error)
+                }
+            }
+        }
     }
 
     NavDisplay(

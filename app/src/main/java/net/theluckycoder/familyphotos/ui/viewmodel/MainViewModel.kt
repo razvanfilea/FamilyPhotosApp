@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.ui.viewmodel
 
+import android.content.Intent
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -13,15 +14,19 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import net.theluckycoder.familyphotos.BuildConfig
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.repository.AppUpdateRepository
 import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.LoginRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
@@ -45,6 +50,7 @@ class MainViewModel @Inject constructor(
     val loginRepository: LoginRepository,
     private val snackbarManager: SnackbarManager,
     private val photoUploadRepository: PhotoUploadRepository,
+    private val appUpdateRepository: AppUpdateRepository,
 ) : ViewModel() {
 
     private val _localPhotosToDelete = Channel<List<LocalPhoto>>()
@@ -58,6 +64,43 @@ class MainViewModel @Inject constructor(
     val isRefreshing = MutableStateFlow(false)
     val isOnline = refreshPhotosUseCase.isOnlineState.asStateFlow()
 
+    val isUpdateAvailable: StateFlow<Boolean> = appUpdateRepository.latestVersion
+        .map { latest -> latest != null && latest > BuildConfig.VERSION_CODE }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    sealed interface UpdateDownload {
+        data object Idle : UpdateDownload
+        /** [progress] is 0..1, or null while the size is unknown. */
+        data class Downloading(val progress: Float?) : UpdateDownload
+        data object Failed : UpdateDownload
+    }
+
+    private val _updateDownload = MutableStateFlow<UpdateDownload>(UpdateDownload.Idle)
+    val updateDownload = _updateDownload.asStateFlow()
+
+    private val _installUpdate = Channel<Intent>(Channel.CONFLATED)
+    val installUpdate = _installUpdate.receiveAsFlow()
+
+    fun downloadUpdate() {
+        if (_updateDownload.value is UpdateDownload.Downloading) return
+        _updateDownload.value = UpdateDownload.Downloading(null)
+
+        viewModelScope.launch {
+            val versionCode = appUpdateRepository.latestVersion.value
+            val apk = versionCode?.let {
+                appUpdateRepository.downloadApk(it) { progress ->
+                    _updateDownload.value = UpdateDownload.Downloading(progress)
+                }
+            }
+            if (apk == null) {
+                _updateDownload.value = UpdateDownload.Failed
+            } else {
+                _updateDownload.value = UpdateDownload.Idle
+                _installUpdate.send(appUpdateRepository.installIntent(apk))
+            }
+        }
+    }
+
     init {
         viewModelScope.launch {
             userDataStore.user.collectLatest { newUser ->
@@ -70,6 +113,12 @@ class MainViewModel @Inject constructor(
 
         viewModelScope.launch {
             photoUploadRepository.deleteOrphanedSharedFiles()
+        }
+
+        viewModelScope.launch {
+            // Nothing is announced yet at startup (the latest version isn't persisted), so any
+            // APK left over from a previous run is either installed or will be downloaded again
+            appUpdateRepository.deleteDownloadedApk()
         }
 
         viewModelScope.launch {

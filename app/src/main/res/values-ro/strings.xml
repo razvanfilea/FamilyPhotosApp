@@ -263,4 +263,9 @@
     <string name="cd_open_month_picker">Deschide selectorul de luni</string>
     <string name="cd_scroll_timeline">Derulează cronologia</string>
     <string name="cd_edit_permissions">Editează permisiunile</string>
+    <string name="update_available">O versiune nouă a aplicației este disponibilă</string>
+    <string name="update_tap_to_install">Atinge pentru a o descărca și instala</string>
+    <string name="update_downloading">Se descarcă actualizarea…</string>
+    <string name="update_download_failed">Descărcarea a eșuat, atinge pentru a reîncerca</string>
+    <string name="update_no_installer">Programul de instalare nu a putut fi deschis</string>
 </resources>

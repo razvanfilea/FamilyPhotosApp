@@ -29,6 +29,7 @@ import net.theluckycoder.familyphotos.core.data.model.sharing.SharedFolderChange
 import net.theluckycoder.familyphotos.core.data.remote.FolderService
 import net.theluckycoder.familyphotos.core.data.remote.PhotosService
 import net.theluckycoder.familyphotos.core.data.remote.SyncService
+import retrofit2.Response
 import javax.inject.Inject
 
 /**
@@ -47,11 +48,14 @@ class ServerRepository @Inject internal constructor(
     private val settingsDataStore: SettingsDataStore,
     private val sharedActivityStore: SharedActivityStore,
     private val database: PhotosDatabase,
+    private val appUpdateRepository: AppUpdateRepository,
 ) {
 
     private companion object {
         // Syncs can overlap (app refresh, backup worker, notification worker); each delta must be read once
         val syncMutex = Mutex()
+
+        const val LATEST_APP_VERSION_HEADER = "X-App-Latest-Version"
     }
 
     enum class DownloadResponse {
@@ -71,6 +75,7 @@ class ServerRepository @Inject internal constructor(
         Log.i("ServerRepository", "Last synced event id: $lastSyncedEventLogId")
 
         val response = syncService.get().getEventLogsList(lastSyncedEventLogId)
+        recordLatestAppVersion(response)
 
         if (!response.isSuccessful) {
             return when (response.code()) {
@@ -127,6 +132,12 @@ class ServerRepository @Inject internal constructor(
         return SharedFolderChangeDetector.detectInOwnFolders(currentUserId, ownFolderIds, alreadyKnown, photoEvents)
     }
 
+    /** The server announces the newest app release in a header of its sync responses. */
+    private fun recordLatestAppVersion(response: Response<*>) {
+        response.headers()[LATEST_APP_VERSION_HEADER]?.toIntOrNull()
+            ?.let { appUpdateRepository.setLatestVersion(it) }
+    }
+
     suspend fun downloadUserPhotos(): DownloadResponse {
         val userId = userDataStore.getUser()?.userId ?: return DownloadResponse.NOT_LOGGED_IN
         return syncMutex.withLock { downloadUserPhotosLocked(userId) }
@@ -142,6 +153,7 @@ class ServerRepository @Inject internal constructor(
             ?.let { Log.e("ServerRepository", "Failed to getOrCompute favorites ${it.string()}") }
 
         val photosResponse = photosAsync.await()
+        recordLatestAppVersion(photosResponse)
 
         if (photosResponse.isSuccessful) {
             val fullPhotos = photosResponse.body()!!

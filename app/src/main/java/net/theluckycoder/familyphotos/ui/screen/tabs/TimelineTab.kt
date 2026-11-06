@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -75,6 +76,7 @@ fun TimelineTab(
 
     val isOnline by mainViewModel.isOnline.collectAsState()
     val isRefreshing by mainViewModel.isRefreshing.collectAsState()
+    val isUpdateAvailable by mainViewModel.isUpdateAvailable.collectAsState()
     val selectedPhotoIds = remember { mutableStateSetOf<Long>() }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -100,6 +102,11 @@ fun TimelineTab(
 
                 if (!isOnline && !isRefreshing) {
                     FailedConnectionCard(mainViewModel)
+                }
+
+                if (isUpdateAvailable) {
+                    val updateDownload by mainViewModel.updateDownload.collectAsState()
+                    UpdateAvailableCard(updateDownload, onClick = mainViewModel::downloadUpdate)
                 }
             },
         )
@@ -186,6 +193,58 @@ private fun MemoriesList(
                         style = MaterialTheme.typography.labelSmall,
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UpdateAvailableCard(
+    download: MainViewModel.UpdateDownload,
+    onClick: () -> Unit,
+) = Card(
+    modifier = Modifier
+        .fillMaxWidth()
+        .padding(16.dp),
+    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.tertiaryContainer),
+    onClick = onClick,
+) {
+    Row(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            modifier = Modifier.size(32.dp),
+            painter = painterResource(R.drawable.ic_cloud_download_outline),
+            contentDescription = null,
+        )
+
+        Column(Modifier.weight(1f)) {
+            Text(
+                stringResource(R.string.update_available),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+
+            when (download) {
+                is MainViewModel.UpdateDownload.Downloading -> {
+                    Text(stringResource(R.string.update_downloading), style = MaterialTheme.typography.bodyMedium)
+                    val progressModifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                    if (download.progress != null) {
+                        LinearProgressIndicator(progress = { download.progress }, modifier = progressModifier)
+                    } else {
+                        LinearProgressIndicator(modifier = progressModifier)
+                    }
+                }
+
+                MainViewModel.UpdateDownload.Failed ->
+                    Text(stringResource(R.string.update_download_failed), style = MaterialTheme.typography.bodyMedium)
+
+                MainViewModel.UpdateDownload.Idle ->
+                    Text(stringResource(R.string.update_tap_to_install), style = MaterialTheme.typography.bodyMedium)
             }
         }
     }
