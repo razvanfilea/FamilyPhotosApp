@@ -82,10 +82,12 @@ fun VideoPlayer(
             .setUri(sourceUri)
             .build()
 
-        val source = ProgressiveMediaSource.Factory(dataSourceFactory)
-            .createMediaSource(mediaItem)
+        // Explicit factories so R8 can strip subtitle support (the defaults always reference it)
+        val mediaSourceFactory =
+            ProgressiveMediaSource.Factory(dataSourceFactory, NoSubtitlesExtractorsFactory)
+        val source = mediaSourceFactory.createMediaSource(mediaItem)
 
-        ExoPlayer.Builder(context)
+        ExoPlayer.Builder(context, NoSubtitlesRenderersFactory(context), mediaSourceFactory)
             .setAudioAttributes(autoAttributes, true)
             .setSeekBackIncrementMs(5000)
             .setSeekForwardIncrementMs(5000)

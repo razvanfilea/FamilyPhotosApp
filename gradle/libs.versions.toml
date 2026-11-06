@@ -87,7 +87,6 @@ paging_compose = { module = "androidx.paging:paging-compose", version.ref = "and
 camerax_lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "androidx_camerax" }
 camerax_camera2 = { module = "androidx.camera:camera-camera2", version.ref = "androidx_camerax" }
 camerax_view = { module = "androidx.camera:camera-view", version.ref = "androidx_camerax" }
-camerax_extensions = { module = "androidx.camera:camera-extensions", version.ref = "androidx_camerax" }
 
 coil_core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil" }
 coil_okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }

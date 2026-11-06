@@ -33,7 +33,6 @@ dependencies {
     implementation(libs.camerax.lifecycle)
     implementation(libs.camerax.camera2)
     implementation(libs.camerax.view)
-    implementation(libs.camerax.extensions)
 
     // Coil
     implementation(libs.coil.core)

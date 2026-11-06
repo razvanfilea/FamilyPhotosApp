@@ -67,6 +67,12 @@ data class PhotoViewerListNav(
     val photos: List<Photo>,
 ) : NavKey
 
+/** The story of today's memory from [yearsAgo] years ago (looked up in `TimelineViewModel`). */
+@Serializable
+data class MemoryNav(
+    val yearsAgo: Int,
+) : NavKey
+
 @Serializable
 class MovePhotosNav(
     val photoIds: LongArray,

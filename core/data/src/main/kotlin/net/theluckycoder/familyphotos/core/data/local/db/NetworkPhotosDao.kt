@@ -11,7 +11,7 @@ import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhotoThumbnail
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.model.db.MonthSummary
-import net.theluckycoder.familyphotos.core.data.model.db.NetworkPhotoWithYearOffset
+import net.theluckycoder.familyphotos.core.data.model.db.MemoryCandidate
 import net.theluckycoder.familyphotos.core.data.model.db.PhotoStatistics
 import net.theluckycoder.familyphotos.core.data.model.network.PhotoEventLog
 
@@ -49,30 +49,34 @@ internal interface NetworkPhotosDao {
     fun getFolderPhotos(folderId: Long): PagingSource<Int, NetworkPhotoThumbnail>
 
 
+    /**
+     * Coarse filter for memories: photos taken between [minTime] and [maxTime] whose day of the
+     * year is near [todayDayOfYear]'s. `MemoriesBuilder` does the exact matching (leap years, New Year).
+     */
     @Query(
-        """SELECT id, timeCreated, thumbHash, name,
-              CAST(strftime('%Y', 'now', 'localtime') AS INTEGER) - CAST(strftime('%Y', network_photo.timeCreated, 'unixepoch', 'localtime') AS INTEGER) AS yearOffset
-        FROM network_photo
+        """SELECT p.id, p.timeCreated, p.thumbHash, p.name, p.fileSize,
+              EXISTS(SELECT 1 FROM favorite_network_photo f WHERE f.photoId = p.id) AS isFavorite
+        FROM network_photo p
         WHERE CASE
-            WHEN :photoType = 1 THEN (userId = :currentUserId)
-            WHEN :photoType = 2 THEN (userId IS NULL)
-            WHEN :photoType = 3 THEN (userId <> :currentUserId)
+            WHEN :photoType = 1 THEN (p.userId = :currentUserId)
+            WHEN :photoType = 2 THEN (p.userId IS NULL)
+            WHEN :photoType = 3 THEN (p.userId <> :currentUserId)
             ELSE 1
         END
-        AND yearOffset BETWEEN :minYearsAgo AND :maxYearsAgo
+        AND p.trashedOn IS NULL
+        AND p.timeCreated BETWEEN :minTime AND :maxTime
         AND MIN(
-            ABS(CAST(strftime('%j', 'now', 'localtime') AS INTEGER) - CAST(strftime('%j', network_photo.timeCreated, 'unixepoch', 'localtime') AS INTEGER)),
-            366 - ABS(CAST(strftime('%j', 'now', 'localtime') AS INTEGER) - CAST(strftime('%j', network_photo.timeCreated, 'unixepoch', 'localtime') AS INTEGER))
-        ) <= 3
-        AND trashedOn is null
-        ORDER BY yearOffset ASC, network_photo.timeCreated DESC"""
+            ABS(:todayDayOfYear - CAST(strftime('%j', p.timeCreated, 'unixepoch', 'localtime') AS INTEGER)),
+            366 - ABS(:todayDayOfYear - CAST(strftime('%j', p.timeCreated, 'unixepoch', 'localtime') AS INTEGER))
+        ) <= 5"""
     )
-    fun getPhotosGroupedByYearsAgo(
+    fun getMemoryCandidates(
         photoType: PhotoType,
         currentUserId: String,
-        minYearsAgo: Int = 1,
-        maxYearsAgo: Int = 10
-    ): Flow<List<NetworkPhotoWithYearOffset>>
+        todayDayOfYear: Int,
+        minTime: Long,
+        maxTime: Long,
+    ): Flow<List<MemoryCandidate>>
 
     @Query(
         """

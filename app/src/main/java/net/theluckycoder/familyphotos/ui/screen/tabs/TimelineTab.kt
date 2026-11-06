@@ -1,8 +1,10 @@
 package net.theluckycoder.familyphotos.ui.screen.tabs
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -29,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -39,13 +43,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.paging.compose.LazyPagingItems
 import net.theluckycoder.familyphotos.R
+import net.theluckycoder.familyphotos.core.data.model.Memory
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhotoThumbnail
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
-import net.theluckycoder.familyphotos.ui.PhotoViewerListNav
+import net.theluckycoder.familyphotos.ui.MemoryNav
 import net.theluckycoder.familyphotos.ui.composables.CoilPhoto
 import net.theluckycoder.familyphotos.ui.composables.PhotoTypeChips
+import net.theluckycoder.familyphotos.ui.composables.memoryDateText
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
@@ -116,7 +122,7 @@ fun TimelineTab(
 
 @Composable
 private fun MemoriesList(
-    memories: Map<Int, List<NetworkPhotoThumbnail>>?,
+    memories: List<Memory>?,
     listState: LazyListState,
 ) {
     val backStack = LocalNavBackStack.current
@@ -141,34 +147,43 @@ private fun MemoriesList(
             return@LazyRow
         }
 
-        memories.forEach { (yearsAgo, photos) ->
-            item(key = yearsAgo) {
-                val photo = photos.first()
+        items(memories, key = { it.yearsAgo }) { memory ->
+            Box(
+                Modifier
+                    .photoSharedBounds(memory.cover.id)
+                    .width(140.dp)
+                    .aspectRatio(0.75f)
+                    .padding(4.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .clickable { backStack.add(MemoryNav(memory.yearsAgo)) }
+            ) {
+                CoilPhoto(
+                    photo = memory.cover,
+                    modifier = Modifier.fillMaxSize(),
+                    preview = true,
+                    contentScale = ContentScale.Crop,
+                )
 
-                Box(
+                Column(
                     Modifier
-                        .photoSharedBounds(photo.id)
-                        .width(140.dp)
-                        .aspectRatio(0.75f)
-                        .padding(4.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .clickable {
-                            backStack.add(PhotoViewerListNav(photos))
-                        }
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))
+                            )
+                        )
+                        .padding(start = 10.dp, end = 10.dp, top = 24.dp, bottom = 10.dp),
                 ) {
-                    CoilPhoto(
-                        photo = photo,
-                        modifier = Modifier.fillMaxSize(),
-                        preview = true,
-                        contentScale = ContentScale.Crop,
-                    )
-
                     Text(
-                        pluralStringResource(R.plurals.years_ago, yearsAgo, yearsAgo),
+                        pluralStringResource(R.plurals.years_ago, memory.yearsAgo, memory.yearsAgo),
+                        color = Color.White,
                         fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(8.dp),
+                    )
+                    Text(
+                        memoryDateText(memory.date),
+                        color = Color.White.copy(alpha = 0.8f),
+                        style = MaterialTheme.typography.labelSmall,
                     )
                 }
             }

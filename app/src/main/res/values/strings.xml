@@ -234,6 +234,12 @@
     <plurals name="items_selected">
         <item quantity="other">%d selected</item>
     </plurals>
+    <string name="action_close">Close</string>
+    <string name="memory_replay">Replay</string>
+    <plurals name="memory_see_all">
+        <item quantity="one">See %d photo</item>
+        <item quantity="other">See all %d photos</item>
+    </plurals>
     <plurals name="years_ago">
         <item quantity="one">%1$d year ago</item>
         <item quantity="other">%1$d years ago</item>

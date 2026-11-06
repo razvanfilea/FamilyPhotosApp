@@ -66,6 +66,7 @@ import net.theluckycoder.familyphotos.ui.composables.TypedSnackbar
 import net.theluckycoder.familyphotos.ui.screen.DuplicatesScreen
 import net.theluckycoder.familyphotos.ui.screen.FolderScreen
 import net.theluckycoder.familyphotos.ui.screen.LargeFilesScreen
+import net.theluckycoder.familyphotos.ui.screen.MemoryStoryScreen
 import net.theluckycoder.familyphotos.ui.screen.LoginScreen
 import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
 import net.theluckycoder.familyphotos.ui.screen.SettingsScreen
@@ -214,8 +215,11 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(requestedMemory) {
                     if (requestedMemory == null) return@LaunchedEffect
                     memoryToOpen.value = null
-                    val photos = timelineViewModel.memories.filterNotNull().first()[requestedMemory]
-                    if (!photos.isNullOrEmpty()) backStack.add(PhotoViewerListNav(photos))
+                    val memories = timelineViewModel.memories.filterNotNull().first()
+                    val alreadyOpen = (backStack.lastOrNull() as? MemoryNav)?.yearsAgo == requestedMemory
+                    if (memories.any { it.yearsAgo == requestedMemory } && !alreadyOpen) {
+                        backStack.add(MemoryNav(requestedMemory))
+                    }
                 }
 
                 val benchmarkModifier = if (isBenchmark) {
@@ -337,7 +341,7 @@ private val backwardSlideTransitionSpec =
         )
 
 private fun NavKey?.isViewer(): Boolean =
-    this is PhotoViewerFlowNav || this is PhotoViewerListNav
+    this is PhotoViewerFlowNav || this is PhotoViewerListNav || this is MemoryNav
 
 private fun <T : NavKey> navEntry(
     key: T,
@@ -432,6 +436,10 @@ private fun Content(
 
                 is PhotoViewerListNav -> navEntry(key) {
                     PhotosViewer(key.photos, mainViewModel = mainViewModel)
+                }
+
+                is MemoryNav -> navEntry(key) {
+                    MemoryStoryScreen(key.yearsAgo, timelineViewModel, mainViewModel)
                 }
 
                 is MovePhotosNav -> navEntry(key) {

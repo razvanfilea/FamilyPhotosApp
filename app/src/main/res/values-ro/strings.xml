@@ -245,6 +245,13 @@
         <item quantity="few">%d selectate</item>
         <item quantity="other">%d selectate</item>
     </plurals>
+    <string name="action_close">Închide</string>
+    <string name="memory_replay">Redă din nou</string>
+    <plurals name="memory_see_all">
+        <item quantity="one">Vezi %d fotografie</item>
+        <item quantity="few">Vezi toate cele %d fotografii</item>
+        <item quantity="other">Vezi toate cele %d de fotografii</item>
+    </plurals>
     <plurals name="years_ago">
         <item quantity="one">acum %1$d an</item>
         <item quantity="few">acum %1$d ani</item>

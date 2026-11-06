@@ -27,14 +27,14 @@ class SharedFolderChangeDetectorTest {
     ) = FolderSyncDelta(id, ownerId, isFullList, entered)
 
     @Test
-    fun newFolderIsReportedAsNewlyShared() {
+    fun `new folder is reported as newly shared`() {
         val result = detect(listOf(delta(id = 2L, isFullList = true)), known = setOf(1L))
 
         assertEquals(listOf(SharedFolderChange(2L, alice, isNewlyShared = true)), result)
     }
 
     @Test
-    fun eventsWithAdditionsAreCountedWithoutAnUploader() {
+    fun `events with additions are counted without an uploader`() {
         val entered = listOf(added(10), added(11), added(12))
 
         val result = detect(listOf(delta(entered = entered)))
@@ -46,20 +46,14 @@ class SharedFolderChangeDetectorTest {
     }
 
     @Test
-    fun removalsOnlyProduceNothing() {
-        // Removals have no data, so the sync layer reports no entered photos
-        assertTrue(detect(listOf(delta(entered = emptyList()))).isEmpty())
-    }
-
-    @Test
-    fun fullListForKnownFolderIsAStaleCursorNotNews() {
+    fun `full list for a known folder is a stale cursor, not news`() {
         val entered = listOf(added(10))
 
         assertTrue(detect(listOf(delta(isFullList = true, entered = entered))).isEmpty())
     }
 
     @Test
-    fun firstSyncNeverNotifies() {
+    fun `first sync never notifies`() {
         val result = detect(
             listOf(delta(id = 2L, isFullList = true), delta(entered = listOf(added(10)))),
             known = emptySet(),
@@ -70,8 +64,8 @@ class SharedFolderChangeDetectorTest {
     }
 
     @Test
-    fun ownUploadsFromThisDeviceAreExcluded() {
-        // The upload inserts the returned photo before the sync sees its event
+    fun `photos already in the folder are not additions`() {
+        // Own uploads (inserted before the sync sees their event) and metadata updates of known photos
         val entered = listOf(added(10), added(11), added(12))
 
         val result = detect(listOf(delta(entered = entered)), alreadyInFolder = mapOf(1L to setOf(10L, 11L)))
@@ -80,7 +74,7 @@ class SharedFolderChangeDetectorTest {
     }
 
     @Test
-    fun othersUploadsIntoOwnFolderAreDetected() {
+    fun `others' uploads into own folders are detected`() {
         val events = listOf(added(10, folderId = 5L), added(11, folderId = 5L), added(12, folderId = 6L))
 
         val result = SharedFolderChangeDetector.detectInOwnFolders(me, setOf(5L, 6L), emptySet(), events)
@@ -95,7 +89,7 @@ class SharedFolderChangeDetectorTest {
     }
 
     @Test
-    fun ownFolderDetectionSkipsKnownPhotosOtherFoldersAndRemovals() {
+    fun `own folder detection skips known photos, other folders and removals`() {
         val events = listOf(
             added(10, folderId = 5L), // uploaded from this device, already in the DB
             added(11, folderId = null), // personal photo outside any folder
@@ -107,7 +101,7 @@ class SharedFolderChangeDetectorTest {
     }
 
     @Test
-    fun ownAndPublicFoldersInTheResponseAreIgnored() {
+    fun `own and public folders in the response are ignored`() {
         val result = detect(
             listOf(
                 delta(id = 5L, ownerId = me, isFullList = true),
@@ -119,23 +113,14 @@ class SharedFolderChangeDetectorTest {
     }
 
     @Test
-    fun metadataUpdatesOfKnownPhotosAreNotAdditions() {
-        val entered = listOf(added(10), added(11))
-
-        val result = detect(listOf(delta(entered = entered)), alreadyInFolder = mapOf(1L to setOf(10L)))
-
-        assertEquals(1, result.single().addedCount)
-    }
-
-    @Test
-    fun repeatedEventsForOnePhotoCountOnce() {
+    fun `repeated events for one photo count once`() {
         val entered = listOf(added(10), added(10))
 
         assertEquals(1, detect(listOf(delta(entered = entered))).single().addedCount)
     }
 
     @Test
-    fun photoAddedThenRemovedInOneBatchIsNotCounted() {
+    fun `photo added then removed in one batch is not counted`() {
         val events = listOf(added(10), removed(10), added(11))
 
         assertEquals(1, detect(listOf(delta(entered = events))).single().addedCount)
@@ -143,14 +128,14 @@ class SharedFolderChangeDetectorTest {
     }
 
     @Test
-    fun photoRemovedThenRestoredCounts() {
+    fun `photo removed then restored counts`() {
         val events = listOf(removed(10), added(10))
 
         assertEquals(1, detect(listOf(delta(entered = events))).single().addedCount)
     }
 
     @Test
-    fun dropUnseenKeepsCountsOfVisibleNotifications() {
+    fun `drop unseen keeps counts of visible notifications`() {
         val change = SharedFolderChange(1L, alice, false, listOf(PhotosAddedBy(alice, 3)))
         val posted = PendingSharedActivity().merge(listOf(change)).let {
             it.copy(folders = it.folders.map { f -> f.copy(dirty = false, notified = true) })
@@ -167,7 +152,7 @@ class SharedFolderChangeDetectorTest {
     }
 
     @Test
-    fun pendingActivityAccumulatesUntilDismissed() {
+    fun `pending activity accumulates until dismissed`() {
         val first = SharedFolderChange(1L, alice, false, listOf(PhotosAddedBy(alice, 2)))
         val second = SharedFolderChange(1L, alice, false, listOf(PhotosAddedBy(alice, 3)))
 

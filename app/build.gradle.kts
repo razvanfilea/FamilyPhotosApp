@@ -19,10 +19,15 @@ android {
         minSdk = 30
         targetSdk = 37
 
-        versionCode = 301
-        versionName = "3.0.1"
+        versionCode = 302
+        versionName = "3.0.2"
 
         buildConfigField("boolean", "BENCHMARK", "false")
+
+        ndk {
+            // 64-bit only: arm64 for phones, x86_64 for the emulator
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
     }
 
     androidResources {

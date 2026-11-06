@@ -256,6 +256,10 @@ fun Photo.photoDateText(): String = remember(this) {
     PHOTO_DATE_FORMATTER.format(date.toJavaLocalDateTime())
 }
 
+private val MEMORY_DATE_FORMATTER = DateTimeFormatter.ofPattern("d MMMM uuuu")
+
+fun memoryDateText(date: java.time.LocalDate): String = MEMORY_DATE_FORMATTER.format(date)
+
 @Composable
 fun VerticallyAnimatedInt(
     targetState: Int,

@@ -12,6 +12,7 @@ import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
+import net.theluckycoder.familyphotos.core.data.model.isVideo
 import net.theluckycoder.familyphotos.notifications.MemoriesNotifier
 
 /**
@@ -52,14 +53,19 @@ class MemoriesWorker @AssistedInject constructor(
 
         // The query window is a few days wide, so most photos show up on several consecutive days
         val notified = settingsDataStore.getNotifiedMemoryIds()
-        val (yearsAgo, photos) = memories.entries
-            .firstOrNull { (_, photos) -> photos.any { it.id !in notified } } ?: return
-        val fresh = photos.filter { it.id !in notified }
+        val memory = memories.firstOrNull { memory -> memory.allPhotos.any { it.id !in notified } }
+            ?: return
+        val fresh = memory.allPhotos.filter { it.id !in notified }
+        // Highlights are ranked: the first fresh photo of them is the best one left
+        val cover = memory.cover.takeIf { it in fresh }
+            ?: memory.highlights.firstOrNull { it in fresh && !it.isVideo }
+            ?: fresh.firstOrNull { !it.isVideo }
+            ?: fresh.first()
 
-        notifier.post(yearsAgo, fresh.size, cover = fresh.first())
+        notifier.post(memory.yearsAgo, fresh.size, cover = cover)
         settingsDataStore.setLastMemoriesDay(today)
 
-        val inWindow = memories.values.flatten().map { it.id }.toSet()
+        val inWindow = memories.flatMap { it.allPhotos }.map { it.id }.toSet()
         settingsDataStore.setNotifiedMemoryIds((notified + fresh.map { it.id }) intersect inWindow)
     }
 
