@@ -44,9 +44,14 @@ internal object MemoriesBuilder {
      * crossing New Year: on Jan 2nd, a photo from Dec 31st two years earlier is 1 year ago.
      */
     fun yearsAgo(photoDate: LocalDate, today: LocalDate): Int? {
+        // Feb 29th counts as Feb 28th in leap years too, like the server's memories
+        val monthDay = if (photoDate.monthValue == 2 && photoDate.dayOfMonth == 29) {
+            photoDate.withDayOfMonth(28)
+        } else {
+            photoDate
+        }
         for (year in today.year - 1..today.year + 1) {
-            // withYear() moves Feb 29th to Feb 28th in non-leap years
-            val anniversary = photoDate.withYear(year)
+            val anniversary = monthDay.withYear(year)
             if (abs(ChronoUnit.DAYS.between(today, anniversary)) <= WINDOW_DAYS) {
                 return year - photoDate.year
             }

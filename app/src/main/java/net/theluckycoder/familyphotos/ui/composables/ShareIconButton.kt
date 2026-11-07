@@ -1,5 +1,6 @@
 package net.theluckycoder.familyphotos.ui.composables
 
+import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.size
@@ -60,6 +61,10 @@ fun SharePhotoIconButton(
                         arrayList.addAll(uriList)
                         putParcelableArrayListExtra(Intent.EXTRA_STREAM, arrayList)
                         type = "*/*"
+                        clipData = ClipData.newRawUri(null, uriList.first()).apply {
+                            uriList.drop(1).forEach { addItem(ClipData.Item(it)) }
+                        }
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
                     ensureActive()
 

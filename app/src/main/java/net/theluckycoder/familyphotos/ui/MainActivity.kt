@@ -167,8 +167,9 @@ class MainActivity : ComponentActivity() {
 
         val isBenchmark = BuildConfig.BENCHMARK
 
-        // Inject benchmark credentials from intent extras and trigger sync
-        if (isBenchmark) {
+        // Inject benchmark credentials from intent extras and trigger sync.
+        // Debug builds accept them too, so tests on an emulator can skip the login screen
+        if (isBenchmark || BuildConfig.DEBUG) {
             val sessionCookie = intent.getStringExtra(EXTRA_BENCHMARK_SESSION_COOKIE)
             val username = intent.getStringExtra(EXTRA_BENCHMARK_USERNAME)
             val serverAddress = intent.getStringExtra(EXTRA_BENCHMARK_SERVER_ADDRESS)

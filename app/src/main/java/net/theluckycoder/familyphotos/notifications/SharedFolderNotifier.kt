@@ -1,16 +1,13 @@
 package net.theluckycoder.familyphotos.notifications
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.local.datastore.SharedActivityStore
@@ -28,10 +25,7 @@ class SharedFolderNotifier @Inject constructor(
     private val notificationManager = NotificationManagerCompat.from(context)
 
     val canPost: Boolean
-        get() = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.POST_NOTIFICATIONS
-        ) == PackageManager.PERMISSION_GRANTED
+        get() = context.canPostNotifications()
 
     @SuppressLint("MissingPermission") // checked through canPost, which lint can't follow
     fun post(

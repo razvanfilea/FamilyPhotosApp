@@ -1,15 +1,13 @@
 package net.theluckycoder.familyphotos.workers
 
-import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.graphics.drawable.Icon
 import android.util.Log
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.work.HiltWorker
@@ -32,6 +30,7 @@ import net.theluckycoder.familyphotos.core.data.repository.FoldersRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotoUploadRepository
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.domain.RefreshPhotosUseCase
+import net.theluckycoder.familyphotos.notifications.canPostNotifications
 
 @HiltWorker
 class BackupAndUploadWorker @AssistedInject constructor(
@@ -44,6 +43,9 @@ class BackupAndUploadWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, workerParams) {
 
     private val notificationId = id.hashCode()
+
+    @Volatile
+    private var postedManually = false
 
     override suspend fun doWork(): Result {
         if (!workerMutex.tryLock()) {
@@ -81,7 +83,7 @@ class BackupAndUploadWorker @AssistedInject constructor(
                 setForegroundSafe(
                     createForegroundInfo(
                         applicationContext.getString(R.string.notification_backup_progress, successCount, total),
-                        successCount
+                        0
                     )
                 )
                 setProgress(
@@ -157,6 +159,11 @@ class BackupAndUploadWorker @AssistedInject constructor(
             createFailNotification(FailReason.Other, e.stackTraceToString())
             return Result.failure()
         } finally {
+            // WorkManager only removes the notification of its own foreground service,
+            // so the one posted by notifyManually would otherwise stay forever
+            if (postedManually) {
+                NotificationManagerCompat.from(applicationContext).cancel(notificationId)
+            }
             workerMutex.unlock()
         }
     }
@@ -251,6 +258,7 @@ class BackupAndUploadWorker @AssistedInject constructor(
         )
     }
 
+    @SuppressLint("MissingPermission") // checked through canPostNotifications, which lint can't follow
     private fun createFailNotification(failReason: FailReason, str: String? = null) {
         val ctx = applicationContext
 
@@ -272,15 +280,12 @@ class BackupAndUploadWorker @AssistedInject constructor(
             .setSmallIcon(R.drawable.ic_error_outline)
             .build()
 
-        if (ActivityCompat.checkSelfPermission(
-                ctx,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
+        if (ctx.canPostNotifications()) {
             NotificationManagerCompat.from(ctx).notify(NOTIFICATION_FAIL_ID, notification)
         }
     }
 
+    @SuppressLint("MissingPermission") // checked through canPostNotifications, which lint can't follow
     private fun createSuccessNotification(successfulCount: Int, failedCount: Int) {
         val ctx = applicationContext
         val title = ctx.getString(R.string.notification_backup_finished)
@@ -312,11 +317,7 @@ class BackupAndUploadWorker @AssistedInject constructor(
             .setSmallIcon(R.drawable.ic_cloud_done_filled)
             .build()
 
-        if (ActivityCompat.checkSelfPermission(
-                ctx,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
+        if (ctx.canPostNotifications()) {
             NotificationManagerCompat.from(ctx).notify(NOTIFICATION_FAIL_ID, notification)
         }
     }
@@ -338,13 +339,11 @@ class BackupAndUploadWorker @AssistedInject constructor(
         }
     }
 
+    @SuppressLint("MissingPermission") // checked through canPostNotifications, which lint can't follow
     private fun notifyManually(foregroundInfo: ForegroundInfo) {
         val ctx = applicationContext
-        if (ActivityCompat.checkSelfPermission(
-                ctx,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
+        if (ctx.canPostNotifications()) {
+            postedManually = true
             NotificationManagerCompat.from(ctx).notify(notificationId, foregroundInfo.notification)
         }
     }

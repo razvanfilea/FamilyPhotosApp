@@ -54,6 +54,13 @@ class MemoriesBuilderTest {
     }
 
     @Test
+    fun `leap day matches Feb 28th in leap years too`() {
+        assertEquals(8, MemoriesBuilder.yearsAgo(LocalDate.of(2020, 2, 29), LocalDate.of(2028, 2, 25)))
+        assertEquals(8, MemoriesBuilder.yearsAgo(LocalDate.of(2020, 2, 29), LocalDate.of(2028, 3, 2)))
+        assertNull(MemoriesBuilder.yearsAgo(LocalDate.of(2020, 2, 29), LocalDate.of(2028, 3, 3)))
+    }
+
+    @Test
     fun `memories are grouped and sorted by years ago, dropping out of range photos`() {
         val today = LocalDate.of(2026, 6, 15)
         val memories = MemoriesBuilder.build(

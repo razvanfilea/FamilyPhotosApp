@@ -1,18 +1,15 @@
 package net.theluckycoder.familyphotos.notifications
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import coil3.ImageLoader
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
@@ -36,10 +33,7 @@ class MemoriesNotifier @Inject constructor(
     private val notificationManager = NotificationManagerCompat.from(context)
 
     val canPost: Boolean
-        get() = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.POST_NOTIFICATIONS
-        ) == PackageManager.PERMISSION_GRANTED
+        get() = context.canPostNotifications()
 
     @SuppressLint("MissingPermission") // checked through canPost, which lint can't follow
     suspend fun post(yearsAgo: Int, photoCount: Int, cover: Photo) {

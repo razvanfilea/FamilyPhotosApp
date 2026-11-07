@@ -108,6 +108,10 @@ fun BoxScope.MonthScrollIndicator(
         }
     }
 
+    val currentLayout by rememberUpdatedState(timelineLayout)
+    val currentMaxVisibleIndex by rememberUpdatedState(maxVisibleIndex)
+    val currentOnScrollToGridIndex by rememberUpdatedState(onScrollToGridIndex)
+
     val thumbOffsetY by animateFloatAsState(
         targetValue = if (isDragging.value) dragOffsetY else (gridProgress * currentMaxScroll),
         animationSpec = if (isDragging.value) snap() else tween(150),
@@ -153,16 +157,17 @@ fun BoxScope.MonthScrollIndicator(
                                     if (currentMaxScroll > 0) dragOffsetY / currentMaxScroll else 0f
 
                                 // Find where we are in the overall timeline based on the drag
-                                val targetItemIndex = (progress * maxVisibleIndex).toInt()
+                                val targetItemIndex = (progress * currentMaxVisibleIndex).toInt()
 
                                 // Determine which month this item index falls into
+                                val layout = currentLayout
                                 val searchResult =
-                                    timelineLayout.monthCumulativeCounts.binarySearch(
+                                    layout.monthCumulativeCounts.binarySearch(
                                         targetItemIndex
                                     )
                                 val monthIndex =
                                     (if (searchResult >= 0) searchResult else -(searchResult + 1) - 1)
-                                        .coerceIn(0, timelineLayout.monthSummaries.lastIndex)
+                                        .coerceIn(0, layout.monthSummaries.lastIndex)
 
                                 // ONLY trigger the scroll and haptics if we crossed into a new month
                                 if (monthIndex != lastScrolledMonthIndex) {
@@ -170,10 +175,10 @@ fun BoxScope.MonthScrollIndicator(
 
                                     // Get the grid index of the month's header to snap to it
                                     val targetGridIndex =
-                                        timelineLayout.monthCumulativeCounts.getOrNull(monthIndex)
+                                        layout.monthCumulativeCounts.getOrNull(monthIndex)
                                             ?: 0
 
-                                    onScrollToGridIndex(targetGridIndex)
+                                    currentOnScrollToGridIndex(targetGridIndex)
                                     lastScrolledMonthIndex = monthIndex
                                 }
                             }
