@@ -242,6 +242,7 @@
     </plurals>
     <string name="action_close">Close</string>
     <string name="memory_replay">Replay</string>
+    <string name="memory_go_to_photo">Go to photo</string>
     <plurals name="memory_see_all">
         <item quantity="one">See %d photo</item>
         <item quantity="other">See all %d photos</item>

@@ -113,7 +113,7 @@ class MemoriesBuilderTest {
         assertEquals(MemoriesBuilder.MAX_HIGHLIGHTS, selected.size)
         assertTrue(photos[37] in selected)
         assertEquals(selected.sortedBy { it.photo.timeCreated }, selected)
-        // Spread over the whole span, not the first 20 minutes
+        // Spread over the whole span, not the first 15 minutes
         assertTrue(selected.last().photo.timeCreated - selected.first().photo.timeCreated > 50 * 60)
     }
 
@@ -132,5 +132,43 @@ class MemoriesBuilderTest {
         assertEquals(listOf(favorite, video, plain, last).map { it.photo }, memory.highlights)
         assertEquals(listOf(video, plain, favorite, last).map { it.photo }, memory.allPhotos)
         assertEquals(LocalDate.of(2024, 6, 15), memory.date)
+    }
+
+    @Test
+    fun `moments count bursts once`() {
+        val today = LocalDate.of(2026, 6, 15)
+        val base = LocalDateTime.of(2025, 6, 15, 12, 0)
+        val photos = listOf(
+            candidate(base),
+            candidate(base.plusSeconds(2)),
+            candidate(base.plusMinutes(10)),
+        )
+
+        assertEquals(2, MemoriesBuilder.build(photos, today, zone).single().moments)
+    }
+
+    @Test
+    fun `only the memories with the most moments are kept, sorted by years ago`() {
+        val today = LocalDate.of(2026, 6, 15)
+        // N photos an hour apart (N moments) N years ago, for N in 1..6
+        val photos = (1..6).flatMap { yearsAgo ->
+            val base = LocalDateTime.of(2026 - yearsAgo, 6, 15, 8, 0)
+            List(yearsAgo) { candidate(base.plusHours(it.toLong())) }
+        }
+
+        val memories = MemoriesBuilder.build(photos, today, zone).mostMemorable()
+
+        assertEquals(MemoriesBuilder.MAX_MEMORIES, memories.size)
+        assertEquals((7 - MemoriesBuilder.MAX_MEMORIES..6).toList(), memories.map { it.yearsAgo })
+    }
+
+    @Test
+    fun `ties keep the more recent memories`() {
+        val today = LocalDate.of(2026, 6, 15)
+        val photos = (1..10).map { candidate(LocalDateTime.of(2026 - it, 6, 15, 12, 0)) }
+
+        val memories = MemoriesBuilder.build(photos, today, zone).mostMemorable()
+
+        assertEquals((1..MemoriesBuilder.MAX_MEMORIES).toList(), memories.map { it.yearsAgo })
     }
 }

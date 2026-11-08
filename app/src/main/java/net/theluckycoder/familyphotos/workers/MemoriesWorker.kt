@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.first
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.core.data.model.isVideo
+import net.theluckycoder.familyphotos.core.data.model.mostMemorable
 import net.theluckycoder.familyphotos.notifications.MemoriesNotifier
 
 /**
@@ -49,7 +50,9 @@ class MemoriesWorker @AssistedInject constructor(
         val today = LocalDate.now().toEpochDay()
         if (settingsDataStore.getLastMemoriesDay() == today) return
 
-        val memories = photosRepository.getMemoriesNow(settingsDataStore.currentPhotoType())
+        val allMemories = photosRepository.getMemoriesNow(settingsDataStore.currentPhotoType())
+        // Only those the timeline shows, so that tapping the notification can open the story
+        val memories = allMemories.mostMemorable()
 
         // The query window is a few days wide, so most photos show up on several consecutive days
         val notified = settingsDataStore.getNotifiedMemoryIds()
@@ -65,7 +68,8 @@ class MemoriesWorker @AssistedInject constructor(
         notifier.post(memory.yearsAgo, fresh.size, cover = cover)
         settingsDataStore.setLastMemoriesDay(today)
 
-        val inWindow = memories.flatMap { it.allPhotos }.map { it.id }.toSet()
+        // All of them: a year left out today can be shown tomorrow, and mustn't be notified again
+        val inWindow = allMemories.flatMap { it.allPhotos }.map { it.id }.toSet()
         settingsDataStore.setNotifiedMemoryIds((notified + fresh.map { it.id }) intersect inWindow)
     }
 

@@ -12,6 +12,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -31,10 +32,12 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -306,6 +309,11 @@ private fun MemoryStory(
                 photo = photo,
                 mainViewModel = mainViewModel,
                 photoViewerViewModel = photoViewerViewModel,
+                // Among all the memory's photos, to see the ones around it. Back returns to the story.
+                onGoToPhoto = {
+                    val index = memory.allPhotos.indexOfFirst { it.id == photo.id }.coerceAtLeast(0)
+                    backStack.add(PhotoViewerListNav(memory.allPhotos, index))
+                },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .graphicsLayer { alpha = chromeAlpha },
@@ -583,6 +591,7 @@ private fun StoryBottomBar(
     photo: NetworkPhotoThumbnail,
     mainViewModel: MainViewModel,
     photoViewerViewModel: PhotoViewerViewModel,
+    onGoToPhoto: () -> Unit,
     modifier: Modifier = Modifier,
 ) = Row(
     modifier
@@ -590,9 +599,29 @@ private fun StoryBottomBar(
         .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.5f))))
         .navigationBarsPadding()
         .padding(horizontal = 16.dp, vertical = 12.dp),
-    horizontalArrangement = Arrangement.End,
     verticalAlignment = Alignment.CenterVertically,
 ) {
+    // Translucent, to stand out on any photo without hiding much of it
+    OutlinedButton(
+        onClick = onGoToPhoto,
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = Color.Black.copy(alpha = 0.3f),
+            contentColor = Color.White,
+        ),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.6f)),
+        contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_image_outline),
+            contentDescription = null,
+            modifier = Modifier.size(ButtonDefaults.IconSize),
+        )
+        Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+        Text(stringResource(R.string.memory_go_to_photo))
+    }
+
+    Spacer(Modifier.weight(1f))
+
     val isFavorite by remember(photo.id) { photoViewerViewModel.isNetworkPhotoFavorite(photo.id) }
         .collectAsState(false)
 

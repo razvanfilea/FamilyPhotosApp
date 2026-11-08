@@ -65,6 +65,7 @@ data class PhotoViewerFlowNav(
 @Serializable
 data class PhotoViewerListNav(
     val photos: List<Photo>,
+    val initialPhotoIndex: Int = 0,
 ) : NavKey
 
 /** The story of today's memory from [yearsAgo] years ago (looked up in `TimelineViewModel`). */

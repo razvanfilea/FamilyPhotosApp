@@ -473,7 +473,7 @@ private fun Content(
                 }
 
                 is PhotoViewerListNav -> navEntry(key) {
-                    PhotosViewer(key.photos, mainViewModel = mainViewModel)
+                    PhotosViewer(key.photos, key.initialPhotoIndex, mainViewModel = mainViewModel)
                 }
 
                 is MemoryNav -> navEntry(key) {

@@ -18,8 +18,11 @@ internal object MemoriesBuilder {
     const val MIN_YEARS_AGO = 1
     const val MAX_YEARS_AGO = 10
 
+    /** Most memories shown at once: nearly every day has photos from most of the last 10 years. */
+    const val MAX_MEMORIES = 5
+
     /** Most photos a memory's story shows. */
-    const val MAX_HIGHLIGHTS = 20
+    const val MAX_HIGHLIGHTS = 15
 
     /** Photos taken at most this many seconds apart are one burst: only the best one is shown. */
     const val BURST_GAP_SECONDS = 10L
@@ -77,6 +80,7 @@ internal object MemoriesBuilder {
             cover = cover.photo,
             highlights = listOf(cover.photo) + selected.filter { it !== cover }.map { it.photo },
             allPhotos = chronological.map { it.photo },
+            moments = bursts(chronological).size,
         )
     }
 

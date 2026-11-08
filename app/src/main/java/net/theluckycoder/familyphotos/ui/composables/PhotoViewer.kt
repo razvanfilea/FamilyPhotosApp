@@ -151,16 +151,23 @@ fun <T : Photo> PhotosViewer(
 @Composable
 fun <T : Photo> PhotosViewer(
     items: List<T>,
+    initialPhotoIndex: Int,
     mainViewModel: MainViewModel,
     photoViewerViewModel: PhotoViewerViewModel = viewModel()
 ) {
-    val photosList = remember { mutableStateListOf<T>() }
+    // Filled right away: the pager would clamp its initial page while it has no pages
+    val photosList = remember { mutableStateListOf<T>().apply { addAll(items) } }
     LaunchedEffect(items) {
-        photosList.clear()
-        photosList.addAll(items)
+        if (photosList.toList() != items) {
+            photosList.clear()
+            photosList.addAll(items)
+        }
     }
 
-    val pagerState = rememberPagerState(pageCount = { photosList.size })
+    val pagerState = rememberPagerState(
+        initialPage = initialPhotoIndex,
+        pageCount = { photosList.size }
+    )
 
     val showUi = remember { mutableStateOf(true) }
     val currentPhoto = photosList.getOrNull(pagerState.currentPage)

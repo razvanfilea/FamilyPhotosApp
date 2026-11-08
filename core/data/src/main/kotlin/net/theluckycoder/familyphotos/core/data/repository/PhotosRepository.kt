@@ -14,6 +14,7 @@ import net.theluckycoder.familyphotos.core.data.local.db.LocalPhotosDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkPhotosDao
 import net.theluckycoder.familyphotos.core.data.model.MemoriesBuilder
 import net.theluckycoder.familyphotos.core.data.model.Memory
+import net.theluckycoder.familyphotos.core.data.model.mostMemorable
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import java.time.Duration
@@ -42,10 +43,13 @@ class PhotosRepository @Inject internal constructor(
     suspend fun getLocalPhotoFromNetwork(networkPhotoId: Long) =
         localPhotosDao.findByNetworkId(networkPhotoId)
 
-    /** Re-computed at midnight: memories are relative to today. */
+    /** The memories worth showing, re-computed at midnight: memories are relative to today. */
     fun getMemories(photoType: PhotoType): Flow<List<Memory>> =
-        todayFlow().flatMapLatest { today -> memoriesFlow(photoType, currentUserId, today) }
+        todayFlow().flatMapLatest { today ->
+            memoriesFlow(photoType, currentUserId, today).map { it.mostMemorable() }
+        }
 
+    /** All of today's memories, including those [getMemories] leaves out (see [mostMemorable]). */
     suspend fun getMemoriesNow(photoType: PhotoType): List<Memory> {
         val userId = userDataStore.getUser()?.userId ?: return emptyList()
         return memoriesFlow(photoType, userId, LocalDate.now()).first()
