@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarVisuals
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
@@ -88,28 +89,34 @@ fun BoxScope.TypedSnackbar(snackbarManager: SnackbarManager) {
             .align(Alignment.BottomCenter)
             .navigationBarsPadding()
     ) {
-        SnackbarHost(hostState = snackbarHostState) { snackbarData ->
-            val visuals = snackbarData.visuals
-            val type = (visuals as? TypedSnackbarVisuals)?.type ?: UiMessageType.Info
+        TypedSnackbarHost(snackbarHostState)
+    }
+}
 
-            val containerColor = when (type) {
-                UiMessageType.Success -> MaterialTheme.colorScheme.primaryContainer
-                UiMessageType.Error -> MaterialTheme.colorScheme.errorContainer
-                UiMessageType.Info -> MaterialTheme.colorScheme.inverseSurface
-            }
+/** A [SnackbarHost] that colors its snackbars by their [TypedSnackbarVisuals.type]. */
+@Composable
+fun TypedSnackbarHost(hostState: SnackbarHostState, modifier: Modifier = Modifier) {
+    SnackbarHost(hostState = hostState, modifier = modifier) { snackbarData ->
+        val visuals = snackbarData.visuals
+        val type = (visuals as? TypedSnackbarVisuals)?.type ?: UiMessageType.Info
 
-            val contentColor = when (type) {
-                UiMessageType.Success -> MaterialTheme.colorScheme.onPrimaryContainer
-                UiMessageType.Error -> MaterialTheme.colorScheme.onErrorContainer
-                UiMessageType.Info -> MaterialTheme.colorScheme.inverseOnSurface
-            }
-
-            Snackbar(
-                snackbarData = snackbarData,
-                containerColor = containerColor,
-                contentColor = contentColor,
-                dismissActionContentColor = contentColor,
-            )
+        val containerColor = when (type) {
+            UiMessageType.Success -> MaterialTheme.colorScheme.primaryContainer
+            UiMessageType.Error -> MaterialTheme.colorScheme.errorContainer
+            UiMessageType.Info -> MaterialTheme.colorScheme.inverseSurface
         }
+
+        val contentColor = when (type) {
+            UiMessageType.Success -> MaterialTheme.colorScheme.onPrimaryContainer
+            UiMessageType.Error -> MaterialTheme.colorScheme.onErrorContainer
+            UiMessageType.Info -> MaterialTheme.colorScheme.inverseOnSurface
+        }
+
+        Snackbar(
+            snackbarData = snackbarData,
+            containerColor = containerColor,
+            contentColor = contentColor,
+            dismissActionContentColor = contentColor,
+        )
     }
 }

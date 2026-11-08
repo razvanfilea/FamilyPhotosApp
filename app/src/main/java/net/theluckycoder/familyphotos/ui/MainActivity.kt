@@ -489,7 +489,7 @@ private fun Content(
                 }
 
                 is DuplicatesNav -> navEntry(key) {
-                    DuplicatesScreen(mainViewModel = mainViewModel)
+                    DuplicatesScreen()
                 }
 
                 is LargeFilesNav -> navEntry(key) {

@@ -102,6 +102,12 @@ class FoldersRepository @Inject internal constructor(
     suspend fun getFolderName(folderId: Long): String? =
         networkFoldersDao.getFolderName(folderId)
 
+    /** The names of the folders that exist locally, by id, in one query. */
+    suspend fun getFolderNames(folderIds: Collection<Long>): Map<Long, String> =
+        folderIds.distinct().chunked(500)
+            .flatMap { networkFoldersDao.getFolderNames(it) }
+            .associate { it.id to it.name }
+
     fun getPendingBackupCount(): Flow<Int> = localPhotosDao.getPendingBackupCount()
 
     @OptIn(ExperimentalTime::class, FlowPreview::class)

@@ -79,6 +79,24 @@
     <string name="duplicates_which_to_keep">Which do you want to keep?</string>
     <string name="duplicates_none">No duplicates found</string>
     <string name="duplicates_error">Failed to load duplicates</string>
+    <string name="duplicates_progress">%1$d of %2$d</string>
+    <string name="duplicates_frees">Frees %s</string>
+    <string name="duplicates_total_freeable">Up to %s can be freed</string>
+    <string name="duplicates_keep_one">Keep one</string>
+    <string name="duplicates_keep_selected">Keep this copy</string>
+    <string name="duplicates_suggested">Suggested</string>
+    <string name="duplicates_action_family">Keep the Family copy</string>
+    <string name="duplicates_action_family_detail">The Personal copy of each photo is moved to the trash, the Family copy stays.</string>
+    <string name="duplicates_action_extra">Remove extra copies</string>
+    <string name="duplicates_action_extra_detail">One copy of each photo stays, the extra copies are moved to the trash.</string>
+    <string name="duplicates_action_label">%1$s (%2$d)</string>
+    <string name="duplicates_move_to_trash">Move to trash</string>
+    <string name="duplicates_not_permanent">They are not deleted permanently: you can restore them from the trash.</string>
+    <plurals name="duplicates_bulk_confirm">
+        <item quantity="one">%1$d photo will be moved to the trash, freeing %2$s.</item>
+        <item quantity="other">%1$d photos will be moved to the trash, freeing %2$s.</item>
+    </plurals>
+    <string name="action_undo">Undo</string>
 
     <!-- Trash -->
     <string name="trash_is_empty">Trash is empty</string>

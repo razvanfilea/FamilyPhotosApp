@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import net.theluckycoder.familyphotos.core.data.model.NetworkFolder
 import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.model.db.FolderCursor
+import net.theluckycoder.familyphotos.core.data.model.db.FolderName
 import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolderEntity
 
 @Dao
@@ -28,6 +29,9 @@ internal interface NetworkFoldersDao {
 
     @Query("SELECT name FROM network_folder WHERE id = :folderId")
     suspend fun getFolderName(folderId: Long): String?
+
+    @Query("SELECT id, name FROM network_folder WHERE id IN (:folderIds)")
+    suspend fun getFolderNames(folderIds: List<Long>): List<FolderName>
 
     @Query("SELECT * FROM network_folder WHERE name = :name LIMIT 1")
     suspend fun findByName(name: String): NetworkFolderEntity?

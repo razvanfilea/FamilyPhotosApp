@@ -76,6 +76,25 @@
     <string name="duplicates_which_to_keep">Pe care îl păstrezi?</string>
     <string name="duplicates_none">Nu s-au găsit dubluri</string>
     <string name="duplicates_error">Nu s-au putut încărca dublurile</string>
+    <string name="duplicates_progress">%1$d din %2$d</string>
+    <string name="duplicates_frees">Eliberezi %s</string>
+    <string name="duplicates_total_freeable">Poți elibera până la %s</string>
+    <string name="duplicates_keep_one">Păstrează una</string>
+    <string name="duplicates_keep_selected">Păstrează copia aceasta</string>
+    <string name="duplicates_suggested">Sugerat</string>
+    <string name="duplicates_action_family">Păstrează copia Familie</string>
+    <string name="duplicates_action_family_detail">Copia Personală a fiecărei poze este mutată în coșul de gunoi, copia Familie rămâne.</string>
+    <string name="duplicates_action_extra">Elimină copiile în plus</string>
+    <string name="duplicates_action_extra_detail">O copie a fiecărei poze rămâne, copiile în plus sunt mutate în coșul de gunoi.</string>
+    <string name="duplicates_action_label">%1$s (%2$d)</string>
+    <string name="duplicates_move_to_trash">Mută în coșul de gunoi</string>
+    <string name="duplicates_not_permanent">Nu sunt șterse definitiv: le poți restaura din coșul de gunoi.</string>
+    <plurals name="duplicates_bulk_confirm">
+        <item quantity="one">%1$d poză va fi mutată în coșul de gunoi, eliberând %2$s.</item>
+        <item quantity="few">%1$d poze vor fi mutate în coșul de gunoi, eliberând %2$s.</item>
+        <item quantity="other">%1$d de poze vor fi mutate în coșul de gunoi, eliberând %2$s.</item>
+    </plurals>
+    <string name="action_undo">Anulează</string>
 
     <!-- Trash -->
     <string name="trash_is_empty">Coșul de gunoi este gol</string>

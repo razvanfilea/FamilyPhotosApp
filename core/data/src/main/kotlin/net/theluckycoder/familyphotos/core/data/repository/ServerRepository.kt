@@ -15,6 +15,7 @@ import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
 import net.theluckycoder.familyphotos.core.data.local.db.FavoritePhotosDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkFoldersDao
 import net.theluckycoder.familyphotos.core.data.local.db.NetworkPhotosDao
+import net.theluckycoder.familyphotos.core.data.model.DuplicateGroups
 import net.theluckycoder.familyphotos.core.data.model.ExifData
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
 import net.theluckycoder.familyphotos.core.data.model.UploadChoice
@@ -422,9 +423,9 @@ class ServerRepository @Inject internal constructor(
     suspend fun getDuplicates(): List<List<NetworkPhoto>>? {
         val response = photosService.get().getDuplicates()
         response.body()?.let { list ->
-            return list.map { ids ->
-                ids.mapNotNull { id -> networkPhotosDao.findById(id) }
-            }
+            return DuplicateGroups.sanitize(
+                list.map { ids -> ids.map { id -> networkPhotosDao.findById(id) } }
+            )
         }
 
         return null
