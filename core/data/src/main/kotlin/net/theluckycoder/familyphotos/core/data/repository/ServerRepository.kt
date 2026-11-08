@@ -21,6 +21,7 @@ import net.theluckycoder.familyphotos.core.data.model.UploadChoice
 import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolderEntity
 import net.theluckycoder.familyphotos.core.data.model.network.CreateFolderRequest
 import net.theluckycoder.familyphotos.core.data.model.network.PhotoEventLog
+import net.theluckycoder.familyphotos.core.data.model.network.UpdatePhotosDateRequest
 import net.theluckycoder.familyphotos.core.data.model.network.toEntity
 import net.theluckycoder.familyphotos.core.data.model.sharing.FolderSyncDelta
 import net.theluckycoder.familyphotos.core.data.model.sharing.PhotoEvent
@@ -30,6 +31,7 @@ import net.theluckycoder.familyphotos.core.data.remote.FolderService
 import net.theluckycoder.familyphotos.core.data.remote.PhotosService
 import net.theluckycoder.familyphotos.core.data.remote.SyncService
 import retrofit2.Response
+import java.io.IOException
 import javax.inject.Inject
 
 /**
@@ -354,6 +356,26 @@ class ServerRepository @Inject internal constructor(
 
         networkPhotosDao.insert(changedPhotos.map { it.toEntity() })
         return true
+    }
+
+    suspend fun updatePhotosDate(photoIds: List<Long>, epochSeconds: Long): Int? {
+        val response = try {
+            photosService.get().updatePhotosDate(UpdatePhotosDateRequest(photoIds, epochSeconds))
+        } catch (e: IOException) {
+            Log.e("ServerRepository", "Failed to change the date", e)
+            return null
+        }
+        val changedPhotos = response.body()
+        if (!response.isSuccessful || changedPhotos == null) {
+            Log.e(
+                "ServerRepository",
+                "Failed to change the date: code=${response.code()}, error=${response.errorBody()?.string()}"
+            )
+            return null
+        }
+
+        networkPhotosDao.insert(changedPhotos.map { it.toEntity() })
+        return changedPhotos.size
     }
 
     suspend fun updateFavorite(photo: NetworkPhoto, add: Boolean) {

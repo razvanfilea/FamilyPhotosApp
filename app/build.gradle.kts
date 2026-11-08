@@ -19,8 +19,8 @@ android {
         minSdk = 30
         targetSdk = 37
 
-        versionCode = 302
-        versionName = "3.0.2"
+        versionCode = 310
+        versionName = "3.1.0"
 
         buildConfigField("boolean", "BENCHMARK", "false")
 

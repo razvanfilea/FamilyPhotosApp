@@ -2,6 +2,7 @@ package net.theluckycoder.familyphotos.core.data.remote
 
 import net.theluckycoder.familyphotos.core.data.model.network.ExifFieldDto
 import net.theluckycoder.familyphotos.core.data.model.network.NetworkPhotoDto
+import net.theluckycoder.familyphotos.core.data.model.network.UpdatePhotosDateRequest
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -61,6 +62,11 @@ internal interface PhotosService {
         @Query("make_public") makePublic: Boolean?,
         @Query("target_folder_id") targetFolderId: Long?,
         @Body photoId: List<Long>,
+    ): Response<List<NetworkPhotoDto>>
+
+    @POST("/api/photos/date")
+    suspend fun updatePhotosDate(
+        @Body request: UpdatePhotosDateRequest,
     ): Response<List<NetworkPhotoDto>>
 
     @GET("/api/favorite")

@@ -15,6 +15,7 @@
     <string name="title_trash">Trash</string>
     <string name="title_large_files">Large Files</string>
     <string name="title_upload_to">Upload to: %s</string>
+    <string name="title_select_time">Select time</string>
 
     <!-- Login -->
     <string name="login_server_address_label">Server Address</string>
@@ -41,6 +42,8 @@
     <string name="action_upload">Upload</string>
     <string name="action_upload_photos">Upload Photos</string>
     <string name="action_move">Move</string>
+    <string name="action_change_date">Change date</string>
+    <string name="action_ok">OK</string>
     <string name="action_move_photos">Move Photos</string>
     <string name="action_rename_folder">Rename Folder</string>
     <string name="action_more">More</string>
@@ -159,6 +162,7 @@
     <string name="status_permissions_updated">Permissions updated</string>
     <string name="status_member_removed">Member removed</string>
     <string name="status_folder_renamed">Folder renamed</string>
+    <string name="status_date_changed">Date changed</string>
     <plurals name="status_photos_trashed">
         <item quantity="one">%d photo moved to trash</item>
         <item quantity="other">%d photos moved to trash</item>
@@ -182,6 +186,8 @@
     <string name="error_shared_items_failed">Couldn\'t add the shared items</string>
     <string name="error_shared_items_partial">Some shared items couldn\'t be added</string>
     <string name="error_trash_failed">Failed to move photos to trash</string>
+    <string name="error_date_change_failed">Failed to change the date</string>
+    <string name="error_date_change_not_allowed">You can\'t change the date of this photo</string>
     <string name="error_delete_failed">Failed to delete photos</string>
     <string name="error_restore_failed">Failed to restore photos</string>
     <string name="error_member_add_failed">Failed to add member</string>

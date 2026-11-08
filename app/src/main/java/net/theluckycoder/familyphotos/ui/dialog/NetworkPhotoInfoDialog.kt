@@ -5,15 +5,19 @@ import android.text.format.Formatter
 import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.text.selection.rememberSelectionState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,12 +28,15 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -52,9 +59,11 @@ import androidx.exifinterface.media.ExifInterface.TAG_LENS_MODEL
 import androidx.exifinterface.media.ExifInterface.TAG_MODEL
 import androidx.exifinterface.media.ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.filterNotNull
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.ExifData
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhoto
+import net.theluckycoder.familyphotos.core.data.model.canChangeDate
 import net.theluckycoder.familyphotos.core.data.model.isPublic
 import net.theluckycoder.familyphotos.core.data.model.isVideo
 import net.theluckycoder.familyphotos.ui.composables.photoDateText
@@ -102,11 +111,16 @@ private fun DetailItem(title: String, summary: String?, @DrawableRes icon: Int) 
 
 @Composable
 fun NetworkPhotoInfoDialogContent(
-    photo: NetworkPhoto
+    initialPhoto: NetworkPhoto
 ) = SelectionContainer(state = rememberSelectionState()) {
     val viewModel: PhotoViewerViewModel = viewModel()
+    val photo by remember(initialPhoto.id) {
+        viewModel.getNetworkPhotoFlow(initialPhoto.id).filterNotNull()
+    }.collectAsState(initialPhoto)
+    val currentUser by viewModel.currentUser.collectAsState()
     var exif by remember { mutableStateOf(ExifData()) }
     var folderName by remember { mutableStateOf<String?>(null) }
+    var showChangeDateDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(photo.id) {
         exif = viewModel.getExifData(photo) ?: ExifData()
@@ -132,11 +146,26 @@ fun NetworkPhotoInfoDialogContent(
 
         Spacer(Modifier.height(4.dp))
 
-        Text(
-            text = photo.photoDateText(),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = photo.photoDateText(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f)
+            )
+
+            if (photo.canChangeDate(currentUser?.userId)) {
+                TextButton(onClick = { showChangeDateDialog = true }) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_calendar),
+                        contentDescription = null,
+                        modifier = Modifier.size(ButtonDefaults.IconSize)
+                    )
+                    Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                    Text(stringResource(R.string.action_change_date))
+                }
+            }
+        }
 
         Spacer(Modifier.height(16.dp))
 
@@ -214,6 +243,17 @@ fun NetworkPhotoInfoDialogContent(
                 )
             }
         }
+    }
+
+    if (showChangeDateDialog) {
+        ChangeDateDialog(
+            initialEpochSeconds = photo.timeCreated,
+            onDismissRequest = { showChangeDateDialog = false },
+            onConfirm = { epochSeconds ->
+                showChangeDateDialog = false
+                viewModel.updatePhotoDate(photo.id, epochSeconds)
+            }
+        )
     }
 }
 
