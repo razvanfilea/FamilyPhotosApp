@@ -3,7 +3,6 @@ package net.theluckycoder.familyphotos.ui.composables.player
 import android.content.Context
 import android.net.Uri
 import android.os.Looper
-import androidx.media3.common.C
 import androidx.media3.common.FileTypes
 import androidx.media3.common.util.TimestampAdjuster
 import androidx.media3.common.util.UnstableApi
@@ -72,8 +71,6 @@ internal object NoSubtitlesExtractorsFactory : ExtractorsFactory {
 
     private val noSubtitles = SubtitleParser.Factory.UNSUPPORTED
 
-    private val gopSampleDependenciesCodecs = C.VIDEO_CODEC_FLAG_H264 or C.VIDEO_CODEC_FLAG_H265
-
     override fun createExtractors(): Array<Extractor> =
         createExtractors(Uri.EMPTY, emptyMap())
 
@@ -107,19 +104,9 @@ internal object NoSubtitlesExtractorsFactory : ExtractorsFactory {
             FileTypes.MATROSKA -> out += MatroskaExtractor(noSubtitles, 0)
             FileTypes.MP3 -> out += Mp3Extractor()
             FileTypes.MP4 -> {
-                out += FragmentedMp4Extractor(
-                    noSubtitles,
-                    FragmentedMp4Extractor.FLAG_READ_MFRA_FOR_SEEK_MAP or
-                        FragmentedMp4Extractor.codecsToParseWithinGopSampleDependenciesAsFlags(
-                            gopSampleDependenciesCodecs
-                        )
-                )
-                out += Mp4Extractor(
-                    noSubtitles,
-                    Mp4Extractor.codecsToParseWithinGopSampleDependenciesAsFlags(
-                        gopSampleDependenciesCodecs
-                    )
-                )
+                // Since Media3 1.12, within-GOP sample dependencies are always parsed for H.264/H.265
+                out += FragmentedMp4Extractor(noSubtitles, FragmentedMp4Extractor.FLAG_READ_MFRA_FOR_SEEK_MAP)
+                out += Mp4Extractor(noSubtitles)
             }
 
             FileTypes.OGG -> out += OggExtractor()
