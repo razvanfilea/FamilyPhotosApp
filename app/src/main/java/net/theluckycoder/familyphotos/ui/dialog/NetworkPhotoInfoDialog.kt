@@ -85,12 +85,6 @@ fun NetworkPhotoInfoDialog(
 private fun DetailItem(title: String, summary: String?, @DrawableRes icon: Int) =
     ListItem(
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        headlineContent = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge
-            )
-        },
         supportingContent = if (summary != null) {
             {
                 Text(
@@ -107,7 +101,12 @@ private fun DetailItem(title: String, summary: String?, @DrawableRes icon: Int) 
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-    )
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge
+        )
+    }
 
 @Composable
 fun NetworkPhotoInfoDialogContent(
@@ -295,12 +294,6 @@ private fun LocationInfoCard(exifData: ExifData) {
     ) {
         ListItem(
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-            headlineContent = {
-                Text(
-                    text = "%.4f, %.4f".format(latitude, longitude),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            },
             supportingContent = {
                 Text(
                     text = stringResource(R.string.photo_detail_open_maps),
@@ -314,7 +307,12 @@ private fun LocationInfoCard(exifData: ExifData) {
                     contentDescription = null
                 )
             }
-        )
+        ) {
+            Text(
+                text = "%.4f, %.4f".format(latitude, longitude),
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
     }
 }
 

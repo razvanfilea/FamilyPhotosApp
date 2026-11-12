@@ -1,7 +1,6 @@
 package net.theluckycoder.familyphotos.ui.dialog
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -116,7 +115,6 @@ fun FolderSharingBottomSheet(
                     ?: currentUser?.displayName ?: ""
             ListItem(
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                headlineContent = { Text(if (folder.isPublic) stringResource(R.string.sharing_owner_everyone) else ownerName) },
                 supportingContent = { Text(stringResource(if (folder.isPublic) R.string.sharing_shared_access else R.string.sharing_owner)) },
                 leadingContent = {
                     Surface(
@@ -133,15 +131,12 @@ fun FolderSharingBottomSheet(
                         }
                     }
                 }
-            )
+            ) { Text(if (folder.isPublic) stringResource(R.string.sharing_owner_everyone) else ownerName) }
 
             AnimatedVisibility(canAddMembers) {
                 ListItem(
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                    headlineContent = {
-                        Text(stringResource(R.string.sharing_add_members))
-                    },
-                    modifier = Modifier.clickable { addPeopleExpanded = !addPeopleExpanded },
+                    onClick = { addPeopleExpanded = !addPeopleExpanded },
                     leadingContent = {
                         Icon(
                             painterResource(R.drawable.ic_action_add),
@@ -149,7 +144,9 @@ fun FolderSharingBottomSheet(
                             tint = MaterialTheme.colorScheme.primary
                         )
                     },
-                )
+                ) {
+                    Text(stringResource(R.string.sharing_add_members))
+                }
             }
         }
 
@@ -160,19 +157,18 @@ fun FolderSharingBottomSheet(
 
             items(filteredMembers, key = { it.userId }) { user ->
                 ListItem(
+                    onClick = {
+                        onAddMember(user)
+                        addPeopleExpanded = false
+                    },
                     modifier = Modifier
                         .padding(horizontal = 16.dp, vertical = 2.dp)
-                        .animateItem()
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable {
-                            onAddMember(user)
-                            addPeopleExpanded = false
-                        },
+                        .animateItem(),
+                    shapes = ListItemDefaults.shapes(shape = RoundedCornerShape(12.dp)),
                     colors = ListItemDefaults.colors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                     ),
-                    headlineContent = { Text(user.displayName) }
-                )
+                ) { Text(user.displayName) }
             }
         }
 
@@ -204,9 +200,6 @@ private fun FolderMemberItem(
 ) = ListItem(
     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     modifier = modifier,
-    headlineContent = {
-        Text(member.userDisplayName, fontWeight = FontWeight.SemiBold)
-    },
     supportingContent = {
         val currentPermissionText = when {
             member.canUpload && member.canDelete -> uploadAndDeletePermissionString
@@ -316,4 +309,6 @@ private fun FolderMemberItem(
             }
         }
     }
-)
+) {
+    Text(member.userDisplayName, fontWeight = FontWeight.SemiBold)
+}
