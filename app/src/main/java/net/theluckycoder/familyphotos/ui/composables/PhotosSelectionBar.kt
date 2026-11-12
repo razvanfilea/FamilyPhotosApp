@@ -1,6 +1,6 @@
 package net.theluckycoder.familyphotos.ui.composables
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.CapturedAnimatedVisibility
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -40,7 +40,8 @@ fun PhotosSelectionBar(
     selectedPhotoIds: SnapshotStateSet<Long>,
     modifier: Modifier = Modifier,
     actionsContent: @Composable RowScope.() -> Unit
-) = AnimatedVisibility(
+) = CapturedAnimatedVisibility(
+    // Exit animates the last frame, so the count doesn't roll down to 0 while the bar shrinks
     modifier = modifier.clip(CircleShape),
     visible = selectedPhotoIds.isNotEmpty(),
     enter = expandHorizontally(expandFrom = Alignment.CenterHorizontally) + fadeIn(),

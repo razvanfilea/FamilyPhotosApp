@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.layout.LazyLayoutCacheWindow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -155,7 +156,10 @@ fun <T : Photo> PhotosList(
         columns = GridCells.Fixed(columnCount),
         contentPadding = PaddingValues(
             bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-        )
+        ),
+        // Compose a screen of thumbnails ahead so Coil starts loading them before they scroll in,
+        // and keep half a screen behind so scrolling back doesn't reload them
+        cacheWindow = remember { LazyLayoutCacheWindow(aheadFraction = 1f, behindFraction = 0.5f) },
     ) {
         items(count = layout.totalItemCount, key = { gridIndex ->
             if (gridIndex == 0) "top_header"
