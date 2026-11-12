@@ -4,7 +4,6 @@ import android.text.format.DateFormat
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -24,7 +23,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChangeDateDialog(
     initialEpochSeconds: Long,
@@ -85,7 +83,6 @@ fun ChangeDateDialog(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 private object PastDates : SelectableDates {
     override fun isSelectableDate(utcTimeMillis: Long): Boolean =
         Instant.ofEpochMilli(utcTimeMillis).atOffset(ZoneOffset.UTC).toLocalDate() <= LocalDate.now()

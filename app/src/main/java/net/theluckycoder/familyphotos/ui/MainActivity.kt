@@ -16,7 +16,6 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.net.toUri
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.EaseOutQuart
@@ -156,7 +155,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @OptIn(ExperimentalSharedTransitionApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         window.isNavigationBarContrastEnforced = false

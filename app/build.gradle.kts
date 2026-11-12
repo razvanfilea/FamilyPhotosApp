@@ -11,7 +11,9 @@ plugins {
 }
 
 android {
-    compileSdk = 37
+    compileSdk {
+        version = release(37) { minorApiLevel = 1 }
+    }
     namespace = "net.theluckycoder.familyphotos"
 
     defaultConfig {
@@ -25,7 +27,6 @@ android {
         buildConfigField("boolean", "BENCHMARK", "false")
 
         ndk {
-            // 64-bit only: arm64 for phones, x86_64 for the emulator
             abiFilters += listOf("arm64-v8a", "x86_64")
         }
     }

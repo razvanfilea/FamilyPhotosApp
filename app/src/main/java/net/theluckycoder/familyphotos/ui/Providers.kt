@@ -1,6 +1,5 @@
 package net.theluckycoder.familyphotos.ui
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.MutableState
@@ -24,7 +23,6 @@ val LocalSettingsDataStore = staticCompositionLocalOf<SettingsDataStore> {
     error("No SettingsDataStore found!")
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 val LocalSharedTransitionScope =
     staticCompositionLocalOf<SharedTransitionScope> { error("No LocalSharedTransitionScope found!") }
 

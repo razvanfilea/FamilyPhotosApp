@@ -2,7 +2,6 @@ package net.theluckycoder.familyphotos.ui.composables
 
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
@@ -271,7 +270,6 @@ private fun PhotoViewerScaffold(
 }
 
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun PagerContent(
     photo: Photo,

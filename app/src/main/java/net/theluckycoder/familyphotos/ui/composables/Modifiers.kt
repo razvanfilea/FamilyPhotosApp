@@ -1,6 +1,5 @@
 package net.theluckycoder.familyphotos.ui.composables
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -44,7 +43,6 @@ import kotlin.math.abs
 import androidx.compose.ui.graphics.LayerOutsets
 import androidx.compose.ui.graphics.graphicsLayer
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun Modifier.photoSharedBounds(photoId: Long): Modifier {
     with(LocalSharedTransitionScope.current) {

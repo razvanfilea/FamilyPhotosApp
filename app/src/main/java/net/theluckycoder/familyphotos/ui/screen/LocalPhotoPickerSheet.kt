@@ -3,7 +3,6 @@ package net.theluckycoder.familyphotos.ui.screen
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -28,7 +27,6 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
@@ -52,6 +50,7 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.ui.LocalSharedTransitionScope
 import net.theluckycoder.familyphotos.ui.composables.FoldersGridList
 import net.theluckycoder.familyphotos.ui.composables.PhotosList
+import net.theluckycoder.familyphotos.ui.composables.rememberExpandedOnlySheetState
 import net.theluckycoder.familyphotos.ui.viewmodel.LocalPhotoPickerViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,14 +61,13 @@ fun LocalPhotoPickerSheet(
     onDismiss: () -> Unit,
     viewModel: LocalPhotoPickerViewModel = viewModel(),
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberExpandedOnlySheetState()
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        contentWindowInsets = { BottomSheetDefaults.windowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top) },
+        contentWindowInsets = { BottomSheetDefaults.modalWindowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top) },
         modifier = Modifier.fillMaxSize()
     ) {
-        @OptIn(ExperimentalSharedTransitionApi::class)
         SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
             CompositionLocalProvider(LocalSharedTransitionScope provides this) {
                 LocalPhotoPickerContent(
