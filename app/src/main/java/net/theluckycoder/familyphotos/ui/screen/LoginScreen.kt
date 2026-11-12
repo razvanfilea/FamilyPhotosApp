@@ -34,6 +34,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.TextObfuscationMode
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -43,16 +45,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.SecureTextField
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
@@ -76,12 +81,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.network.UserLoginDto
@@ -102,7 +106,8 @@ fun LoginScreen(
 ) {
     var serverAddress by remember(initialServerAddress) { mutableStateOf(initialServerAddress) }
     var userName by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    // Not rememberTextFieldState(): that would put the password in the saved instance state
+    val password = remember { TextFieldState() }
 
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
@@ -113,7 +118,11 @@ fun LoginScreen(
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
 
-    val isFormValid = serverAddress.isNotBlank() && userName.isNotBlank() && password.isNotBlank()
+    val isFormValid = serverAddress.isNotBlank() && userName.isNotBlank() && password.text.isNotBlank()
+
+    LaunchedEffect(password) {
+        snapshotFlow { password.text.toString() }.drop(1).collect { errorMessage = null }
+    }
 
     val invalidCredentialsMessage = stringResource(R.string.login_error_invalid_credentials)
     val serverUnreachableMessage = stringResource(R.string.login_error_server_unreachable)
@@ -136,7 +145,7 @@ fun LoginScreen(
             scope.launch {
                 val result = loginAction(
                     serverAddress,
-                    UserLoginDto(userName.lowercase().trim(), password.trim())
+                    UserLoginDto(userName.lowercase().trim(), password.text.trim().toString())
                 )
                 isLoading = false
                 errorMessage = when (result) {
@@ -173,10 +182,6 @@ fun LoginScreen(
                 userName = it
                 errorMessage = null
             },
-            onPasswordChange = {
-                password = it
-                errorMessage = null
-            },
             onPasswordVisibleChange = { passwordVisible = it },
             onCheckConnection = onCheckConnection,
             onLogin = onLogin,
@@ -188,7 +193,7 @@ fun LoginScreen(
 private class LoginFormState(
     val serverAddress: String = "",
     val userName: String = "",
-    val password: String = "",
+    val password: TextFieldState = TextFieldState(),
     val passwordVisible: Boolean = false,
     val isLoading: Boolean = false,
     val isCheckingConnection: Boolean = false,
@@ -200,7 +205,6 @@ private class LoginFormState(
 private class LoginActions(
     val onServerAddressChange: (String) -> Unit = {},
     val onUserNameChange: (String) -> Unit = {},
-    val onPasswordChange: (String) -> Unit = {},
     val onPasswordVisibleChange: (Boolean) -> Unit = {},
     val onCheckConnection: () -> Unit = {},
     val onLogin: () -> Unit = {},
@@ -373,8 +377,7 @@ private fun LoginForm(form: LoginFormState, actions: LoginActions) = Column(
     )
 
     PasswordInput(
-        value = form.password,
-        onValueChange = actions.onPasswordChange,
+        state = form.password,
         passwordVisible = form.passwordVisible,
         onPasswordVisibleChange = actions.onPasswordVisibleChange,
         isLoading = form.isLoading,
@@ -668,8 +671,7 @@ private fun UsernameInput(
 
 @Composable
 private fun PasswordInput(
-    value: String,
-    onValueChange: (String) -> Unit,
+    state: TextFieldState,
     passwordVisible: Boolean,
     onPasswordVisibleChange: (Boolean) -> Unit,
     isLoading: Boolean,
@@ -677,9 +679,8 @@ private fun PasswordInput(
     onDoneAction: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    TextField(
-        value = value,
-        onValueChange = onValueChange,
+    SecureTextField(
+        state = state,
         label = { Text(stringResource(R.string.login_password_label)) },
         trailingIcon = {
             IconButton(
@@ -694,16 +695,14 @@ private fun PasswordInput(
                 )
             }
         },
-        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-        singleLine = true,
+        // System follows the "Show passwords" setting when hidden
+        textObfuscationMode = if (passwordVisible) TextObfuscationMode.Visible else TextObfuscationMode.System,
         enabled = !isLoading && !isCheckingConnection,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Password,
             imeAction = ImeAction.Done
         ),
-        keyboardActions = KeyboardActions(
-            onDone = { onDoneAction() }
-        ),
+        onKeyboardAction = { onDoneAction() },
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = FieldMinHeight)
@@ -718,7 +717,7 @@ private fun PasswordInput(
 private val previewForm = LoginFormState(
     serverAddress = "https://photos.example.com",
     userName = "alice",
-    password = "hunter2",
+    password = TextFieldState("hunter2"),
     connectionStatus = ConnectionTestResult.Success,
     isFormValid = true,
 )
@@ -742,7 +741,7 @@ private fun LoginErrorPreview() = AppTheme {
         LoginFormState(
             serverAddress = "https://photos.example.com",
             userName = "alice",
-            password = "wrong",
+            password = TextFieldState("wrong"),
             isFormValid = true,
             connectionStatus = ConnectionTestResult.Unreachable,
             errorMessage = stringResource(R.string.login_error_invalid_credentials),
@@ -759,7 +758,7 @@ private fun LoginLoadingPreview() = AppTheme {
         LoginFormState(
             serverAddress = "https://photos.example.com",
             userName = "alice",
-            password = "hunter2",
+            password = TextFieldState("hunter2"),
             isFormValid = true,
             isLoading = true,
         ),

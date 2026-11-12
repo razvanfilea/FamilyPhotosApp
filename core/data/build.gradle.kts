@@ -7,7 +7,9 @@ plugins {
 
 android {
     namespace = "net.theluckycoder.familyphotos.core.data"
-    compileSdk = 37
+    compileSdk {
+        version = release(37) { minorApiLevel = 1 }
+    }
 
     defaultConfig {
         minSdk = 30

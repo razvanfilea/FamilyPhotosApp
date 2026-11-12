@@ -15,13 +15,13 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -167,7 +167,8 @@ private fun NotifyMemoriesItem(viewModel: SettingsViewModel) {
 @Composable
 private fun CacheSizeItem(viewModel: SettingsViewModel) {
     val cacheSizeMb by viewModel.cacheSizeMb.collectAsStateWithLifecycle()
-    var sliderValue by remember(cacheSizeMb) { mutableIntStateOf(cacheSizeMb) }
+    val sliderState = remember(cacheSizeMb) { SliderState(cacheSizeMb.toFloat(), trackRange = 512f..4096f) }
+    val sliderValue = sliderState.value.roundToInt()
     val context = LocalContext.current
     val formattedSize = remember(sliderValue) {
         Formatter.formatShortFileSize(context, sliderValue * 1024L * 1024L)
@@ -182,10 +183,9 @@ private fun CacheSizeItem(viewModel: SettingsViewModel) {
             Column {
                 Text(stringResource(R.string.settings_cache_size_summary))
                 Slider(
-                    value = sliderValue.toFloat(),
-                    onValueChange = { sliderValue = it.roundToInt() },
-                    onValueChangeFinished = { viewModel.setCacheSize(sliderValue) },
-                    valueRange = 512f..4096f,
+                    state = sliderState,
+                    onValueChange = { sliderState.value = it },
+                    onValueChangeFinished = { viewModel.setCacheSize(sliderState.value.roundToInt()) },
                 )
             }
         },

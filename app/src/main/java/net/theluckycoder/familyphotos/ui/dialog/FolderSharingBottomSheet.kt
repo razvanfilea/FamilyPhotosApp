@@ -29,7 +29,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,6 +48,7 @@ import net.theluckycoder.familyphotos.core.data.model.SharedFolderAccess
 import net.theluckycoder.familyphotos.core.data.model.db.NetworkFolderEntity
 import net.theluckycoder.familyphotos.core.data.model.db.isPublic
 import net.theluckycoder.familyphotos.core.data.model.network.UserDto
+import net.theluckycoder.familyphotos.ui.composables.rememberExpandedOnlySheetState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +62,7 @@ fun FolderSharingBottomSheet(
     onDismiss: () -> Unit,
 ) = ModalBottomSheet(
     onDismissRequest = onDismiss,
-    sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    sheetState = rememberExpandedOnlySheetState(),
 ) {
     val canModifyMembers = !folder.isPublic && folder.ownerId == currentUser?.userId
     val canAddMembers = folderShares.availableMembers.isNotEmpty() && canModifyMembers

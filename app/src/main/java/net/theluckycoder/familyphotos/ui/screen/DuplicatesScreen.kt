@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -83,6 +84,7 @@ fun DuplicatesScreen(
     // Shown above the photo, so it doesn't cover the choices like the app-wide one at the bottom
     val undoSnackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val resources = LocalResources.current
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
@@ -128,11 +130,11 @@ fun DuplicatesScreen(
             undoSnackbarHostState.currentSnackbarData?.dismiss()
             val result = undoSnackbarHostState.showSnackbar(
                 TypedSnackbarVisuals(
-                    message = context.resources.getQuantityString(
+                    message = resources.getQuantityString(
                         R.plurals.status_photos_trashed, ids.size, ids.size
                     ),
                     type = UiMessageType.Info,
-                    actionLabel = context.getString(R.string.action_undo),
+                    actionLabel = resources.getString(R.string.action_undo),
                     duration = SnackbarDuration.Long,
                 )
             )

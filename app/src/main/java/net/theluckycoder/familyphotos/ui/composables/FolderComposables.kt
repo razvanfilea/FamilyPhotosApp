@@ -31,8 +31,11 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -71,7 +74,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -105,10 +107,11 @@ fun <T : PhotoFolder> FoldersGridList(
     val gridState = rememberLazyGridState()
     val settingsDataStore = LocalSettingsDataStore.current
     val showAsGrid by settingsDataStore.showFoldersAsGrid.collectAsState()
-    var folderNameFilter by remember { mutableStateOf("") }
+    val folderNameFilter = rememberTextFieldState()
+    val filterText = folderNameFilter.text.toString()
 
-    val filteredFolders = remember(folders, folderNameFilter) {
-        val filterName = folderNameFilter.normalize()
+    val filteredFolders = remember(folders, filterText) {
+        val filterName = filterText.normalize()
         folders.filter {
             it.name.normalize().contains(filterName, ignoreCase = true)
         }
@@ -129,7 +132,7 @@ fun <T : PhotoFolder> FoldersGridList(
     ) {
         item(span = { GridItemSpan(columnCount) }, key = "header") {
             Column {
-                FolderFilterTextField(folderNameFilter, onSearch = { folderNameFilter = it })
+                FolderFilterTextField(folderNameFilter)
 
                 extraHeader()
 
@@ -201,7 +204,7 @@ fun <T : PhotoFolder> FoldersGridList(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FolderFilterTextField(query: String, onSearch: (String) -> Unit) {
+private fun FolderFilterTextField(state: TextFieldState) {
     val focusRequester = remember { FocusRequester() }
 
     val interactionSource = remember { MutableInteractionSource() }
@@ -209,8 +212,7 @@ private fun FolderFilterTextField(query: String, onSearch: (String) -> Unit) {
     val textColor = colors.focusedTextColor
 
     BasicTextField(
-        value = query,
-        onValueChange = onSearch,
+        state = state,
         modifier =
             Modifier
                 .fillMaxWidth()
@@ -221,53 +223,47 @@ private fun FolderFilterTextField(query: String, onSearch: (String) -> Unit) {
                         true
                     }
                 },
-        singleLine = true,
+        lineLimits = TextFieldLineLimits.SingleLine,
         textStyle = LocalTextStyle.current.merge(TextStyle(color = textColor)),
         cursorBrush = SolidColor(colors.cursorColor),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { onSearch(query) }),
         interactionSource = interactionSource,
-        decorationBox =
-            @Composable { innerTextField ->
-                TextFieldDefaults.DecorationBox(
-                    value = query,
-                    innerTextField = innerTextField,
-                    singleLine = true,
-                    visualTransformation = VisualTransformation.None,
-                    interactionSource = interactionSource,
-                    placeholder = { Text(stringResource(R.string.action_search_folders)) },
-                    leadingIcon = {
-                        Box(Modifier.offset(x = 4.dp)) {
+        decorator = TextFieldDefaults.decorator(
+            state = state,
+            enabled = true,
+            lineLimits = TextFieldLineLimits.SingleLine,
+            outputTransformation = null,
+            interactionSource = interactionSource,
+            placeholder = { Text(stringResource(R.string.action_search_folders)) },
+            leadingIcon = {
+                Box(Modifier.offset(x = 4.dp)) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_search),
+                        tint = textColor,
+                        contentDescription = null
+                    )
+                }
+            },
+            trailingIcon = {
+                Box(Modifier.offset(x = (-4).dp)) {
+                    AnimatedVisibility(
+                        state.text.isNotEmpty(),
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        IconButton(onClick = { state.clearText() }) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_search),
-                                tint = textColor,
+                                painterResource(R.drawable.ic_close),
                                 contentDescription = null
                             )
                         }
-                    },
-                    trailingIcon = {
-                        Box(Modifier.offset(x = (-4).dp)) {
-                            AnimatedVisibility(
-                                query.isNotEmpty(),
-                                enter = fadeIn(),
-                                exit = fadeOut(),
-                            ) {
-                                IconButton(onClick = { onSearch("") }) {
-                                    Icon(
-                                        painterResource(R.drawable.ic_close),
-                                        contentDescription = null
-                                    )
-                                }
-                            }
-                        }
-                    },
-                    shape = SearchBarDefaults.inputFieldShape,
-                    colors = colors,
-                    contentPadding = TextFieldDefaults.contentPaddingWithoutLabel(),
-                    enabled = true,
-                    container = {},
-                )
-            }
+                    }
+                }
+            },
+            colors = colors,
+            contentPadding = TextFieldDefaults.contentPaddingWithoutLabel(),
+            container = {},
+        ),
     )
 
     HorizontalDivider(Modifier.padding(top = 8.dp, bottom = 16.dp))

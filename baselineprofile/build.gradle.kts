@@ -15,7 +15,9 @@ val benchmarkServerAddress: String? = localProperties.getProperty("benchmark.ser
 
 android {
     namespace = "net.theluckycoder.baselineprofile"
-    compileSdk = 37
+    compileSdk {
+        version = release(37) { minorApiLevel = 1 }
+    }
 
     defaultConfig {
         minSdk = 30
