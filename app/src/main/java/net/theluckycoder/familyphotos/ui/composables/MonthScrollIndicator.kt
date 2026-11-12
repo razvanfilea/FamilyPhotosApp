@@ -25,7 +25,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.computedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -94,14 +94,14 @@ fun BoxScope.MonthScrollIndicator(
 
     // Use maxVisibleIndex to ensure the drag scale matches the grid's scrollable scale
     val maxVisibleIndex by remember(gridState, totalItems) {
-        derivedStateOf {
+        computedStateOf {
             val visibleItemsCount = gridState.layoutInfo.visibleItemsInfo.size
             (totalItems - visibleItemsCount).coerceAtLeast(1)
         }
     }
 
     val gridProgress by remember(gridState, maxVisibleIndex) {
-        derivedStateOf {
+        computedStateOf {
             if (totalItems <= 0) 0f else {
                 (gridState.firstVisibleItemIndex.toFloat() / maxVisibleIndex).coerceIn(0f, 1f)
             }

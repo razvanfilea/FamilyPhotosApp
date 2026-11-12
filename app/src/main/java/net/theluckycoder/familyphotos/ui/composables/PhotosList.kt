@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.layout.LazyLayoutCacheWindow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.computedStateOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -102,7 +104,7 @@ fun <T : Photo> PhotosList(
     val layout = timelineLayout.withOffset(1)
     var showMonthOverlay by remember { mutableStateOf(false) }
     val isThumbDragging = remember { mutableStateOf(false) }
-    val hasSelection = remember { derivedStateOf { selectedPhotoIds.isNotEmpty() } }
+    val hasSelection = remember { computedStateOf { selectedPhotoIds.isNotEmpty() } }
 
     BackHandler(enabled = hasSelection.value) {
         selectedPhotoIds.clear()
@@ -155,7 +157,10 @@ fun <T : Photo> PhotosList(
         columns = GridCells.Fixed(columnCount),
         contentPadding = PaddingValues(
             bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-        )
+        ),
+        // Compose a screen of thumbnails ahead so Coil starts loading them before they scroll in,
+        // and keep half a screen behind so scrolling back doesn't reload them
+        cacheWindow = remember { LazyLayoutCacheWindow(aheadFraction = 1f, behindFraction = 0.5f) },
     ) {
         items(count = layout.totalItemCount, key = { gridIndex ->
             if (gridIndex == 0) "top_header"
@@ -347,7 +352,7 @@ fun <T : Photo> PhotoListItem(
     requestedPhotoSize: Size? = null,
 ) {
     val isVideo = remember(photo.id) { photo.isVideo }
-    val selected by remember(photo.id) { derivedStateOf { selectedPhotoIds.contains(photo.id) } }
+    val selected by remember(photo.id) { computedStateOf { selectedPhotoIds.contains(photo.id) } }
 
     SelectablePhoto(
         modifier = modifier.testTag("photo_item"),

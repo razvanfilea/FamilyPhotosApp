@@ -2,7 +2,7 @@ package net.theluckycoder.familyphotos.ui.screen
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.CapturedAnimatedVisibility
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -147,7 +147,7 @@ private fun LocalPhotoPickerContent(
             )
         },
         floatingActionButton = {
-            AnimatedVisibility(visible = selectedPhotoIds.isNotEmpty()) {
+            CapturedAnimatedVisibility(visible = selectedPhotoIds.isNotEmpty()) {
                 ExtendedFloatingActionButton(
                     onClick = {
                         viewModel.uploadPhotos(
