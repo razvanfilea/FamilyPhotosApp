@@ -2,9 +2,6 @@ package net.theluckycoder.familyphotos.ui.composables.player
 
 import android.net.Uri
 import androidx.annotation.OptIn
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -109,33 +106,16 @@ fun VideoPlayer(
         showControls = showControls.value,
         contentScale = ContentScale.Fit,
         topControls = null,
-        centerControls = { player, visible ->
-            AnimatedVisibility(
-                visible = visible,
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
-                if (player != null) {
-                    MinimalControls(player)
-                }
-            }
-        },
-        bottomControls = { player, visible ->
-            AnimatedVisibility(
-                visible = visible,
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
-                if (player != null) {
-                    TimeProgressBar(
-                        player = player,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(controlsPadding)
-                            .navigationBarsPadding()
-                    )
-                }
-            }
+        // Player fades the controls in and out with showControls
+        centerControls = { MinimalControls(exoPlayer) },
+        bottomControls = {
+            TimeProgressBar(
+                player = exoPlayer,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(controlsPadding)
+                    .navigationBarsPadding()
+            )
         }
     )
 
