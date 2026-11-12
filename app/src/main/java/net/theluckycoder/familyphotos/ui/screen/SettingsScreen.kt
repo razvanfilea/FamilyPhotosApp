@@ -1,7 +1,6 @@
 package net.theluckycoder.familyphotos.ui.screen
 
 import android.text.format.Formatter
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -121,13 +120,12 @@ private fun BackupMobileDataItem(viewModel: SettingsViewModel) {
         leadingContent = {
             Icon(painterResource(R.drawable.ic_cloud_upload_outline), contentDescription = null)
         },
-        headlineContent = { Text(stringResource(R.string.settings_backup_mobile_data)) },
         supportingContent = { Text(stringResource(R.string.settings_backup_mobile_data_summary)) },
         trailingContent = {
             Switch(checked = enabled, onCheckedChange = { viewModel.setBackupOverMobileData(it) })
         },
-        modifier = Modifier.clickable { viewModel.setBackupOverMobileData(!enabled) }
-    )
+        onClick = { viewModel.setBackupOverMobileData(!enabled) },
+    ) { Text(stringResource(R.string.settings_backup_mobile_data)) }
 }
 
 @Composable
@@ -138,13 +136,12 @@ private fun NotifySharedFoldersItem(viewModel: SettingsViewModel) {
         leadingContent = {
             Icon(painterResource(R.drawable.ic_folder_outlined), contentDescription = null)
         },
-        headlineContent = { Text(stringResource(R.string.settings_notify_shared_folders)) },
         supportingContent = { Text(stringResource(R.string.settings_notify_shared_folders_summary)) },
         trailingContent = {
             Switch(checked = enabled, onCheckedChange = { viewModel.setNotifySharedFolders(it) })
         },
-        modifier = Modifier.clickable { viewModel.setNotifySharedFolders(!enabled) }
-    )
+        onClick = { viewModel.setNotifySharedFolders(!enabled) },
+    ) { Text(stringResource(R.string.settings_notify_shared_folders)) }
 }
 
 @Composable
@@ -155,13 +152,12 @@ private fun NotifyMemoriesItem(viewModel: SettingsViewModel) {
         leadingContent = {
             Icon(painterResource(R.drawable.ic_large_photos), contentDescription = null)
         },
-        headlineContent = { Text(stringResource(R.string.settings_notify_memories)) },
         supportingContent = { Text(stringResource(R.string.settings_notify_memories_summary)) },
         trailingContent = {
             Switch(checked = enabled, onCheckedChange = { viewModel.setNotifyMemories(it) })
         },
-        modifier = Modifier.clickable { viewModel.setNotifyMemories(!enabled) }
-    )
+        onClick = { viewModel.setNotifyMemories(!enabled) },
+    ) { Text(stringResource(R.string.settings_notify_memories)) }
 }
 
 @Composable
@@ -178,7 +174,6 @@ private fun CacheSizeItem(viewModel: SettingsViewModel) {
         leadingContent = {
             Icon(painterResource(R.drawable.ic_cloud_download_outline), contentDescription = null)
         },
-        headlineContent = { Text(stringResource(R.string.settings_cache_size) + " ($formattedSize)") },
         supportingContent = {
             Column {
                 Text(stringResource(R.string.settings_cache_size_summary))
@@ -189,7 +184,7 @@ private fun CacheSizeItem(viewModel: SettingsViewModel) {
                 )
             }
         },
-    )
+    ) { Text(stringResource(R.string.settings_cache_size) + " ($formattedSize)") }
 }
 
 @Composable
@@ -202,10 +197,9 @@ private fun ClearCacheItem(viewModel: SettingsViewModel) {
         leadingContent = {
             Icon(painterResource(R.drawable.ic_action_delete), contentDescription = null)
         },
-        headlineContent = { Text(stringResource(R.string.settings_clear_cache)) },
         supportingContent = { Text(stringResource(R.string.settings_cache_usage, usageText)) },
-        modifier = Modifier.clickable { viewModel.clearCache() }
-    )
+        onClick = { viewModel.clearCache() },
+    ) { Text(stringResource(R.string.settings_clear_cache)) }
 }
 
 @Composable
@@ -214,30 +208,27 @@ private fun AppVersionItem(version: String) {
         leadingContent = {
             Icon(painterResource(R.drawable.ic_outline_info), contentDescription = null)
         },
-        headlineContent = { Text(stringResource(R.string.settings_app_version)) },
         supportingContent = { Text(version) }
-    )
+    ) { Text(stringResource(R.string.settings_app_version)) }
 }
 
 @Composable
 private fun ServerAddressItem(address: String) {
     ListItem(
-        headlineContent = { Text(stringResource(R.string.settings_server_address)) },
         supportingContent = { Text(address) }
-    )
+    ) { Text(stringResource(R.string.settings_server_address)) }
 }
 
 @Composable
 private fun SignOutItem(onClick: () -> Unit) {
     ListItem(
-        headlineContent = {
-            Text(
-                text = stringResource(R.string.settings_sign_out),
-                color = MaterialTheme.colorScheme.error,
-            )
-        },
-        modifier = Modifier.clickable(onClick = onClick)
-    )
+        onClick = onClick,
+    ) {
+        Text(
+            text = stringResource(R.string.settings_sign_out),
+            color = MaterialTheme.colorScheme.error,
+        )
+    }
 }
 
 @Composable
