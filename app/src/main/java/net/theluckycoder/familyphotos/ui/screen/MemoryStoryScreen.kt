@@ -22,9 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,42 +49,38 @@ import net.theluckycoder.familyphotos.ui.composables.memoryDateText
 import net.theluckycoder.familyphotos.ui.composables.rememberStoryPlayerState
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
 import net.theluckycoder.familyphotos.ui.viewmodel.PhotoViewerViewModel
-import net.theluckycoder.familyphotos.ui.viewmodel.TimelineViewModel
+import net.theluckycoder.familyphotos.ui.viewmodel.MemoryStoryViewModel
 
 @Composable
 fun MemoryStoryScreen(
-    yearsAgo: Int,
-    timelineViewModel: TimelineViewModel,
+    key: MemoryNav,
     mainViewModel: MainViewModel,
+    memoryStoryViewModel: MemoryStoryViewModel = viewModel(),
     photoViewerViewModel: PhotoViewerViewModel = viewModel(),
 ) {
     val backStack = LocalNavBackStack.current
-    val memories by timelineViewModel.memories.collectAsState()
+    val state by memoryStoryViewModel.state.collectAsState()
 
-    // Kept once found: the story mustn't reshuffle while playing (e.g. after favoriting a photo)
-    var memory by remember { mutableStateOf<Memory?>(null) }
-    LaunchedEffect(memories) {
-        val all = memories ?: return@LaunchedEffect
-        if (memory != null) return@LaunchedEffect
-        memory = all.find { it.yearsAgo == yearsAgo }
-        // Gone, e.g. the day changed while the app was in the background
-        if (memory == null && backStack.lastOrNull() == MemoryNav(yearsAgo)) {
+    LaunchedEffect(key) {
+        memoryStoryViewModel.load(key)
+    }
+
+    LaunchedEffect(state) {
+        if (state == MemoryStoryViewModel.State.Missing && backStack.lastOrNull() == key) {
             backStack.removeLastOrNull()
         }
     }
 
-    val current = memory
-    if (current == null) {
-        Box(Modifier.fillMaxSize().background(Color.Black))
-    } else {
-        MemoryStory(current, yearsAgo, mainViewModel, photoViewerViewModel)
+    when (val current = state) {
+        is MemoryStoryViewModel.State.Found -> MemoryStory(current.memory, key, mainViewModel, photoViewerViewModel)
+        else -> Box(Modifier.fillMaxSize().background(Color.Black))
     }
 }
 
 @Composable
 private fun MemoryStory(
     memory: Memory,
-    yearsAgo: Int,
+    key: MemoryNav,
     mainViewModel: MainViewModel,
     photoViewerViewModel: PhotoViewerViewModel,
 ) {
@@ -96,7 +89,7 @@ private fun MemoryStory(
 
     fun close() {
         // Only this story: a second close during the exit animation must not pop anything else
-        if (backStack.lastOrNull() == MemoryNav(yearsAgo)) backStack.removeLastOrNull()
+        if (backStack.lastOrNull() == key) backStack.removeLastOrNull()
     }
 
     val showTitle = state.index == 0 && !state.finished

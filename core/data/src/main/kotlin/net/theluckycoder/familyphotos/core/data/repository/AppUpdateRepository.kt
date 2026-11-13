@@ -59,7 +59,6 @@ class AppUpdateRepository @Inject internal constructor(
             try {
                 val request = Request.Builder()
                     .url("${NetworkModule.PLACEHOLDER_BASE_URL}api/app/download")
-                    // Compression would hide Content-Length (and an APK is already compressed)
                     .header("Accept-Encoding", "identity")
                     .build()
 
@@ -96,8 +95,13 @@ class AppUpdateRepository @Inject internal constructor(
                     }
                 }
 
-                if (!isValidUpdate(partFile, versionCode) || !partFile.renameTo(apkFile)) {
-                    Log.e(TAG, "The downloaded APK isn't an update of this app")
+                val rejection = rejectionReason(partFile, versionCode)
+                if (rejection != null) {
+                    Log.e(TAG, "The downloaded APK isn't an update of this app: $rejection")
+                    return@withContext null
+                }
+                if (!partFile.renameTo(apkFile)) {
+                    Log.e(TAG, "Couldn't move the downloaded APK into place")
                     return@withContext null
                 }
                 apkFile
@@ -121,11 +125,20 @@ class AppUpdateRepository @Inject internal constructor(
         directory.deleteRecursively()
     }
 
-    /** Same package (so same signing key is checked by the installer) and new enough. */
-    private fun isValidUpdate(file: File, versionCode: Int): Boolean {
-        if (!file.isFile) return false
-        val info = context.packageManager.getPackageArchiveInfo(file.path, 0) ?: return false
-        return info.packageName == context.packageName && info.longVersionCode >= versionCode
+    private fun isValidUpdate(file: File, versionCode: Int): Boolean =
+        rejectionReason(file, versionCode) == null
+
+    private fun rejectionReason(file: File, versionCode: Int): String? {
+        if (!file.isFile) return "no file"
+        val info = context.packageManager.getPackageArchiveInfo(file.path, 0)
+            ?: return "not a valid APK (${file.length()} bytes)"
+        return when {
+            info.packageName != context.packageName ->
+                "package ${info.packageName}, expected ${context.packageName}"
+            info.longVersionCode < versionCode ->
+                "versionCode ${info.longVersionCode}, but the server announced $versionCode"
+            else -> null
+        }
     }
 
     private companion object {

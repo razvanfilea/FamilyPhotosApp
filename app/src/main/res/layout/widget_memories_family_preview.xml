@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shown in the widget picker: a memory without its photo. Inflated by the launcher, without
+     AppCompat, so app:tint wouldn't work. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_memories_preview_background">
+
+    <ImageView
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_large_photos"
+        android:tint="#CCFFFFFF"
+        tools:ignore="UseAppTint" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="14dp"
+        android:text="@string/widget_memories_family_label"
+        android:textColor="#FFFFFFFF"
+        android:textSize="16sp" />
+
+</FrameLayout>

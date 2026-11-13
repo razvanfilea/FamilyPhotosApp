@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
+import net.theluckycoder.familyphotos.core.data.model.Memory
+import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel.Companion.PAGING_CONFIG
@@ -34,8 +36,11 @@ class TimelineViewModel @Inject constructor(
         }.flow
     }.cachedIn(viewModelScope)
 
-    val memories = settingsStore.photoType
-        .flatMapLatest { photoType -> photosRepository.getMemories(photoType) }
+    /** With their type, which a story opened from them needs (see [net.theluckycoder.familyphotos.ui.MemoryNav]). */
+    val memories: StateFlow<TimelineMemories?> = settingsStore.photoType
+        .flatMapLatest { photoType ->
+            photosRepository.getMemories(photoType).map { TimelineMemories(photoType, it) }
+        }
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
@@ -48,3 +53,8 @@ class TimelineViewModel @Inject constructor(
     val memoriesListState = LazyListState()
     val timelineGridState = LazyGridState()
 }
+
+data class TimelineMemories(
+    val photoType: PhotoType,
+    val memories: List<Memory>,
+)

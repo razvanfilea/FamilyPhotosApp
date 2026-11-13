@@ -11,10 +11,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
+import net.theluckycoder.familyphotos.widget.MemoriesWidget
+import net.theluckycoder.familyphotos.workers.enqueueMemoriesWidgetWorker
 import net.theluckycoder.familyphotos.workers.enqueueMemoriesWorker
 import javax.inject.Inject
 
-/** The memories delay was computed for the old clock or time zone, so 09:00 has moved. */
+/**
+ * The memories delays were computed for the old clock or time zone, so 09:00 and the widget's
+ * slots have moved.
+ */
 @AndroidEntryPoint
 class TimeChangedReceiver : BroadcastReceiver() {
 
@@ -27,8 +32,14 @@ class TimeChangedReceiver : BroadcastReceiver() {
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                val workManager = WorkManager.getInstance(context)
                 if (settingsStore.notifyMemories.first()) {
-                    WorkManager.getInstance(context).enqueueMemoriesWorker(ExistingWorkPolicy.REPLACE)
+                    workManager.enqueueMemoriesWorker(ExistingWorkPolicy.REPLACE)
+                }
+                if (MemoriesWidget.hasAny(context)) {
+                    // Now, not at the next slot: a new day may have started. Replacing the worker
+                    // also moves its next slots to the new clock.
+                    workManager.enqueueMemoriesWidgetWorker(ExistingWorkPolicy.REPLACE, immediately = true)
                 }
             } finally {
                 pendingResult.finish()

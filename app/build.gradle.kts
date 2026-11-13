@@ -21,8 +21,8 @@ android {
         minSdk = 30
         targetSdk = 37
 
-        versionCode = 310
-        versionName = "3.1.0"
+        versionCode = 311
+        versionName = "3.1.1"
 
         buildConfigField("boolean", "BENCHMARK", "false")
 
@@ -146,6 +146,9 @@ dependencies {
 
     // WorkManager
     implementation(libs.androidx.work)
+
+    // Widgets
+    implementation(libs.androidx.glance)
 
     // Hilt
     implementation(libs.dagger.android)

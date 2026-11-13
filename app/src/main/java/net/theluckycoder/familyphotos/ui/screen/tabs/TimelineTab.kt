@@ -44,12 +44,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.paging.compose.LazyPagingItems
 import net.theluckycoder.familyphotos.R
-import net.theluckycoder.familyphotos.core.data.model.Memory
 import net.theluckycoder.familyphotos.core.data.model.NetworkPhotoThumbnail
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
 import net.theluckycoder.familyphotos.ui.MemoryNav
+import net.theluckycoder.familyphotos.ui.viewmodel.TimelineMemories
 import net.theluckycoder.familyphotos.ui.composables.CoilPhoto
 import net.theluckycoder.familyphotos.ui.composables.PhotoTypeChips
 import net.theluckycoder.familyphotos.ui.composables.memoryDateText
@@ -129,7 +129,7 @@ fun TimelineTab(
 
 @Composable
 private fun MemoriesList(
-    memories: List<Memory>?,
+    timelineMemories: TimelineMemories?,
     listState: LazyListState,
 ) {
     val backStack = LocalNavBackStack.current
@@ -139,7 +139,7 @@ private fun MemoriesList(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
-        if (memories == null) {
+        if (timelineMemories == null) {
             item("placeholder") {
                 Surface(
                     Modifier
@@ -154,7 +154,7 @@ private fun MemoriesList(
             return@LazyRow
         }
 
-        items(memories, key = { it.yearsAgo }) { memory ->
+        items(timelineMemories.memories, key = { it.yearsAgo }) { memory ->
             Box(
                 Modifier
                     .photoSharedBounds(memory.cover.id)
@@ -162,7 +162,7 @@ private fun MemoriesList(
                     .aspectRatio(0.75f)
                     .padding(4.dp)
                     .clip(RoundedCornerShape(20.dp))
-                    .clickable { backStack.add(MemoryNav(memory.yearsAgo)) }
+                    .clickable { backStack.add(MemoryNav(memory.yearsAgo, timelineMemories.photoType)) }
             ) {
                 CoilPhoto(
                     photo = memory.cover,

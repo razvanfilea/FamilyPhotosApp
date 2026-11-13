@@ -2,7 +2,7 @@
 agp = "9.5.1"
 blakeHash = "1.1.1"
 kotlin_base = "2.4.21"
-kotlin_ksp = "2.3.13"
+kotlin_ksp = "2.3.14"
 kotlin_coroutines = "1.11.0"
 kotlin_serialization = "1.13.0"
 kotlin_datetime = "0.8.0-0.6.x-compat"
@@ -14,10 +14,11 @@ androidx_core = "1.19.1"
 androidx_room = "2.8.5"
 androidx_media = "1.12.0-beta01"
 androidx_paging = "3.5.3"
-androidx_camerax = "1.6.2"
+androidx_camerax = "1.7.0"
 androidx_work = "2.12.0"
 androidx_nav3 = "1.2.1"
 androidx_baselineprofile = "1.5.0"
+androidx_glance = "1.2.0"
 coil = "3.6.3"
 dagger = "2.60.1"
 hilt = "1.4.0"
@@ -54,6 +55,7 @@ androidx_core = { group = "androidx.core", name = "core-ktx", version.ref = "and
 androidx_dataStore = { module = "androidx.datastore:datastore-preferences", version = "1.3.0" }
 androidx_exif = { module = "androidx.exifinterface:exifinterface", version = "1.4.2" }
 androidx_work = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx_work" }
+androidx_glance = { module = "androidx.glance:glance-appwidget", version.ref = "androidx_glance" }
 
 compose_bom = { group = "androidx.compose", name = "compose-bom-alpha", version.ref = "compose_bom" }
 compose_foundation = { group = "androidx.compose.foundation", name = "foundation" }

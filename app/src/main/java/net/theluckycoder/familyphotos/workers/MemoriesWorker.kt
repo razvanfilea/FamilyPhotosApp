@@ -11,6 +11,7 @@ import dagger.assisted.AssistedInject
 import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
+import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
 import net.theluckycoder.familyphotos.core.data.model.isVideo
 import net.theluckycoder.familyphotos.core.data.model.mostMemorable
@@ -50,7 +51,8 @@ class MemoriesWorker @AssistedInject constructor(
         val today = LocalDate.now().toEpochDay()
         if (settingsDataStore.getLastMemoriesDay() == today) return
 
-        val allMemories = photosRepository.getMemoriesNow(settingsDataStore.currentPhotoType())
+        // All the photos, whatever the timeline's filter: one notification a day
+        val allMemories = photosRepository.getMemoriesNow(PhotoType.All)
         // Only those the timeline shows, so that tapping the notification can open the story
         val memories = allMemories.mostMemorable()
 

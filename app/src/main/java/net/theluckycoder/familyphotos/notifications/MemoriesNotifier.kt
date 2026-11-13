@@ -19,6 +19,7 @@ import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.Photo
+import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.model.getPreviewUri
 import net.theluckycoder.familyphotos.ui.MainActivity
 import javax.inject.Inject
@@ -49,6 +50,8 @@ class MemoriesNotifier @Inject constructor(
 
         val openIntent = Intent(context, MainActivity::class.java)
             .putExtra(MainActivity.EXTRA_OPEN_MEMORY_YEARS_AGO, yearsAgo)
+            // Like MemoriesWorker
+            .putExtra(MainActivity.EXTRA_OPEN_MEMORY_PHOTO_TYPE, PhotoType.All.index)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         val contentIntent = PendingIntent.getActivity(
             context, REQUEST_CODE, openIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
