@@ -15,6 +15,12 @@ import net.theluckycoder.familyphotos.core.data.model.db.MemoryCandidate
 import net.theluckycoder.familyphotos.core.data.model.db.PhotoStatistics
 import net.theluckycoder.familyphotos.core.data.model.network.PhotoEventLog
 
+/** Shared by the folder grid and the folder slideshow, which must show the same photos in the same order. */
+private const val FOLDER_PHOTOS_QUERY = """SELECT id, timeCreated, thumbHash, name FROM network_photo
+    WHERE network_photo.folderId = :folderId
+    AND trashedOn IS NULL
+    ORDER BY network_photo.timeCreated DESC"""
+
 @Dao
 internal interface NetworkPhotosDao {
 
@@ -40,13 +46,14 @@ internal interface NetworkPhotosDao {
         currentUserId: String
     ): PagingSource<Int, NetworkPhotoThumbnail>
 
-    @Query(
-        """SELECT id, timeCreated, thumbHash, name FROM network_photo
-        WHERE network_photo.folderId = :folderId
-        AND trashedOn IS NULL
-        ORDER BY network_photo.timeCreated DESC"""
-    )
+    @Query(FOLDER_PHOTOS_QUERY)
     fun getFolderPhotos(folderId: Long): PagingSource<Int, NetworkPhotoThumbnail>
+
+    @Query(FOLDER_PHOTOS_QUERY)
+    suspend fun getAllFolderPhotos(folderId: Long): List<NetworkPhotoThumbnail>
+
+    @Query("SELECT id, timeCreated, thumbHash, name FROM network_photo WHERE id IN (:photoIds) AND trashedOn IS NULL")
+    suspend fun getThumbnails(photoIds: List<Long>): List<NetworkPhotoThumbnail>
 
 
     /**

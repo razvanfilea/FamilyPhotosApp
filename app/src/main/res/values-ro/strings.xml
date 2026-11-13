@@ -273,6 +273,8 @@
     <string name="action_close">Închide</string>
     <string name="memory_replay">Redă din nou</string>
     <string name="memory_go_to_photo">Mergi la fotografie</string>
+    <string name="action_slideshow">Prezentare</string>
+    <string name="slideshow_counter">%1$d / %2$d</string>
     <plurals name="memory_see_all">
         <item quantity="one">Vezi %d fotografie</item>
         <item quantity="few">Vezi toate cele %d fotografii</item>

@@ -68,6 +68,12 @@ class FoldersRepository @Inject internal constructor(
     fun networkPhotosFromFolderPaged(folderId: Long) =
         networkPhotosDao.getFolderPhotos(folderId)
 
+    suspend fun allLocalPhotosFromFolder(folder: String) =
+        localPhotosDao.getAllFolderPhotos(folder)
+
+    suspend fun allNetworkPhotosFromFolder(folderId: Long) =
+        networkPhotosDao.getAllFolderPhotos(folderId)
+
     fun localMonthSummariesForFolder(folder: String): Flow<List<MonthSummary>> =
         localPhotosDao.getMonthSummariesForFolder(folder)
 

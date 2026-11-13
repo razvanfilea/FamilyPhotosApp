@@ -74,6 +74,25 @@ data class MemoryNav(
     val yearsAgo: Int,
 ) : NavKey
 
+/** A slideshow of a whole folder, in its order, or of some photos, newest first. */
+@Serializable
+data class SlideshowNav(
+    val source: Source,
+) : NavKey {
+    @Serializable
+    sealed class Source {
+        @Serializable
+        data class Folder(val folder: FolderNav.Source) : Source()
+
+        /**
+         * Selected photos, kept in [net.theluckycoder.familyphotos.ui.viewmodel.SlideshowSelections]
+         * under [selectionId]: thousands of ids wouldn't fit in the saved state.
+         */
+        @Serializable
+        data class Selection(val selectionId: Long, val isLocal: Boolean) : Source()
+    }
+}
+
 @Serializable
 class MovePhotosNav(
     val photoIds: LongArray,

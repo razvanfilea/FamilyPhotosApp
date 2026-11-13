@@ -51,12 +51,16 @@ class MainViewModel @Inject constructor(
     private val snackbarManager: SnackbarManager,
     private val photoUploadRepository: PhotoUploadRepository,
     private val appUpdateRepository: AppUpdateRepository,
+    private val slideshowSelections: SlideshowSelections,
 ) : ViewModel() {
 
     private val _localPhotosToDelete = Channel<List<LocalPhoto>>()
     val localPhotosToDelete = _localPhotosToDelete.receiveAsFlow()
 
     val selectedTabState = mutableStateOf(TopLevelTab.Timeline)
+
+    /** Keeps [photoIds] for a slideshow, see [SlideshowSelections]. */
+    fun addSlideshowSelection(photoIds: List<Long>): Long = slideshowSelections.add(photoIds)
 
     val isLoggedIn = loginRepository.isLoggedIn
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
