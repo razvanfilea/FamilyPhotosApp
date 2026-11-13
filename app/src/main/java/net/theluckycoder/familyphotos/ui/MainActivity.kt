@@ -79,6 +79,7 @@ import net.theluckycoder.familyphotos.ui.screen.MemoryStoryScreen
 import net.theluckycoder.familyphotos.ui.screen.LoginScreen
 import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
 import net.theluckycoder.familyphotos.ui.screen.SettingsScreen
+import net.theluckycoder.familyphotos.ui.screen.SlideshowScreen
 import net.theluckycoder.familyphotos.ui.screen.TopLevelScreen
 import net.theluckycoder.familyphotos.ui.screen.TrashScreen
 import net.theluckycoder.familyphotos.ui.screen.UploadPhotosScreen
@@ -351,7 +352,8 @@ private val backwardSlideTransitionSpec =
         )
 
 private fun NavKey?.isViewer(): Boolean =
-    this is PhotoViewerFlowNav || this is PhotoViewerListNav || this is MemoryNav
+    this is PhotoViewerFlowNav || this is PhotoViewerListNav || this is MemoryNav ||
+            this is SlideshowNav
 
 private fun <T : NavKey> navEntry(
     key: T,
@@ -478,6 +480,10 @@ private fun Content(
 
                 is MemoryNav -> navEntry(key) {
                     MemoryStoryScreen(key.yearsAgo, timelineViewModel, mainViewModel)
+                }
+
+                is SlideshowNav -> navEntry(key) {
+                    SlideshowScreen(key, mainViewModel)
                 }
 
                 is MovePhotosNav -> navEntry(key) {

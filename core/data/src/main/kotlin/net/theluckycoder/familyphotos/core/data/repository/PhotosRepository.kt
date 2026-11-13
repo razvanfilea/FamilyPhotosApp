@@ -90,6 +90,16 @@ class PhotosRepository @Inject internal constructor(
 
     fun getFavoritePhotosPaged() = favoritePhotosDao.getFavoritePhotosPaged()
 
+    suspend fun getFavoritePhotos() = favoritePhotosDao.getFavoritePhotos()
+
+    /** Without the trashed or missing ones, in no particular order. */
+    suspend fun getNetworkPhotoThumbnails(photoIds: List<Long>) =
+        photoIds.chunked(MAX_QUERY_IDS).flatMap { networkPhotosDao.getThumbnails(it) }
+
+    /** Without the missing ones, in no particular order. */
+    suspend fun getLocalPhotos(photoIds: List<Long>) =
+        photoIds.chunked(MAX_QUERY_IDS).flatMap { localPhotosDao.findByIds(it) }
+
     fun getFavoriteMonthSummaries() = favoritePhotosDao.getMonthSummaries()
 
     fun isNetworkPhotoFavorite(photoId: Long) = favoritePhotosDao.isFavorite(photoId)
@@ -104,3 +114,6 @@ class PhotosRepository @Inject internal constructor(
     fun getLargePhotos(minSizeBytes: Long = 52_428_800L) =
         networkPhotosDao.getLargePhotos(minSizeBytes)
 }
+
+/** Under SQLite's limit of variables in a query (999 before 3.32). */
+private const val MAX_QUERY_IDS = 900

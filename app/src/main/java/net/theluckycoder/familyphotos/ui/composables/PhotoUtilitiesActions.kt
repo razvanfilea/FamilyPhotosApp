@@ -21,6 +21,7 @@ import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.Photo
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.MovePhotosNav
+import net.theluckycoder.familyphotos.ui.SlideshowNav
 import net.theluckycoder.familyphotos.ui.UploadPhotosNav
 import net.theluckycoder.familyphotos.ui.dialog.DeletePhotosDialog
 import net.theluckycoder.familyphotos.ui.viewmodel.MainViewModel
@@ -93,6 +94,20 @@ fun RowScope.PhotoUtilitiesActions(
                     modifier = Modifier.size(iconSize),
                 )
             }
+        }
+
+        IconButton(
+            onClick = {
+                // Copied: the selection can change while the slideshow plays
+                val selectionId = mainViewModel.addSlideshowSelection(selectedItems.toList())
+                backStack.add(SlideshowNav(SlideshowNav.Source.Selection(selectionId, isLocalPhoto)))
+            }
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_slideshow),
+                contentDescription = stringResource(R.string.action_slideshow),
+                modifier = Modifier.size(iconSize),
+            )
         }
     }
 

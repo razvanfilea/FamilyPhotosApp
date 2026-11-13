@@ -52,6 +52,7 @@ import net.theluckycoder.familyphotos.core.data.model.network.UserDto
 import net.theluckycoder.familyphotos.ui.FolderNav
 import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
+import net.theluckycoder.familyphotos.ui.SlideshowNav
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.mutableStateSetOf
@@ -135,7 +136,10 @@ fun FolderScreen(
                         folderShares = folderShares,
                         photoCount = timelineLayout.totalPhotoCount,
                         onOpenSharing = { showSharingBottomSheet = true },
-                        onOpenRename = { showRenameFolderDialog = true }
+                        onOpenRename = { showRenameFolderDialog = true },
+                        onStartSlideshow = {
+                            backStack.add(SlideshowNav(SlideshowNav.Source.Folder(source)))
+                        },
                     )
 
                     if (source is FolderNav.Source.Local) {
@@ -307,6 +311,7 @@ private fun FolderTopAppBar(
     photoCount: Int,
     onOpenSharing: () -> Unit,
     onOpenRename: () -> Unit,
+    onStartSlideshow: () -> Unit,
 ) {
     val titleText = when (source) {
         FolderNav.Source.Favorites -> stringResource(R.string.title_favorites)
@@ -405,6 +410,15 @@ private fun FolderTopAppBar(
             }
         },
         actions = {
+            if (photoCount > 0) {
+                IconButton(onClick = onStartSlideshow) {
+                    Icon(
+                        painterResource(R.drawable.ic_slideshow),
+                        contentDescription = stringResource(R.string.action_slideshow)
+                    )
+                }
+            }
+
             if (source is FolderNav.Source.Network && networkFolder != null) {
                 IconButton(onClick = onOpenSharing) {
                     Icon(

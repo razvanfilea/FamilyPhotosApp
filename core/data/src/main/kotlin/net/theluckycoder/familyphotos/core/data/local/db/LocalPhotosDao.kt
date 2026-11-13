@@ -12,6 +12,10 @@ import net.theluckycoder.familyphotos.core.data.model.LocalNetworkReference
 import net.theluckycoder.familyphotos.core.data.model.LocalPhoto
 import net.theluckycoder.familyphotos.core.data.model.db.MonthSummary
 
+/** Shared by the folder grid and the folder slideshow, which must show the same photos in the same order. */
+private const val FOLDER_PHOTOS_QUERY =
+    "SELECT * FROM local_photo WHERE local_photo.folder = :folder ORDER BY local_photo.timeCreated DESC"
+
 @Dao
 internal interface LocalPhotosDao {
 
@@ -37,8 +41,14 @@ internal interface LocalPhotosDao {
     @Query("SELECT * FROM local_photo WHERE local_photo.folder = :folder ORDER BY local_photo.timeCreated DESC LIMIT :count")
     fun getFolderPhotos(folder: String, count: Int): List<LocalPhoto>
 
-    @Query("SELECT * FROM local_photo WHERE local_photo.folder = :folder ORDER BY local_photo.timeCreated DESC")
+    @Query(FOLDER_PHOTOS_QUERY)
     fun getFolderPhotosPaged(folder: String): PagingSource<Int, LocalPhoto>
+
+    @Query(FOLDER_PHOTOS_QUERY)
+    suspend fun getAllFolderPhotos(folder: String): List<LocalPhoto>
+
+    @Query("SELECT * FROM local_photo WHERE id IN (:ids)")
+    suspend fun findByIds(ids: List<Long>): List<LocalPhoto>
 
     @Query(
         """
