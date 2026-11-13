@@ -121,6 +121,32 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".widget.PersonalMemoriesWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_memories_personal_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/memories_widget_personal_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.FamilyMemoriesWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_memories_family_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/memories_widget_family_info" />
+        </receiver>
+
     </application>
 
 </manifest>

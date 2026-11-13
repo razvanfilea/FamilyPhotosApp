@@ -73,9 +73,6 @@ class SettingsDataStore @Inject constructor(
         .distinctUntilChanged()
         .stateIn(scope, SharingStarted.Eagerly, PhotoType.All)
 
-    /** The stored value, for background callers that can't wait for [photoType] to load. */
-    suspend fun currentPhotoType(): PhotoType = settingsDataStore.data.first().toPhotoType()
-
     private fun Preferences.toPhotoType() = when (this[FOLDERS_FILTER_TYPE]) {
         PhotoType.Personal.index -> PhotoType.Personal
         PhotoType.Family.index -> PhotoType.Family

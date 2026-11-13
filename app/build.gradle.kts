@@ -147,6 +147,9 @@ dependencies {
     // WorkManager
     implementation(libs.androidx.work)
 
+    // Widgets
+    implementation(libs.androidx.glance)
+
     // Hilt
     implementation(libs.dagger.android)
     ksp(libs.kotlin.metadataJvm)

@@ -224,6 +224,15 @@
         <item quantity="other">Nu s-au putut muta %d de poze</item>
     </plurals>
 
+    <!-- Widgets -->
+    <string name="widget_memories_personal_label">Amintiri personale</string>
+    <string name="widget_memories_personal_description">Pozele tale din această zi, din anii trecuți</string>
+    <string name="widget_memories_personal_empty">Nicio amintire personală azi</string>
+    <string name="widget_memories_family_label">Amintiri de familie</string>
+    <string name="widget_memories_family_description">Pozele familiei din această zi, din anii trecuți</string>
+    <string name="widget_memories_family_empty">Nicio amintire de familie azi</string>
+    <string name="widget_memories_empty_summary">Pozele din această zi, din anii trecuți, vor apărea aici</string>
+
     <!-- Notifications -->
     <string name="notification_missing_permission">Lipsă permisiune notificări</string>
     <string name="notification_channel_backup">Backup</string>

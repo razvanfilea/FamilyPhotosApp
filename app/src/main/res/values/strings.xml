@@ -218,6 +218,15 @@
         <item quantity="other">Failed to move %d photos</item>
     </plurals>
 
+    <!-- Widgets -->
+    <string name="widget_memories_personal_label">Personal memories</string>
+    <string name="widget_memories_personal_description">Your photos from this day in earlier years</string>
+    <string name="widget_memories_personal_empty">No personal memories today</string>
+    <string name="widget_memories_family_label">Family memories</string>
+    <string name="widget_memories_family_description">Family photos from this day in earlier years</string>
+    <string name="widget_memories_family_empty">No family memories today</string>
+    <string name="widget_memories_empty_summary">Photos from this day in earlier years will show up here</string>
+
     <!-- Notifications -->
     <string name="notification_missing_permission">Missing notification permission</string>
     <string name="notification_channel_backup">Backup</string>

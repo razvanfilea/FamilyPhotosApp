@@ -6,6 +6,7 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.model.Photo
+import net.theluckycoder.familyphotos.core.data.model.PhotoType
 
 @Serializable
 object TopLevelNav : NavKey
@@ -68,10 +69,14 @@ data class PhotoViewerListNav(
     val initialPhotoIndex: Int = 0,
 ) : NavKey
 
-/** The story of today's memory from [yearsAgo] years ago (looked up in `TimelineViewModel`). */
+/**
+ * The story of today's memory from [yearsAgo] years ago, among the memories of [photoType]: the
+ * widgets and notifications don't follow the timeline's filter.
+ */
 @Serializable
 data class MemoryNav(
     val yearsAgo: Int,
+    val photoType: PhotoType,
 ) : NavKey
 
 /** A slideshow of a whole folder, in its order, or of some photos, newest first. */

@@ -9,8 +9,10 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import net.theluckycoder.familyphotos.widget.MemoriesWidget
 import java.time.Duration
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
 
 fun WorkManager.enqueueBackupAndUploadWorker(
@@ -96,4 +98,24 @@ fun WorkManager.enqueueMemoriesWorker(
 
 fun WorkManager.cancelMemoriesWorker() {
     cancelUniqueWork(MemoriesWorker.UNIQUE_WORK_NAME)
+}
+
+/** At the start of the next slot, or [immediately] (then it re-enqueues itself for the next slot). */
+fun WorkManager.enqueueMemoriesWidgetWorker(
+    policy: ExistingWorkPolicy = ExistingWorkPolicy.KEEP,
+    immediately: Boolean = false,
+) {
+    val now = LocalDateTime.now()
+    val slotStart = now.truncatedTo(ChronoUnit.HOURS).withHour(now.hour - now.hour % MemoriesWidget.REFRESH_HOURS)
+    val next = slotStart.plusHours(MemoriesWidget.REFRESH_HOURS.toLong())
+
+    val request = OneTimeWorkRequestBuilder<MemoriesWidgetWorker>()
+        .apply { if (!immediately) setInitialDelay(Duration.between(now, next)) }
+        .build()
+
+    enqueueUniqueWork(MemoriesWidgetWorker.UNIQUE_WORK_NAME, policy, request)
+}
+
+fun WorkManager.cancelMemoriesWidgetWorker() {
+    cancelUniqueWork(MemoriesWidgetWorker.UNIQUE_WORK_NAME)
 }

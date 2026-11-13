@@ -63,13 +63,13 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.theluckycoder.familyphotos.BuildConfig
 import net.theluckycoder.familyphotos.R
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
+import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.ui.composables.PhotosViewer
 import net.theluckycoder.familyphotos.ui.composables.TypedSnackbar
 import net.theluckycoder.familyphotos.ui.screen.DuplicatesScreen
@@ -124,11 +124,14 @@ class MainActivity : ComponentActivity() {
         const val EXTRA_OPEN_FOLDER_ID = "open_folder_id"
         const val EXTRA_OPEN_FOLDER_NAME = "open_folder_name"
         const val EXTRA_OPEN_MEMORY_YEARS_AGO = "open_memory_years_ago"
+
+        /** [PhotoType.index] of the memory to open, with [EXTRA_OPEN_MEMORY_YEARS_AGO]. */
+        const val EXTRA_OPEN_MEMORY_PHOTO_TYPE = "open_memory_photo_type"
     }
 
     private val folderToOpen = mutableStateOf<FolderNav.Source.Network?>(null)
 
-    private val memoryToOpen = mutableStateOf<Int?>(null)
+    private val memoryToOpen = mutableStateOf<MemoryNav?>(null)
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -151,9 +154,12 @@ class MainActivity : ComponentActivity() {
         }
 
         val yearsAgo = intent.getIntExtra(EXTRA_OPEN_MEMORY_YEARS_AGO, -1)
-        if (yearsAgo != -1) {
+        // Notifications posted before the type extra existed were all for PhotoType.All
+        val photoType = PhotoType.entries.find { it.index == intent.getIntExtra(EXTRA_OPEN_MEMORY_PHOTO_TYPE, PhotoType.All.index) }
+        if (yearsAgo != -1 && photoType != null) {
             intent.removeExtra(EXTRA_OPEN_MEMORY_YEARS_AGO)
-            memoryToOpen.value = yearsAgo
+            intent.removeExtra(EXTRA_OPEN_MEMORY_PHOTO_TYPE)
+            memoryToOpen.value = MemoryNav(yearsAgo, photoType)
         }
     }
 
@@ -226,11 +232,8 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(requestedMemory) {
                     if (requestedMemory == null) return@LaunchedEffect
                     memoryToOpen.value = null
-                    val memories = timelineViewModel.memories.filterNotNull().first()
-                    val alreadyOpen = (backStack.lastOrNull() as? MemoryNav)?.yearsAgo == requestedMemory
-                    if (memories.any { it.yearsAgo == requestedMemory } && !alreadyOpen) {
-                        backStack.add(MemoryNav(requestedMemory))
-                    }
+                    // The story closes itself if the memory is gone meanwhile
+                    if (backStack.lastOrNull() != requestedMemory) backStack.add(requestedMemory)
                 }
 
                 val benchmarkModifier = if (isBenchmark) {
@@ -479,7 +482,7 @@ private fun Content(
                 }
 
                 is MemoryNav -> navEntry(key) {
-                    MemoryStoryScreen(key.yearsAgo, timelineViewModel, mainViewModel)
+                    MemoryStoryScreen(key, mainViewModel)
                 }
 
                 is SlideshowNav -> navEntry(key) {

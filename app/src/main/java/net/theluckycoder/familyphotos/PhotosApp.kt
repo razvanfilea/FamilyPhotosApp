@@ -7,12 +7,24 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.WorkManager
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asExecutor
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import net.theluckycoder.familyphotos.core.data.di.DefaultCoroutineScope
 import net.theluckycoder.familyphotos.core.data.local.datastore.SettingsDataStore
 import net.theluckycoder.familyphotos.core.data.local.datastore.SharedActivityStore
+import net.theluckycoder.familyphotos.core.data.local.datastore.UserDataStore
+import net.theluckycoder.familyphotos.core.data.model.PhotoType
+import net.theluckycoder.familyphotos.core.data.repository.PhotosRepository
+import net.theluckycoder.familyphotos.widget.MemoriesWidget
+import net.theluckycoder.familyphotos.workers.enqueueMemoriesWidgetWorker
 import net.theluckycoder.familyphotos.workers.enqueuePeriodBackupWorker
 import net.theluckycoder.familyphotos.workers.enqueueMemoriesWorker
 import net.theluckycoder.familyphotos.workers.enqueueSharedActivityWorker
@@ -35,6 +47,12 @@ class PhotosApp : Application(), Configuration.Provider {
 
     @Inject
     lateinit var sharedActivityStore: SharedActivityStore
+
+    @Inject
+    lateinit var userDataStore: UserDataStore
+
+    @Inject
+    lateinit var photosRepository: PhotosRepository
 
     @Inject
     lateinit var sharedFolderNotifier: SharedFolderNotifier
@@ -70,6 +88,7 @@ class PhotosApp : Application(), Configuration.Provider {
         }
 
         createUploadWorker()
+        updateMemoriesWidget()
     }
 
     override val workManagerConfiguration: Configuration
@@ -77,6 +96,31 @@ class PhotosApp : Application(), Configuration.Provider {
             .setWorkerFactory(workerFactory)
             .setExecutor(Dispatchers.Default.asExecutor())
             .build()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun updateMemoriesWidget() = coroutineScope.launch {
+        if (MemoriesWidget.hasAny(this@PhotosApp)) {
+            WorkManager.getInstance(this@PhotosApp).enqueueMemoriesWidgetWorker()
+        }
+
+        // Redraw when the memories change: signing in or out, a sync bringing photos (right after
+        // signing in the database is still empty), a new day. The user flow starts with a
+        // placeholder: skip it until the stored user shows up. The first memories are what the
+        // widgets already show.
+        val stored = userDataStore.getUser()?.userId
+        userDataStore.user.map { it?.userId }
+            .dropWhile { it != stored }
+            .distinctUntilChanged()
+            .flatMapLatest {
+                combine(
+                    photosRepository.getMemories(PhotoType.Personal),
+                    photosRepository.getMemories(PhotoType.Family),
+                ) { personal, family -> personal to family }
+            }
+            .distinctUntilChanged()
+            .drop(1)
+            .collect { MemoriesWidget.updateAllTypes(this@PhotosApp) }
+    }
 
     private fun createUploadWorker() = coroutineScope.launch {
         val workManager = WorkManager.getInstance(this@PhotosApp)
