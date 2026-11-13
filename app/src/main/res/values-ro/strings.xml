@@ -305,4 +305,9 @@
     <string name="update_downloading">Se descarcă actualizarea…</string>
     <string name="update_download_failed">Descărcarea a eșuat, atinge pentru a reîncerca</string>
     <string name="update_no_installer">Programul de instalare nu a putut fi deschis</string>
+
+    <string name="search_hint">Caută dosare, date și nume de fișiere</string>
+    <string name="search_filter_videos">Videoclipuri</string>
+    <string name="search_years">Ani</string>
+    <string name="search_no_results">Nu s-au găsit fotografii</string>
 </resources>

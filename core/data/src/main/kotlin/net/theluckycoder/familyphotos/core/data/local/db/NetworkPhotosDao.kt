@@ -13,6 +13,7 @@ import net.theluckycoder.familyphotos.core.data.model.PhotoType
 import net.theluckycoder.familyphotos.core.data.model.db.MonthSummary
 import net.theluckycoder.familyphotos.core.data.model.db.MemoryCandidate
 import net.theluckycoder.familyphotos.core.data.model.db.PhotoStatistics
+import net.theluckycoder.familyphotos.core.data.model.db.YearSummary
 import net.theluckycoder.familyphotos.core.data.model.network.PhotoEventLog
 
 /** Shared by the folder grid and the folder slideshow, which must show the same photos in the same order. */
@@ -20,6 +21,21 @@ private const val FOLDER_PHOTOS_QUERY = """SELECT id, timeCreated, thumbHash, na
     WHERE network_photo.folderId = :folderId
     AND trashedOn IS NULL
     ORDER BY network_photo.timeCreated DESC"""
+
+/**
+ * Shared by the search grid and its month headers. The text matches the file name or the folder's
+ * name; a null year/month matches any. Searches all the photos the user can see.
+ */
+private const val SEARCH_WHERE = """p.trashedOn IS NULL
+    AND (:text = ''
+        OR p.name LIKE '%' || :text || '%' ESCAPE '\'
+        OR p.folderId IN (SELECT id FROM network_folder WHERE name LIKE '%' || :text || '%' ESCAPE '\'))
+    AND (:year IS NULL OR CAST(strftime('%Y', p.timeCreated, 'unixepoch', 'localtime') AS INTEGER) = :year)
+    AND (:month IS NULL OR CAST(strftime('%m', p.timeCreated, 'unixepoch', 'localtime') AS INTEGER) = :month)
+    AND (:videosOnly = 0 OR LOWER(p.name) LIKE '%.mp4' OR LOWER(p.name) LIKE '%.mov'
+        OR LOWER(p.name) LIKE '%.mkv' OR LOWER(p.name) LIKE '%.webm'
+        OR LOWER(p.name) LIKE '%.avi' OR LOWER(p.name) LIKE '%.3gp')
+    AND (:favoritesOnly = 0 OR EXISTS(SELECT 1 FROM favorite_network_photo f WHERE f.photoId = p.id))"""
 
 @Dao
 internal interface NetworkPhotosDao {
@@ -117,6 +133,45 @@ internal interface NetworkPhotosDao {
         """
     )
     fun getMonthSummariesForFolder(folderId: Long): Flow<List<MonthSummary>>
+
+    @Query(
+        """SELECT p.id, p.timeCreated, p.thumbHash, p.name FROM network_photo p
+        WHERE $SEARCH_WHERE
+        ORDER BY p.timeCreated DESC"""
+    )
+    fun searchPhotosPaged(
+        text: String,
+        year: Int?,
+        month: Int?,
+        videosOnly: Boolean,
+        favoritesOnly: Boolean,
+    ): PagingSource<Int, NetworkPhotoThumbnail>
+
+    @Query(
+        """SELECT MAX(p.timeCreated) AS timeCreated, p.id AS coverPhotoId, COUNT(*) AS photoCount
+        FROM network_photo p
+        WHERE $SEARCH_WHERE
+        GROUP BY strftime('%Y-%m', datetime(p.timeCreated, 'unixepoch', 'localtime'))
+        ORDER BY timeCreated DESC"""
+    )
+    fun searchMonthSummaries(
+        text: String,
+        year: Int?,
+        month: Int?,
+        videosOnly: Boolean,
+        favoritesOnly: Boolean,
+    ): Flow<List<MonthSummary>>
+
+    /** Each year with photos, newest first, with its latest photo (bare columns follow MAX). */
+    @Query(
+        """SELECT CAST(strftime('%Y', timeCreated, 'unixepoch', 'localtime') AS INTEGER) AS year,
+               COUNT(*) AS photoCount, id, MAX(timeCreated) AS timeCreated, thumbHash, name
+        FROM network_photo
+        WHERE trashedOn IS NULL
+        GROUP BY year
+        ORDER BY year DESC"""
+    )
+    fun getYearSummaries(): Flow<List<YearSummary>>
 
     @Query("SELECT * FROM network_photo WHERE trashedOn IS NOT NULL ORDER BY trashedOn ASC")
     fun getTrashedPhotos(): Flow<List<NetworkPhoto>>

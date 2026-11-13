@@ -291,4 +291,9 @@
     <string name="update_downloading">Downloading the update…</string>
     <string name="update_download_failed">Download failed, tap to retry</string>
     <string name="update_no_installer">Couldn\'t open the installer</string>
+
+    <string name="search_hint">Search folders, dates and file names</string>
+    <string name="search_filter_videos">Videos</string>
+    <string name="search_years">Years</string>
+    <string name="search_no_results">No photos found</string>
 </resources>

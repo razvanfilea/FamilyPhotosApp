@@ -78,6 +78,7 @@ import net.theluckycoder.familyphotos.ui.screen.LargeFilesScreen
 import net.theluckycoder.familyphotos.ui.screen.MemoryStoryScreen
 import net.theluckycoder.familyphotos.ui.screen.LoginScreen
 import net.theluckycoder.familyphotos.ui.screen.MovePhotosScreen
+import net.theluckycoder.familyphotos.ui.screen.SearchScreen
 import net.theluckycoder.familyphotos.ui.screen.SettingsScreen
 import net.theluckycoder.familyphotos.ui.screen.SlideshowScreen
 import net.theluckycoder.familyphotos.ui.screen.TopLevelScreen
@@ -511,6 +512,10 @@ private fun Content(
 
                 is TrashNav -> navEntry(key) {
                     TrashScreen()
+                }
+
+                is SearchNav -> navEntry(key) {
+                    SearchScreen(mainViewModel)
                 }
 
                 else -> navEntry(key) {

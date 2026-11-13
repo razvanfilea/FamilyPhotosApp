@@ -49,6 +49,8 @@ import net.theluckycoder.familyphotos.ui.LocalNavBackStack
 import net.theluckycoder.familyphotos.ui.LocalSettingsDataStore
 import net.theluckycoder.familyphotos.ui.PhotoViewerFlowNav
 import net.theluckycoder.familyphotos.ui.MemoryNav
+import net.theluckycoder.familyphotos.ui.SearchNav
+import net.theluckycoder.familyphotos.ui.screen.SearchEntryBar
 import net.theluckycoder.familyphotos.ui.viewmodel.TimelineMemories
 import net.theluckycoder.familyphotos.ui.composables.CoilPhoto
 import net.theluckycoder.familyphotos.ui.composables.PhotoTypeChips
@@ -89,12 +91,17 @@ fun TimelineTab(
                 backStack.add(PhotoViewerFlowNav(index, PhotoViewerFlowNav.Source.Timeline))
             },
             headerContent = {
+                SearchEntryBar(
+                    onClick = { backStack.add(SearchNav) },
+                    modifier = Modifier
+                        .windowInsetsPadding(TopAppBarDefaults.windowInsets)
+                        .padding(top = 8.dp),
+                )
+
                 PhotoTypeChips(
                     selectedPhotoType = selectedPhotoType,
                     onChangePhotoType = settingsDataStore::setSelectedPhotoType,
-                    modifier = Modifier
-                        .windowInsetsPadding(TopAppBarDefaults.windowInsets)
-                        .padding(8.dp),
+                    modifier = Modifier.padding(horizontal = 8.dp),
                 )
 
                 val memories by timelineViewModel.memories.collectAsState()

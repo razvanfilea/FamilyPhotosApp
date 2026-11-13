@@ -120,3 +120,6 @@ object SettingsNav : NavKey
 
 @Serializable
 object TrashNav : NavKey
+
+@Serializable
+object SearchNav : NavKey

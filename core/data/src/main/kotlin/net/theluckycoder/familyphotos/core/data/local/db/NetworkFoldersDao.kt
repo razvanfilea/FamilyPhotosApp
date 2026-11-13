@@ -72,6 +72,25 @@ internal interface NetworkFoldersDao {
         currentUserId: String
     ): Flow<List<NetworkFolder>>
 
+    /** Folders whose name contains [text] (a LIKE pattern, `ESCAPE '\'`), the latest first. */
+    @Query(
+        """
+        SELECT nf.id AS folderId, nf.name AS folderName, nf.ownerId as userId,
+               agg.coverPhotoId, agg.photoCount
+        FROM network_folder nf
+        INNER JOIN (
+            SELECT folderId, COUNT(*) AS photoCount, MAX(timeCreated) AS maxTime,
+                   id AS coverPhotoId
+            FROM network_photo
+            WHERE trashedOn IS NULL
+            GROUP BY folderId
+        ) agg ON agg.folderId = nf.id
+        WHERE nf.name LIKE '%' || :text || '%' ESCAPE '\'
+        ORDER BY agg.maxTime DESC
+        """
+    )
+    fun searchFolders(text: String): Flow<List<NetworkFolder>>
+
     @Transaction
     suspend fun replaceAll(folders: List<NetworkFolderEntity>) {
         deleteAll()
