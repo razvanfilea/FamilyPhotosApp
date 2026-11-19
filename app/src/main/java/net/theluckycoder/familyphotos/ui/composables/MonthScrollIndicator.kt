@@ -111,8 +111,6 @@ fun BoxScope.MonthScrollIndicator(
     val currentMaxVisibleIndex by rememberUpdatedState(maxVisibleIndex)
     val currentOnScrollToGridIndex by rememberUpdatedState(onScrollToGridIndex)
 
-    // Driven from an effect rather than as an animateFloatAsState target, so scrolling the grid
-    // doesn't recompose this composable for every row
     val thumbOffsetY = remember { Animatable(0f) }
     LaunchedEffect(thumbOffsetY) {
         var first = true

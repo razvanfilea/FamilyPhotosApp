@@ -481,7 +481,6 @@ fun ZoomableImage(
     val isImageLoaded = remember { mutableStateOf(false) }
 
     val zoomableState = rememberZoomableState()
-    // zoomFraction changes every frame while pinching: only recompose when the UI visibility flips
     val uiVisible by remember(zoomableState) {
         computedStateOf { (zoomableState.zoomFraction ?: 0.0f) < 0.1f }
     }

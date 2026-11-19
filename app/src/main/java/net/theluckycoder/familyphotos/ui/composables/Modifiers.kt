@@ -95,8 +95,7 @@ fun <T : Photo> Modifier.photoGridDrag(
     val currentGetItems = rememberUpdatedState(getItems)
     val currentLayout = rememberUpdatedState(timelineLayout)
 
-    // Only run the auto-scroll loop while a drag gesture is active.
-    // Observed in the effect (not in composition) so a drag doesn't recompose the caller
+    // Only run auto-scroll loop when drag gesture is active
     LaunchedEffect(lazyGridState) {
         snapshotFlow { scrollGestureActive.value }.collectLatest { active ->
             if (!active) return@collectLatest
@@ -237,10 +236,6 @@ private fun <T : Photo> Modifier.photoGridDrag(
         }
     }
 
-    // Not detectDragGesturesAfterLongPress: that one reads events in the Main pass, where the grid's
-    // own scrollable (a child of this modifier) sees them first and claims any vertical drag,
-    // cancelling the selection. After the long press, consume every change in the Initial pass
-    // so the grid neither scrolls nor treats the release as a click on the item.
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
         val longPress = awaitLongPressOrCancellation(down.id) ?: return@awaitEachGesture
@@ -252,10 +247,9 @@ private fun <T : Photo> Modifier.photoGridDrag(
             while (true) {
                 val event = awaitPointerEvent(PointerEventPass.Initial)
                 event.changes.forEach { it.consume() }
-                // Follow the original finger, or another one still down if it lifted
                 val change = event.changes.firstOrNull { it.id == pointerId && it.pressed }
                     ?: event.changes.firstOrNull { it.pressed }
-                    ?: break // every finger lifted
+                    ?: break
                 pointerId = change.id
                 onDrag(change.position)
             }

@@ -11,7 +11,31 @@ import kotlin.math.roundToInt
  */
 object ThumbHash {
 
+    private const val MAX_SIZE = 32
+    private const val MAX_COMPONENTS = 7
+
+    private class Scratch {
+        val lAc = FloatArray(28)
+        val pAc = FloatArray(8)
+        val qAc = FloatArray(8)
+        val aAc = FloatArray(14)
+        val fxTable = FloatArray(MAX_COMPONENTS * MAX_SIZE)
+        val fyTable = FloatArray(MAX_COMPONENTS * MAX_SIZE)
+        val lXc = FloatArray(MAX_COMPONENTS * MAX_SIZE)
+        val pXc = FloatArray(3 * MAX_SIZE)
+        val qXc = FloatArray(3 * MAX_SIZE)
+        val aXc = FloatArray(5 * MAX_SIZE)
+        val pixels = IntArray(MAX_SIZE * MAX_SIZE)
+        val lRow = FloatArray(MAX_SIZE)
+        val pRow = FloatArray(MAX_SIZE)
+        val qRow = FloatArray(MAX_SIZE)
+        val aRow = FloatArray(MAX_SIZE)
+    }
+
+    private val scratch = ThreadLocal.withInitial { Scratch() }
+
     fun thumbHashToRGBA(hash: ByteArray): Bitmap {
+        val scratch = scratch.get()!!
         val header24 =
             (hash[0].toInt() and 255) or ((hash[1].toInt() and 255) shl 8) or ((hash[2].toInt() and 255) shl 16)
         val header16 = (hash[3].toInt() and 255) or ((hash[4].toInt() and 255) shl 8)
@@ -40,13 +64,13 @@ object ThumbHash {
         val dataStart = if (hasAlpha) 6 else 5
         var nibIdx = 0
 
-        val lAc = FloatArray(28)
+        val lAc = scratch.lAc
         var lAcN = 0
-        val pAc = FloatArray(8)
+        val pAc = scratch.pAc
         var pAcN = 0
-        val qAc = FloatArray(8)
+        val qAc = scratch.qAc
         var qAcN = 0
-        val aAc = FloatArray(14)
+        val aAc = scratch.aAc
         var aAcN = 0
 
         fun readNibble(): Int {
@@ -112,17 +136,18 @@ object ThumbHash {
         val piW = kotlin.math.PI.toFloat() / w.toFloat()
         val piH = kotlin.math.PI.toFloat() / h.toFloat()
 
-        val fxTable = FloatArray(maxCx * w)
+        val fxTable = scratch.fxTable
         for (cx in 0 until maxCx) {
             fillCosTable(fxTable, cx * w, piW * cx.toFloat(), w)
         }
-        val fyTable = FloatArray(maxCy * h)
+        val fyTable = scratch.fyTable
         for (cy in 0 until maxCy) {
             fillCosTable(fyTable, cy * h, piH * cy.toFloat(), h)
         }
 
         // Phase 1: x-contributions per cy (separable IDCT)
-        val lXc = FloatArray(ly * w)
+        val lXc = scratch.lXc
+        lXc.fill(0f, 0, ly * w)
         run {
             var j = 0
             for (cy in 0 until ly) {
@@ -140,8 +165,10 @@ object ThumbHash {
             }
         }
 
-        val pXc = FloatArray(3 * w)
-        val qXc = FloatArray(3 * w)
+        val pXc = scratch.pXc
+        val qXc = scratch.qXc
+        pXc.fill(0f, 0, 3 * w)
+        qXc.fill(0f, 0, 3 * w)
         run {
             var j = 0
             for (cy in 0 until 3) {
@@ -162,7 +189,7 @@ object ThumbHash {
             }
         }
 
-        val aXc = if (hasAlpha) FloatArray(5 * w) else null
+        val aXc = if (hasAlpha) scratch.aXc.also { it.fill(0f, 0, 5 * w) } else null
         if (hasAlpha && aXc != null) {
             var j = 0
             for (cy in 0 until 5) {
@@ -181,17 +208,17 @@ object ThumbHash {
         }
 
         // Phase 2: row-by-row SAXPY accumulation
-        val pixels = IntArray(w * h)
-        val lRow = FloatArray(w)
-        val pRow = FloatArray(w)
-        val qRow = FloatArray(w)
-        val aRow = FloatArray(w)
+        val pixels = scratch.pixels
+        val lRow = scratch.lRow
+        val pRow = scratch.pRow
+        val qRow = scratch.qRow
+        val aRow = scratch.aRow
 
         for (y in 0 until h) {
-            lRow.fill(lDc)
-            pRow.fill(pDc)
-            qRow.fill(qDc)
-            aRow.fill(aDc)
+            lRow.fill(lDc, 0, w)
+            pRow.fill(pDc, 0, w)
+            qRow.fill(qDc, 0, w)
+            aRow.fill(aDc, 0, w)
 
             for (cy in 0 until ly) {
                 val fy2 = fyTable[cy * h + y] * 2.0f

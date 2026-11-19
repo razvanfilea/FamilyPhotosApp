@@ -211,7 +211,6 @@ fun SelectablePhoto(
     }
 
     if (inSelectionMode) {
-        // Starts at 0 when the icon enters composition, so it fades in with selection mode
         val iconAlpha = remember { Animatable(0f) }
         LaunchedEffect(iconAlpha) { iconAlpha.animateTo(1f) }
         val iconScale by animateFloatAsState(
