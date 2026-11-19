@@ -69,6 +69,7 @@ compose_activity = { module = "androidx.activity:activity-compose", version.ref 
 compose_lifecycleViewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "compose_lifecycleViewmodel" }
 androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "compose_lifecycleViewmodel" }
 compose_runtimeLivedata = { group = "androidx.compose.runtime", name = "runtime-livedata" }
+compose_runtimeTracing = { group = "androidx.compose.runtime", name = "runtime-tracing" }
 
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "androidx_nav3" }
 androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "androidx_nav3" }

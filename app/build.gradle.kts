@@ -121,6 +121,9 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.toolingPreview)
     debugImplementation(libs.compose.tooling)
+    // Composables and the state writes behind recompositions in system traces. Not in release builds
+    debugImplementation(libs.compose.runtimeTracing)
+    "benchmarkReleaseImplementation"(libs.compose.runtimeTracing)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
     implementation(libs.compose.material3Adaptive)
