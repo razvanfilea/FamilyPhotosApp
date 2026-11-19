@@ -132,7 +132,8 @@ fun <T : Photo> PhotosList(
     val photoDragModifier = Modifier.photoGridDrag(
         lazyGridState = gridState,
         selectedIds = selectedPhotoIds,
-        items = photos.itemSnapshotList.items,
+        // A provider, so this body isn't subscribed to every paging update
+        getItems = { photos.itemSnapshotList.items },
         timelineLayout = layout,
     )
 
@@ -206,8 +207,12 @@ fun <T : Photo> PhotosList(
                         if (pagingIndex in 0 until photos.itemCount) photos[pagingIndex] else null
 
                     if (photo != null) {
+                        // Only the cell whose result changes re-runs when a photo is opened/closed
+                        val isOpening by remember(photo.id) {
+                            computedStateOf { openingPhotoIdState.value == photo.id }
+                        }
                         val sharedBoundsModifier =
-                            if (photo.id == openingPhotoIdState.value) {
+                            if (isOpening) {
                                 Modifier.photoSharedBounds(photo.id)
                             } else {
                                 Modifier

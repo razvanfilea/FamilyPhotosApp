@@ -2,6 +2,7 @@ package net.theluckycoder.familyphotos.ui.composables
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
@@ -28,6 +29,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -209,10 +211,9 @@ fun SelectablePhoto(
     }
 
     if (inSelectionMode) {
-        val iconAlpha by animateFloatAsState(
-            targetValue = if (inSelectionMode) 1f else 0f,
-            label = "selectionIconAlpha"
-        )
+        // Starts at 0 when the icon enters composition, so it fades in with selection mode
+        val iconAlpha = remember { Animatable(0f) }
+        LaunchedEffect(iconAlpha) { iconAlpha.animateTo(1f) }
         val iconScale by animateFloatAsState(
             targetValue = if (selected) 1f else 0.85f,
             label = "selectionIconScale"
@@ -230,7 +231,7 @@ fun SelectablePhoto(
             modifier = Modifier
                 .padding(4.dp)
                 .graphicsLayer {
-                    alpha = iconAlpha
+                    alpha = iconAlpha.value
                     scaleX = iconScale
                     scaleY = iconScale
                 }

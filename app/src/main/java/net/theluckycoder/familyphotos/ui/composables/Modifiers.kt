@@ -6,7 +6,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.calculateCentroidSize
 import androidx.compose.foundation.gestures.calculateZoom
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.selection.toggleable
@@ -17,6 +17,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toIntRect
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
 import net.theluckycoder.familyphotos.core.data.model.Photo
 import net.theluckycoder.familyphotos.core.data.model.TimelineLayout
@@ -85,17 +87,19 @@ fun Modifier.selectableClickable(
 fun <T : Photo> Modifier.photoGridDrag(
     lazyGridState: LazyGridState,
     selectedIds: SnapshotStateSet<Long>,
-    items: List<T?>,
+    getItems: () -> List<T?>,
     timelineLayout: TimelineLayout,
 ): Modifier {
     val autoScrollSpeed = remember { mutableFloatStateOf(0f) }
     val scrollGestureActive = remember { mutableStateOf(false) }
-    val currentItems = rememberUpdatedState(items)
+    val currentGetItems = rememberUpdatedState(getItems)
     val currentLayout = rememberUpdatedState(timelineLayout)
 
-    // Only run auto-scroll loop when drag gesture is active
-    if (scrollGestureActive.value) {
-        LaunchedEffect(Unit) {
+    // Only run the auto-scroll loop while a drag gesture is active.
+    // Observed in the effect (not in composition) so a drag doesn't recompose the caller
+    LaunchedEffect(lazyGridState) {
+        snapshotFlow { scrollGestureActive.value }.collectLatest { active ->
+            if (!active) return@collectLatest
             while (isActive) {
                 val speed = autoScrollSpeed.floatValue
                 if (speed != 0f) {
@@ -113,7 +117,7 @@ fun <T : Photo> Modifier.photoGridDrag(
         autoScrollSpeed = autoScrollSpeed,
         autoScrollThreshold = with(LocalDensity.current) { 40.dp.toPx() },
         scrollGestureActive = scrollGestureActive,
-        getItems = { currentItems.value },
+        getItems = { currentGetItems.value() },
         getLayout = { currentLayout.value }
     )
 }
@@ -183,62 +187,82 @@ private fun <T : Photo> Modifier.photoGridDrag(
         return idToIndexMap[key]
     }
 
-    detectDragGesturesAfterLongPress(
-        onDragStart = { raw ->
-            scrollGestureActive.value = true
-            idToIndexMap = buildIdToIndexMap()
-            lazyGridState.hitKeyAt(raw)?.let { key ->
-                val idx = resolveIndex(key) ?: return@let
-                if (key !in selectedIds) {
-                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    initialMediaIndex = idx
-                    currentMediaIndex = idx
-                    selectedIds.add(key)
-                }
+    fun onDragStart(raw: Offset) {
+        scrollGestureActive.value = true
+        idToIndexMap = buildIdToIndexMap()
+        lazyGridState.hitKeyAt(raw)?.let { key ->
+            val idx = resolveIndex(key) ?: return@let
+            if (key !in selectedIds) {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                initialMediaIndex = idx
+                currentMediaIndex = idx
+                selectedIds.add(key)
             }
-        },
-        onDragCancel = {
-            scrollGestureActive.value = false
-            initialMediaIndex = null
-            idToIndexMap = emptyMap()
-            autoScrollSpeed.value = 0f
-        },
-        onDragEnd = {
-            scrollGestureActive.value = false
-            initialMediaIndex = null
-            idToIndexMap = emptyMap()
-            autoScrollSpeed.value = 0f
-        },
-        onDrag = { change, _ ->
-            val raw = change.position
-            if (initialMediaIndex != null) {
-                val distB = lazyGridState.layoutInfo.viewportSize.height - raw.y
-                val distT = raw.y
-                autoScrollSpeed.value = when {
-                    distB < autoScrollThreshold -> autoScrollThreshold - distB
-                    distT < autoScrollThreshold -> -(autoScrollThreshold - distT)
-                    else -> 0f
-                }
+        }
+    }
 
-                lazyGridState.hitKeyAt(raw)?.let { key ->
-                    val newIdx = resolveIndex(key) ?: return@let
-                    if (newIdx != currentMediaIndex) {
-                        val start = initialMediaIndex ?: return@let
-                        val oldEnd = currentMediaIndex ?: return@let
-                        val oldRange = if (oldEnd >= start) start..oldEnd else oldEnd..start
-                        val newRange = if (newIdx >= start) start..newIdx else newIdx..start
+    fun onDragStop() {
+        scrollGestureActive.value = false
+        initialMediaIndex = null
+        currentMediaIndex = null
+        idToIndexMap = emptyMap()
+        autoScrollSpeed.value = 0f
+    }
 
-                        val oldIds = oldRange.mapIndexToId()
-                        val newIds = newRange.mapIndexToId()
+    fun onDrag(raw: Offset) {
+        if (initialMediaIndex == null) return
+        val distB = lazyGridState.layoutInfo.viewportSize.height - raw.y
+        val distT = raw.y
+        autoScrollSpeed.value = when {
+            distB < autoScrollThreshold -> autoScrollThreshold - distB
+            distT < autoScrollThreshold -> -(autoScrollThreshold - distT)
+            else -> 0f
+        }
 
-                        selectedIds.removeAll(oldIds)
-                        selectedIds.addAll(newIds)
-                        currentMediaIndex = newIdx
-                    }
-                }
+        lazyGridState.hitKeyAt(raw)?.let { key ->
+            val newIdx = resolveIndex(key) ?: return@let
+            if (newIdx != currentMediaIndex) {
+                val start = initialMediaIndex ?: return@let
+                val oldEnd = currentMediaIndex ?: return@let
+                val oldRange = if (oldEnd >= start) start..oldEnd else oldEnd..start
+                val newRange = if (newIdx >= start) start..newIdx else newIdx..start
+
+                val oldIds = oldRange.mapIndexToId()
+                val newIds = newRange.mapIndexToId()
+
+                selectedIds.removeAll(oldIds)
+                selectedIds.addAll(newIds)
+                currentMediaIndex = newIdx
             }
-        },
-    )
+        }
+    }
+
+    // Not detectDragGesturesAfterLongPress: that one reads events in the Main pass, where the grid's
+    // own scrollable (a child of this modifier) sees them first and claims any vertical drag,
+    // cancelling the selection. After the long press, consume every change in the Initial pass
+    // so the grid neither scrolls nor treats the release as a click on the item.
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false)
+        val longPress = awaitLongPressOrCancellation(down.id) ?: return@awaitEachGesture
+        longPress.consume()
+
+        onDragStart(longPress.position)
+        var pointerId = longPress.id
+        try {
+            while (true) {
+                val event = awaitPointerEvent(PointerEventPass.Initial)
+                event.changes.forEach { it.consume() }
+                // Follow the original finger, or another one still down if it lifted
+                val change = event.changes.firstOrNull { it.id == pointerId && it.pressed }
+                    ?: event.changes.firstOrNull { it.pressed }
+                    ?: break // every finger lifted
+                pointerId = change.id
+                onDrag(change.position)
+            }
+        } finally {
+            onDragStop()
+        }
+    }
 }
 
 private const val UPPER_THRESHOLD = 1.8f

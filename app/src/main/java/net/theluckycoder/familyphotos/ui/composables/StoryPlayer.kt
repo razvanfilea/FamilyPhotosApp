@@ -16,7 +16,6 @@ import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -38,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -63,6 +63,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -225,7 +226,10 @@ fun StoryPlayer(
 
     val chromeAlpha by animateFloatAsState(if (state.holding) 0f else 1f, label = "chromeAlpha")
 
-    BoxWithConstraints(
+    val windowSize = LocalWindowInfo.current.containerSize
+    val sizePx = remember(windowSize) { Size(windowSize.width, windowSize.height) }
+
+    Box(
         modifier
             .fillMaxSize()
             .background(Color.Black)
@@ -266,8 +270,6 @@ fun StoryPlayer(
                 scaleY = 1f - fraction * 0.2f
             }
     ) {
-        val sizePx = with(density) { Size(maxWidth.roundToPx(), maxHeight.roundToPx()) }
-
         // Fresh state (e.g. a new video player) for each slide and each restart of a slide
         key(photo.id, progress) {
             StorySlide(
@@ -505,7 +507,7 @@ private fun StoryVideo(
         }
     }
 
-    LaunchedEffect(player, paused) {
+    SideEffect {
         player.playWhenReady = !paused
     }
 

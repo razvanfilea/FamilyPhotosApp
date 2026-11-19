@@ -1,8 +1,7 @@
 package net.theluckycoder.familyphotos.ui.composables
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -112,11 +111,19 @@ fun BoxScope.MonthScrollIndicator(
     val currentMaxVisibleIndex by rememberUpdatedState(maxVisibleIndex)
     val currentOnScrollToGridIndex by rememberUpdatedState(onScrollToGridIndex)
 
-    val thumbOffsetY by animateFloatAsState(
-        targetValue = if (isDragging.value) dragOffsetY else (gridProgress * currentMaxScroll),
-        animationSpec = if (isDragging.value) snap() else tween(150),
-        label = "thumbOffsetY"
-    )
+    // Driven from an effect rather than as an animateFloatAsState target, so scrolling the grid
+    // doesn't recompose this composable for every row
+    val thumbOffsetY = remember { Animatable(0f) }
+    LaunchedEffect(thumbOffsetY) {
+        var first = true
+        snapshotFlow {
+            if (isDragging.value) dragOffsetY to true else gridProgress * currentMaxScroll to false
+        }.collectLatest { (target, dragging) ->
+            if (first || dragging) thumbOffsetY.snapTo(target)
+            else thumbOffsetY.animateTo(target, tween(150))
+            first = false
+        }
+    }
 
     AnimatedVisibility(
         visible = isVisible || isDragging.value,
@@ -136,13 +143,13 @@ fun BoxScope.MonthScrollIndicator(
             Surface(
                 modifier = Modifier
                     .testTag("month_scroll_indicator")
-                    .offset { IntOffset(x = 0, y = thumbOffsetY.toInt()) }
+                    .offset { IntOffset(x = 0, y = thumbOffsetY.value.toInt()) }
                     .size(width = 44.dp, height = 56.dp)
                     .pointerInput(Unit) {
                         detectVerticalDragGestures(
                             onDragStart = {
                                 isDragging.value = true
-                                dragOffsetY = thumbOffsetY
+                                dragOffsetY = thumbOffsetY.value
                                 lastScrolledMonthIndex = -1
                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                             },

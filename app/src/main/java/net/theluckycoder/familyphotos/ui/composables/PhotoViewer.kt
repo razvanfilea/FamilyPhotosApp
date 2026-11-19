@@ -27,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.computedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -400,8 +401,9 @@ private fun BottomBar(
             } else {
                 // Find the network equivalent of this photo
                 val networkPhotoState =
-                    photoViewerViewModel.getNetworkPhotoFlow(photo.networkPhotoId)
-                        .collectAsState(null)
+                    remember(photo.networkPhotoId) {
+                        photoViewerViewModel.getNetworkPhotoFlow(photo.networkPhotoId)
+                    }.collectAsState(null)
 
                 IconButtonText(
                     onClick = {
@@ -479,9 +481,12 @@ fun ZoomableImage(
     val isImageLoaded = remember { mutableStateOf(false) }
 
     val zoomableState = rememberZoomableState()
-    val zoomFraction = zoomableState.zoomFraction ?: 0.0f
-    SideEffect(key1 = zoomFraction < 0.1f) {
-        showUI(zoomFraction < 0.1f)
+    // zoomFraction changes every frame while pinching: only recompose when the UI visibility flips
+    val uiVisible by remember(zoomableState) {
+        computedStateOf { (zoomableState.zoomFraction ?: 0.0f) < 0.1f }
+    }
+    SideEffect(key1 = uiVisible) {
+        showUI(uiVisible)
     }
 
     val thumbHashPainter = thumbHashPainter(photo.thumbHash)

@@ -83,7 +83,7 @@ fun TrashScreen() = Scaffold { paddingValues ->
                 .photoGridDrag(
                     lazyGridState = gridState,
                     selectedIds = selectedPhotoIds,
-                    items = trashedPhotos ?: emptyList(),
+                    getItems = { trashedPhotosState.value ?: emptyList() },
                     timelineLayout = TimelineLayout.EMPTY,
                 ),
             state = gridState,
